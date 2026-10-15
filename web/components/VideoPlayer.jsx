@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen, Captions, ListPlus, Play } from 'lucide-react';
-import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl } from '@/lib/media';
+import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia } from '@/lib/media';
 
 const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
 
@@ -153,14 +153,21 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     } catch { /* cancelled */ }
   };
 
-  const build = () => {
+  const build = async () => {
     let src = url.trim(); if (!src) return null;
     if (!/^https?:\/\//i.test(src) && !src.startsWith('/api/')) src = 'https://' + src;
     const type = force === 'auto' ? detect(src) : force;
     if (type === 'proxy') return { type: 'proxy', src: toProxyUrl(src), orig: src };
+    if (type === 'auto' || type === 'embed') {
+      const resolved = await resolveMedia(src);
+      if (resolved && resolved.type === 'hls') {
+        if (resolved.subtitle) setSub(resolved.subtitle);
+        return resolved;
+      }
+    }
     return { type, src: type === 'embed' ? toEmbed(src) : src };
   };
-  const enqueue = () => { const m = build(); if (m) { socket.emit('queue:add', { media: m }); setUrl(''); } };
+  const enqueue = async () => { const m = await build(); if (m) { socket.emit('queue:add', { media: m }); setUrl(''); } };
   const pickLocal = (e) => {                         // any file on this device: both partners pick their own copy
     const f = e.target.files[0]; if (!f) return;
     setLocalUrl(URL.createObjectURL(f));
@@ -173,11 +180,11 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (!t.startsWith('WEBVTT')) t = 'WEBVTT\n\n' + t.replace(/(\d+:\d+:\d+),(\d+)/g, '$1.$2');
     setSub(URL.createObjectURL(new Blob([t], { type: 'text/vtt' }))); e.target.value = '';
   };
-  const load = (e) => {
+  const load = async (e) => {
     e.preventDefault();
-    const m = build(); if (!m) return;
+    const m = await build(); if (!m) return;
     socket.emit('media:set', { media: m });
-    const h = [m.src, ...hist.filter((x) => x !== m.src)].slice(0, 6); setHist(h); localStorage.hist = JSON.stringify(h);
+    const h = [m.origSrc || m.src, ...hist.filter((x) => x !== (m.origSrc || m.src))].slice(0, 6); setHist(h); localStorage.hist = JSON.stringify(h);
     setUrl('');
   };
 
@@ -194,7 +201,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         {(T === 'embed' || T === 'proxy') && !stream && (
           <iframe
             src={media.src}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-storage-access-by-user-activation"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-downloads allow-modals allow-storage-access-by-user-activation"
             referrerPolicy="no-referrer-when-downgrade"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen

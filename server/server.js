@@ -78,12 +78,91 @@ app.get('/api/ice', (req, res) => {
   res.json({ iceServers, peerKey: PEER_KEY });
 });
 
+// Resolves streaming sites like hubstream.art to direct HLS streams
+async function resolveHubstream(inputUrl) {
+  try {
+    const u = new URL(inputUrl);
+    if (!u.hostname.includes('hubstream.art')) return null;
+    const hash = u.hash.slice(1).split('&')[0];
+    if (!hash) return null;
+    const O = (...v) => String.fromCodePoint(...v);
+    const P = (v, p) => (v ? v.charCodeAt(p) : 0) || 0;
+    const K = (v) => Buffer.from(v, 'utf8');
+    const protocol = 'https:';
+    const L = '10', M = 110, W = 1;
+    let N = '';
+    const q = P('ᵟ').toString().split('');
+    for (let Ge = 0; Ge < q.length; Ge++) N += O(L + q[Ge]);
+    N += O(P(protocol, L / 10));
+    N += N.slice(1, 3);
+    N += O(M, M - 1, M + 7);
+    const he = '3579'.split('');
+    N += O(he[3] + he[2], he[1] + he[2]);
+    N += O(he[0] * W + W + he[3], he[0] * W + W + he[3]);
+    N += O(he[3] * L + he[3] * W, he.reverse().join('').slice(0, 2));
+    const keyBuf = K(N);
+
+    const p = protocol, L2 = p + '//', M2 = '#' + hash, W2 = p.length * L2.length, N2 = 1;
+    let q2 = '';
+    for (let Be = N2; Be < 10; Be++) q2 += O(Be + W2);
+    let he2 = '';
+    he2 = N2 + he2 + N2 + he2 + N2;
+    const Ge2 = he2.length * P(M2);
+    const at = he2 * N2 + p.length;
+    const X = at + 4;
+    const Ee = P(p, N2);
+    const Me = Ee * N2 - 2;
+    q2 += O(W2, he2, Ge2, at, X, Ee, Me);
+    const ivBuf = K(q2);
+
+    const apiUrl = `https://hubstream.art/api/v1/video?id=${encodeURIComponent(hash)}&w=1920&h=1080&r=`;
+    const resp = await fetch(apiUrl, {
+      headers: {
+        Referer: 'https://hubstream.art/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
+    if (!resp.ok) return null;
+    const rawHex = await resp.text();
+    const cipherBuf = Buffer.from(rawHex.trim(), 'hex');
+    const key = await crypto.subtle.importKey('raw', keyBuf, { name: 'AES-CBC' }, true, ['decrypt']);
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: ivBuf }, key, cipherBuf);
+    const json = JSON.parse(new TextDecoder().decode(decrypted));
+    const streamUrl = json.cfNative || json.source;
+    if (!streamUrl) return null;
+    return {
+      type: 'hls',
+      src: `/api/stream?url=${encodeURIComponent(streamUrl)}`,
+      origSrc: streamUrl,
+      title: json.title,
+      poster: json.poster ? (json.poster.startsWith('http') ? json.poster : 'https://hubstream.art' + json.poster) : null,
+      subtitle: json.subtitle?.en ? (json.subtitle.en.startsWith('http') ? json.subtitle.en : 'https://hubstream.art' + json.subtitle.en) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+app.get('/api/resolve', async (req, res) => {
+  const target = cleanUrl(req.query.url);
+  if (!target) return res.status(400).json({ error: 'invalid' });
+  if (target.includes('hubstream.art')) {
+    const resolved = await resolveHubstream(target);
+    if (resolved) return res.json(resolved);
+  }
+  res.json({ type: 'embed', src: target });
+});
+
 // Stream proxy: bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4)
 app.get('/api/stream', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).send('Invalid or private URL');
   try {
-    const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' };
+    const targetUrl = new URL(target);
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+      Referer: targetUrl.origin + '/',
+    };
     if (req.headers.range) headers['Range'] = req.headers.range;
     const upstream = await fetch(target, { headers });
     res.status(upstream.status);
@@ -97,6 +176,13 @@ app.get('/api/stream', async (req, res) => {
     if (ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8')) {
       let text = await upstream.text();
       const base = new URL(target);
+      // Rewrite URIs in #EXT-X-MEDIA and segment lines
+      text = text.replace(/URI="([^"]+)"/g, (_, uri) => {
+        try {
+          const resolved = new URL(uri, base).href;
+          return `URI="/api/stream?url=${encodeURIComponent(resolved)}"`;
+        } catch { return `URI="${uri}"`; }
+      });
       text = text.replace(/^(?!#)(\S+)/gm, (line) => {
         try {
           const resolved = new URL(line, base).href;
@@ -116,7 +202,7 @@ app.get('/api/stream', async (req, res) => {
   }
 });
 
-// Web embed proxy: strips X-Frame-Options & CSP frame-ancestors, injects <base>
+// Web embed proxy: strips X-Frame-Options & CSP frame-ancestors, injects <base> & ad blocker
 app.get('/api/proxy', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).send('Invalid or private URL');
@@ -124,7 +210,8 @@ app.get('/api/proxy', async (req, res) => {
     const upstream = await fetch(target, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        Referer: new URL(target).origin + '/',
       },
       redirect: 'follow',
     });
@@ -138,11 +225,22 @@ app.get('/api/proxy', async (req, res) => {
       let html = await upstream.text();
       const finalUrl = upstream.url || target;
       const baseTag = `<base href="${finalUrl}">`;
-      const noBust = `<script>try{Object.defineProperty(window,'top',{get:()=>window.self});Object.defineProperty(window,'parent',{get:()=>window.self});}catch(e){}</script>`;
+      const antiAd = `<style>
+        div[style*="z-index: 2147483647"], div[style*="z-index:2147483647"],
+        div[style*="z-index: 9999999"], div[style*="z-index:9999999"],
+        .ad-overlay, .ads-banner, [id*="ad-overlay"] { display: none !important; pointer-events: none !important; }
+      </style>
+      <script>
+        try {
+          Object.defineProperty(window, 'top', { get: () => window.self });
+          Object.defineProperty(window, 'parent', { get: () => window.self });
+          window.open = function() { console.log('Ad popup blocked'); return null; };
+        } catch (e) {}
+      </script>`;
       if (/<head[^>]*>/i.test(html)) {
-        html = html.replace(/<head[^>]*>/i, `$&${baseTag}${noBust}`);
+        html = html.replace(/<head[^>]*>/i, `$&${baseTag}${antiAd}`);
       } else {
-        html = baseTag + noBust + html;
+        html = baseTag + antiAd + html;
       }
       return res.send(html);
     }

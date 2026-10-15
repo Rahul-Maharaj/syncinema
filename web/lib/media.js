@@ -27,3 +27,10 @@ export const toEmbed = (src) => {
   } catch { return src; }
 };export const toProxyUrl = (src) => `/api/proxy?url=${encodeURIComponent(src)}`;
 export const toStreamProxyUrl = (src) => `/api/stream?url=${encodeURIComponent(src)}`;
+export const resolveMedia = async (src) => {
+  try {
+    const res = await fetch(`/api/resolve?url=${encodeURIComponent(src)}`);
+    if (res.ok) return await res.json();
+  } catch {}
+  return null;
+};
