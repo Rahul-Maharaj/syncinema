@@ -143,6 +143,59 @@ async function resolveHubstream(inputUrl) {
   }
 }
 
+// Tube and adult site embed converters
+function convertTubeUrl(target) {
+  try {
+    const u = new URL(target);
+    // EPorner
+    let m = target.match(/eporner\.com\/video-([a-zA-Z0-9]+)/i);
+    if (m) return `https://www.eporner.com/embed/${m[1]}/`;
+    // Pornhub
+    m = target.match(/pornhub\.com\/(?:view_video\.php\?(?:.*&)?viewkey=|embed\/)([a-zA-Z0-9]+)/i);
+    if (m) return `https://www.pornhub.com/embed/${m[1]}`;
+    // XVideos
+    m = target.match(/xvideos\.com\/video\.?([a-zA-Z0-9_-]+)/i);
+    if (m) return `https://www.xvideos.com/embedframe/${m[1]}`;
+    // XNXX
+    m = target.match(/xnxx\.com\/video-?([a-zA-Z0-9_-]+)/i);
+    if (m) return `https://www.xnxx.com/embedframe/${m[1]}`;
+    // SpankBang
+    m = target.match(/spankbang\.com\/([a-zA-Z0-9]+)\/(?:video|embed)/i);
+    if (m) return `https://spankbang.com/${m[1]}/embed/`;
+    // RedTube
+    m = target.match(/redtube\.com\/(\d+)/i);
+    if (m) return `https://embed.redtube.com/?id=${m[1]}`;
+    // YouPorn
+    m = target.match(/youporn\.com\/watch\/(\d+)/i);
+    if (m) return `https://www.youporn.com/embed/${m[1]}`;
+    // XHamster
+    m = target.match(/xhamster\.com\/videos\/[^\s\"']*?(xh[a-zA-Z0-9]+|\d+)/i);
+    if (m) return `https://xhamster.com/xembed.php?video=${m[1]}`;
+    // Doodstream
+    m = target.match(/dood\.(?:to|watch|so|ws|cx|la|pm|re|sh)\/(?:d|e)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://dood.to/e/${m[1]}`;
+    // Streamtape
+    m = target.match(/streamtape\.com\/(?:v|e)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://streamtape.com/e/${m[1]}`;
+    // Streamwish
+    m = target.match(/streamwish\.(?:to|com)\/(?:f|e)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://streamwish.to/e/${m[1]}`;
+    // Filemoon
+    m = target.match(/filemoon\.sx\/(?:d|e)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://filemoon.sx/e/${m[1]}`;
+    // Vidmoly
+    m = target.match(/vidmoly\.to\/(?:w\/|embed-)([a-zA-Z0-9]+)/i);
+    if (m) return `https://vidmoly.to/embed-${m[1]}.html`;
+    // Voe
+    m = target.match(/voe\.sx\/(?:e\/)?([a-zA-Z0-9]+)/i);
+    if (m) return `https://voe.sx/e/${m[1]}`;
+    // Mixdrop
+    m = target.match(/mixdrop\.(?:co|to)\/(?:f|e)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://mixdrop.co/e/${m[1]}`;
+  } catch {}
+  return null;
+}
+
 app.get('/api/resolve', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).json({ error: 'invalid' });
@@ -150,10 +203,31 @@ app.get('/api/resolve', async (req, res) => {
     const resolved = await resolveHubstream(target);
     if (resolved) return res.json(resolved);
   }
+  const tubeEmbed = convertTubeUrl(target);
+  if (tubeEmbed) {
+    return res.json({ type: 'embed', src: tubeEmbed, origSrc: target });
+  }
+
+  // Fast check if target is direct audio/video stream or HLS
+  try {
+    const headResp = await fetch(target, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(2500),
+    });
+    const ct = (headResp.headers.get('content-type') || '').toLowerCase();
+    if (ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8')) {
+      return res.json({ type: 'hls', src: `/api/stream?url=${encodeURIComponent(target)}`, origSrc: target });
+    }
+    if (ct.startsWith('audio/') || ct.startsWith('video/') || ct.includes('mp4') || ct.includes('webm')) {
+      return res.json({ type: 'file', src: `/api/stream?url=${encodeURIComponent(target)}`, origSrc: target });
+    }
+  } catch {}
+
   res.json({ type: 'embed', src: target });
 });
 
-// Stream proxy: bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4)
+// Stream proxy: bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4, audio)
 app.get('/api/stream', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).send('Invalid or private URL');
@@ -176,6 +250,11 @@ app.get('/api/stream', async (req, res) => {
     if (ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8')) {
       let text = await upstream.text();
       const base = new URL(target);
+      // Ensure at least one audio track is DEFAULT=YES, AUTOSELECT=YES so video never plays silently
+      if (!text.includes('DEFAULT=YES')) {
+        text = text.replace(/(#EXT-X-MEDIA:TYPE=AUDIO[^\n]*?)DEFAULT=NO/i, '$1DEFAULT=YES');
+        text = text.replace(/(#EXT-X-MEDIA:TYPE=AUDIO[^\n]*?)AUTOSELECT=NO/i, '$1AUTOSELECT=YES');
+      }
       // Rewrite URIs in #EXT-X-MEDIA and segment lines
       text = text.replace(/URI="([^"]+)"/g, (_, uri) => {
         try {

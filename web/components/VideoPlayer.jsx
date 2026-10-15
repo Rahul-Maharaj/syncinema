@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen, Captions, ListPlus, Play } from 'lucide-react';
+import { Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen, Captions, ListPlus, Play, Volume2 } from 'lucide-react';
 import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia } from '@/lib/media';
 
 const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
@@ -9,7 +9,8 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const [media, setMedia] = useState(initial.media);
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
   const [local, setLocal] = useState(null), [error, setError] = useState('');
-  const vref = useRef(), ytBox = useRef(), vmBox = useRef(), shareEl = useRef();
+  const [audioTracks, setAudioTracks] = useState([]), [curAudio, setCurAudio] = useState(0);
+  const vref = useRef(), ytBox = useRef(), vmBox = useRef(), shareEl = useRef(), hlsRef = useRef(null);
   const api = useRef({ time: () => 0, play() {}, pause() {}, seek() {} });
   const st = useRef(initial);          // last known room state
   const quiet = useRef(false);         // true while applying remote commands (prevents echo loops)
@@ -41,13 +42,44 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (!['file', 'hls', 'dash', 'local'].includes(T)) { v.pause(); v.removeAttribute('src'); v.load(); return; }
     if (T === 'local' && !localUrl) { v.removeAttribute('src'); v.load(); return; }
     let dispose = () => {};
+    setAudioTracks([]);
     if (T === 'hls' && !v.canPlayType('application/vnd.apple.mpegurl'))
       import('hls.js').then(({ default: H }) => {
-        const h = new H(); h.loadSource(media.src); h.attachMedia(v); dispose = () => h.destroy();
+        const h = new H({ enableWorker: true, lowLatencyMode: true });
+        hlsRef.current = h;
+        h.loadSource(media.src);
+        h.attachMedia(v);
+        dispose = () => { hlsRef.current = null; h.destroy(); };
+
+        h.on(H.Events.MANIFEST_PARSED, () => {
+          if (h.audioTracks && h.audioTracks.length > 0) {
+            setAudioTracks(h.audioTracks.map((t, idx) => ({ id: idx, name: t.name || t.lang || `Track ${idx + 1}` })));
+            if (h.audioTrack === -1) {
+              h.audioTrack = 0;
+              setCurAudio(0);
+            } else {
+              setCurAudio(h.audioTrack);
+            }
+          }
+        });
+        h.on(H.Events.AUDIO_TRACKS_UPDATED, (_, data) => {
+          if (data.audioTracks && data.audioTracks.length > 0) {
+            setAudioTracks(data.audioTracks.map((t, idx) => ({ id: idx, name: t.name || t.lang || `Track ${idx + 1}` })));
+          }
+        });
+        h.on(H.Events.AUDIO_TRACK_SWITCHED, (_, data) => {
+          setCurAudio(data.id);
+        });
         h.on(H.Events.ERROR, (_, d) => {
           if (d.fatal) {
-            if (!media.src.startsWith('/api/stream') && !media.src.startsWith('http://localhost:8080/api/stream')) {
-              h.loadSource(toStreamProxyUrl(media.src));
+            if (d.type === H.ErrorTypes.MEDIA_ERROR) {
+              h.recoverMediaError();
+            } else if (d.type === H.ErrorTypes.NETWORK_ERROR) {
+              if (!media.src.startsWith('/api/stream') && !media.src.startsWith('http://localhost:8080/api/stream')) {
+                h.loadSource(toStreamProxyUrl(media.src));
+              } else {
+                h.startLoad();
+              }
             } else {
               setError('Stream failed to load (blocked, offline or CORS).');
             }
@@ -180,6 +212,12 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (!t.startsWith('WEBVTT')) t = 'WEBVTT\n\n' + t.replace(/(\d+:\d+:\d+),(\d+)/g, '$1.$2');
     setSub(URL.createObjectURL(new Blob([t], { type: 'text/vtt' }))); e.target.value = '';
   };
+  const switchAudio = (id) => {
+    if (hlsRef.current) {
+      hlsRef.current.audioTrack = id;
+      setCurAudio(id);
+    }
+  };
   const load = async (e) => {
     e.preventDefault();
     const m = await build(); if (!m) return;
@@ -265,6 +303,14 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           <button type="button" onClick={enqueue} className="ghost" title="Add this link to the Up next list"><ListPlus className="h-4 w-4" />Add to queue</button>
           <label className="ghost cursor-pointer" title="Play a movie file from your own device"><FolderOpen className="h-4 w-4" />My file<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></label>
           <label className="ghost cursor-pointer" title="Add .srt or .vtt subtitles"><Captions className="h-4 w-4" />Subtitles<input type="file" accept=".srt,.vtt" onChange={pickSub} hidden /></label>
+          {audioTracks.length > 1 && (
+            <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/90" title="Audio track / language">
+              <Volume2 className="h-4 w-4 text-[#ff6fa0]" />
+              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer">
+                {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
+              </select>
+            </div>
+          )}
           {screenBy === me
             ? <button type="button" onClick={stopShare} className="ghost"><MonitorOff className="h-4 w-4" />Stop sharing</button>
             : <button type="button" onClick={startShare} disabled={!!screenBy} className="ghost" title="Show your screen to your partner"><MonitorUp className="h-4 w-4" />Share screen</button>}

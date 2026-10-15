@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
-import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut } from 'lucide-react';
+import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film } from 'lucide-react';
 import Floaters from '@/components/Floaters';
 import { getKey, setKey, verify, loadHero, forgetEverything } from '@/lib/vault';
 
@@ -49,8 +49,11 @@ function Dashboard({ hero, onLock }) {
   const router = useRouter();
   const root = useRef(), stage = useRef(), cta = useRef();
   const [seam, setSeam] = useState({ x: 0, y: 0 });
-  const [pass, setPass] = useState(''), [perr, setPerr] = useState('');
-  const [code, setCode] = useState(''), [last, setLast] = useState(''), [err, setErr] = useState(''), [loaded, setLoaded] = useState(false);
+  const [tab, setTab] = useState('create');
+  const [roomName, setRoomName] = useState('');
+  const [pass, setPass] = useState(''), [showPass, setShowPass] = useState(false), [perr, setPerr] = useState('');
+  const [code, setCode] = useState(''), [joinPass, setJoinPass] = useState(''), [showJoinPass, setShowJoinPass] = useState(false);
+  const [last, setLast] = useState(''), [err, setErr] = useState(''), [loaded, setLoaded] = useState(false);
   useEffect(() => setLast(localStorage.getItem('lastRoom') || ''), []);
 
   // keep the glowing seam + heart exactly on the picture's split line, on any screen shape
@@ -94,18 +97,27 @@ function Dashboard({ hero, onLock }) {
   };
   const release = () => cta.current && gsap.to(cta.current, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1,.5)' });
 
-  const create = () => {
+  const create = (e) => {
+    e?.preventDefault?.();
     const p = pass.trim();
-    if (p.length > 0 && p.length < 4) return setPerr('Room passkey needs at least 4 characters (or leave empty).');
-    const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    if (p.length > 0 && p.length < 4) return setPerr('Room password needs at least 4 characters (or leave empty).');
+    let id = roomName.trim();
+    if (id) {
+      id = slug(id);
+      if (!/^[\w-]{2,64}$/.test(id)) return setPerr('Room name must be 2-64 letters, numbers or dashes.');
+    } else {
+      id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    }
     if (p) sessionStorage.setItem('rp_' + id, p);
     router.push(`/room/${id}${p ? '#pass=' + encodeURIComponent(p) : ''}`);
   };
   const join = (e) => {
     e.preventDefault();
     const c = slug(code);
-    if (!/^[\w-]{2,64}$/.test(c)) return setErr('That does not look like a room code.');
-    router.push(`/room/${c}`);
+    if (!/^[\w-]{2,64}$/.test(c)) return setErr('Please enter a valid room code or link.');
+    const jp = joinPass.trim();
+    if (jp) sessionStorage.setItem('rp_' + c, jp);
+    router.push(`/room/${c}${jp ? '#pass=' + encodeURIComponent(jp) : ''}`);
   };
 
   return (
@@ -151,23 +163,133 @@ function Dashboard({ hero, onLock }) {
         </div>
 
         <div className="panel glass w-full space-y-4 p-6 md:max-w-md">
-          <div>
-            <h2 className="font-display text-xl font-semibold">Ready when you are</h2>
-            <p className="text-sm text-white/65">Start a room, or join your partner with their code or link.</p>
+          {/* Tab switcher */}
+          <div className="flex rounded-xl bg-white/5 p-1 border border-white/10">
+            <button
+              type="button"
+              onClick={() => { setTab('create'); setErr(''); setPerr(''); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
+                tab === 'create'
+                  ? 'bg-[#d9467a] text-white shadow-lg shadow-[#d9467a]/30'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Create Room
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab('join'); setErr(''); setPerr(''); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
+                tab === 'join'
+                  ? 'bg-[#d9467a] text-white shadow-lg shadow-[#d9467a]/30'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Join Room
+            </button>
           </div>
-          <div>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-              <input type="password" value={pass} onChange={(e) => { setPass(e.target.value); setPerr(''); }} onKeyDown={(e) => e.key === 'Enter' && create()} placeholder="Room passkey (optional)" aria-label="Room passkey" maxLength={64} className="field-d !pl-9" />
-            </div>
-            <p className={`mt-1 text-xs ${perr ? 'text-rose-300' : 'text-white/50'}`} role={perr ? 'alert' : undefined}>{perr || 'Optional: Leave blank to let your partner join directly, or set a passkey.'}</p>
-          </div>
-          <button ref={cta} onClick={create} onPointerMove={pull} onPointerLeave={release} className="btn w-full !py-3.5 !text-base"><Sparkles className="h-4 w-4" />Start a private room<ArrowRight className="h-4 w-4" /></button>
-          <form onSubmit={join} className="flex gap-2">
-            <input value={code} onChange={(e) => { setCode(e.target.value); setErr(''); }} placeholder="Room code or link" aria-label="Room code or link" className="field-d" />
-            <button className="glass-btn">Join</button>
-          </form>
-          {err && <p role="alert" className="-mt-2 text-xs text-rose-300">{err}</p>}
+
+          {tab === 'create' ? (
+            <form onSubmit={create} className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-white/80">Room Name / ID (optional)</label>
+                <div className="relative">
+                  <Film className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <input
+                    type="text"
+                    value={roomName}
+                    onChange={(e) => { setRoomName(e.target.value); setPerr(''); }}
+                    placeholder="e.g. movie-couch (or leave empty for random)"
+                    aria-label="Room name"
+                    maxLength={64}
+                    className="field-d !pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-white/80">Room Password (optional)</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={pass}
+                    onChange={(e) => { setPass(e.target.value); setPerr(''); }}
+                    placeholder="Room password (optional)"
+                    aria-label="Room password"
+                    maxLength={64}
+                    className="field-d !pl-9 !pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-2 top-2 rounded-lg p-1 text-white/60 hover:text-white"
+                  >
+                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className={`mt-1 text-xs ${perr ? 'text-rose-300' : 'text-white/50'}`}>
+                  {perr || 'Leave blank for an open room, or set a password.'}
+                </p>
+              </div>
+              <button
+                ref={cta}
+                onPointerMove={pull}
+                onPointerLeave={release}
+                className="btn w-full !py-3.5 !text-base"
+              >
+                <Sparkles className="h-4 w-4" />
+                Create Room
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={join} className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-white/80">Room Code or Link</label>
+                <div className="relative">
+                  <Film className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <input
+                    autoFocus
+                    value={code}
+                    onChange={(e) => { setCode(e.target.value); setErr(''); }}
+                    placeholder="Paste room code or invite link"
+                    aria-label="Room code or link"
+                    className="field-d !pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-white/80">Room Password (if protected)</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <input
+                    type={showJoinPass ? 'text' : 'password'}
+                    value={joinPass}
+                    onChange={(e) => { setJoinPass(e.target.value); setErr(''); }}
+                    placeholder="Room password (optional)"
+                    aria-label="Room password"
+                    className="field-d !pl-9 !pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowJoinPass(!showJoinPass)}
+                    className="absolute right-2 top-2 rounded-lg p-1 text-white/60 hover:text-white"
+                  >
+                    {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {err && <p role="alert" className="mt-1 text-xs text-rose-300">{err}</p>}
+              </div>
+              <button className="btn w-full !py-3.5 !text-base">
+                <KeyRound className="h-4 w-4" />
+                Join Room
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          )}
+
           {last && (
             <button onClick={() => router.push(`/room/${last}`)} className="glass-btn w-full justify-between">
               <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#ff6fa0]" />Back to our room</span>
