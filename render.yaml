@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: synccinema
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ACCESS_KEY        # the secret word: you will be asked for it on first deploy (10+ characters)
+        sync: false
+      - key: TRUST_PROXY
+        value: "1"

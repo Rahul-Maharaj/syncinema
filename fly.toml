@@ -1,0 +1,19 @@
+app = "synccinema-CHANGE-ME"          # must be unique: edit, or run `fly launch --no-deploy`
+primary_region = "sin"
+[build]
+[env]
+  PORT = "8080"
+  TRUST_PROXY = "1"
+  DATA_FILE = "/data/rooms.json"
+[mounts]
+  source = "rooms"
+  destination = "/data"
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  min_machines_running = 1
+  [[http_service.checks]]
+    path = "/health"
+    interval = "30s"
+    timeout = "5s"
