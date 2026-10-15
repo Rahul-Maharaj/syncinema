@@ -13,16 +13,21 @@ export default function manifest() {
     categories: ['entertainment', 'video', 'social'],
     icons: [
       {
-        src: '/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
+        src: '/logo.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any maskable',
+      },
+      {
+        src: '/icon.png',
+        sizes: '192x192 512x512',
+        type: 'image/png',
         purpose: 'any maskable',
       },
       {
         src: '/icon.svg',
-        sizes: '192x192 512x512',
+        sizes: 'any',
         type: 'image/svg+xml',
-        purpose: 'any maskable',
       },
     ],
   };

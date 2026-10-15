@@ -48,7 +48,9 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
 const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
   <main className="grid min-h-screen place-items-center px-6">
     <form onSubmit={onSubmit} className="card rise w-full max-w-sm space-y-4 p-7 text-center">
-      <div className="relative mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#d9467a]/15 text-[#d9467a]"><i className="ring" />{icon}</div>
+      <div className="relative mx-auto h-16 w-16">
+        <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(217,70,122,0.7)]" />
+      </div>
       <h1 className="font-display text-2xl font-semibold">{title}</h1>
       <p className="text-sm opacity-70">{hint}</p>
       {children}
@@ -305,9 +307,11 @@ export default function Room() {
       {/* Responsive Top Header */}
       <header className="hdr mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="ghost !p-2" aria-label="Back to home" title="Back to home"><HomeIcon className="h-4 w-4" /></Link>
+          <Link href="/" className="ghost !p-1.5 sm:!p-2 flex items-center" aria-label="Back to home" title="Back to home">
+            <img src="/logo.png" alt="SyncCinema Logo" className="h-6 w-6 sm:h-7 sm:w-7 object-contain drop-shadow-[0_0_8px_rgba(217,70,122,0.6)]" />
+          </Link>
           <div className="flex items-center gap-2">
-            <h1 className="font-display text-lg sm:text-xl font-semibold">SyncCinema</h1>
+            <h1 className="font-display text-base sm:text-xl font-semibold">SyncCinema</h1>
             <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs ${online ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/15 text-rose-500'}`}>
               <i className={`h-1.5 w-1.5 rounded-full ${online ? 'animate-pulse bg-emerald-400' : 'bg-rose-500'}`} />{online ? 'Live' : 'Reconnecting'}
             </span>

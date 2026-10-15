@@ -4,8 +4,13 @@ import Floaters from '@/components/Floaters';
 const display = Fraunces({ subsets: ['latin'], variable: '--font-display' });
 const body = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
 export const metadata = {
-  title: 'SyncCinema', description: 'Watch together, wherever you are.',
-  robots: { index: false, follow: false, nocache: true },       // private: keep out of search engines
+  title: 'SyncCinema',
+  description: 'Watch together, wherever you are.',
+  robots: { index: false, follow: false, nocache: true },
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 export const viewport = {
   themeColor: '#d9467a',
@@ -19,8 +24,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
       <head>
+        <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="manifest" href="/manifest.webmanifest" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />

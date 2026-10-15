@@ -30,7 +30,9 @@ function Gate({ onUnlock, notice }) {
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_90%_50%_at_50%_-10%,rgba(235,70,130,0.35),transparent_70%),radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(255,185,115,0.18),transparent_60%),radial-gradient(circle_at_15%_35%,rgba(165,25,85,0.25),transparent_50%),radial-gradient(circle_at_85%_75%,rgba(95,25,125,0.28),transparent_55%)]" />
       <Floaters n={16} />
       <form ref={card} onSubmit={submit} className="glass relative w-full max-w-sm space-y-4 p-8 text-center">
-        <div className="relative mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#d9467a] shadow-[0_0_50px_rgba(217,70,122,.6)]"><i className="ring" /><Lock className="h-7 w-7" /></div>
+        <div className="relative mx-auto h-20 w-20">
+          <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain drop-shadow-[0_0_30px_rgba(217,70,122,0.8)]" />
+        </div>
         <h1 className="font-display text-3xl font-semibold">Our private couch</h1>
         <p className="text-sm text-white/70">Only you two know the secret word. Type it to come in.</p>
         <div className="relative">
@@ -143,8 +145,9 @@ function Dashboard({ hero, onLock }) {
       </div>
 
       <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8">
-        <span className="flex items-center gap-2 font-display text-lg font-semibold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#d9467a]"><Heart className="h-4 w-4 fill-white" /></span>SyncCinema
+        <span className="flex items-center gap-2.5 font-display text-lg font-semibold">
+          <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 object-contain drop-shadow-[0_0_15px_rgba(217,70,122,0.6)]" />
+          <span>SyncCinema</span>
         </span>
         <div className="flex items-center gap-2">
           <InstallPrompt />
