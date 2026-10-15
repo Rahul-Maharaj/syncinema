@@ -79,6 +79,72 @@ app.get('/api/ice', (req, res) => {
   res.json({ iceServers, peerKey: PEER_KEY });
 });
 
+// Room file sharing (My file): uploads video and streams it to everyone in the room
+const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+app.post('/api/upload', (req, res) => {
+  const fileName = req.headers['x-file-name'] ? decodeURIComponent(req.headers['x-file-name']) : 'video.mp4';
+  const cleanExt = path.extname(fileName) || '.mp4';
+  const fileId = `${crypto.randomUUID()}${cleanExt}`;
+  const filePath = path.join(UPLOADS_DIR, fileId);
+
+  const fileStream = fs.createWriteStream(filePath);
+  req.pipe(fileStream);
+
+  fileStream.on('finish', () => {
+    res.json({
+      url: `/api/uploads/${fileId}`,
+      name: fileName,
+    });
+  });
+
+  fileStream.on('error', (err) => {
+    res.status(500).json({ error: err.message });
+  });
+});
+
+app.get('/api/uploads/:fileId', (req, res) => {
+  const fileId = path.basename(req.params.fileId);
+  const filePath = path.join(UPLOADS_DIR, fileId);
+  if (!fs.existsSync(filePath)) return res.status(404).send('File not found');
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Accept-Ranges', 'bytes');
+
+  const ext = path.extname(fileId).toLowerCase();
+  const mimeMap = {
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mkv': 'video/mp4',
+    '.mov': 'video/quicktime',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.m4a': 'audio/mp4',
+  };
+  res.set('Content-Type', mimeMap[ext] || 'video/mp4');
+
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunksize = end - start + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Content-Length': chunksize,
+    });
+    file.pipe(res);
+  } else {
+    res.writeHead(200, { 'Content-Length': fileSize });
+    fs.createReadStream(filePath).pipe(res);
+  }
+});
+
 // Resolves streaming sites like hubstream.art to direct HLS streams
 async function resolveHubstream(inputUrl) {
   try {

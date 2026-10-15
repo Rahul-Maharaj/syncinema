@@ -19,6 +19,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const stream = screenBy === me ? local : screenStream;
   const T = media.type;
   const [localUrl, setLocalUrl] = useState(null), [sub, setSub] = useState(null), [hist, setHist] = useState([]);
+  const [uploading, setUploading] = useState(null); // { progress: number, name: string } | null
   const hostRef = useRef(false); hostRef.current = me === hostId;
   const rateTimer = useRef(null);
 
@@ -359,7 +360,45 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     const f = e.target.files[0];
     if (!f) return;
     setLocalUrl(URL.createObjectURL(f));
-    if (!(T === 'local' && media.name === f.name)) socket.emit('media:set', { media: { type: 'local', name: f.name } });
+    setUploading({ progress: 0, name: f.name });
+
+    // Stream file to server so partner's phone can automatically play it
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/upload');
+    xhr.setRequestHeader('x-file-name', encodeURIComponent(f.name));
+
+    xhr.upload.onprogress = (evt) => {
+      if (evt.lengthComputable) {
+        const pct = Math.round((evt.loaded / evt.total) * 100);
+        setUploading({ progress: pct, name: f.name });
+      }
+    };
+
+    xhr.onload = () => {
+      setUploading(null);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          // Broadcast the shared file stream URL to partner!
+          socket.emit('media:set', {
+            media: {
+              type: 'file',
+              src: res.url,
+              name: f.name,
+            },
+          });
+        } catch {}
+      } else {
+        socket.emit('media:set', { media: { type: 'local', name: f.name } });
+      }
+    };
+
+    xhr.onerror = () => {
+      setUploading(null);
+      socket.emit('media:set', { media: { type: 'local', name: f.name } });
+    };
+
+    xhr.send(f);
     e.target.value = '';
   };
 
@@ -425,8 +464,17 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           />
         )}
         {T === 'local' && !localUrl && !stream && (
-          <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/80">
-            <span>Playing <b>{media.name}</b><br />Tap to pick the same file from your device<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></span>
+          <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/90 bg-black/85 backdrop-blur-sm z-20">
+            <div className="max-w-sm space-y-3">
+              <FolderOpen className="h-10 w-10 mx-auto text-[#ff6fa0] animate-pulse" />
+              <p className="font-semibold text-sm sm:text-base">Partner picked: {media.name}</p>
+              <p className="text-xs text-white/70">Wait a moment while the file uploads, or tap below to pick this file if you already have it on your phone.</p>
+              <span className="btn !py-2 !px-4 text-xs inline-flex items-center gap-1.5 shadow-lg shadow-[#d9467a]/40">
+                <FolderOpen className="h-3.5 w-3.5" />
+                Pick File from Device
+                <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
+              </span>
+            </div>
           </label>
         )}
         {T === 'none' && !stream && (
@@ -446,6 +494,18 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         )}
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
       </div>
+
+      {uploading && (
+        <div className="card flex items-center justify-between gap-3 p-3 bg-gradient-to-r from-[#d9467a]/25 via-purple-600/20 to-pink-600/25 border-[#ff6fa0]/40 text-xs text-white shadow-lg shadow-[#d9467a]/20">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="h-2.5 w-2.5 rounded-full bg-[#ff6fa0] animate-ping shrink-0" />
+            <span className="truncate">Sharing <b>{uploading.name}</b> with partner&apos;s phone ({uploading.progress}%)…</span>
+          </div>
+          <div className="h-2 w-28 bg-white/15 rounded-full overflow-hidden shrink-0">
+            <div className="h-full bg-gradient-to-r from-[#ff6fa0] to-[#d9467a] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
+          </div>
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
