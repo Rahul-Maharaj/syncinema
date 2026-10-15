@@ -96,10 +96,10 @@ function Dashboard({ hero, onLock }) {
 
   const create = () => {
     const p = pass.trim();
-    if (p.length < 4) return setPerr('Room passkey needs at least 4 characters.');
+    if (p.length > 0 && p.length < 4) return setPerr('Room passkey needs at least 4 characters (or leave empty).');
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
-    sessionStorage.setItem('rp_' + id, p);              // the room locks itself with this passkey on first entry
-    router.push(`/room/${id}`);
+    if (p) sessionStorage.setItem('rp_' + id, p);
+    router.push(`/room/${id}${p ? '#pass=' + encodeURIComponent(p) : ''}`);
   };
   const join = (e) => {
     e.preventDefault();
@@ -158,9 +158,9 @@ function Dashboard({ hero, onLock }) {
           <div>
             <div className="relative">
               <KeyRound className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-              <input type="password" value={pass} onChange={(e) => { setPass(e.target.value); setPerr(''); }} onKeyDown={(e) => e.key === 'Enter' && create()} placeholder="Choose a room passkey" aria-label="Room passkey" maxLength={64} className="field-d !pl-9" />
+              <input type="password" value={pass} onChange={(e) => { setPass(e.target.value); setPerr(''); }} onKeyDown={(e) => e.key === 'Enter' && create()} placeholder="Room passkey (optional)" aria-label="Room passkey" maxLength={64} className="field-d !pl-9" />
             </div>
-            <p className={`mt-1 text-xs ${perr ? 'text-rose-300' : 'text-white/50'}`} role={perr ? 'alert' : undefined}>{perr || 'Only people with this passkey can enter. Tell it to your partner.'}</p>
+            <p className={`mt-1 text-xs ${perr ? 'text-rose-300' : 'text-white/50'}`} role={perr ? 'alert' : undefined}>{perr || 'Optional: Leave blank to let your partner join directly, or set a passkey.'}</p>
           </div>
           <button ref={cta} onClick={create} onPointerMove={pull} onPointerLeave={release} className="btn w-full !py-3.5 !text-base"><Sparkles className="h-4 w-4" />Start a private room<ArrowRight className="h-4 w-4" /></button>
           <form onSubmit={join} className="flex gap-2">

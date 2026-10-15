@@ -57,20 +57,61 @@ export default function Room() {
 
   const say = (m) => { setToast({ m, n: Date.now() }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2400); };
 
-  useEffect(() => { localStorage.lastRoom = roomId; setName(localStorage.getItem('name') || ''); }, []);
+  const doJoin = (overridePass, overrideKey) => {
+    if (!socket || !name) return;
+    const p = overridePass !== undefined ? overridePass : (sessionStorage.getItem('rp_' + roomId) || '');
+    const k = overrideKey !== undefined ? overrideKey : getKey();
+    socket.emit('join', {
+      roomId,
+      cid: me,
+      name,
+      key: k,
+      pass: p,
+      token: sessionStorage.tok || '',
+    }, (r) => {
+      if (!r) return;
+      if (r.error === 'denied') return setNeedKey(true);
+      if (['needpass', 'badpass'].includes(r.error)) {
+        sessionStorage.removeItem('rp_' + roomId);
+        return setNeedPass(r.error);
+      }
+      if (r.error) return setErr(r.error);
+      setNeedKey(false);
+      setNeedPass(null);
+      setErr('');
+      sessionStorage.tok = r.token;
+      if (p) sessionStorage.setItem('rp_' + roomId, p);
+      setQueue(r.queue);
+      setLock(r.lock);
+      setUsers(r.users);
+      setHostId(r.hostId);
+      setChat(r.chat);
+      setScreenBy(r.screenBy);
+      setBoot(r);
+      setOnline(true);
+    });
+  };
+
+  useEffect(() => {
+    localStorage.lastRoom = roomId;
+    setName(localStorage.getItem('name') || '');
+    try {
+      const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+      const params = new URLSearchParams(hash || (typeof window !== 'undefined' ? window.location.search : ''));
+      const p = params.get('pass');
+      const k = params.get('key');
+      if (p) sessionStorage.setItem('rp_' + roomId, p);
+      if (k) setKey(k);
+    } catch {}
+  }, [roomId]);
+
   useEffect(() => () => document.body.classList.remove('cinema', 'hide-screen'), []);   // leave the room → leave its modes behind
   useEffect(() => { document.body.classList.toggle('hide-screen', hidden); }, [hidden]);
 
   useEffect(() => { // quick-join: connect once a display name exists
-    if (!name) return;
-    const join = () => socket.emit('join', { roomId, cid: me, name, key: getKey(), pass: sessionStorage.getItem('rp_' + roomId) || '', token: sessionStorage.tok || '' }, (r) => {
-      if (r.error === 'denied') return setNeedKey(true);
-      if (['needpass', 'badpass', 'newroom'].includes(r.error)) { sessionStorage.removeItem('rp_' + roomId); return setNeedPass(r.error); }
-      if (r.error) return setErr(r.error);
-      setNeedKey(false); setNeedPass(null); sessionStorage.tok = r.token; setQueue(r.queue);
-      setLock(r.lock); setUsers(r.users); setHostId(r.hostId); setChat(r.chat); setScreenBy(r.screenBy); setBoot(r); setOnline(true);
-    });
-    socket.on('connect', join);
+    if (!name || !socket) return;
+    const joinHandler = () => doJoin();
+    socket.on('connect', joinHandler);
     socket.on('disconnect', () => setOnline(false));
     socket.on('presence', (p) => {
       p.users.forEach((u) => { if (u.id !== me && !seen.current.has(u.sid)) { seen.current.add(u.sid); hello(u.name); } });
@@ -96,10 +137,17 @@ export default function Room() {
         gsap.to(el, { y: -window.innerHeight * 0.8, opacity: 0, scale: 1.6, duration: 2 + Math.random(), delay: i * 0.08, ease: 'power1.out', onComplete: () => el.remove() });
       }
     });
-    socket.connect();
-    if (socket.connected) join();
-    return () => { socket.removeAllListeners(); socket.disconnect(); };
-  }, [name, keyTick]);
+
+    if (socket.connected) {
+      doJoin();
+    } else {
+      socket.connect();
+    }
+
+    return () => {
+      socket.off('connect', joinHandler);
+    };
+  }, [name, socket]);
 
   useEffect(() => { // keep the screen awake while watching (phones/tablets)
     if (!boot) return;
@@ -136,7 +184,19 @@ export default function Room() {
     setText('');
   };
   const ask = () => socket.emit('chat', { text: '💬 ' + QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)], vt: playerRef.current?.time?.() || 0 });
-  const copy = () => { navigator.clipboard.writeText(location.href); setCopied(true); setTimeout(() => setCopied(false), 1500); say('Invite link copied — send it to your partner 💗'); };
+  const copy = () => {
+    const rp = sessionStorage.getItem('rp_' + roomId);
+    const sk = getKey();
+    const parts = [];
+    if (rp) parts.push(`pass=${encodeURIComponent(rp)}`);
+    if (sk) parts.push(`key=${encodeURIComponent(sk)}`);
+    const hash = parts.length ? `#${parts.join('&')}` : '';
+    const inviteUrl = `${location.origin}/room/${roomId}${hash}`;
+    navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+    say('Invite link copied — send it to your partner 💗');
+  };
   const clearChat = () => { if (confirm('Delete the chat history for both of you? This cannot be undone.')) socket.emit('chat:clear'); };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
   const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: hover the top or chat to bring controls back' : 'Cinema mode off'); };
@@ -152,17 +212,17 @@ export default function Room() {
 
   if (needKey) return (
     <Gate icon={<KeyRound className="h-6 w-6" />} title="Our secret word" hint="This room is private. Type the word only you two know." cta="Unlock"
-      onSubmit={(e) => { e.preventDefault(); setKey(keyDraft); setKeyTick((t) => t + 1); }}>
+      onSubmit={(e) => { e.preventDefault(); setKey(keyDraft); setNeedKey(false); doJoin(undefined, keyDraft); }}>
       <input autoFocus type="password" value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} placeholder="Secret word" className="field text-center" />
     </Gate>
   );
 
   if (needPass) return (
-    <Gate icon={<Lock className="h-6 w-6" />} cta={needPass === 'newroom' ? 'Lock this room' : 'Enter room'}
-      title={needPass === 'newroom' ? 'Set a room passkey' : 'Room passkey'}
-      hint={needPass === 'newroom' ? 'Nobody can enter this room without it. Share it only with your partner.' : needPass === 'badpass' ? 'Wrong passkey. Try again.' : 'This room is locked. Type its passkey to enter.'}
-      onSubmit={(e) => { e.preventDefault(); const v = passDraft.trim(); if (v.length < 4) return; sessionStorage.setItem('rp_' + roomId, v); setPassDraft(''); setKeyTick((t) => t + 1); }}>
-      <input autoFocus type="password" minLength={4} maxLength={64} value={passDraft} onChange={(e) => setPassDraft(e.target.value)} placeholder="Room passkey (4+ characters)" className="field text-center" />
+    <Gate icon={<Lock className="h-6 w-6" />} cta="Enter room"
+      title="Room passkey"
+      hint={needPass === 'badpass' ? 'Wrong passkey. Try again.' : 'This room is locked with a passkey. Type it to enter.'}
+      onSubmit={(e) => { e.preventDefault(); const v = passDraft.trim(); if (!v) return; sessionStorage.setItem('rp_' + roomId, v); setNeedPass(null); setPassDraft(''); doJoin(v); }}>
+      <input autoFocus type="password" minLength={4} maxLength={64} value={passDraft} onChange={(e) => setPassDraft(e.target.value)} placeholder="Room passkey" className="field text-center" />
     </Gate>
   );
 

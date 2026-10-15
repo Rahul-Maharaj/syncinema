@@ -25,4 +25,5 @@ export const toEmbed = (src) => {
     else if (/dailymotion\.com$/.test(u.hostname) && u.pathname.startsWith('/video/')) u.pathname = '/embed' + u.pathname;
     return u.href;
   } catch { return src; }
-};
+};export const toProxyUrl = (src) => `/api/proxy?url=${encodeURIComponent(src)}`;
+export const toStreamProxyUrl = (src) => `/api/stream?url=${encodeURIComponent(src)}`;

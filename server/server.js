@@ -18,7 +18,7 @@ if (process.env.NODE_ENV === 'production' && (!ACCESS_KEY || ACCESS_KEY.length <
   console.error('Refusing to start: set ACCESS_KEY (10+ chars) so strangers cannot enter.'); process.exit(1);
 }
 const PEER_KEY = ACCESS_KEY ? crypto.createHmac('sha256', ACCESS_KEY).update('peer').digest('hex').slice(0, 32) : 'peerjs';
-const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed'];
+const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const ROOM_RE = /^[\w-]{2,64}$/;
 
 const keyOk = (k) => { // private mode: shared passphrase gates rooms + TURN creds
@@ -28,13 +28,19 @@ const keyOk = (k) => { // private mode: shared passphrase gates rooms + TURN cre
 };
 const fails = new Map();                             // brute-force lockout: 8 wrong tries → 15 min ban per IP
 const ipOf = (r) => String(r.headers['x-forwarded-for'] || r.address || r.socket?.remoteAddress || '').split(',')[0].trim();
-const locked = (ip) => (fails.get(ip)?.until || 0) > Date.now();
-const fail = (ip) => { const f = fails.get(ip) || { n: 0 }; if (++f.n >= 8) { f.until = Date.now() + 15 * 60_000; f.n = 0; } fails.set(ip, f); };
+const isLocalIp = (ip) => !ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === '::ffff:127.0.0.1';
+const locked = (ip) => !isLocalIp(ip) && (fails.get(ip)?.until || 0) > Date.now();
+const fail = (ip) => {
+  if (isLocalIp(ip)) return;
+  const f = fails.get(ip) || { n: 0 };
+  if (++f.n >= 8) { f.until = Date.now() + 15 * 60_000; f.n = 0; }
+  fails.set(ip, f);
+};
 const app = express();
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 app.use(cors({ origin }));
-app.use('/api', rateLimit({ windowMs: 60_000, max: 120 }));
+app.use('/api', rateLimit({ windowMs: 60_000, max: 240 }));
 const server = http.createServer(app);
 app.use('/peerjs', ExpressPeerServer(server, {
   path: '/', key: PEER_KEY, allow_discovery: false,
@@ -72,6 +78,85 @@ app.get('/api/ice', (req, res) => {
   res.json({ iceServers, peerKey: PEER_KEY });
 });
 
+// Stream proxy: bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4)
+app.get('/api/stream', async (req, res) => {
+  const target = cleanUrl(req.query.url);
+  if (!target) return res.status(400).send('Invalid or private URL');
+  try {
+    const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' };
+    if (req.headers.range) headers['Range'] = req.headers.range;
+    const upstream = await fetch(target, { headers });
+    res.status(upstream.status);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', '*');
+    for (const h of ['content-type', 'content-length', 'content-range', 'accept-ranges']) {
+      const v = upstream.headers.get(h);
+      if (v) res.set(h, v);
+    }
+    const ct = upstream.headers.get('content-type') || '';
+    if (ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8')) {
+      let text = await upstream.text();
+      const base = new URL(target);
+      text = text.replace(/^(?!#)(\S+)/gm, (line) => {
+        try {
+          const resolved = new URL(line, base).href;
+          return `/api/stream?url=${encodeURIComponent(resolved)}`;
+        } catch { return line; }
+      });
+      return res.send(text);
+    }
+    if (upstream.body) {
+      const { Readable } = require('stream');
+      Readable.fromWeb(upstream.body).pipe(res);
+    } else {
+      res.end();
+    }
+  } catch (err) {
+    res.status(502).send('Stream proxy error: ' + err.message);
+  }
+});
+
+// Web embed proxy: strips X-Frame-Options & CSP frame-ancestors, injects <base>
+app.get('/api/proxy', async (req, res) => {
+  const target = cleanUrl(req.query.url);
+  if (!target) return res.status(400).send('Invalid or private URL');
+  try {
+    const upstream = await fetch(target, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+    });
+    res.status(upstream.status);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.removeHeader('X-Frame-Options');
+    res.removeHeader('Content-Security-Policy');
+    const ct = upstream.headers.get('content-type') || '';
+    res.set('Content-Type', ct);
+    if (ct.includes('text/html')) {
+      let html = await upstream.text();
+      const finalUrl = upstream.url || target;
+      const baseTag = `<base href="${finalUrl}">`;
+      const noBust = `<script>try{Object.defineProperty(window,'top',{get:()=>window.self});Object.defineProperty(window,'parent',{get:()=>window.self});}catch(e){}</script>`;
+      if (/<head[^>]*>/i.test(html)) {
+        html = html.replace(/<head[^>]*>/i, `$&${baseTag}${noBust}`);
+      } else {
+        html = baseTag + noBust + html;
+      }
+      return res.send(html);
+    }
+    if (upstream.body) {
+      const { Readable } = require('stream');
+      Readable.fromWeb(upstream.body).pipe(res);
+    } else {
+      res.end();
+    }
+  } catch (err) {
+    res.status(502).send('Proxy error: ' + err.message);
+  }
+});
+
 const io = new Server(server, {
   cors: { origin }, maxHttpBufferSize: 1e5,
   allowRequest: (req, cb) => cb(null, !CLIENT_ORIGIN || !req.headers.origin || origin.includes(req.headers.origin)),  // block cross-site websockets
@@ -99,7 +184,9 @@ const presence = (id, r) => io.to(id).emit('presence', { users: roster(r), hostI
 const PRIVATE = /^(localhost|.*\.(local|internal|lan)|127\..*|10\..*|192\.168\..*|172\.(1[6-9]|2\d|3[01])\..*|169\.254\..*|0\.0\.0\.0|\[?::1?\]?|\[?f[cd].*)$/i;
 const cleanUrl = (v) => { // http(s) only; never point a partner's browser at their home network
   try {
-    const u = new URL(String(v).trim());
+    const s = String(v || '').trim();
+    if (s.startsWith('/api/')) return s.slice(0, 2048);
+    const u = new URL(s);
     if (!/^https?:$/.test(u.protocol) || (!process.env.ALLOW_PRIVATE_URLS && PRIVATE.test(u.hostname))) return null;
     return u.href.slice(0, 2048);
   } catch { return null; }
@@ -125,8 +212,14 @@ io.on('connection', (socket) => {
     if (r.pass) {                                    // locked room: right passkey or no entry
       if (!p) return ack({ error: 'needpass' });
       if (!passOk(r, p)) { fail(ip); return ack({ error: 'badpass' }); }
-    } else if (p.length >= 4 && p.length <= 64) { r.pass = hashPass(p); rooms.set(roomId, r); save(); }   // first person claims + locks it
-    else return ack({ error: 'newroom' });
+    } else if (p.length >= 4 && p.length <= 64) {
+      r.pass = hashPass(p); rooms.set(roomId, r); save();   // user locks it with a passkey
+    } else if (p.length === 0) {
+      rooms.set(roomId, r);                          // open room: no passkey required
+    } else {
+      return ack({ error: 'badpass' });
+    }
+    fails.delete(ip);                                // successful auth clears strike count
     if (!r.users.has(cid) && r.users.size >= MAX_USERS) return ack({ error: 'full' });
     const ex = r.users.get(cid);                      // seat is bound to a secret token: nobody can impersonate you
     if (ex && ex.token !== token) return ack({ error: 'taken' });

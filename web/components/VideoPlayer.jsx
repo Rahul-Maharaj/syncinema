@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen, Captions, ListPlus, Play } from 'lucide-react';
-import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed } from '@/lib/media';
+import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl } from '@/lib/media';
 
-const TYPES = ['auto', 'file', 'hls', 'dash', 'embed'];
+const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
 
 export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef }) {
   const [media, setMedia] = useState(initial.media);
@@ -44,7 +44,15 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (T === 'hls' && !v.canPlayType('application/vnd.apple.mpegurl'))
       import('hls.js').then(({ default: H }) => {
         const h = new H(); h.loadSource(media.src); h.attachMedia(v); dispose = () => h.destroy();
-        h.on(H.Events.ERROR, (_, d) => d.fatal && setError('Stream failed to load (blocked, offline or CORS).'));
+        h.on(H.Events.ERROR, (_, d) => {
+          if (d.fatal) {
+            if (!media.src.startsWith('/api/stream') && !media.src.startsWith('http://localhost:8080/api/stream')) {
+              h.loadSource(toStreamProxyUrl(media.src));
+            } else {
+              setError('Stream failed to load (blocked, offline or CORS).');
+            }
+          }
+        });
       });
     else if (T === 'dash') import('dashjs').then(({ MediaPlayer }) => { const d = MediaPlayer().create(); d.initialize(v, media.src, false); dispose = () => d.reset(); });
     else v.src = T === 'local' ? localUrl : media.src;
@@ -52,7 +60,15 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     const evs = [['play', 'PLAY'], ['playing', 'PLAY'], ['pause', 'PAUSE'], ['seeked', 'SEEK'], ['waiting', 'BUFFERING']]
       .map(([e, a]) => { const f = () => send(a); v.addEventListener(e, f); return () => v.removeEventListener(e, f); });
     v.onended = () => hostRef.current && socket.emit('queue:next');
-    v.onerror = () => setError('This link cannot be played here (unsupported format or blocked by the host). Try another type, or use Share screen.');
+    v.onerror = () => {
+      if (['file', 'hls'].includes(T) && !v.src.includes('/api/stream')) {
+        v.src = toStreamProxyUrl(media.src);
+        v.load();
+        v.play().catch(() => {});
+      } else {
+        setError('This link cannot be played directly (unsupported or blocked). Try PROXY type or Share screen.');
+      }
+    };
     v.onloadedmetadata = () => correct(st.current.time, st.current.playing);
     return () => { evs.forEach((o) => o()); dispose(); };
   }, [media, localUrl]);
@@ -139,8 +155,9 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
   const build = () => {
     let src = url.trim(); if (!src) return null;
-    if (!/^https?:\/\//i.test(src)) src = 'https://' + src;
+    if (!/^https?:\/\//i.test(src) && !src.startsWith('/api/')) src = 'https://' + src;
     const type = force === 'auto' ? detect(src) : force;
+    if (type === 'proxy') return { type: 'proxy', src: toProxyUrl(src), orig: src };
     return { type, src: type === 'embed' ? toEmbed(src) : src };
   };
   const enqueue = () => { const m = build(); if (m) { socket.emit('queue:add', { media: m }); setUrl(''); } };
@@ -174,8 +191,15 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         </video>
         <div ref={ytBox} className={`absolute inset-0 ${show(T === 'youtube')}`} />
         <div ref={vmBox} className={`absolute inset-0 [&_iframe]:h-full [&_iframe]:w-full ${show(T === 'vimeo')}`} />
-        {T === 'embed' && !stream && (
-          <iframe src={media.src} sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups" referrerPolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen className="absolute inset-0 h-full w-full bg-white" />
+        {(T === 'embed' || T === 'proxy') && !stream && (
+          <iframe
+            src={media.src}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-downloads allow-modals allow-storage-access-by-user-activation"
+            referrerPolicy="no-referrer-when-downgrade"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full bg-white"
+          />
         )}
         {T === 'local' && !localUrl && !stream && (
           <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/80">
@@ -200,11 +224,27 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
       </div>
       {error && <p role="alert" className="flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-700 dark:text-amber-300"><AlertTriangle className="h-4 w-4 shrink-0" />{error}</p>}
-      {T === 'embed' && !stream && (
-        <p className="flex flex-wrap items-center gap-2 text-xs opacity-70">
-          Embedded page: playback is not synced. Many sites block embedding — for those use <b>Share screen</b> to watch in perfect sync.
-          <a href={media.src} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">Open <ExternalLink className="h-3 w-3" /></a>
-        </p>
+      {(T === 'embed' || T === 'proxy') && !stream && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs opacity-75">
+          <p>
+            {T === 'proxy' ? 'Proxy Mode: blocks bypassed. ' : 'Embedded page: '}
+            If playback is blocked, try{' '}
+            <button
+              type="button"
+              onClick={() => {
+                const target = media.orig || media.src;
+                socket.emit('media:set', { media: { type: 'proxy', src: toProxyUrl(target), orig: target } });
+              }}
+              className="font-semibold underline hover:text-[#d9467a]"
+            >
+              Proxy Mode
+            </button>{' '}
+            or use <b>Share screen</b>.
+          </p>
+          <a href={media.orig || media.src} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">
+            Open in new tab <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
       )}
       <form onSubmit={load} className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
