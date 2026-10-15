@@ -429,7 +429,7 @@ export default function Room() {
           <section className="panel flex flex-col">
             {users.length < 2 && (
               <div className="card rise mb-3 flex items-center gap-3 p-3 sm:p-4">
-                <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#d9467a]/15"><i className="ring" /><Heart className="beat h-5 w-5 fill-[#d9467a] text-[#d9467a]" /></div>
+                <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#d9467a]/15"><i className="ring" /><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain drop-shadow-[0_0_8px_rgba(217,70,122,0.8)]" /></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>
                   <p className="text-xs sm:text-sm opacity-65 truncate">Send them the invite link to join.</p>

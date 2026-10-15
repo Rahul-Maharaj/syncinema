@@ -69,7 +69,10 @@ export default function InstallPrompt({ className = '' }) {
 
       {showIosGuide && (
         <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-white/20 bg-[#160d1f]/95 p-3 text-xs text-white shadow-2xl backdrop-blur-xl z-50">
-          <p className="font-semibold text-[#ff8fb3] mb-1">Install on iPhone / iPad:</p>
+          <div className="flex items-center gap-2 mb-1.5">
+            <img src="/logo.png" alt="SyncCinema" className="h-5 w-5 object-contain" />
+            <p className="font-semibold text-[#ff8fb3]">Install on iPhone / iPad:</p>
+          </div>
           <p className="opacity-80">Tap the <b>Share</b> button (⎋) at the bottom of Safari, then select <b>&ldquo;Add to Home Screen&rdquo;</b> (➕).</p>
         </div>
       )}
