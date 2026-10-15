@@ -55,6 +55,11 @@ export const toEmbed = (src) => {
     if (m) return `https://voe.sx/e/${m[1]}`;
     m = src.match(/mixdrop\.(?:co|to)\/(?:f|e)\/([a-zA-Z0-9]+)/i);
     if (m) return `https://mixdrop.co/e/${m[1]}`;
+    // Movie & third party hosts
+    m = src.match(/hdstream4u\.com\/(?:file|embed)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://hdstream4u.com/embed/${m[1]}`;
+    m = src.match(/filefly\.[a-z]+\/(?:file|embed|v|d)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://filefly.xyz/embed/${m[1]}`;
     return u.href;
   } catch { return src; }
 };export const toProxyUrl = (src) => `/api/proxy?url=${encodeURIComponent(src)}`;

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film } from 'lucide-react';
 import Floaters from '@/components/Floaters';
+import InstallPrompt from '@/components/InstallPrompt';
 import { getKey, setKey, verify, loadHero, forgetEverything } from '@/lib/vault';
 
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -145,7 +146,10 @@ function Dashboard({ hero, onLock }) {
         <span className="flex items-center gap-2 font-display text-lg font-semibold">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#d9467a]"><Heart className="h-4 w-4 fill-white" /></span>SyncCinema
         </span>
-        <button onClick={onLock} className="glass-btn" title="Lock and forget this device"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Lock &amp; forget this device</span><span className="sm:hidden">Lock</span></button>
+        <div className="flex items-center gap-2">
+          <InstallPrompt />
+          <button onClick={onLock} className="glass-btn" title="Lock and forget this device"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Lock &amp; forget this device</span><span className="sm:hidden">Lock</span></button>
+        </div>
       </nav>
 
       <section className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-end gap-8 px-5 pb-8 pt-[34vh] md:flex-row md:items-end md:justify-between md:px-10 md:pb-12 md:pt-0">

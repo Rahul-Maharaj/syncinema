@@ -192,7 +192,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (type === 'proxy') return { type: 'proxy', src: toProxyUrl(src), orig: src };
     if (type === 'auto' || type === 'embed') {
       const resolved = await resolveMedia(src);
-      if (resolved && resolved.type === 'hls') {
+      if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed')) {
         if (resolved.subtitle) setSub(resolved.subtitle);
         return resolved;
       }
@@ -239,11 +239,10 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         {(T === 'embed' || T === 'proxy') && !stream && (
           <iframe
             src={media.src}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-downloads allow-modals allow-storage-access-by-user-activation"
             referrerPolicy="no-referrer-when-downgrade"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
-            className="absolute inset-0 h-full w-full bg-white"
+            className="absolute inset-0 h-full w-full bg-black/90"
           />
         )}
         {T === 'local' && !localUrl && !stream && (

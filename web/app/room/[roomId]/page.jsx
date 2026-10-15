@@ -10,6 +10,7 @@ import VideoPlayer from '@/components/VideoPlayer';
 import CouplesOverlay from '@/components/CouplesOverlay';
 import CoupleGestures from '@/components/CoupleGestures';
 import ThemeToggle from '@/components/ThemeToggle';
+import InstallPrompt from '@/components/InstallPrompt';
 
 const EMOJI = ['❤️', '😂', '😮', '😢', '🔥', '👏'];
 const QUESTIONS = ['What is a memory of us you replay the most?', 'What small thing did I do that made you smile this week?', 'Where should our first trip together be?',
@@ -237,13 +238,14 @@ export default function Room() {
             <i className={`h-2 w-2 rounded-full ${online ? 'animate-pulse bg-emerald-400' : 'bg-rose-500'}`} />{online ? 'Live' : 'Reconnecting…'}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
           {me === hostId && <Tool onClick={() => socket.emit('lock', !lock)} title={lock ? 'Only you control playback (click to let everyone)' : 'Everyone controls playback (click to keep it to you)'} icon={lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />} label={lock ? 'Host controls' : 'Everyone controls'} />}
           <Tool onClick={() => socket.emit('nudge')} title="Send hearts to your partner" icon={<Heart className="beat h-4 w-4 text-[#d9467a]" />} label="Miss you" labelClass="hidden sm:inline" />
           <Tool onClick={toggleCinema} title="Cinema mode: dim everything but the screen" icon={<Film className="h-4 w-4" />} label="Cinema" />
           <Tool onClick={cycleSleep} title="Sleep timer: pause the movie automatically" icon={<Moon className="h-4 w-4" />} label={sleep ? `${sleep} min` : 'Sleep'} labelClass={sleep ? '' : 'hidden lg:inline'} />
           <Tool onClick={toggleHide} title={hidden ? 'Show the screen again' : 'Hide the screen and chat (blur) — hover to peek'} icon={hidden ? <EyeOff className="h-4 w-4 text-[#d9467a]" /> : <Eye className="h-4 w-4" />} label={hidden ? 'Hidden' : 'Hide'} />
           <button onClick={copy} className="btn !py-2" title="Copy the invite link">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}<span className="hidden sm:inline">{copied ? 'Link copied' : 'Invite partner'}</span></button>
+          <InstallPrompt />
           <ThemeToggle />
         </div>
       </header>

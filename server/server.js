@@ -55,6 +55,7 @@ app.use('/peerjs', ExpressPeerServer(server, {
 })); // WebRTC signaling
 
 app.get('/health', (_, res) => res.send('ok'));
+app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 app.use('/api', (_, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 const gate = (req, res, next) => {                   // every private asset needs the secret word (sent as a header, never in the URL)
   const ip = ipOf(req);
@@ -196,6 +197,49 @@ function convertTubeUrl(target) {
   return null;
 }
 
+function unpackJS(p, a, c, k) {
+  while (c--) {
+    if (k[c]) {
+      p = p.replace(new RegExp('\\b' + c.toString(a) + '\\b', 'g'), k[c]);
+    }
+  }
+  return p;
+}
+
+async function extractThirdPartyStream(url) {
+  try {
+    const targetUrl = new URL(url);
+    const r = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        Referer: targetUrl.origin + '/',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!r.ok) return null;
+    const text = await r.text();
+
+    // 1. Check unpacked text for direct .m3u8 or .mp4
+    let m = text.match(/(https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*)/i);
+    if (m) return { type: 'hls', stream: m[1] };
+    m = text.match(/(https?:\/\/[^"'\s\\]+\.mp4[^"'\s\\]*)/i);
+    if (m && !m[1].includes('favicon') && !m[1].includes('logo')) return { type: 'file', stream: m[1] };
+
+    // 2. Unpack p,a,c,k packed javascript
+    const match = text.match(/}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)/);
+    if (match) {
+      const [_, p, a, c, kStr] = match;
+      const un = unpackJS(p, parseInt(a), parseInt(c), kStr.split('|'));
+      let sm = un.match(/(https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*)/i);
+      if (sm) return { type: 'hls', stream: sm[1] };
+      sm = un.match(/(https?:\/\/[^"'\s\\]+\.mp4[^"'\s\\]*)/i);
+      if (sm && !sm[1].includes('favicon') && !sm[1].includes('logo')) return { type: 'file', stream: sm[1] };
+    }
+  } catch {}
+  return null;
+}
+
 app.get('/api/resolve', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).json({ error: 'invalid' });
@@ -214,6 +258,16 @@ app.get('/api/resolve', async (req, res) => {
   }
   if (/\.(mp3|wav|flac|aac|m4a|ogg|opus|weba|mp4|webm|mkv|mov)$/.test(clean)) {
     return res.json({ type: 'file', src: `/api/stream?url=${encodeURIComponent(target)}`, origSrc: target });
+  }
+
+  // Check third-party movie streaming sites (hdstream4u, filefly, filelions, streamwish, etc.)
+  const extracted = await extractThirdPartyStream(target);
+  if (extracted) {
+    return res.json({
+      type: extracted.type,
+      src: `/api/stream?url=${encodeURIComponent(extracted.stream)}`,
+      origSrc: extracted.stream,
+    });
   }
 
   // Fast check if target is direct audio/video stream or HLS
@@ -311,6 +365,8 @@ app.get('/api/proxy', async (req, res) => {
     if (ct.includes('text/html')) {
       let html = await upstream.text();
       const finalUrl = upstream.url || target;
+      // Neutralize anti-sandbox redirects on movie sites
+      html = html.replace(/\/sandboxed\.html[^\s"']*/g, 'javascript:void(0)');
       const baseTag = `<base href="${finalUrl}">`;
       const antiAd = `<style>
         div[style*="z-index: 2147483647"], div[style*="z-index:2147483647"],
@@ -322,6 +378,12 @@ app.get('/api/proxy', async (req, res) => {
           Object.defineProperty(window, 'top', { get: () => window.self });
           Object.defineProperty(window, 'parent', { get: () => window.self });
           window.open = function() { console.log('Ad popup blocked'); return null; };
+          if (window.frameElement) {
+            window.frameElement.hasAttribute = function(attr) {
+              if (attr === 'sandbox') return false;
+              return Element.prototype.hasAttribute.call(this, attr);
+            };
+          }
         } catch (e) {}
       </script>`;
       if (/<head[^>]*>/i.test(html)) {
