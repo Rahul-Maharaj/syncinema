@@ -260,10 +260,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('kiss')}
             title="Blow a sweet kiss to your partner"
-            className="ghost !px-2.5 !py-1.5 text-xs text-white/90 bg-white/5 hover:bg-[#d9467a]/20 hover:border-[#ff6fa0]/40 transition"
+            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#d9467a]/20 hover:border-[#ff6fa0]/40 transition active:scale-95"
           >
             <span className="text-sm">💋</span>
-            <span className="hidden sm:inline">Kiss</span>
+            <span>Kiss</span>
           </button>
 
           {/* Cuddle / Hug */}
@@ -271,10 +271,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('hug')}
             title="Send a warm, cozy cuddle"
-            className="ghost !px-2.5 !py-1.5 text-xs text-white/90 bg-white/5 hover:bg-[#d9467a]/20 hover:border-[#ff6fa0]/40 transition"
+            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#d9467a]/20 hover:border-[#ff6fa0]/40 transition active:scale-95"
           >
             <span className="text-sm">🫂</span>
-            <span className="hidden sm:inline">Hug</span>
+            <span>Hug</span>
           </button>
 
           {/* Hold Hands Interactive */}
@@ -282,7 +282,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={toggleHoldHand}
             title={holdingHand ? 'Holding hands! Tap to release' : 'Hold hands with your partner'}
-            className={`ghost !px-2.5 !py-1.5 text-xs transition ${
+            className={`ghost !px-2.5 !py-2 text-xs transition active:scale-95 ${
               holdingHand || partnerHolding
                 ? 'bg-gradient-to-r from-[#ff6fa0] to-[#d9467a] text-white shadow-md shadow-[#d9467a]/50 border-transparent font-medium'
                 : 'text-white/90 bg-white/5 hover:bg-[#d9467a]/20'
@@ -299,10 +299,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('popcorn')}
             title="Feed your partner popcorn"
-            className="ghost !px-2.5 !py-1.5 text-xs text-white/90 bg-white/5 hover:bg-[#ff9a6b]/20 hover:border-[#ff9a6b]/40 transition"
+            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#ff9a6b]/20 hover:border-[#ff9a6b]/40 transition active:scale-95"
           >
             <span className="text-sm">🍿</span>
-            <span className="hidden sm:inline">Popcorn</span>
+            <span>Popcorn</span>
           </button>
 
           {/* Cheers */}
@@ -310,10 +310,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('cheers')}
             title="Cheers with a glass of champagne"
-            className="ghost !px-2.5 !py-1.5 text-xs text-white/90 bg-white/5 hover:bg-[#f59e0b]/20 hover:border-[#f59e0b]/40 transition"
+            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#f59e0b]/20 hover:border-[#f59e0b]/40 transition active:scale-95"
           >
             <span className="text-sm">🥂</span>
-            <span className="hidden sm:inline">Cheers</span>
+            <span>Cheers</span>
           </button>
 
           {/* Candlelight Mode */}
@@ -321,12 +321,12 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={toggleCandle}
             title={candleMode ? 'Turn off candlelight' : 'Light candlelight for romantic ambience'}
-            className={`ghost !px-2.5 !py-1.5 text-xs transition ${
+            className={`ghost !px-2.5 !py-2 text-xs transition active:scale-95 ${
               candleMode ? 'bg-amber-500/25 border-amber-400 text-amber-200' : 'text-white/90 bg-white/5'
             }`}
           >
             <span className="text-sm">🕯️</span>
-            <span className="hidden sm:inline">Candlelight</span>
+            <span>Candle</span>
           </button>
 
           {/* Sweet Whisper Notes */}
@@ -335,10 +335,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
               type="button"
               onClick={() => setShowWhispers(!showWhispers)}
               title="Whisper a sweet love note to your partner"
-              className="ghost !px-2.5 !py-1.5 text-xs text-white/90 bg-white/5 hover:bg-[#d9467a]/20 transition"
+              className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#d9467a]/20 transition active:scale-95"
             >
               <MessageCircleHeart className="h-3.5 w-3.5 text-[#ff6fa0]" />
-              <span className="hidden sm:inline">Whisper</span>
+              <span>Whisper</span>
             </button>
 
             {/* Whisper Dropdown Menu */}

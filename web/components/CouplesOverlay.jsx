@@ -67,12 +67,17 @@ function Tile({ stream, name, muted, isPartner }) {
   );
 }
 
-export default function CouplesOverlay({ me, users, peerRef, onScreen }) {
+export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall, setShowCall }) {
   const [mine, setMine] = useState(null);
   const [remote, setRemote] = useState({});     // peerId -> MediaStream
   const [ready, setReady] = useState(false);
   const [mic, setMic] = useState(true), [cam, setCam] = useState(true);
-  const [hidden, setHidden] = useState(false);  // hide / minimize video call
+  const [internalHidden, setInternalHidden] = useState(false);
+  const isHidden = showCall !== undefined ? !showCall : internalHidden;
+  const setHide = (val) => {
+    if (setShowCall) setShowCall(!val);
+    setInternalHidden(val);
+  };
   const box = useRef(), grip = useRef(), local = useRef(), called = useRef(new Set());
   const usersRef = useRef(users); usersRef.current = users;
 
@@ -161,11 +166,11 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen }) {
   }, [users, ready]);
 
   useEffect(() => {
-    if (hidden || !box.current) return;
+    if (isHidden || !box.current) return;
     const d = Draggable.create(box.current, { trigger: grip.current, bounds: window, inertia: false })[0];
     gsap.from(box.current, { scale: 0.85, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' });
     return () => d?.kill?.();
-  }, [hidden]);
+  }, [isHidden]);
 
   const toggle = (kind) => {
     const on = kind === 'mic' ? !mic : !cam;
@@ -173,11 +178,11 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen }) {
     kind === 'mic' ? setMic(on) : setCam(on);
   };
 
-  if (hidden) {
+  if (isHidden) {
     return (
       <button
         type="button"
-        onClick={() => setHidden(false)}
+        onClick={() => setHide(false)}
         className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-white/20 bg-[#160d1f]/90 px-3.5 py-2 text-xs font-medium text-white shadow-2xl backdrop-blur transition hover:scale-105 hover:border-[#ff6fa0]/60 hover:bg-[#d9467a]/20"
         title="Show video call window"
       >
@@ -195,7 +200,7 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen }) {
         </div>
         <button
           type="button"
-          onClick={() => setHidden(true)}
+          onClick={() => setHide(true)}
           title="Hide video call (saves battery and screen space)"
           className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white transition"
         >
