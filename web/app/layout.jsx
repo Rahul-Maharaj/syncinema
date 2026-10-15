@@ -26,10 +26,8 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
       <body>
-        <div aria-hidden className="ambient">
-          <div className="aurora"><i /><i /><i /></div>
-          <div className="pointer-events-none fixed inset-0 z-0"><Floaters n={10} /></div>
-        </div>
+        <div aria-hidden className="ambient" />
+        <div className="pointer-events-none fixed inset-0 z-0"><Floaters n={8} /></div>
         <div className="relative z-10">{children}</div>
       </body>
     </html>

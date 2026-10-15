@@ -213,28 +213,55 @@ async function extractThirdPartyStream(url) {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
         Referer: targetUrl.origin + '/',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
       redirect: 'follow',
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(6000),
     });
     if (!r.ok) return null;
-    const text = await r.text();
+    let text = await r.text();
 
-    // 1. Check unpacked text for direct .m3u8 or .mp4
+    // Normalize escaped JSON slashes (https:\/\/... -> https://...)
+    text = text.replace(/\\\//g, '/');
+
+    // 1. Direct regex for .m3u8 or .mp4 URLs
     let m = text.match(/(https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*)/i);
     if (m) return { type: 'hls', stream: m[1] };
-    m = text.match(/(https?:\/\/[^"'\s\\]+\.mp4[^"'\s\\]*)/i);
-    if (m && !m[1].includes('favicon') && !m[1].includes('logo')) return { type: 'file', stream: m[1] };
+    m = text.match(/(https?:\/\/[^"'\s\\]+\.(?:mp4|webm|mkv)[^"'\s\\]*)/i);
+    if (m && !m[1].includes('favicon') && !m[1].includes('logo') && !m[1].includes('preview')) {
+      return { type: 'file', stream: m[1] };
+    }
 
-    // 2. Unpack p,a,c,k packed javascript
-    const match = text.match(/}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)/);
-    if (match) {
+    // 2. HTML5 <source> or <video> tags
+    m = text.match(/<(?:video|source)[^>]+src=["']([^"']+)["']/i);
+    if (m && m[1]) {
+      const resolved = new URL(m[1], targetUrl).href;
+      return { type: resolved.includes('.m3u8') ? 'hls' : 'file', stream: resolved };
+    }
+
+    // 3. JWPlayer / VideoJS player config: file: "..." or source: "..."
+    m = text.match(/(?:file|sources?|src)\s*:\s*["']([^"']+\.(?:m3u8|mp4|webm)[^"']*)["']/i);
+    if (m && m[1]) {
+      const resolved = new URL(m[1], targetUrl).href;
+      return { type: resolved.includes('.m3u8') ? 'hls' : 'file', stream: resolved };
+    }
+
+    // 4. Unpack p,a,c,k packed javascript (eval(function(p,a,c,k,e,d)...))
+    const packedMatches = text.matchAll(/}\('([\s\S]*?)',(\d+),(\d+),'([\s\S]*?)'\.split\('\|'\)/g);
+    for (const match of packedMatches) {
       const [_, p, a, c, kStr] = match;
       const un = unpackJS(p, parseInt(a), parseInt(c), kStr.split('|'));
       let sm = un.match(/(https?:\/\/[^"'\s\\]+\.m3u8[^"'\s\\]*)/i);
       if (sm) return { type: 'hls', stream: sm[1] };
-      sm = un.match(/(https?:\/\/[^"'\s\\]+\.mp4[^"'\s\\]*)/i);
-      if (sm && !sm[1].includes('favicon') && !sm[1].includes('logo')) return { type: 'file', stream: sm[1] };
+      sm = un.match(/(https?:\/\/[^"'\s\\]+\.(?:mp4|webm|mkv)[^"'\s\\]*)/i);
+      if (sm && !sm[1].includes('favicon') && !sm[1].includes('logo')) {
+        return { type: 'file', stream: sm[1] };
+      }
+      sm = un.match(/(?:file|sources?|src)\s*:\s*["']([^"']+)["']/i);
+      if (sm && sm[1] && (sm[1].includes('http') || sm[1].startsWith('/'))) {
+        const resolved = new URL(sm[1], targetUrl).href;
+        return { type: resolved.includes('.m3u8') ? 'hls' : 'file', stream: resolved };
+      }
     }
   } catch {}
   return null;
@@ -299,8 +326,12 @@ app.get('/api/stream', async (req, res) => {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
       Referer: targetUrl.origin + '/',
     };
-    if (req.headers.range) headers['Range'] = req.headers.range;
-    const upstream = await fetch(target, { headers });
+    let upstream = await fetch(target, { headers, redirect: 'follow' });
+    if (!upstream.ok && (upstream.status === 403 || upstream.status === 401)) {
+      const fallbackHeaders = { ...headers, Referer: target };
+      const fallback = await fetch(target, { headers: fallbackHeaders, redirect: 'follow' });
+      if (fallback.ok) upstream = fallback;
+    }
     res.status(upstream.status);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', '*');

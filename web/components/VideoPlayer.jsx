@@ -20,18 +20,67 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const T = media.type;
   const [localUrl, setLocalUrl] = useState(null), [sub, setSub] = useState(null), [hist, setHist] = useState([]);
   const hostRef = useRef(false); hostRef.current = me === hostId;
+  const rateTimer = useRef(null);
+
   useEffect(() => setHist(JSON.parse(localStorage.hist || '[]')), []);
 
-  const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 700); };
+  const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 800); };
   const send = (action) => {
     if (quiet.current) return;
     playing.current = action === 'PLAY' ? true : action === 'SEEK' ? playing.current : false;
     socket.emit('player', { action, time: api.current.time() });
   };
-  const correct = (time, play) => silently(() => {
+
+  const setPlaybackSpeed = (speed) => {
+    const v = vref.current;
+    if (v && v.playbackRate !== speed) {
+      try { v.playbackRate = speed; } catch {}
+    }
+  };
+
+  // State-of-the-art sync: soft rate adjustment for minor drift, hard seek only for major skips (>2.8s)
+  const correct = (targetTime, shouldPlay) => silently(() => {
     const a = api.current;
-    if (Math.abs(a.time() - time) > 1.5) a.seek(time);       // drift threshold
-    if (play !== playing.current) { play ? a.play() : a.pause(); playing.current = play; }
+    const v = vref.current;
+    const curTime = a.time();
+    const drift = curTime - targetTime;
+    const absDrift = Math.abs(drift);
+
+    // Sync play/pause state
+    if (shouldPlay !== playing.current) {
+      shouldPlay ? a.play() : a.pause();
+      playing.current = shouldPlay;
+    }
+
+    // If element is already buffering or seeking, let it finish loading first
+    if (v && (v.seeking || v.readyState < 2)) return;
+
+    // 1. Minor drift (< 0.4s): Inaudible/invisible difference, stay at normal 1.0x speed
+    if (absDrift < 0.4) {
+      setPlaybackSpeed(1.0);
+      return;
+    }
+
+    // 2. Soft Sync (0.4s to 2.8s) while playing:
+    // Nudge playback speed by 6% to converge without buffer dumping or video freezing!
+    if (absDrift <= 2.8 && shouldPlay) {
+      if (drift < 0) {
+        setPlaybackSpeed(1.06); // Behind: catch up smoothly
+      } else {
+        setPlaybackSpeed(0.94); // Ahead: wait smoothly
+      }
+      clearTimeout(rateTimer.current);
+      rateTimer.current = setTimeout(() => {
+        setPlaybackSpeed(1.0);
+      }, 1800);
+      return;
+    }
+
+    // 3. Hard Sync: only for major jumps (> 2.8s, e.g. intentional user skip forward/backward)
+    if (absDrift > 2.8) {
+      setPlaybackSpeed(1.0);
+      a.seek(targetTime);
+    }
   });
 
   // ---------- <video>: mp4/webm/audio, HLS, DASH ----------
@@ -43,15 +92,24 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (T === 'local' && !localUrl) { v.removeAttribute('src'); v.load(); return; }
     let dispose = () => {};
     setAudioTracks([]);
+
     if (T === 'hls' && !v.canPlayType('application/vnd.apple.mpegurl'))
       import('hls.js').then(({ default: H }) => {
-        const h = new H({ enableWorker: true, lowLatencyMode: true });
+        const h = new H({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 60,
+          manifestLoadingMaxRetry: 4,
+          levelLoadingMaxRetry: 4,
+          fragLoadingMaxRetry: 5,
+        });
         hlsRef.current = h;
         h.loadSource(media.src);
         h.attachMedia(v);
         dispose = () => { hlsRef.current = null; h.destroy(); };
 
         h.on(H.Events.MANIFEST_PARSED, () => {
+          setError('');
           if (h.audioTracks && h.audioTracks.length > 0) {
             setAudioTracks(h.audioTracks.map((t, idx) => ({ id: idx, name: t.name || t.lang || `Track ${idx + 1}` })));
             if (h.audioTrack === -1) {
@@ -61,6 +119,9 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
               setCurAudio(h.audioTrack);
             }
           }
+        });
+        h.on(H.Events.FRAG_LOADED, () => {
+          setError('');
         });
         h.on(H.Events.AUDIO_TRACKS_UPDATED, (_, data) => {
           if (data.audioTracks && data.audioTracks.length > 0) {
@@ -81,27 +142,36 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
                 h.startLoad();
               }
             } else {
-              setError('Stream failed to load (blocked, offline or CORS).');
+              setError('Stream unavailable or blocked. You can try PROXY type or Share screen.');
             }
           }
         });
       });
     else if (T === 'dash') import('dashjs').then(({ MediaPlayer }) => { const d = MediaPlayer().create(); d.initialize(v, media.src, false); dispose = () => d.reset(); });
     else v.src = T === 'local' ? localUrl : media.src;
+
     api.current = { time: () => v.currentTime, play: () => v.play().catch(() => {}), pause: () => v.pause(), seek: (t) => (v.currentTime = t) };
     const evs = [['play', 'PLAY'], ['playing', 'PLAY'], ['pause', 'PAUSE'], ['seeked', 'SEEK'], ['waiting', 'BUFFERING']]
       .map(([e, a]) => { const f = () => send(a); v.addEventListener(e, f); return () => v.removeEventListener(e, f); });
+    
+    // Clear errors when frames actually load or play
+    v.onplaying = () => setError('');
+    v.oncanplay = () => setError('');
+    v.onloadeddata = () => setError('');
     v.onended = () => hostRef.current && socket.emit('queue:next');
     v.onerror = () => {
-      if (['file', 'hls'].includes(T) && !v.src.includes('/api/stream')) {
+      if (['file', 'hls'].includes(T) && !v.src.includes('/api/stream') && media.src) {
         v.src = toStreamProxyUrl(media.src);
         v.load();
         v.play().catch(() => {});
-      } else {
-        setError('This link cannot be played directly (unsupported or blocked). Try PROXY type or Share screen.');
+      } else if (v.error && v.error.code === 4 && v.networkState === 3) {
+        setError('Stream failed to load. Try PROXY type or Share screen.');
       }
     };
-    v.onloadedmetadata = () => correct(st.current.time, st.current.playing);
+    v.onloadedmetadata = () => {
+      setError('');
+      correct(st.current.time, st.current.playing);
+    };
     return () => { evs.forEach((o) => o()); dispose(); };
   }, [media, localUrl]);
 
@@ -116,6 +186,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         width: '100%', height: '100%', videoId: ytId(media.src), playerVars: { playsinline: 1, rel: 0 },
         events: {
           onReady: () => {
+            setError('');
             api.current = { time: () => p.getCurrentTime(), play: () => p.playVideo(), pause: () => p.pauseVideo(), seek: (t) => p.seekTo(t, true) };
             correct(st.current.time, st.current.playing);
           },
@@ -130,63 +201,142 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   // ---------- Vimeo ----------
   useEffect(() => {
     if (T !== 'vimeo') return;
-    let p, t = 0, dead = false;
+    let p, dead = false;
     loadScript('https://player.vimeo.com/api/player.js').then(() => {
       if (dead) return;
       vmBox.current.innerHTML = '';
-      p = new window.Vimeo.Player(vmBox.current, { id: +vimeoId(media.src), width: 1280 });
-      api.current = { time: () => t, play: () => p.play().catch(() => {}), pause: () => p.pause(), seek: (s) => { t = s; p.setCurrentTime(s); } };
-      p.on('timeupdate', (e) => (t = e.seconds));
-      p.on('play', () => send('PLAY')); p.on('pause', () => send('PAUSE'));
-      p.on('seeked', () => send('SEEK')); p.on('bufferstart', () => send('BUFFERING'));
-      p.on('loaded', () => correct(st.current.time, st.current.playing));
-      p.on('error', () => setError('Vimeo refused to play this video here (privacy settings). Open it in another tab and use Share screen instead.'));
+      p = new window.Vimeo.Player(vmBox.current, { id: vimeoId(media.src), responsive: true, autopause: false });
+      api.current = { time: () => p.getCurrentTime(), play: () => p.play(), pause: () => p.pause(), seek: (t) => p.setCurrentTime(t) };
+      p.ready().then(() => {
+        setError('');
+        correct(st.current.time, st.current.playing);
+        p.on('play', () => send('PLAY'));
+        p.on('pause', () => send('PAUSE'));
+        p.on('seeked', () => send('SEEK'));
+        p.on('ended', () => hostRef.current && socket.emit('queue:next'));
+      });
     });
     return () => { dead = true; p?.destroy?.(); };
   }, [media]);
 
-  // ---------- socket sync ----------
+  // ---------- room state sync ----------
   useEffect(() => {
-    const onState = (s) => { st.current = s; setMedia((m) => (m.src === s.media.src && m.type === s.media.type ? m : s.media)); correct(s.time, s.playing); };
+    const onState = (s) => {
+      st.current = s;
+      setMedia((m) => (m.src === s.media.src && m.type === s.media.type ? m : s.media));
+      correct(s.time, s.playing);
+    };
+
     const onPlayer = ({ action, time }) => silently(() => {
       const a = api.current;
-      if (Math.abs(a.time() - time) > 0.5) a.seek(time);
-      if (action === 'PLAY') { a.play(); playing.current = true; }
-      if (action === 'PAUSE' || action === 'BUFFERING') { a.pause(); playing.current = false; }
+      if (action === 'PLAY') {
+        a.play();
+        playing.current = true;
+        correct(time, true);
+      } else if (action === 'PAUSE' || action === 'BUFFERING') {
+        a.pause();
+        playing.current = false;
+        setPlaybackSpeed(1.0);
+      } else if (action === 'SEEK') {
+        a.seek(time);
+        correct(time, playing.current);
+      }
     });
-    const onBeat = ({ time, playing: p }) => correct(time, p);
-    socket.on('state', onState); socket.on('player', onPlayer); socket.on('heartbeat', onBeat);
-    const beat = setInterval(() => me === hostId && socket.emit('heartbeat', { time: api.current.time(), playing: playing.current }), 3000);
-    playerRef.current = { pause: () => { api.current.pause(); send('PAUSE'); }, time: () => api.current.time(), seek: (t) => { api.current.seek(t); send('SEEK'); } };
-    return () => { socket.off('state', onState); socket.off('player', onPlayer); socket.off('heartbeat', onBeat); clearInterval(beat); };
+
+    const onBeat = ({ time, playing: p }) => {
+      if (p) correct(time, p);
+    };
+
+    socket.on('state', onState);
+    socket.on('player', onPlayer);
+    socket.on('heartbeat', onBeat);
+
+    // Host emits periodic heartbeat only while playing, minimizing network chatter
+    const beat = setInterval(() => {
+      if (me === hostId && playing.current) {
+        socket.emit('heartbeat', { time: api.current.time(), playing: true });
+      }
+    }, 4000);
+
+    playerRef.current = {
+      pause: () => { api.current.pause(); send('PAUSE'); setPlaybackSpeed(1.0); },
+      time: () => api.current.time(),
+      seek: (t) => { api.current.seek(t); send('SEEK'); },
+    };
+
+    return () => {
+      socket.off('state', onState);
+      socket.off('player', onPlayer);
+      socket.off('heartbeat', onBeat);
+      clearInterval(beat);
+      clearTimeout(rateTimer.current);
+    };
   }, [me, hostId]);
 
-  // ---------- screen share (WebRTC) ----------
-  useEffect(() => { if (shareEl.current) shareEl.current.srcObject = stream || null; }, [stream]);
-  useEffect(() => { // call guests who joined (or rejoined) while sharing
+  // ---------- screen share (WebRTC optimized for low-end devices) ----------
+  useEffect(() => {
+    if (shareEl.current) shareEl.current.srcObject = stream || null;
+  }, [stream]);
+
+  useEffect(() => {
     if (!share.current) return;
     users.filter((u) => u.id !== me && !called.current.has(u.sid)).forEach((u) => {
       called.current.add(u.sid);
       peerRef.current?.call(u.id, share.current, { metadata: { type: 'screen' } });
     });
   }, [users]);
+
   const stopShare = () => {
     share.current?.getTracks().forEach((t) => t.stop());
-    share.current = null; called.current.clear(); setLocal(null);
+    share.current = null;
+    called.current.clear();
+    setLocal(null);
     socket.emit('screen:stop');
   };
+
   const startShare = async () => {
     try {
-      const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      share.current = s; setLocal(s);
+      // 720p 30fps ideal constraints prevent GPU throttling and network stalls on low-end devices
+      let s;
+      try {
+        s = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            cursor: 'motion',
+            frameRate: { ideal: 30, max: 30 },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+          },
+          audio: true,
+        });
+      } catch {
+        s = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            cursor: 'motion',
+            frameRate: { ideal: 30, max: 30 },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+          },
+        });
+      }
+
+      s.getVideoTracks().forEach((track) => {
+        if ('contentHint' in track) track.contentHint = 'motion';
+      });
+
+      share.current = s;
+      setLocal(s);
       s.getVideoTracks()[0].onended = stopShare;
       socket.emit('screen:start');
-      users.filter((u) => u.id !== me).forEach((u) => { called.current.add(u.sid); peerRef.current?.call(u.id, s, { metadata: { type: 'screen' } }); });
-    } catch { /* cancelled */ }
+      users.filter((u) => u.id !== me).forEach((u) => {
+        called.current.add(u.sid);
+        peerRef.current?.call(u.id, s, { metadata: { type: 'screen' } });
+      });
+    } catch { /* cancelled by user */ }
   };
 
   const build = async () => {
-    let src = url.trim(); if (!src) return null;
+    let src = url.trim();
+    if (!src) return null;
     if (!/^https?:\/\//i.test(src) && !src.startsWith('/api/')) src = 'https://' + src;
     const type = force === 'auto' ? detect(src) : force;
     if (type === 'proxy') return { type: 'proxy', src: toProxyUrl(src), orig: src };
@@ -199,39 +349,68 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     }
     return { type, src: type === 'embed' ? toEmbed(src) : src };
   };
-  const enqueue = async () => { const m = await build(); if (m) { socket.emit('queue:add', { media: m }); setUrl(''); } };
-  const pickLocal = (e) => {                         // any file on this device: both partners pick their own copy
-    const f = e.target.files[0]; if (!f) return;
+
+  const enqueue = async () => {
+    const m = await build();
+    if (m) { socket.emit('queue:add', { media: m }); setUrl(''); }
+  };
+
+  const pickLocal = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
     setLocalUrl(URL.createObjectURL(f));
     if (!(T === 'local' && media.name === f.name)) socket.emit('media:set', { media: { type: 'local', name: f.name } });
     e.target.value = '';
   };
-  const pickSub = async (e) => {                     // .srt / .vtt subtitles for your own player
-    const f = e.target.files[0]; if (!f) return;
+
+  const pickSub = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
     let t = (await f.text()).replace(/\r/g, '');
     if (!t.startsWith('WEBVTT')) t = 'WEBVTT\n\n' + t.replace(/(\d+:\d+:\d+),(\d+)/g, '$1.$2');
-    setSub(URL.createObjectURL(new Blob([t], { type: 'text/vtt' }))); e.target.value = '';
+    setSub(URL.createObjectURL(new Blob([t], { type: 'text/vtt' })));
+    e.target.value = '';
   };
+
   const switchAudio = (id) => {
     if (hlsRef.current) {
       hlsRef.current.audioTrack = id;
       setCurAudio(id);
     }
   };
+
   const load = async (e) => {
     e.preventDefault();
-    const m = await build(); if (!m) return;
+    setError('');
+    const m = await build();
+    if (!m) return;
     socket.emit('media:set', { media: m });
-    const h = [m.origSrc || m.src, ...hist.filter((x) => x !== (m.origSrc || m.src))].slice(0, 6); setHist(h); localStorage.hist = JSON.stringify(h);
+    const h = [m.origSrc || m.src, ...hist.filter((x) => x !== (m.origSrc || m.src))].slice(0, 6);
+    setHist(h);
+    localStorage.hist = JSON.stringify(h);
     setUrl('');
   };
 
   const show = (k) => (!stream && k ? '' : 'hidden');
+
   return (
     <div className="flex flex-col gap-3">
       <div className="vault relative aspect-video overflow-hidden rounded-2xl bg-black shadow-[0_20px_80px_-24px_rgba(217,70,122,.55)] ring-1 ring-white/10">
-        <video ref={shareEl} autoPlay playsInline muted={screenBy === me} className={`absolute inset-0 h-full w-full bg-black object-contain ${stream ? '' : 'hidden'}`} />
-        <video ref={vref} controls playsInline className={`absolute inset-0 h-full w-full ${show(['file', 'hls', 'dash', 'local'].includes(T))}`}>
+        <video
+          ref={shareEl}
+          autoPlay
+          playsInline
+          muted={screenBy === me}
+          className={`absolute inset-0 h-full w-full bg-black object-contain will-change-transform ${stream ? '' : 'hidden'}`}
+          style={{ transform: 'translateZ(0)' }}
+        />
+        <video
+          ref={vref}
+          controls
+          playsInline
+          className={`absolute inset-0 h-full w-full ${show(['file', 'hls', 'dash', 'local'].includes(T))}`}
+          style={{ transform: 'translateZ(0)' }}
+        >
           {sub && <track key={sub} default kind="subtitles" src={sub} srcLang="en" label="Subtitles" />}
         </video>
         <div ref={ytBox} className={`absolute inset-0 ${show(T === 'youtube')}`} />
@@ -256,7 +435,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
               <div className="relative mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#d9467a] shadow-[0_0_50px_rgba(217,70,122,.6)]"><i className="ring" /><Play className="h-7 w-7 fill-white" /></div>
               <p className="font-display text-xl font-semibold">Pick tonight&apos;s movie</p>
               <ol className="mt-4 space-y-2 text-left text-sm text-white/80">
-                {['Paste a video link in the box below', 'Press “Play for everyone”', 'Or share your screen for any site'].map((t, i) => (
+                {['Paste any video link in the box below', 'Press “Play for everyone”', 'Or share your screen for any site'].map((t, i) => (
                   <li key={t} className="rise flex items-center gap-2" style={{ animationDelay: `${0.2 + i * 0.15}s` }}>
                     <b className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/15 text-xs">{i + 1}</b>{t}
                   </li>
@@ -267,7 +446,14 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         )}
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
       </div>
-      {error && <p role="alert" className="flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-700 dark:text-amber-300"><AlertTriangle className="h-4 w-4 shrink-0" />{error}</p>}
+
+      {error && (
+        <p role="alert" className="flex items-center gap-2 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          {error}
+        </p>
+      )}
+
       {(T === 'embed' || T === 'proxy') && !stream && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs opacity-75">
           <p>
@@ -290,11 +476,12 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           </a>
         </div>
       )}
+
       <form onSubmit={load} className="flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
           <div className="relative min-w-0 flex-1 basis-60">
             <Link2 className="absolute left-3 top-2.5 h-4 w-4 opacity-50" />
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link: YouTube, Vimeo, mp4, m3u8, mpd, website…" className="field !pl-9" />
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link: YouTube, Vimeo, mp4, m3u8, movie websites…" className="field !pl-9" />
           </div>
           <button className="btn"><Play className="h-4 w-4" />Play for everyone</button>
         </div>
