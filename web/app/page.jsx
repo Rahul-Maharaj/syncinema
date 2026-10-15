@@ -25,8 +25,8 @@ function Gate({ onUnlock, notice }) {
     if (r === 'denied') { card.current.classList.remove('shake'); void card.current.offsetWidth; card.current.classList.add('shake'); }
   };
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#120b1a] px-6 text-white">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(217,70,122,.35),transparent_55%),radial-gradient(ellipse_at_80%_80%,rgba(109,74,255,.3),transparent_55%)]" />
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#0c0612] px-6 text-white">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_90%_50%_at_50%_-10%,rgba(235,70,130,0.35),transparent_70%),radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(255,185,115,0.18),transparent_60%),radial-gradient(circle_at_15%_35%,rgba(165,25,85,0.25),transparent_50%),radial-gradient(circle_at_85%_75%,rgba(95,25,125,0.28),transparent_55%)]" />
       <Floaters n={16} />
       <form ref={card} onSubmit={submit} className="glass relative w-full max-w-sm space-y-4 p-8 text-center">
         <div className="relative mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#d9467a] shadow-[0_0_50px_rgba(217,70,122,.6)]"><i className="ring" /><Lock className="h-7 w-7" /></div>
@@ -121,7 +121,7 @@ function Dashboard({ hero, onLock }) {
   };
 
   return (
-    <main ref={root} className="relative min-h-screen overflow-hidden bg-[#120b1a] text-white">
+    <main ref={root} className="relative min-h-screen overflow-hidden bg-[#0c0612] text-white">
       {/* picture: top banner on phones, full-screen background on desktop */}
       <div ref={stage} className="absolute inset-x-0 top-0 h-[56vh] md:inset-0 md:h-auto">
         <div className="layer absolute inset-0 will-change-transform">
@@ -135,9 +135,10 @@ function Dashboard({ hero, onLock }) {
             <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/50 px-2.5 py-0.5 text-[10px] uppercase tracking-widest backdrop-blur">in sync</span>
           </div>
         </div>
-        <Floaters n={16} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#120b1a] via-[#120b1a]/50 to-[#120b1a]/10 md:via-[#120b1a]/35" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(10,6,16,.65)_100%)]" />
+        <Floaters n={18} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612] via-[#0c0612]/60 to-transparent md:via-[#0c0612]/45" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(8,4,12,.75)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_45%_at_50%_-10%,rgba(235,70,130,0.28),transparent_70%),radial-gradient(ellipse_70%_35%_at_50%_0%,rgba(255,185,115,0.14),transparent_60%)]" />
       </div>
 
       <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8">

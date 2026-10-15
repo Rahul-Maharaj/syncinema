@@ -208,6 +208,14 @@ app.get('/api/resolve', async (req, res) => {
     return res.json({ type: 'embed', src: tubeEmbed, origSrc: target });
   }
 
+  const clean = target.split('?')[0].split('#')[0].toLowerCase();
+  if (clean.endsWith('.m3u8')) {
+    return res.json({ type: 'hls', src: `/api/stream?url=${encodeURIComponent(target)}`, origSrc: target });
+  }
+  if (/\.(mp3|wav|flac|aac|m4a|ogg|opus|weba|mp4|webm|mkv|mov)$/.test(clean)) {
+    return res.json({ type: 'file', src: `/api/stream?url=${encodeURIComponent(target)}`, origSrc: target });
+  }
+
   // Fast check if target is direct audio/video stream or HLS
   try {
     const headResp = await fetch(target, {
@@ -459,6 +467,11 @@ io.on('connection', (socket) => {
     io.to(rid).emit('chat', m); save();
   });
   socket.on('reaction', (e) => { if (joined() && ['❤️', '😂', '😮', '😢', '🔥', '👏'].includes(e)) io.to(rid).emit('reaction', e); });
+  socket.on('gesture', (g = {}) => {
+    if (joined() && typeof g.type === 'string') {
+      io.to(rid).emit('gesture', { from: user.name, fromId: user.cid, type: g.type, meta: g.meta, ts: Date.now() });
+    }
+  });
   socket.on('screen:start', () => { if (joined()) { room.screenBy = user.cid; io.to(rid).emit('screen', room.screenBy); } });
   socket.on('screen:stop', () => { if (joined() && room.screenBy === user.cid) { room.screenBy = null; io.to(rid).emit('screen', null); } });
 

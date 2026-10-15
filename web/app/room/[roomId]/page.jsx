@@ -8,6 +8,7 @@ import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
 import VideoPlayer from '@/components/VideoPlayer';
 import CouplesOverlay from '@/components/CouplesOverlay';
+import CoupleGestures from '@/components/CoupleGestures';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const EMOJI = ['❤️', '😂', '😮', '😢', '🔥', '👏'];
@@ -263,6 +264,7 @@ export default function Room() {
             )}
             <VideoPlayer socket={socket} me={me} hostId={hostId} users={users} peerRef={peerRef} initial={boot}
               screenBy={screenBy} screenStream={screen} playerRef={playerRef} />
+            <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
             {queue.length > 0 && (
               <div className="card mt-3 p-3">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide opacity-60">Up next</p>
