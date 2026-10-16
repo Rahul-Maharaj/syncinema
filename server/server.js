@@ -953,15 +953,25 @@ io.on('connection', (socket) => {
     if (!canControl() || !['PLAY', 'PAUSE', 'SEEK', 'BUFFERING'].includes(action)) return;
     room.time = num(time); room.at = Date.now();
     if (action === 'PLAY') room.playing = true;
-    if (action === 'PAUSE' || action === 'BUFFERING') room.playing = false;
-    socket.to(rid).emit('player', { action, time: room.time, by: user.cid });
+    if (action === 'PAUSE') room.playing = false;
+    // BUFFERING is handled as non-blocking soft notification, never stops the other person's player
+    if (action !== 'BUFFERING') {
+      socket.to(rid).emit('player', { action, time: room.time, by: user.cid, sentAt: Date.now() });
+    }
   });
 
-  // host heartbeat → clients correct drift > 1.5s
+  // host heartbeat → clients correct drift smoothly with transit timestamp
   socket.on('heartbeat', ({ time, playing } = {}) => {
     if (!joined() || user.cid !== room.hostId) return;
     room.time = num(time); room.playing = !!playing; room.at = Date.now();
-    socket.to(rid).emit('heartbeat', { time: room.time, playing: room.playing });
+    socket.to(rid).emit('heartbeat', { time: room.time, playing: room.playing, sentAt: Date.now() });
+  });
+
+  // Synchronized voice activity detection relay for smart ducking & video slowdown
+  socket.on('voice:active', ({ active } = {}) => {
+    if (joined()) {
+      socket.to(rid).emit('voice:active', { active: !!active, by: user.name });
+    }
   });
 
   socket.on('lock', (v) => { if (joined() && user.cid === room.hostId) { room.lock = !!v; presence(rid, room); } });

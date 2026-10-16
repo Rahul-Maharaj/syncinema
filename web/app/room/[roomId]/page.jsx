@@ -97,6 +97,7 @@ export default function Room() {
   const [adultMode, setAdultMode] = useState(false);
   const [hasPin, setHasPin] = useState(false);
   const [currentMedia, setCurrentMedia] = useState(null);
+  const [voiceActive, setVoiceActive] = useState(false);
 
   const peerRef = useRef(null), playerRef = useRef(null), listRef = useRef(), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
@@ -238,6 +239,9 @@ export default function Room() {
     socket.on('state', (st) => {
       if (st?.media) setCurrentMedia(st.media);
     });
+    socket.on('voice:active', ({ active } = {}) => {
+      setVoiceActive(!!active);
+    });
     socket.on('nudge', () => {
       navigator.vibrate?.([200, 100, 200]);
       for (let i = 0; i < 14; i++) {
@@ -256,6 +260,7 @@ export default function Room() {
 
     return () => {
       socket.off('connect', joinHandler);
+      socket.off('voice:active');
     };
   }, [name, socket]);
 
@@ -623,6 +628,7 @@ export default function Room() {
               screenBy={screenBy}
               screenStream={screen}
               playerRef={playerRef}
+              voiceActive={voiceActive}
             />
 
             {/* MOBILE ONLY: App-like Segmented Tab Bar */}
@@ -878,6 +884,8 @@ export default function Room() {
           onScreen={setScreen}
           showCall={showCall}
           setShowCall={setShowCall}
+          socket={socket}
+          onVoiceActivity={setVoiceActive}
         />
       )}
 

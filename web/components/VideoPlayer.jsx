@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen,
   Captions, ListPlus, Play, Volume2, Sliders, Radio, Zap, Settings,
-  RefreshCw, Sparkles, FastForward, Check, RotateCcw
+  RefreshCw, Sparkles, FastForward, Check, RotateCcw, Mic
 } from 'lucide-react';
 import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia } from '@/lib/media';
 
 const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
-export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef }) {
+export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef, voiceActive }) {
   const [media, setMedia] = useState(initial.media);
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
   const [local, setLocal] = useState(null), [error, setError] = useState('');
@@ -27,6 +27,13 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const [uploading, setUploading] = useState(null); // { progress: number, name: string } | null
   const hostRef = useRef(false); hostRef.current = me === hostId;
   const rateTimer = useRef(null);
+  const lastProgrammaticSeek = useRef(0);
+  const driftHistory = useRef([]);
+
+  // Smart Voice Audio Ducking & Video Slowdown
+  const [smartDuckingEnabled, setSmartDuckingEnabled] = useState(true);
+  const [isDucked, setIsDucked] = useState(false);
+  const prevVolumeRef = useRef(1.0);
 
   // Precision Sync & Settings State
   const [syncLatency, setSyncLatency] = useState(16); // ms (one-way latency estimate)
@@ -141,15 +148,47 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     }
   };
 
-  // Ultra-Precise Sync: Network latency compensation + micro-rate adjustment + manual offset
-  const correct = (targetTime, shouldPlay) => silently(() => {
+  // Smart Voice Ducking & Playback Slowdown ("when anyone talk then video slow automatic and then increse")
+  useEffect(() => {
+    if (!smartDuckingEnabled) return;
+    const v = vref.current;
+    if (voiceActive) {
+      setIsDucked(true);
+      // Smoothly duck audio
+      if (gainNodeRef.current && audioCtxRef.current) {
+        try {
+          gainNodeRef.current.gain.setTargetAtTime(0.22 * (audioBoost / 100), audioCtxRef.current.currentTime, 0.1);
+        } catch {}
+      } else if (v) {
+        prevVolumeRef.current = v.volume;
+        v.volume = Math.max(0.05, (prevVolumeRef.current || 1.0) * 0.22);
+      }
+      // Slow down video playback smoothly to 0.82x so conversation doesn't miss movie dialog
+      setPlaybackSpeed(sharedSpeed * 0.82);
+    } else {
+      setIsDucked(false);
+      // Smoothly restore audio
+      if (gainNodeRef.current && audioCtxRef.current) {
+        try {
+          gainNodeRef.current.gain.setTargetAtTime(audioBoost / 100, audioCtxRef.current.currentTime, 0.2);
+        } catch {}
+      } else if (v) {
+        v.volume = prevVolumeRef.current || 1.0;
+      }
+      // Smoothly restore speed
+      setPlaybackSpeed(sharedSpeed);
+    }
+  }, [voiceActive, smartDuckingEnabled, sharedSpeed, audioBoost]);
+
+  // Ultra-Precise & Stable Sync: Latency compensation + zero-jitter deadband + micro-rate adjustment
+  const correct = (targetTime, shouldPlay, sentAt) => silently(() => {
     const a = api.current;
     const v = vref.current;
     const curTime = a.time();
 
-    // Latency compensation: add estimated one-way trip and manual syncOffset
-    const latencySec = (syncLatency || 16) / 1000;
-    const compensatedTarget = Math.max(0, targetTime + (shouldPlay ? latencySec : 0) + (syncOffset || 0));
+    // Transit time compensation: using sentAt if provided, otherwise ping RTT
+    const transitSec = sentAt ? Math.max(0, (Date.now() - sentAt) / 1000) : ((syncLatency || 16) / 1000);
+    const compensatedTarget = Math.max(0, targetTime + (shouldPlay ? transitSec : 0) + (syncOffset || 0));
     const drift = curTime - compensatedTarget;
     const absDrift = Math.abs(drift);
 
@@ -162,36 +201,46 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     // If element is already buffering or seeking, let it finish loading first
     if (v && (v.seeking || v.readyState < 2)) return;
 
-    // 1. Minor drift (< 0.35s): Inaudible difference, stay at shared speed
-    if (absDrift < 0.35) {
+    // 1. Rock-Solid Deadband (<= 1.0s):
+    // Inaudible difference. Absolutely zero speed shifts or seeking! Completely eliminates back-and-forth jitter.
+    if (absDrift <= 1.0) {
       setSyncStatus('in_sync');
-      setPlaybackSpeed(sharedSpeed);
+      driftHistory.current = [];
+      if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       return;
     }
 
-    // 2. Soft Sync (0.35s to 2.8s) while playing:
-    // Micro-adjust playback speed by 6% to converge without stutter or buffer dumping
-    if (absDrift <= 2.8 && shouldPlay) {
+    // 2. Soft Sync (1.0s to 3.5s) while playing:
+    // Gently glide back into sync using imperceptible +/- 4% speed micro-adjustment. NO hard seeking!
+    if (absDrift <= 3.5 && shouldPlay) {
       setSyncStatus('syncing');
-      if (drift < 0) {
-        setPlaybackSpeed(sharedSpeed * 1.06); // Behind: catch up smoothly
-      } else {
-        setPlaybackSpeed(sharedSpeed * 0.94); // Ahead: wait smoothly
+      driftHistory.current.push(drift);
+      if (driftHistory.current.length > 2) driftHistory.current.shift();
+      const avg = driftHistory.current.reduce((x, y) => x + y, 0) / driftHistory.current.length;
+
+      if (!voiceActive) {
+        if (avg < 0) {
+          setPlaybackSpeed(sharedSpeed * 1.04); // Behind: catch up smoothly
+        } else {
+          setPlaybackSpeed(sharedSpeed * 0.96); // Ahead: wait smoothly
+        }
       }
       clearTimeout(rateTimer.current);
       rateTimer.current = setTimeout(() => {
-        setPlaybackSpeed(sharedSpeed);
+        if (!voiceActive) setPlaybackSpeed(sharedSpeed);
         setSyncStatus('in_sync');
-      }, 1600);
+      }, 2000);
       return;
     }
 
-    // 3. Hard Sync (> 2.8s): intentional user skip or big gap
-    if (absDrift > 2.8) {
+    // 3. Hard Sync (> 3.5s): intentional user skip or large chapter jump
+    if (absDrift > 3.5) {
       setSyncStatus('desync');
-      setPlaybackSpeed(sharedSpeed);
+      lastProgrammaticSeek.current = Date.now();
+      if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       a.seek(compensatedTarget);
-      setTimeout(() => setSyncStatus('in_sync'), 700);
+      driftHistory.current = [];
+      setTimeout(() => setSyncStatus('in_sync'), 800);
     }
   });
 
@@ -270,10 +319,19 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       setSpeed: (s) => (v.playbackRate = s),
     };
     const evs = [['play', 'PLAY'], ['playing', 'PLAY'], ['pause', 'PAUSE'], ['seeked', 'SEEK']]
-      .map(([e, a]) => { const f = () => send(a); v.addEventListener(e, f); return () => v.removeEventListener(e, f); });
+      .map(([e, a]) => {
+        const f = () => {
+          // Suppress programmatic/sync-induced seeks and pauses from sending echo events back
+          if (Date.now() - lastProgrammaticSeek.current < 2000) return;
+          send(a);
+        };
+        v.addEventListener(e, f);
+        return () => v.removeEventListener(e, f);
+      });
     
     const onWait = () => {
-      send('BUFFERING');
+      // Do not send('BUFFERING') as a pause command to other viewers!
+      // Only emit gentle player:buffering status indicator
       socket.emit('player:buffering', { buffering: true, time: v.currentTime });
     };
     const onResume = () => {
@@ -336,7 +394,8 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           },
           onStateChange: (e) => {
             const a = { 1: 'PLAY', 2: 'PAUSE', 3: 'BUFFERING' }[e.data];
-            if (a) send(a);
+            if (Date.now() - lastProgrammaticSeek.current < 2000) return;
+            if (a && a !== 'BUFFERING') send(a);
             if (e.data === 3) socket.emit('player:buffering', { buffering: true, time: api.current.time() });
             if (e.data === 1) socket.emit('player:buffering', { buffering: false, time: api.current.time() });
             if (e.data === 0 && hostRef.current) socket.emit('queue:next');
@@ -391,34 +450,36 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       correct(s.time, s.playing);
     };
 
-    const onPlayer = ({ action, time }) => silently(() => {
+    const onPlayer = ({ action, time, by, sentAt }) => silently(() => {
       const a = api.current;
+      if (by === me) return;
       if (action === 'PLAY') {
         a.play();
         playing.current = true;
-        correct(time, true);
-      } else if (action === 'PAUSE' || action === 'BUFFERING') {
+        correct(time, true, sentAt);
+      } else if (action === 'PAUSE') {
         a.pause();
         playing.current = false;
-        setPlaybackSpeed(1.0);
+        if (!isDucked) setPlaybackSpeed(1.0);
       } else if (action === 'SEEK') {
+        lastProgrammaticSeek.current = Date.now();
         a.seek(time);
-        correct(time, playing.current);
+        correct(time, playing.current, sentAt);
       }
     });
 
-    const onBeat = ({ time, playing: p }) => {
-      if (p) correct(time, p);
+    const onBeat = ({ time, playing: p, sentAt }) => {
+      if (p) correct(time, p, sentAt);
     };
 
     socket.on('state', onState);
     socket.on('player', onPlayer);
     socket.on('heartbeat', onBeat);
 
-    // Host emits periodic heartbeat only while playing, minimizing network chatter
+    // Host emits periodic heartbeat with timestamp only while playing
     const beat = setInterval(() => {
       if (me === hostId && playing.current) {
-        socket.emit('heartbeat', { time: api.current.time(), playing: true });
+        socket.emit('heartbeat', { time: api.current.time(), playing: true, sentAt: Date.now() });
       }
     }, 4000);
 
@@ -635,6 +696,17 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
             >
               Catch up
             </button>
+          </div>
+        )}
+
+        {/* Smart Voice Talk Ducking & Slowdown Banner */}
+        {isDucked && (
+          <div className="absolute top-12 left-3 z-30 flex items-center gap-2 rounded-full bg-black/85 border border-[#ff6fa0]/40 px-3 py-1 text-[11px] font-medium text-white shadow-xl backdrop-blur animate-pulse pointer-events-none">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6fa0] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d9467a]"></span>
+            </span>
+            <span>🎙️ Couch Talk: Audio ducked & video slowed for voice (0.82x)</span>
           </div>
         )}
 
@@ -859,6 +931,25 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
                   <option value="rgba(0,0,0,0.85)" className="text-black">Dark Box</option>
                 </select>
               </div>
+            </div>
+
+            {/* Smart Voice Ducking & Slowdown */}
+            <div className="flex items-center justify-between py-2 border-t border-white/10 mt-1">
+              <div className="min-w-0 pr-2">
+                <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <Mic className="h-3.5 w-3.5 text-[#ff6fa0]" /> Smart Voice Ducking
+                </p>
+                <p className="text-[10px] text-white/50">Auto-slows video (0.82x) and lowers movie volume when anyone speaks</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSmartDuckingEnabled((prev) => !prev)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition shrink-0 ${
+                  smartDuckingEnabled ? 'bg-[#d9467a] text-white' : 'bg-white/10 text-white/50'
+                }`}
+              >
+                {smartDuckingEnabled ? 'Enabled' : 'Disabled'}
+              </button>
             </div>
           </div>
         </div>
