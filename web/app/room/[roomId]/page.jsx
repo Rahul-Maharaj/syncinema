@@ -21,22 +21,9 @@ import WatchHistoryModal from '@/components/WatchHistoryModal';
 import RecentBar from '@/components/RecentBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
+import ChatPanel from '@/components/ChatPanel';
 
-const EMOJI = ['❤️', '😂', '😮', '😢', '🔥', '👏'];
-const QUESTIONS = [
-  'What is a memory of us you replay the most?',
-  'What small thing did I do that made you smile this week?',
-  'Where should our first trip together be?',
-  'What song reminds you of me?',
-  'What are you looking forward to this month?',
-  'If we had a free day together tomorrow, what would we do?',
-  'What is one thing you want us to try this year?',
-  'What was the best part of your day?',
-  'What is a dream you have never told me?',
-  'Which movie should we watch next, and why?',
-  'What do you miss most about being together?',
-  'What is the first thing we do when we meet?',
-];
+
 
 const hello = (n) => {
   try {
@@ -76,7 +63,7 @@ export default function Room() {
   const [name, setName] = useState(null), [draft, setDraft] = useState('');
   const [boot, setBoot] = useState(null), [users, setUsers] = useState([]), [hostId, setHostId] = useState(null);
   const [maxSeats, setMaxSeats] = useState(2);
-  const [chat, setChat] = useState([]), [text, setText] = useState('');
+  const [chat, setChat] = useState([]);
   const [screenBy, setScreenBy] = useState(null), [screen, setScreen] = useState(null);
   const [queue, setQueue] = useState([]), [needKey, setNeedKey] = useState(false), [keyTick, setKeyTick] = useState(0), [keyDraft, setKeyDraft] = useState('');
   const [sleep, setSleep] = useState(0), seen = useRef(new Set());
@@ -104,7 +91,7 @@ export default function Room() {
   const [currentMedia, setCurrentMedia] = useState(null);
   const [voiceActive, setVoiceActive] = useState(false);
 
-  const peerRef = useRef(null), playerRef = useRef(null), listRef = useRef(), root = useRef();
+  const peerRef = useRef(null), playerRef = useRef(null), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
   const me = typeof window !== 'undefined' ? getCid() : null;
 
@@ -366,21 +353,6 @@ export default function Room() {
     return () => ctx.revert();
   }, [!!boot]);
 
-  useEffect(() => {
-    const last = listRef.current?.lastElementChild;
-    if (last) {
-      gsap.from(last, { x: 24, opacity: 0, duration: 0.35 });
-      listRef.current.scrollTop = 1e9;
-    }
-  }, [chat.length, mobileTab]);
-
-  const send = (e) => {
-    e.preventDefault();
-    if (!text.trim()) return;
-    socket.emit('chat', { text, vt: playerRef.current?.time?.() || 0 });
-    setText('');
-  };
-  const ask = () => socket.emit('chat', { text: '💬 ' + QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)], vt: playerRef.current?.time?.() || 0 });
   const copy = () => {
     const rp = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
     const sk = getKey();
@@ -394,7 +366,6 @@ export default function Room() {
     setTimeout(() => setCopied(false), 1500);
     say('Invite link with password copied — send it to your partner 💗');
   };
-  const clearChat = () => { if (confirm('Delete the chat history for both of you? This cannot be undone.')) socket.emit('chat:clear'); };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
   const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: dimming background lights' : 'Cinema mode off'); };
   const toggleHide = () => { setHidden((h) => { say(!h ? 'Screen hidden — hover or tap to peek' : 'Screen visible'); return !h; }); };
@@ -462,91 +433,7 @@ export default function Room() {
     </Gate>
   );
 
-  // Chat panel component shared between mobile tab and desktop aside
-  const ChatPanel = ({ isMobile = false }) => (
-    <div className={`card vault flex flex-col p-3.5 sm:p-4 ${isMobile ? 'h-[50vh] sm:h-[55vh]' : 'h-full'}`}>
-      <div className="mb-2.5 flex flex-wrap items-center gap-2">
-        <span className="flex items-center gap-1 text-xs opacity-60"><Users className="h-3.5 w-3.5" />{users.length} here</span>
-        {users.map((u) => (
-          <span key={u.id} className="flex items-center gap-1 rounded-full border border-black/10 dark:border-white/10 px-2 py-0.5 text-xs">
-            <i className="h-2 w-2 rounded-full" style={{ background: u.color }} />
-            {u.name}
-            {u.id === hostId && <Crown className="h-3 w-3 text-amber-500" title="Room Host" />}
-            {me === hostId && u.id !== me && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm(`Pass host controls to ${u.name}?`)) {
-                    socket.emit('host:handover', { targetId: u.id });
-                    say?.(`Handed host controls to ${u.name}`);
-                  }
-                }}
-                className="opacity-40 hover:opacity-100 hover:text-amber-400 p-0.5 ml-0.5 transition"
-                title={`Transfer host controls to ${u.name}`}
-              >
-                <Crown className="h-2.5 w-2.5" />
-              </button>
-            )}
-          </span>
-        ))}
-        {chat.length > 0 && (
-          <button onClick={clearChat} title="Delete chat history" aria-label="Delete chat history" className="ml-auto rounded-lg p-1 opacity-50 transition hover:opacity-100">
-            <Trash2 className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-      <div ref={listRef} className="flex-1 space-y-2.5 overflow-y-auto pr-1">
-        {chat.length === 0 && <p className="mt-8 text-center text-sm opacity-50">No messages yet.<br />Say hi 👋 or tap 💬 for a conversation starter.</p>}
-        {chat.map((m) => {
-          const mine = m.user === name;
-          return (
-            <div key={m.id} className={`flex flex-col text-sm leading-snug ${mine ? 'items-end' : 'items-start'}`}>
-              <div className="flex items-center gap-1.5 text-xs">
-                <b style={{ color: m.color }}>{mine ? 'You' : m.user}</b>
-                <button onClick={() => playerRef.current?.seek(m.vt)} title="Jump to this moment" className="rounded bg-[#d9467a]/15 px-1 text-[11px] text-[#d9467a] hover:bg-[#d9467a]/25">{fmt(m.vt)}</button>
-              </div>
-              <p className={`mt-0.5 max-w-[85%] break-words rounded-2xl px-3 py-1.5 ${mine ? 'rounded-tr-sm bg-[#d9467a] text-white' : 'rounded-tl-sm bg-black/5 dark:bg-white/10'}`}>{m.text}</p>
-            </div>
-          );
-        })}
-      </div>
-      <div className="my-2 flex items-center justify-between">
-        <div className="flex gap-1">
-          {EMOJI.map((e) => (
-            <button
-              key={e}
-              onClick={() => {
-                socket.emit('reaction', e);
-                socket.emit('reaction:timed', { emoji: e, vt: playerRef.current?.time?.() || 0 });
-              }}
-              aria-label={`React ${e}`}
-              className="rounded-lg p-1 text-xl transition hover:-translate-y-1 hover:scale-125 active:scale-90"
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              const cur = playerRef.current?.time?.() || 0;
-              setText((prev) => `[${fmt(cur)}] ` + prev);
-            }}
-            title="Attach current video timestamp"
-            className="rounded-lg text-[11px] text-[#ff6fa0] bg-white/5 hover:bg-white/10 border border-[#ff6fa0]/30 px-2 py-1 font-mono transition"
-          >
-            ⏱️ {fmt(playerRef.current?.time?.() || 0)}
-          </button>
-          <button onClick={ask} aria-label="Conversation starter" title="Conversation starter" className="rounded-lg p-1 text-xl transition hover:-translate-y-1 hover:scale-125 active:scale-90">💬</button>
-        </div>
-      </div>
-      <form onSubmit={send} className="flex gap-2">
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Say something sweet…" className="field" />
-        <button className="btn !px-3" aria-label="Send"><Send className="h-4 w-4" /></button>
-      </form>
-    </div>
-  );
+
 
   return (
     <div ref={root} className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4">
@@ -992,7 +879,19 @@ export default function Room() {
 
             {/* MOBILE TAB CONTENT */}
             <div className="lg:hidden">
-              {mobileTab === 'chat' && <ChatPanel isMobile={true} />}
+              {mobileTab === 'chat' && (
+                <ChatPanel
+                  socket={socket}
+                  me={me}
+                  name={name}
+                  users={users}
+                  hostId={hostId}
+                  chat={chat}
+                  playerRef={playerRef}
+                  say={say}
+                  isMobile={true}
+                />
+              )}
               {mobileTab === 'gestures' && (
                 <div className="rise">
                   <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
@@ -1192,7 +1091,17 @@ export default function Room() {
 
           {/* DESKTOP ONLY: Right Side Chat Panel */}
           <aside className="panel hidden lg:flex h-[calc(100vh-5.5rem)]">
-            <ChatPanel isMobile={false} />
+            <ChatPanel
+              socket={socket}
+              me={me}
+              name={name}
+              users={users}
+              hostId={hostId}
+              chat={chat}
+              playerRef={playerRef}
+              say={say}
+              isMobile={false}
+            />
           </aside>
         </div>
       )}

@@ -424,7 +424,7 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 px-3.5 py-2 text-xs font-medium text-white shadow-2xl backdrop-blur transition hover:scale-105 hover:border-[#ff6fa0]/60 cursor-pointer"
+          className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 px-3.5 py-2 text-xs font-medium text-white shadow-2xl backdrop-blur transition hover:scale-105 hover:border-[#ff6fa0]/60 cursor-pointer"
           title="Show video call window"
         >
           <Video className="h-3.5 w-3.5 text-[#ff6fa0]" />
@@ -432,7 +432,7 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
           {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-[#ff6fa0] animate-ping" />}
         </button>
       ) : (
-        <div ref={box} className={`fixed bottom-5 right-5 z-40 rounded-2xl border border-white/10 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-2.5 shadow-2xl backdrop-blur-md transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+        <div ref={box} className={`fixed bottom-5 left-5 z-40 rounded-2xl border border-white/10 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-2.5 shadow-2xl backdrop-blur-md transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />
