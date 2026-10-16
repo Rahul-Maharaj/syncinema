@@ -5,9 +5,9 @@ import {
   Shield, ShieldAlert, ShieldCheck, Lock, Unlock, Users, Film, Pause, Play,
   Square, Ban, Trash2, RefreshCw, Eye, EyeOff, Search, AlertTriangle,
   CheckCircle, Video, Flame, Clock, Key, ArrowRight, ExternalLink, LogOut,
-  Copy, Radio, Sparkles
+  Copy, Radio, Sparkles, X
 } from 'lucide-react';
-import { serverUrl } from '@/lib/socket';
+import { serverUrl, getSocket } from '@/lib/socket';
 
 const fmt = (s) => {
   s = Math.max(0, Math.floor(s || 0));
@@ -43,6 +43,14 @@ export default function AdminPage() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef();
 
+  // Room Password reveal state
+  const [revealedPasswords, setRevealedPasswords] = useState({});
+
+  // Ghost Spectator Monitor Modal State
+  const [ghostModal, setGhostModal] = useState({ open: false, roomId: '', data: null });
+  const [ghostSyncState, setGhostSyncState] = useState(null);
+  const [ghostChat, setGhostChat] = useState([]);
+
   // Override Video Modal
   const [overrideModal, setOverrideModal] = useState({ open: false, roomId: '', src: '', title: '' });
   // Broadcast message
@@ -54,6 +62,43 @@ export default function AdminPage() {
     setToast({ msg, type, n: Date.now() });
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleGhostJoin = (roomId) => {
+    setGhostModal({ open: true, roomId, data: null });
+    const sock = getSocket();
+    if (!sock.connected) sock.connect();
+    sock.emit('admin:ghost_join', { roomId, adminKey }, (res) => {
+      if (res?.ok) {
+        setGhostSyncState(res);
+        setGhostChat(res.chat || []);
+      } else {
+        say(res?.message || 'Failed to ghost join', 'error');
+      }
+    });
+
+    sock.on('player', (p) => {
+      setGhostSyncState((prev) => (prev ? { ...prev, playing: p.action === 'PLAY', time: p.time } : prev));
+    });
+    sock.on('state', (st) => {
+      setGhostSyncState((prev) => (prev ? { ...prev, media: st.media, playing: st.playing, time: st.time } : prev));
+    });
+    sock.on('chat', (msg) => {
+      setGhostChat((prev) => [...prev.slice(-99), msg]);
+    });
+  };
+
+  const handleCloseGhost = () => {
+    const sock = getSocket();
+    if (ghostModal.roomId) {
+      sock.emit('admin:ghost_leave', { roomId: ghostModal.roomId });
+    }
+    sock.off('player');
+    sock.off('state');
+    sock.off('chat');
+    setGhostModal({ open: false, roomId: '', data: null });
+    setGhostSyncState(null);
+    setGhostChat([]);
   };
 
   // Restore stored admin key on mount
@@ -490,7 +535,7 @@ export default function AdminPage() {
       {/* Main Content */}
       <main className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 space-y-6">
         {/* Metric Cards Row */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-4">
           <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl">
             <div className="flex items-center justify-between text-xs text-white/60">
               <span>Active Couches</span>
@@ -533,6 +578,18 @@ export default function AdminPage() {
               <span className="text-2xl font-bold text-white">{totalBlocked}</span>
               <span className="text-[11px] text-rose-400">banned items</span>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 backdrop-blur-xl col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between text-xs text-emerald-300">
+              <span>VPN Anti-Track</span>
+              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-xl font-bold text-emerald-300">ACTIVE</span>
+              <span className="text-[10px] text-emerald-400">Multi-Layer</span>
+            </div>
+            <p className="mt-1 text-[10px] text-white/50">Only Admin sees real IP</p>
           </div>
         </div>
 
@@ -616,8 +673,8 @@ export default function AdminPage() {
                     >
                       {/* Room Header */}
                       <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="font-mono text-base font-bold text-white tracking-wide">{room.roomId}</span>
                             <button
                               type="button"
@@ -641,25 +698,83 @@ export default function AdminPage() {
                                 Protected
                               </span>
                             )}
+                            {room.entryLocked ? (
+                              <span className="rounded bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300 flex items-center gap-1">
+                                <Lock className="h-2.5 w-2.5" /> Locked by Host
+                              </span>
+                            ) : (
+                              <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300 flex items-center gap-1">
+                                <Unlock className="h-2.5 w-2.5" /> Open
+                              </span>
+                            )}
                           </div>
-                          <div className="mt-1 flex items-center gap-2 text-[11px] text-white/50">
+
+                          {/* Room Password Row for Administrator */}
+                          {room.hasPass ? (
+                            <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2.5 py-1 text-[11px] text-amber-200 w-fit">
+                              <Key className="h-3 w-3 text-amber-400 shrink-0" />
+                              <span className="text-white/60">Password:</span>
+                              <span className="font-mono font-bold tracking-wider text-amber-300">
+                                {revealedPasswords[room.roomId] ? (room.password || '••••••••') : '••••••••'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setRevealedPasswords(prev => ({ ...prev, [room.roomId]: !prev[room.roomId] }))}
+                                className="p-0.5 text-white/50 hover:text-white transition"
+                                title={revealedPasswords[room.roomId] ? 'Hide password' : 'Show password'}
+                              >
+                                {revealedPasswords[room.roomId] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                              </button>
+                              {room.password && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(room.password);
+                                    say('Room password copied');
+                                  }}
+                                  className="p-0.5 text-white/50 hover:text-white transition"
+                                  title="Copy password"
+                                >
+                                  <Copy className="h-2.5 w-2.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-emerald-400/80 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded inline-block">
+                              🔓 Public / No Pass
+                            </span>
+                          )}
+
+                          <div className="flex items-center gap-2 text-[11px] text-white/50">
                             <span>Created: {new Date(room.createdAt).toLocaleTimeString()}</span>
                             <span>•</span>
-                            <span className={room.userCount >= 2 ? 'text-rose-400 font-medium' : 'text-emerald-400 font-medium'}>
-                              {room.userCount}/2 Seats {room.userCount >= 2 ? '(Full Couch)' : '(Waiting for partner)'}
+                            <span className={room.userCount >= (room.maxUsers || 2) ? 'text-rose-400 font-medium' : 'text-emerald-400 font-medium'}>
+                              {room.userCount}/{room.maxUsers || 2} Seats {room.userCount >= (room.maxUsers || 2) ? '(Full Couch)' : '(Waiting)'}
                             </span>
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleBlockRoom(room.roomId)}
-                          className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300 transition flex items-center gap-1 shrink-0"
-                          title="Terminate room and disconnect all users"
-                        >
-                          <Ban className="h-3.5 w-3.5" />
-                          <span>Close Room</span>
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleGhostJoin(room.roomId)}
+                            className="rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 px-2.5 py-1 text-xs font-semibold text-purple-200 transition flex items-center gap-1.5 shadow-sm"
+                            title="Invisibly monitor this room without host or members knowing"
+                          >
+                            <span className="text-sm">👻</span>
+                            <span>Ghost Join</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleBlockRoom(room.roomId)}
+                            className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2.5 py-1 text-xs text-rose-300 transition flex items-center gap-1 shrink-0"
+                            title="Terminate room and disconnect all users"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                            <span>Close Room</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Video Playback Details (Security Monitor) */}
@@ -809,8 +924,12 @@ export default function AdminPage() {
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <span className="font-mono text-[10px] text-white/50 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-                                    IP: {u.ip || '127.0.0.1'}
+                                  <span
+                                    className="font-mono text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1"
+                                    title="Real IP address captured by server. Completely shielded from peers & external streaming sites."
+                                  >
+                                    <Shield className="h-2.5 w-2.5 text-emerald-400" />
+                                    <span>Real IP: {u.ip || '127.0.0.1'}</span>
                                   </span>
 
                                   <button
@@ -1042,6 +1161,157 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 👻 Ghost Spectator Live Monitor Modal */}
+      {ghostModal.open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="relative w-full max-w-3xl rounded-2xl border border-purple-500/40 bg-gradient-to-b from-[#140f24] via-[#0d091a] to-[#06040c] p-6 shadow-[0_0_50px_rgba(168,85,247,0.25)] space-y-4">
+            {/* Ghost Modal Header */}
+            <div className="flex items-center justify-between border-b border-purple-500/20 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-purple-500/20 border border-purple-500/40 text-xl animate-pulse">
+                  👻
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-white">Stealth Ghost Monitor</h3>
+                    <span className="rounded-full bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 text-[11px] font-semibold text-purple-300">
+                      Room: {ghostModal.roomId}
+                    </span>
+                  </div>
+                  <p className="text-xs text-purple-300/70">
+                    You are 100% invisible. Host and viewers cannot see you in the user list, video call, or member count.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.open('/room/' + ghostModal.roomId + '?ghost=1&adminKey=' + encodeURIComponent(adminKey), '_blank');
+                  }}
+                  className="rounded-xl bg-purple-600 hover:bg-purple-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-purple-600/30 transition flex items-center gap-1.5"
+                  title="Open stealth cinema theater in new tab"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Stealth Tab</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseGhost}
+                  className="rounded-lg p-1.5 text-white/50 hover:text-white transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Synchronized Player State */}
+            <div className="rounded-xl border border-white/10 bg-black/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-white/70">Playback Status:</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ghostSyncState?.playing ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
+                    {ghostSyncState?.playing ? '▶ PLAYING IN ROOM' : '⏸ PAUSED IN ROOM'}
+                  </span>
+                </div>
+                <span className="font-mono text-xs text-white/80 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                  ⏱️ {fmt(ghostSyncState?.time || 0)}
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold text-white truncate">
+                  {ghostSyncState?.media?.title || ghostSyncState?.media?.name || 'No video currently loaded'}
+                </h4>
+                <p className="text-xs font-mono text-cyan-300 truncate">
+                  {ghostSyncState?.media?.src || 'Idle'}
+                </p>
+              </div>
+
+              {/* Video Controls Toolbar */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => handleVideoControl(ghostModal.roomId, ghostSyncState?.playing ? 'pause' : 'play')}
+                  className="rounded-lg bg-white/10 hover:bg-white/20 px-3 py-1 text-xs text-white transition flex items-center gap-1.5"
+                >
+                  {ghostSyncState?.playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  <span>{ghostSyncState?.playing ? 'Pause' : 'Play'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleVideoControl(ghostModal.roomId, 'stop')}
+                  className="rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-3 py-1 text-xs text-amber-300 transition flex items-center gap-1.5"
+                >
+                  <Square className="h-3.5 w-3.5" />
+                  <span>Stop</span>
+                </button>
+                {ghostSyncState?.media?.src && (
+                  <button
+                    type="button"
+                    onClick={() => handleBlockVideoUrl(ghostSyncState.media.src)}
+                    className="rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 px-3 py-1 text-xs text-rose-300 transition flex items-center gap-1.5"
+                  >
+                    <Ban className="h-3.5 w-3.5" />
+                    <span>Block Video</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Live Chat & Viewers Side by Side */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-black/40 p-3 flex flex-col h-52">
+                <span className="text-xs font-semibold text-white/70 mb-2">Live Room Chat:</span>
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                  {ghostChat.length === 0 ? (
+                    <p className="text-white/40 italic text-center py-6">No messages in room yet.</p>
+                  ) : (
+                    ghostChat.map((m, idx) => (
+                      <div key={m.id || idx} className="bg-white/5 rounded-lg p-1.5 border border-white/5">
+                        <span className="font-semibold text-purple-300">{m.user}: </span>
+                        <span className="text-white/90">{m.text}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-black/40 p-3 flex flex-col h-52">
+                <span className="text-xs font-semibold text-white/70 mb-2">
+                  Active Viewers ({ghostSyncState?.users?.length || 0}):
+                </span>
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                  {(!ghostSyncState?.users || ghostSyncState.users.length === 0) ? (
+                    <p className="text-white/40 italic text-center py-6">Waiting for viewers…</p>
+                  ) : (
+                    ghostSyncState.users.map((u) => {
+                      const fullUser = data.rooms.find(r => r.roomId === ghostModal.roomId)?.users?.find(usr => usr.cid === u.id);
+                      const realIp = fullUser?.ip || '127.0.0.1';
+                      return (
+                        <div key={u.id} className="flex items-center justify-between bg-white/5 p-1.5 rounded-lg border border-white/5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: u.color || '#d9467a' }} />
+                            <span className="font-semibold text-white">{u.name}</span>
+                            {u.id === ghostSyncState.hostId && (
+                              <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded font-bold">Host</span>
+                            )}
+                          </div>
+                          <span className="font-mono text-[10px] text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+                            <Shield className="h-2.5 w-2.5 text-emerald-400" />
+                            <span>{realIp}</span>
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

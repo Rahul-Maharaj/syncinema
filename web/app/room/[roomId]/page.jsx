@@ -81,6 +81,7 @@ export default function Room() {
   const [queue, setQueue] = useState([]), [needKey, setNeedKey] = useState(false), [keyTick, setKeyTick] = useState(0), [keyDraft, setKeyDraft] = useState('');
   const [sleep, setSleep] = useState(0), seen = useRef(new Set());
   const [err, setErr] = useState(''), [lock, setLock] = useState(false), [needPass, setNeedPass] = useState(null), [passDraft, setPassDraft] = useState('');
+  const [entryLocked, setEntryLocked] = useState(false), [isGhost, setIsGhost] = useState(false);
   const [showPassModal, setShowPassModal] = useState(false), [newPassDraft, setNewPassDraft] = useState(''), [passVisible, setPassVisible] = useState(false);
   const [online, setOnline] = useState(true), [copied, setCopied] = useState(false);
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
@@ -141,14 +142,22 @@ export default function Room() {
     const isCreate = sessionStorage.getItem('is_create_' + roomId) === '1' || (typeof window !== 'undefined' && window.location.hash.includes('create=1'));
     const k = overrideKey !== undefined ? overrideKey : getKey();
     const maxU = Number(sessionStorage.getItem('max_users_' + roomId) || 2);
+    
+    // Ghost Mode check (Admin only)
+    const searchParams = new URLSearchParams(typeof window !== 'undefined' ? (window.location.search || window.location.hash.replace(/^#/, '?')) : '');
+    const ghostFlag = isGhost || searchParams.get('ghost') === '1';
+    const admKey = searchParams.get('adminKey') || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_key') : '') || '';
+
     socket.emit('join', {
       roomId,
       cid: me,
-      name,
+      name: ghostFlag ? 'Admin Ghost' : name,
       key: k,
       pass: p,
       isCreate,
       maxUsers: maxU,
+      isGhost: ghostFlag,
+      adminKey: admKey,
       token: sessionStorage.tok || '',
     }, (r) => {
       if (!r) return;
@@ -162,7 +171,19 @@ export default function Room() {
         sessionStorage.removeItem('is_create_' + roomId);
         return setNeedPass('room_taken');
       }
+      if (r.error === 'room_locked') {
+        return setErr('room_locked');
+      }
+      if (r.error === 'full') {
+        return setErr('full');
+      }
       if (r.error) return setErr(r.error);
+
+      if (r.isGhost) {
+        setIsGhost(true);
+        setShowCall(false); // Disable camera/mic completely in ghost mode
+      }
+
       sessionStorage.removeItem('is_create_' + roomId);
       setNeedKey(false);
       setNeedPass(null);
@@ -173,6 +194,7 @@ export default function Room() {
         try { localStorage.setItem('rp_' + roomId, p); } catch {}
       }
       if (r.maxUsers) setMaxSeats(r.maxUsers);
+      if (r.entryLocked !== undefined) setEntryLocked(!!r.entryLocked);
       setQueue(r.queue || []);
       setWatchlist(r.watchlist || []);
       setTimer(r.timer || null);
@@ -184,9 +206,9 @@ export default function Room() {
       if (r.media) setCurrentMedia(r.media);
       applyAmbientLighting(r.ambient);
       setLock(r.lock);
-      setUsers(r.users);
+      setUsers(r.users || []);
       setHostId(r.hostId);
-      setChat(r.chat);
+      setChat(r.chat || []);
       setScreenBy(r.screenBy);
       setBoot(r);
       setOnline(true);
@@ -209,6 +231,15 @@ export default function Room() {
       const v = params.get('video');
       const createFlag = params.get('create');
       const maxParam = params.get('max');
+      const ghostParam = params.get('ghost');
+      const admKey = params.get('adminKey');
+      if (ghostParam === '1') {
+        setIsGhost(true);
+        setShowCall(false);
+      }
+      if (admKey) {
+        sessionStorage.setItem('sc_admin_key', admKey);
+      }
       if (p) {
         sessionStorage.setItem('rp_' + roomId, p);
         try { localStorage.setItem('rp_' + roomId, p); } catch {}
@@ -237,7 +268,11 @@ export default function Room() {
       p.users.forEach((u) => { if (u.id !== me && !seen.current.has(u.sid)) { seen.current.add(u.sid); hello(u.name); } });
       setUsers(p.users); setHostId(p.hostId); setLock(p.lock);
       if (p.adult !== undefined) setAdultMode(!!p.adult);
+      if (p.entryLocked !== undefined) setEntryLocked(!!p.entryLocked);
       if (p.maxUsers) setMaxSeats(p.maxUsers);
+    });
+    socket.on('room:entry_locked', ({ locked }) => {
+      setEntryLocked(!!locked);
     });
     socket.on('chat', (m) => setChat((c) => [...c.slice(-99), m]));
     socket.on('chat:cleared', () => setChat([]));
@@ -404,6 +439,29 @@ export default function Room() {
     </Gate>
   );
 
+  if (err) return (
+    <Gate
+      icon={<Lock className="h-6 w-6 text-rose-400" />}
+      cta="Back to Home"
+      title={err === 'room_locked' ? 'Room Locked by Host' : err === 'full' ? 'Room is Full' : 'Cannot Enter Room'}
+      hint={
+        err === 'room_locked'
+          ? 'The host has locked this room. No new members are currently allowed to enter.'
+          : err === 'full'
+          ? `This room has reached its maximum capacity (${maxSeats} members).`
+          : String(err)
+      }
+      onSubmit={(e) => {
+        e.preventDefault();
+        window.location.href = '/';
+      }}
+    >
+      <div className="text-center py-2 text-xs text-white/50">
+        {err === 'room_locked' ? 'Only existing members can rejoin.' : 'Please wait for a seat to free up or join another room.'}
+      </div>
+    </Gate>
+  );
+
   // Chat panel component shared between mobile tab and desktop aside
   const ChatPanel = ({ isMobile = false }) => (
     <div className={`card vault flex flex-col p-3.5 sm:p-4 ${isMobile ? 'h-[50vh] sm:h-[55vh]' : 'h-full'}`}>
@@ -492,6 +550,14 @@ export default function Room() {
 
   return (
     <div ref={root} className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4">
+      {/* 👻 Stealth Admin Ghost Monitor Banner */}
+      {isGhost && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-purple-950/95 border border-purple-400/60 px-4 py-1.5 text-xs font-semibold text-purple-200 shadow-2xl backdrop-blur-xl flex items-center gap-2 pointer-events-none">
+          <span className="text-base animate-pulse">👻</span>
+          <span>Admin Stealth Monitor Active (Invisible to Host &amp; Members)</span>
+        </div>
+      )}
+
       {/* Responsive Top Header */}
       <header className="hdr mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -507,6 +573,12 @@ export default function Room() {
               <Users className="h-3 w-3 text-[#ff8fb3]" />
               <span>{users.length}/{maxSeats}</span>
             </span>
+            {entryLocked && (
+              <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold" title="Host locked this room from new entries">
+                <Lock className="h-3 w-3" />
+                <span className="hidden sm:inline">Locked</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -546,19 +618,21 @@ export default function Room() {
           )}
 
           {/* Prominent Video Call Hide/Show Button */}
-          <button
-            type="button"
-            onClick={() => setShowCall(!showCall)}
-            className={`ghost !px-2.5 !py-1.5 flex items-center gap-1.5 text-xs font-medium transition ${
-              showCall
-                ? 'text-emerald-500 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-                : 'text-white/60 hover:text-white border-white/10'
-            }`}
-            title={showCall ? 'Hide video call to save space and battery' : 'Show video call'}
-          >
-            {showCall ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-            <span>{showCall ? 'Hide Call' : 'Show Call'}</span>
-          </button>
+          {!isGhost && (
+            <button
+              type="button"
+              onClick={() => setShowCall(!showCall)}
+              className={`ghost !px-2.5 !py-1.5 flex items-center gap-1.5 text-xs font-medium transition ${
+                showCall
+                  ? 'text-emerald-500 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
+                  : 'text-white/60 hover:text-white border-white/10'
+              }`}
+              title={showCall ? 'Hide video call to save space and battery' : 'Show video call'}
+            >
+              {showCall ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
+              <span>{showCall ? 'Hide Call' : 'Show Call'}</span>
+            </button>
+          )}
 
           {/* Quick Handoff Button */}
           <button
@@ -600,6 +674,27 @@ export default function Room() {
             <Lock className="h-3.5 w-3.5 text-amber-400" />
             <span className="hidden sm:inline">Password</span>
           </button>
+
+          {/* Host Lock / Unlock Room Control */}
+          {me === hostId && (
+            <button
+              type="button"
+              onClick={() => {
+                socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
+                  if (res?.ok) setEntryLocked(res.entryLocked);
+                });
+              }}
+              className={`ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border transition ${
+                entryLocked
+                  ? 'border-amber-500/50 text-amber-300 bg-amber-500/15 hover:bg-amber-500/25'
+                  : 'border-white/10 hover:border-amber-400/40 text-white/70 hover:text-white'
+              }`}
+              title={entryLocked ? 'Room is locked! No new members can enter. Click to unlock.' : 'Lock room so no one else can enter.'}
+            >
+              {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5" />}
+              <span className="hidden sm:inline">{entryLocked ? 'Locked' : 'Lock Room'}</span>
+            </button>
+          )}
 
           {/* Quick Invite Button */}
           <button onClick={copy} className="btn !py-1.5 !px-3 text-xs" title="Copy the invite link">
@@ -693,6 +788,20 @@ export default function Room() {
               <Lock className="h-4 w-4 text-amber-400" />
               <span>Room Password</span>
             </button>
+            {me === hostId && (
+              <button
+                onClick={() => {
+                  socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
+                    if (res?.ok) setEntryLocked(res.entryLocked);
+                  });
+                  setShowMenu(false);
+                }}
+                className={`ghost !justify-start !py-2.5 !px-3 ${entryLocked ? 'text-amber-300 bg-amber-500/15 border border-amber-500/40' : 'text-white/80'}`}
+              >
+                {entryLocked ? <Lock className="h-4 w-4 text-amber-400" /> : <Unlock className="h-4 w-4" />}
+                <span>{entryLocked ? 'Unlock Room' : 'Lock Room'}</span>
+              </button>
+            )}
             {me === hostId && (
               <button
                 onClick={() => {

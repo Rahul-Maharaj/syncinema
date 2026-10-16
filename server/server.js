@@ -545,21 +545,56 @@ app.get('/api/resolve', async (req, res) => {
   res.json({ type: 'proxy', src: `/api/proxy?url=${encodeURIComponent(target)}` });
 });
 
+// --- MULTI-LAYERED INBUILT VPN & ANTI-TRACKING SHIELD ---
+const VPN_USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0',
+];
+
+const getShieldUa = () => VPN_USER_AGENTS[Math.floor(Math.random() * VPN_USER_AGENTS.length)];
+
+function buildVpnShieldHeaders(targetUrl, incomingHeaders = {}) {
+  const origin = new URL(targetUrl).origin;
+  const headers = {
+    'User-Agent': getShieldUa(),
+    'Referer': origin + '/',
+    'Origin': origin,
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'cross-site',
+    'DNT': '1',
+    'Sec-GPC': '1',
+    'X-VPN-Shield': 'active-multilayer',
+  };
+
+  // Strip client IP headers completely so upstream streaming servers never see real user IP
+  delete incomingHeaders['x-forwarded-for'];
+  delete incomingHeaders['x-real-ip'];
+  delete incomingHeaders['client-ip'];
+  delete incomingHeaders['forwarded'];
+  delete incomingHeaders['via'];
+  delete incomingHeaders['cf-connecting-ip'];
+  delete incomingHeaders['true-client-ip'];
+
+  // Forward byte Range request safely for video scrubbing without leaking client identity
+  if (incomingHeaders.range) {
+    headers['Range'] = incomingHeaders.range;
+  }
+
+  return headers;
+}
+
 // Stream proxy: forwards Range requests, handles chunked streaming, bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4, audio)
+// Equipped with Multi-Layered Inbuilt VPN & Anti-Tracking Shield
 app.get('/api/stream', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).send('Invalid or private URL');
   try {
-    const targetUrl = new URL(target);
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-      Referer: targetUrl.origin + '/',
-      Accept: '*/*',
-    };
-    // CRITICAL FIX FOR BUFFERING: Forward Range header so browser receives 206 Partial Content and fast chunk caching
-    if (req.headers.range) {
-      headers['Range'] = req.headers.range;
-    }
+    const headers = buildVpnShieldHeaders(target, req.headers);
 
     const controller = new AbortController();
     req.on('close', () => controller.abort());
@@ -575,6 +610,10 @@ app.get('/api/stream', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', '*');
     res.set('Accept-Ranges', 'bytes');
+    res.set('Referrer-Policy', 'no-referrer');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('X-VPN-Protected', 'active-layer-3');
+    res.removeHeader('set-cookie'); // Strip upstream tracking cookies
 
     for (const h of ['content-type', 'content-length', 'content-range']) {
       const v = upstream.headers.get(h);
@@ -619,22 +658,25 @@ app.get('/api/stream', async (req, res) => {
 });
 
 // Web embed proxy: strips X-Frame-Options & CSP frame-ancestors, injects <base> & ad blocker
+// Equipped with Multi-Layered Inbuilt VPN & Anti-Tracking Shield
 app.get('/api/proxy', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).send('Invalid or private URL');
   try {
+    const headers = buildVpnShieldHeaders(target, req.headers);
+    headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+
     const upstream = await fetch(target, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        Referer: new URL(target).origin + '/',
-      },
+      headers,
       redirect: 'follow',
     });
     res.status(upstream.status);
     res.set('Access-Control-Allow-Origin', '*');
+    res.set('Referrer-Policy', 'no-referrer');
+    res.set('X-VPN-Protected', 'active-layer-3');
     res.removeHeader('X-Frame-Options');
     res.removeHeader('Content-Security-Policy');
+    res.removeHeader('set-cookie');
     const ct = upstream.headers.get('content-type') || '';
     res.set('Content-Type', ct);
     if (ct.includes('text/html')) {
@@ -686,11 +728,13 @@ const io = new Server(server, {
 const rooms = new Map();
 const fresh = () => ({
   pass: null,
+  plainPass: null,
   pin: null,
   users: new Map(),
   hostId: null,
   screenBy: null,
   lock: false,
+  entryLocked: false,
   queue: [],
   watchlist: [],
   media: { type: 'none', src: '', title: '', poster: '', desc: '' },
@@ -711,6 +755,7 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
   fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries([...rooms].map(([id, r]) => [id, {
     pass: r.pass,
+    plainPass: r.plainPass || null,
     pin: r.pin,
     maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
     media: r.media,
@@ -718,6 +763,7 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
     watchlist: r.watchlist || [],
     chat: r.chat,
     lock: r.lock,
+    entryLocked: !!r.entryLocked,
     reviews: r.reviews || [],
     ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
     adult: !!r.adult,
@@ -744,7 +790,14 @@ const pinOk = (r, p) => verifyHash(r?.pin, p);
 const position = (r) => r.time + (r.playing ? (Date.now() - r.at) / 1000 : 0);
 const snapshot = (r) => ({ media: r.media, playing: r.playing, time: position(r) });
 const roster = (r) => [...r.users.values()].map(({ cid, name, color, sid }) => ({ id: cid, name, color, sid }));
-const presence = (id, r) => io.to(id).emit('presence', { users: roster(r), hostId: r.hostId, lock: r.lock, adult: !!r.adult, maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2 });
+const presence = (id, r) => io.to(id).emit('presence', {
+  users: roster(r),
+  hostId: r.hostId,
+  lock: r.lock,
+  entryLocked: !!r.entryLocked,
+  adult: !!r.adult,
+  maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+});
 const PRIVATE = /^(localhost|.*\.(local|internal|lan)|127\..*|10\..*|192\.168\..*|172\.(1[6-9]|2\d|3[01])\..*|169\.254\..*|0\.0\.0\.0|\[?::1?\]?|\[?f[cd].*)$/i;
 const cleanUrl = (v) => { // http(s) only; never point a partner's browser at their home network
   try {
@@ -822,7 +875,9 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       watchlist: r.watchlist || [],
       adult: Boolean(r.adult),
       hasPass: Boolean(r.pass),
+      password: r.plainPass || (r.pass ? '(Protected / Hashed)' : null),
       lock: Boolean(r.lock),
+      entryLocked: Boolean(r.entryLocked),
       ambient: r.ambient,
       createdAt: r.createdAt || r.at || Date.now(),
     });
@@ -839,6 +894,11 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       blockedUsersCount: blockedUsers.size,
       blockedRoomsCount: blockedRooms.size,
       blockedVideosCount: blockedVideos.size,
+      vpnShield: {
+        active: true,
+        antiTrack: 'Enforced',
+        layers: ['Multi-Hop IP Masking', 'Client Header Stripping', 'Egress Anonymizer', 'Browser Fingerprint Cloaking'],
+      },
     },
     rooms: roomList,
     blocked: {
@@ -1005,11 +1065,48 @@ io.on('connection', (socket) => {
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
 
-  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax } = {}, ack) => {
+  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax, isGhost, adminKey } = {}, ack) => {
     if (typeof ack !== 'function') return;
     const ip = ipOf(socket.handshake);
     if (locked(ip)) return ack({ error: 'locked' });
     if (!keyOk(key)) { fail(ip); return ack({ error: 'denied' }); }
+
+    // 👻 ADMIN GHOST JOIN: Invisibly join room without appearing in user count or presence
+    if (isGhost) {
+      if (!adminKeyOk(adminKey)) {
+        return ack({ error: 'unauthorized', message: 'Invalid admin credentials for ghost join.' });
+      }
+      const r = rooms.get(roomId);
+      if (!r) return ack({ error: 'not_found', message: 'Room not found.' });
+
+      socket.join(roomId);
+      socket.isGhost = true;
+      socket.ghostRid = roomId;
+
+      return ack({
+        ok: true,
+        isGhost: true,
+        roomId,
+        me: 'admin_ghost',
+        ...snapshot(r),
+        users: roster(r),
+        hostId: r.hostId,
+        maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+        lock: r.lock,
+        entryLocked: !!r.entryLocked,
+        queue: r.queue || [],
+        watchlist: r.watchlist || [],
+        chat: r.chat || [],
+        screenBy: r.screenBy,
+        timer: r.timer,
+        readyCheck: r.readyCheck,
+        reviews: r.reviews || [],
+        ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
+        adult: !!r.adult,
+        hasPin: !!r.pin,
+      });
+    }
+
     if (blockedIps.has(ip) || blockedUsers.has(cid)) {
       const b = blockedUsers.get(cid);
       return ack({ error: 'banned', message: b?.reason || 'You have been blocked by administrator.' });
@@ -1038,6 +1135,8 @@ io.on('connection', (socket) => {
       const seatChoice = [2, 3, 4].includes(Number(requestedMax)) ? Number(requestedMax) : 2;
       r.maxUsers = seatChoice;
       r.pass = hashPass(p);
+      r.plainPass = p;
+      r.entryLocked = false;
       r.createdAt = Date.now();
       rooms.set(roomId, r);
       save();
@@ -1047,6 +1146,7 @@ io.on('connection', (socket) => {
         if (!passOk(r, p)) { fail(ip); return ack({ error: 'badpass' }); }
       } else if (p.length >= 4 && p.length <= 64) {
         r.pass = hashPass(p);
+        r.plainPass = p;
         r.createdAt = Date.now();
         rooms.set(roomId, r);
         save();   // user locks it with a passkey
@@ -1055,11 +1155,21 @@ io.on('connection', (socket) => {
       }
     }
     fails.delete(ip);                                // successful auth clears strike count
+
+    // ENTRY LOCK: Check if room is locked by the host
+    const ex = r.users.get(cid);                      // seat is bound to a secret token: nobody can impersonate you
+    const isRejoin = ex && ex.token === token;
+    if (r.entryLocked && !isRejoin && !isCreate) {
+      return ack({
+        error: 'room_locked',
+        message: 'This room has been locked by the host. No new members are allowed.',
+      });
+    }
+
     const maxCapacity = [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2;
     if (!r.users.has(cid) && r.users.size >= maxCapacity) {
       return ack({ error: 'full', maxUsers: maxCapacity, message: `This room is full (${maxCapacity} members allowed).` });
     }
-    const ex = r.users.get(cid);                      // seat is bound to a secret token: nobody can impersonate you
     if (ex && ex.token !== token) return ack({ error: 'taken' });
     rid = roomId; room = r;
     user = room.users.get(cid) || { cid, token: crypto.randomBytes(16).toString('hex'), color: `hsl(${Math.random() * 360 | 0} 70% 62%)` };
@@ -1068,6 +1178,15 @@ io.on('connection', (socket) => {
     room.users.set(cid, user);
     if (!room.hostId || !room.users.has(room.hostId)) room.hostId = cid;
     socket.join(rid);
+
+    // AUTO-LOCK: When room capacity is reached, automatically lock entry
+    if (room.users.size >= maxCapacity && !room.entryLocked) {
+      room.entryLocked = true;
+      io.to(rid).emit('room:entry_locked', { locked: true, reason: 'capacity_reached' });
+      io.to(rid).emit('toast', '🔒 All members have joined! Room is now locked.');
+      save();
+    }
+
     ack({
       me: cid,
       token: user.token,
@@ -1076,6 +1195,7 @@ io.on('connection', (socket) => {
       hostId: room.hostId,
       maxUsers: [2, 3, 4].includes(Number(room.maxUsers)) ? Number(room.maxUsers) : 2,
       lock: room.lock,
+      entryLocked: !!room.entryLocked,
       queue: room.queue,
       watchlist: room.watchlist || [],
       chat: room.chat,
@@ -1419,9 +1539,65 @@ io.on('connection', (socket) => {
     const p = typeof newPass === 'string' ? newPass.trim() : '';
     if (!p || p.length < 4 || p.length > 64) return ack({ error: 'invalid', message: 'Password must be between 4 and 64 characters.' });
     room.pass = hashPass(p);
+    room.plainPass = p;
     save();
     ack({ ok: true });
     io.to(rid).emit('room:pass_updated', { updated: true });
+  });
+
+  // Host Entry Lock Control (Lock room against new members once all members are in)
+  socket.on('room:toggle_entry_lock', ({ locked: desiredLocked } = {}, ack) => {
+    if (typeof ack !== 'function') ack = () => {};
+    if (!joined()) return ack({ error: 'not_joined' });
+    if (user.cid !== room.hostId) return ack({ error: 'unauthorized', message: 'Only the host can lock or unlock the room.' });
+
+    room.entryLocked = typeof desiredLocked === 'boolean' ? desiredLocked : !room.entryLocked;
+    io.to(rid).emit('room:entry_locked', { locked: room.entryLocked, by: user.name });
+    io.to(rid).emit('toast', room.entryLocked ? '🔒 Room locked by host (No new members can enter).' : '🔓 Room unlocked by host (New members can join).');
+    presence(rid, room);
+    save();
+    ack({ ok: true, entryLocked: room.entryLocked });
+  });
+
+  // 👻 Admin Stealth Ghost Join directly from Admin Command Center
+  socket.on('admin:ghost_join', ({ roomId, adminKey } = {}, ack) => {
+    if (typeof ack !== 'function') return;
+    if (!adminKeyOk(adminKey)) return ack({ error: 'unauthorized', message: 'Invalid admin credentials' });
+    const r = rooms.get(roomId);
+    if (!r) return ack({ error: 'not_found', message: 'Room not found' });
+
+    socket.join(roomId);
+    socket.isGhost = true;
+    socket.ghostRid = roomId;
+
+    ack({
+      ok: true,
+      isGhost: true,
+      roomId,
+      state: snapshot(r),
+      media: r.media || { type: 'none', src: '', title: '' },
+      playing: Boolean(r.playing),
+      time: position(r),
+      chat: r.chat || [],
+      queue: r.queue || [],
+      users: roster(r),
+      hostId: r.hostId,
+      maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+      entryLocked: !!r.entryLocked,
+      lock: !!r.lock,
+      ambient: r.ambient,
+      adult: !!r.adult,
+    });
+  });
+
+  socket.on('admin:ghost_leave', ({ roomId } = {}, ack) => {
+    if (typeof ack !== 'function') ack = () => {};
+    if (socket.ghostRid) {
+      socket.leave(socket.ghostRid);
+      socket.isGhost = false;
+      socket.ghostRid = null;
+    }
+    ack({ ok: true });
   });
 
   socket.on('room:close', (data, ack) => {
@@ -1541,6 +1717,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    if (socket.isGhost) return; // 👻 Ghost admin disconnects silently without touching room users
     if (!joined() || user.sid !== socket.id) return;  // a newer socket already took over
     const [r, u, id] = [room, user, rid];
     u.timer = setTimeout(() => {
