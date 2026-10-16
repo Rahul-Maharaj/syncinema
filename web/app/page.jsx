@@ -554,8 +554,8 @@ function Dashboard({ hero, onLock }) {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-semibold text-sm truncate text-white">{r.roomId}</span>
-                            {r.adult && <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-bold">18+</span>}
                           </div>
+
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
                               isFull

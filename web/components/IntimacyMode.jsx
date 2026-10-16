@@ -195,22 +195,12 @@ export default function IntimacyMode({
 
         <button
           type="button"
-          onClick={() => setActiveTab('adult')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'adult' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <Heart className="h-3.5 w-3.5 text-rose-400" />
-          <span>Adults-Only 18+ {adultMode && '🔥'}</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => setActiveTab('stealth')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
             activeTab === 'stealth' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
           }`}
         >
+
           <EyeOff className="h-3.5 w-3.5 text-indigo-400" />
           <span>Stealth Disguise</span>
         </button>
@@ -310,71 +300,7 @@ export default function IntimacyMode({
         </div>
       )}
 
-      {/* TAB 2: ADULTS-ONLY 18+ MODE */}
-      {activeTab === 'adult' && (
-        <div className="space-y-3.5">
-          {!isHost && (
-            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-2">
-              <Crown className="h-4 w-4 text-amber-400 shrink-0" />
-              <span>Adults-Only 18+ mode can only be enabled by the room host.</span>
-            </div>
-          )}
-          <div className="flex items-center justify-between p-3 rounded-xl border border-rose-500/30 bg-rose-950/20">
-            <div>
-              <span className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
-                <Heart className="h-3.5 w-3.5 fill-rose-400 text-rose-400" /> Adults-Only Date Room (18+)
-              </span>
-              <p className="text-[11px] text-white/60 mt-0.5">
-                Enables unblocked adult streaming, romantic gestures, and discreet zero-log privacy.
-              </p>
-            </div>
-            {isHost ? (
-              <button
-                type="button"
-                onClick={() => socket?.emit('room:toggle_adult', !adultMode)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition ${
-                  adultMode
-                    ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/40'
-                    : 'bg-white/10 text-white/60 hover:text-white'
-                }`}
-              >
-                {adultMode ? 'Enabled 🔥' : 'Enable 18+'}
-              </button>
-            ) : (
-              <span className="text-xs px-2.5 py-1 rounded-lg bg-white/10 text-white/60 font-semibold">
-                {adultMode ? '18+ Active 🔥' : 'Host Disabled'}
-              </span>
-            )}
-          </div>
 
-          <div>
-            <p className="text-xs font-semibold text-white/70 mb-2">Private Streaming Features:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
-                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-rose-400" /> Zero-Log Privacy</p>
-                <p className="text-[10px] text-white/50 mt-1">Adult site names and links are hidden everywhere across the app</p>
-              </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
-                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-rose-400" /> High-Speed Streams</p>
-                <p className="text-[10px] text-white/50 mt-1">Chunked range prefetching for smooth zero-buffering playback</p>
-              </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
-                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-rose-400" /> Proxy Unblocker</p>
-                <p className="text-[10px] text-white/50 mt-1">Bypasses ISP bans, frame blocks and ad redirects automatically</p>
-              </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
-                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Heart className="h-3.5 w-3.5 text-rose-400" /> Couch Talk Sync</p>
-                <p className="text-[10px] text-white/50 mt-1">Automatic voice audio ducking and micro-rate sync</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-[11px] text-white/50 bg-black/30 p-2.5 rounded-lg border border-white/5 space-y-1">
-            <p className="font-medium text-white/80">🔒 End-to-End Private Couch</p>
-            <p>Video links stream privately between you two with no logs, tracking, or indexing.</p>
-          </div>
-        </div>
-      )}
 
       {/* TAB 3: STEALTH DISGUISE (PANIC BUTTON) */}
       {activeTab === 'stealth' && (

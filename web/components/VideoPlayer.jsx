@@ -63,6 +63,7 @@ export default function VideoPlayer({
   const [showSettings, setShowSettings] = useState(false);
   const [subStyle, setSubStyle] = useState({ size: 'md', color: '#ffffff', bg: 'rgba(0,0,0,0.75)' });
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [resolvingStatus, setResolvingStatus] = useState('');
 
   // Fullscreen & Floating Video Call PiP State
   const containerRef = useRef(null);
@@ -762,53 +763,135 @@ export default function VideoPlayer({
     }
   };
 
-  const build = async () => {
-    let src = url.trim();
+  const buildMedia = async (rawUrl) => {
+    let src = (rawUrl || url).trim();
     if (!src) return null;
     if (!/^https?:\/\//i.test(src) && !src.startsWith('/api/')) src = 'https://' + src;
 
-    // Enforce 18+ Adults-Only mode: only allow playing if adultMode is enabled
-    if (isAdultMedia(src) && !adultMode) {
-      setError('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to play this video.');
-      return null;
-    }
+    const isAdult = isAdultMedia(src);
 
-    const type = force === 'auto' ? detect(src) : force;
-    if (type === 'proxy') {
+    // 1. YouTube direct
+    if (ytId(src)) {
       return {
-        type: 'proxy',
-        src: toProxyUrl(src),
-        orig: isAdultMedia(src) ? '🔒 Private Stream' : src,
-        title: isAdultMedia(src) ? '🔒 Private Stream' : '',
+        type: 'youtube',
+        src,
+        title: '',
       };
     }
 
-    if (type === 'auto' || type === 'embed') {
+    // 2. Vimeo direct
+    if (vimeoId(src)) {
+      return {
+        type: 'vimeo',
+        src,
+        title: '',
+      };
+    }
+
+    // 3. Direct video extensions
+    const cleanPath = src.split('?')[0].split('#')[0].toLowerCase();
+    if (cleanPath.endsWith('.m3u8')) {
+      return {
+        type: 'hls',
+        src: toStreamProxyUrl(src),
+        origSrc: src,
+        title: isAdult ? '🔒 Private Stream' : '',
+      };
+    }
+    if (cleanPath.endsWith('.mpd')) {
+      return {
+        type: 'dash',
+        src,
+        origSrc: src,
+        title: isAdult ? '🔒 Private Stream' : '',
+      };
+    }
+    if (/\.(mp4|webm|ogv|ogg|mov|m4v|mkv|mp3|m4a|wav|flac|aac|opus|weba|m4b)$/.test(cleanPath)) {
+      return {
+        type: 'file',
+        src: toStreamProxyUrl(src),
+        origSrc: src,
+        title: isAdult ? '🔒 Private Stream' : '',
+      };
+    }
+
+    // 4. Server-side auto-resolver (checks direct HLS extraction, tube converters, movie extractors, etc.)
+    try {
       const resolved = await resolveMedia(src);
       if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed' || resolved.type === 'proxy')) {
         if (resolved.subtitle) setSub(resolved.subtitle);
-        if (isAdultMedia(src)) {
+        if (isAdult) {
           resolved.title = '🔒 Private Stream';
           resolved.origSrc = '🔒 Private Stream';
         }
         return resolved;
       }
+    } catch {}
+
+    // 5. Tube or adult platform proxying fallback (bypasses ISP bans and X-Frame-Options)
+    if (isTubeOrEmbedHost(src)) {
+      return {
+        type: 'proxy',
+        src: toProxyUrl(src),
+        orig: isAdult ? '🔒 Private Stream' : src,
+        title: isAdult ? '🔒 Private Stream' : '',
+      };
     }
+
+    // 6. Generic embed fallback
     return {
-      type,
-      src: type === 'embed' ? toEmbed(src) : src,
-      title: isAdultMedia(src) ? '🔒 Private Stream' : '',
+      type: 'embed',
+      src: toEmbed(src),
+      orig: src,
+      title: isAdult ? '🔒 Private Stream' : '',
     };
   };
 
-  const enqueue = async () => {
-    let src = url.trim();
-    if (isAdultMedia(src) && !adultMode) {
-      setError('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to add this video.');
-      return;
+  const handlePasteAndPlay = async (e) => {
+    const pasted = e.clipboardData?.getData?.('text')?.trim?.();
+    if (!pasted) return;
+    if (
+      /^(https?:\/\/|\/api\/|www\.)/i.test(pasted) ||
+      ytId(pasted) ||
+      vimeoId(pasted) ||
+      isTubeOrEmbedHost(pasted) ||
+      /\.(mp4|webm|m3u8|mpd|mkv|mov|mp3|wav|m4a|flac)(\?|$)/i.test(pasted)
+    ) {
+      setUrl(pasted);
+      setError('');
+      setResolvingStatus('⚡ Auto-detecting link & playing for everyone...');
+      try {
+        const m = await buildMedia(pasted);
+        if (m) {
+          socket.emit('media:set', { media: m });
+          const targetUrl = m.origSrc || m.orig || m.src;
+          const h = [targetUrl, ...hist.filter((x) => x !== targetUrl)].slice(0, 20);
+          setHist(h);
+          try {
+            localStorage.hist = JSON.stringify(h);
+            window.dispatchEvent(new Event('storage'));
+          } catch {}
+          setResolvingStatus('🎬 Playing now in sync!');
+          setTimeout(() => setResolvingStatus(''), 2500);
+          setUrl('');
+        } else {
+          setResolvingStatus('');
+        }
+      } catch (err) {
+        setResolvingStatus('');
+        setError('Auto-play error: ' + (err?.message || 'Failed to detect video'));
+      }
     }
-    const m = await build();
-    if (m) { socket.emit('queue:add', { media: m }); setUrl(''); }
+  };
+
+  const build = async () => buildMedia(url);
+
+  const enqueue = async () => {
+    const m = await buildMedia(url);
+    if (m) {
+      socket.emit('queue:add', { media: m });
+      setUrl('');
+    }
   };
 
   const pickLocal = (e) => {
@@ -876,12 +959,7 @@ export default function VideoPlayer({
   const load = async (e) => {
     e.preventDefault();
     setError('');
-    let src = url.trim();
-    if (isAdultMedia(src) && !adultMode) {
-      setError('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to play this video.');
-      return;
-    }
-    const m = await build();
+    const m = await buildMedia(url);
     if (!m) return;
     socket.emit('media:set', { media: m });
     const targetUrl = m.origSrc || m.orig || m.src;
@@ -893,6 +971,7 @@ export default function VideoPlayer({
     } catch {}
     setUrl('');
   };
+
 
   const show = (k) => (!stream && k ? '' : 'hidden');
 
@@ -1493,13 +1572,26 @@ export default function VideoPlayer({
       )}
 
       <form onSubmit={load} className="flex flex-col gap-2">
+        {resolvingStatus && (
+          <div className="flex items-center gap-2 text-xs text-rose-300 font-medium py-1.5 px-3 rounded-xl bg-rose-500/15 border border-rose-500/30">
+            <Sparkles className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+            <span>{resolvingStatus}</span>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <div className="relative min-w-0 flex-1 basis-60">
             <Link2 className="absolute left-3 top-2.5 h-4 w-4 opacity-50" />
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any video link: YouTube, Vimeo, mp4, m3u8, movie sites…" className="field !pl-9" />
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onPaste={handlePasteAndPlay}
+              placeholder="Paste any video link: YouTube, Vimeo, mp4, m3u8, movie sites (auto-detects & plays)…"
+              className="field !pl-9"
+            />
           </div>
           <button className="btn"><Play className="h-4 w-4" />Play for everyone</button>
         </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={enqueue} className="ghost" title="Add this link to the Up next list"><ListPlus className="h-4 w-4" />Add to queue</button>
           <label className="ghost cursor-pointer" title="Play a movie file from your own device"><FolderOpen className="h-4 w-4" />My file<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></label>

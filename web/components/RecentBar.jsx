@@ -34,19 +34,11 @@ export default function RecentBar({
   }, []);
 
   const handlePlay = (url) => {
-    if (isAdultMedia(url) && !adultMode) {
-      say?.('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to play.');
-      return;
-    }
     onPlayUrl?.(url);
     say?.(isAdultMedia(url) ? 'Playing Private Stream 🔒' : 'Playing from Recent Bar ▶️');
   };
 
   const handleQueue = (url) => {
-    if (isAdultMedia(url) && !adultMode) {
-      say?.('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to queue.');
-      return;
-    }
     onAddToQueue?.({
       title: isAdultMedia(url) ? '🔒 Private Stream' : sanitizeDisplayTitle(url),
       src: url,
@@ -54,6 +46,7 @@ export default function RecentBar({
     });
     say?.('Added to queue 🍿');
   };
+
 
   const handleCopy = (url) => {
     navigator.clipboard.writeText(url);
@@ -189,12 +182,8 @@ export default function RecentBar({
                     <p className="text-xs font-semibold text-white truncate">
                       {title}
                     </p>
-                    {isAdult && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-500/30 text-rose-300 border border-rose-500/40">
-                        {adultMode ? '18+ 🔥' : '18+ Locked'}
-                      </span>
-                    )}
                   </div>
+
                   <p className="text-[10px] text-white/45 truncate">
                     {isAdult
                       ? 'Discreet private stream • Zero-log privacy'

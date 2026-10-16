@@ -117,8 +117,9 @@ app.get('/api/rooms', (req, res) => {
         maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
         hasPass: !!r.pass,
         createdAt: r.createdAt || r.at || Date.now(),
-        adult: !!r.adult,
+        adult: false,
       });
+
     }
   }
   activeRooms.sort((a, b) => b.createdAt - a.createdAt);
@@ -759,9 +760,10 @@ const fresh = () => ({
   readyCheck: null,
   reviews: [],
   ambient: { preset: 'love', intensity: 80, flicker: false },
-  adult: false,
+  adult: true,
   maxUsers: 2,
 });
+
 try { for (const [id, v] of Object.entries(JSON.parse(fs.readFileSync(DATA_FILE)))) rooms.set(id, { ...fresh(), ...v }); } catch {}
 let saveT;                                          // persist rooms so "our room" survives restarts
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
@@ -1234,12 +1236,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Enforce 18+ Adults-Only mode: only allow playing if room.adult is true
     const isAdult = isAdultUrl(src) || isAdultUrl(media?.orig) || isAdultUrl(media?.origSrc);
-    if (isAdult && !room.adult) {
-      socket.emit('toast', '🔞 18+ Mode is disabled. Enable Adults-Only 18+ in Intimacy settings to play.');
-      return;
-    }
 
     setMedia(rid, room, {
       type: media.type,
@@ -1263,12 +1260,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Enforce 18+ Adults-Only mode: only allow queuing if room.adult is true
     const isAdult = isAdultUrl(src) || isAdultUrl(media?.orig) || isAdultUrl(media?.origSrc);
-    if (isAdult && !room.adult) {
-      socket.emit('toast', '🔞 18+ Mode is disabled. Enable Adults-Only 18+ in Intimacy settings to add.');
-      return;
-    }
+
 
     // Prevent duplicate entries in queue
     if (room.queue.some((q) => q.src === src)) {

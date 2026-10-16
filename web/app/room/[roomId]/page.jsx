@@ -490,14 +490,8 @@ export default function Room() {
             </button>
           )}
 
-          {/* Adult Mode Indicator */}
-          {adultMode && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold" title="Adults-Only 18+ Private Couch">
-              18+ 🔥
-            </span>
-          )}
-
           {/* Quick 1-Tap Camera Off/On Toggle (Physical hardware sensor release) */}
+
           {!isGhost && (
             <button
               type="button"
@@ -892,8 +886,9 @@ export default function Room() {
                       }`}
                     >
                       <Flame className="h-3.5 w-3.5 text-rose-400" />
-                      <span>Intimacy {adultMode && '🔥'}</span>
+                      <span>Intimacy</span>
                     </button>
+
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('ai')}
@@ -1193,8 +1188,8 @@ export default function Room() {
                 >
                   <Flame className="h-4 w-4 text-rose-400" />
                   <span>Intimacy &amp; Lighting 🕯️</span>
-                  {adultMode && <span className="text-[10px] bg-rose-500/30 text-rose-200 px-1.5 rounded-full">18+</span>}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setDesktopTab('ai')}

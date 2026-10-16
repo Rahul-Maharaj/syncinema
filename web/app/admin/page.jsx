@@ -687,12 +687,8 @@ export default function AdminPage() {
                             >
                               <Copy className="h-3 w-3" />
                             </button>
-                            {room.adult && (
-                              <span className="rounded bg-rose-500/20 border border-rose-500/30 px-1.5 py-0.5 text-[10px] font-bold text-rose-300">
-                                18+ Adult
-                              </span>
-                            )}
                             {room.hasPass && (
+
                               <span className="rounded bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-medium text-amber-300 flex items-center gap-0.5">
                                 <Lock className="h-2.5 w-2.5" />
                                 Protected
