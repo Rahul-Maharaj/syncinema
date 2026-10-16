@@ -40,7 +40,7 @@ const fail = (ip) => {
 };
 const app = express();
 app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false, frameguard: false }));
 app.use(cors({ origin }));
 app.use('/api', rateLimit({ windowMs: 60_000, max: 240 }));
 const server = http.createServer(app);
@@ -237,52 +237,71 @@ async function resolveHubstream(inputUrl) {
 // Tube and adult site embed converters
 function convertTubeUrl(target) {
   try {
-    const u = new URL(target);
-    // EPorner
-    let m = target.match(/eporner\.com\/video-([a-zA-Z0-9]+)/i);
-    if (m) return `https://www.eporner.com/embed/${m[1]}/`;
-    // Pornhub
-    m = target.match(/pornhub\.com\/(?:view_video\.php\?(?:.*&)?viewkey=|embed\/)([a-zA-Z0-9]+)/i);
+    const s = String(target || '').trim();
+    // 1. Pornhub (all domains: pornhub.com, pornhub.org, pornhub.net, m.pornhub.com, etc.)
+    let m = s.match(/pornhub\.(?:com|org|net|premium)\/(?:(?:[a-z]{2}\/)?view_video\.php\?(?:.*&)?viewkey=|embed\/|video\/)([a-zA-Z0-9]+)/i);
     if (m) return `https://www.pornhub.com/embed/${m[1]}`;
-    // XVideos
-    m = target.match(/xvideos\.com\/video\.?([a-zA-Z0-9_-]+)/i);
-    if (m) return `https://www.xvideos.com/embedframe/${m[1]}`;
-    // XNXX
-    m = target.match(/xnxx\.com\/video-?([a-zA-Z0-9_-]+)/i);
-    if (m) return `https://www.xnxx.com/embedframe/${m[1]}`;
-    // SpankBang
-    m = target.match(/spankbang\.com\/([a-zA-Z0-9]+)\/(?:video|embed)/i);
-    if (m) return `https://spankbang.com/${m[1]}/embed/`;
-    // RedTube
-    m = target.match(/redtube\.com\/(\d+)/i);
-    if (m) return `https://embed.redtube.com/?id=${m[1]}`;
-    // YouPorn
-    m = target.match(/youporn\.com\/watch\/(\d+)/i);
-    if (m) return `https://www.youporn.com/embed/${m[1]}`;
-    // XHamster
-    m = target.match(/xhamster\.com\/videos\/[^\s\"']*?(xh[a-zA-Z0-9]+|\d+)/i);
+
+    // 2. xHamster (all domains: xhamster.com, xhamster.desi, xhamster19.com, xhamster20.com, m.xhamster.com, etc.)
+    m = s.match(/xhamster[a-z0-9]*\.(?:com|desi|org|net|one)\/(?:videos\/|movies\/)[^\s"']*?(xh[a-zA-Z0-9]+|\d+)/i)
+      || s.match(/xhamster[a-z0-9]*\.(?:com|desi|org|net|one)\/xembed\.php\?video=([a-zA-Z0-9]+)/i);
     if (m) return `https://xhamster.com/xembed.php?video=${m[1]}`;
-    // Doodstream
-    m = target.match(/dood\.(?:to|watch|so|ws|cx|la|pm|re|sh)\/(?:d|e)\/([a-zA-Z0-9]+)/i);
-    if (m) return `https://dood.to/e/${m[1]}`;
-    // Streamtape
-    m = target.match(/streamtape\.com\/(?:v|e)\/([a-zA-Z0-9]+)/i);
+
+    // 3. XVideos (xvideos.com, xvideos.es, xvideos2.com, etc.)
+    m = s.match(/xvideos[a-z0-9]*\.(?:com|es|in|net)\/(?:video\.?|embedframe\/)([a-zA-Z0-9_-]+)/i);
+    if (m) return `https://www.xvideos.com/embedframe/${m[1]}`;
+
+    // 4. XNXX (xnxx.com, xnxx.tv, xnxx.in, xnxx2.com, etc.)
+    m = s.match(/xnxx[a-z0-9]*\.(?:com|tv|in|health)\/(?:video-?|embedframe\/)([a-zA-Z0-9_-]+)/i);
+    if (m) return `https://www.xnxx.com/embedframe/${m[1]}`;
+
+    // 5. EPorner
+    m = s.match(/eporner\.(?:com|org)\/(?:video-|embed\/)([a-zA-Z0-9]+)/i);
+    if (m) return `https://www.eporner.com/embed/${m[1]}/`;
+
+    // 6. SpankBang
+    m = s.match(/spankbang\.(?:com|party)\/(?:video\/|embed\/)?([a-zA-Z0-9]+)(?:\/(?:video|embed))?/i);
+    if (m && m[1] !== 'video' && m[1] !== 'embed') return `https://spankbang.com/${m[1]}/embed/`;
+
+    // 7. RedTube
+    m = s.match(/redtube\.(?:com|net)\/(?:embed\/|\?id=)?(\d+)/i);
+    if (m) return `https://embed.redtube.com/?id=${m[1]}`;
+
+    // 8. YouPorn
+    m = s.match(/youporn\.(?:com|org)\/(?:watch|embed)\/(\d+)/i);
+    if (m) return `https://www.youporn.com/embed/${m[1]}`;
+
+    // 9. DoodStream / D000d
+    m = s.match(/(?:dood|d000d|do0od|ds2play)\.[a-z0-9]+\/(?:d|e)\/([a-zA-Z0-9]+)/i);
+    if (m) return `https://d000d.com/e/${m[1]}`;
+
+    // 10. Streamtape
+    m = s.match(/streamtape\.[a-z0-9]+\/(?:v|e)\/([a-zA-Z0-9]+)/i);
     if (m) return `https://streamtape.com/e/${m[1]}`;
-    // Streamwish
-    m = target.match(/streamwish\.(?:to|com)\/(?:f|e)\/([a-zA-Z0-9]+)/i);
+
+    // 11. Streamwish
+    m = s.match(/(?:streamwish|wishembed)\.[a-z0-9]+\/(?:f|e)\/([a-zA-Z0-9]+)/i);
     if (m) return `https://streamwish.to/e/${m[1]}`;
-    // Filemoon
-    m = target.match(/filemoon\.sx\/(?:d|e)\/([a-zA-Z0-9]+)/i);
+
+    // 12. Filemoon
+    m = s.match(/filemoon\.[a-z0-9]+\/(?:d|e)\/([a-zA-Z0-9]+)/i);
     if (m) return `https://filemoon.sx/e/${m[1]}`;
-    // Vidmoly
-    m = target.match(/vidmoly\.to\/(?:w\/|embed-)([a-zA-Z0-9]+)/i);
+
+    // 13. Vidmoly
+    m = s.match(/vidmoly\.[a-z0-9]+\/(?:w\/|embed-)([a-zA-Z0-9]+)/i);
     if (m) return `https://vidmoly.to/embed-${m[1]}.html`;
-    // Voe
-    m = target.match(/voe\.sx\/(?:e\/)?([a-zA-Z0-9]+)/i);
+
+    // 14. Voe
+    m = s.match(/voe[a-z0-9-]*\.[a-z0-9]+\/(?:e\/)?([a-zA-Z0-9]+)/i);
     if (m) return `https://voe.sx/e/${m[1]}`;
-    // Mixdrop
-    m = target.match(/mixdrop\.(?:co|to)\/(?:f|e)\/([a-zA-Z0-9]+)/i);
+
+    // 15. Mixdrop
+    m = s.match(/mixdrop\.[a-z0-9]+\/(?:f|e)\/([a-zA-Z0-9]+)/i);
     if (m) return `https://mixdrop.co/e/${m[1]}`;
+
+    // 16. Tnaflix
+    m = s.match(/tnaflix\.(?:com|net)\/(?:video|embedded)(\d+)/i);
+    if (m) return `https://player.tnaflix.com/video/${m[1]}`;
   } catch {}
   return null;
 }
@@ -357,6 +376,45 @@ async function extractThirdPartyStream(url) {
   return null;
 }
 
+// Extract direct HLS or MP4 streams from adult and tube sites for native synchronized playback
+async function extractDirectStream(url) {
+  try {
+    const targetUrl = new URL(url);
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+      Referer: targetUrl.origin + '/',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    };
+    const r = await fetch(url, { headers, redirect: 'follow', signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    let text = await r.text();
+
+    // 1. XVideos / XNXX html5player
+    let m = text.match(/html5player\.setVideoHLS\(['"]([^'"]+)['"]\)/i);
+    if (m && m[1]) return { type: 'hls', stream: m[1] };
+    m = text.match(/html5player\.setVideoUrlHigh\(['"]([^'"]+)['"]\)/i);
+    if (m && m[1]) return { type: 'file', stream: m[1] };
+    m = text.match(/html5player\.setVideoUrlLow\(['"]([^'"]+)['"]\)/i);
+    if (m && m[1]) return { type: 'file', stream: m[1] };
+
+    // 2. EPorner
+    m = text.match(/sources\s*:\s*\{[\s\S]*?src\s*:\s*["']([^"']+\.mp4[^"']*)["']/i);
+    if (m && m[1]) return { type: 'file', stream: m[1] };
+
+    // 3. Pornhub mediaDefinitions
+    m = text.replace(/\\\//g, '/').match(/mediaDefinitions[\s\S]*?"format"\s*:\s*"hls"[\s\S]*?"videoUrl"\s*:\s*"([^"]+)"/i);
+    if (m && m[1]) return { type: 'hls', stream: m[1] };
+
+    // 4. General HTML5 video or source tag
+    m = text.match(/<(?:video|source)[^>]+src=["']([^"']+\.(?:mp4|webm|m3u8)[^"']*)["']/i);
+    if (m && m[1]) {
+      const resolved = new URL(m[1], targetUrl).href;
+      return { type: resolved.includes('.m3u8') ? 'hls' : 'file', stream: resolved };
+    }
+  } catch {}
+  return null;
+}
+
 app.get('/api/resolve', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).json({ error: 'invalid' });
@@ -364,9 +422,26 @@ app.get('/api/resolve', async (req, res) => {
     const resolved = await resolveHubstream(target);
     if (resolved) return res.json(resolved);
   }
+
+  // 1. Try extracting direct stream for full HTML5 synchronized playback
+  const directStream = await extractDirectStream(target);
+  if (directStream) {
+    return res.json({
+      type: directStream.type,
+      src: `/api/stream?url=${encodeURIComponent(directStream.stream)}`,
+      origSrc: target,
+    });
+  }
+
+  // 2. Tube / adult platforms: return PROXIED embed so ISP blocks and X-Frame-Options are 100% bypassed!
   const tubeEmbed = convertTubeUrl(target);
   if (tubeEmbed) {
-    return res.json({ type: 'embed', src: tubeEmbed, origSrc: target });
+    return res.json({
+      type: 'proxy',
+      src: `/api/proxy?url=${encodeURIComponent(tubeEmbed)}`,
+      origSrc: target,
+      embedUrl: tubeEmbed,
+    });
   }
 
   const clean = target.split('?')[0].split('#')[0].toLowerCase();
@@ -403,10 +478,10 @@ app.get('/api/resolve', async (req, res) => {
     }
   } catch {}
 
-  res.json({ type: 'embed', src: target });
+  res.json({ type: 'proxy', src: `/api/proxy?url=${encodeURIComponent(target)}` });
 });
 
-// Stream proxy: bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4, audio)
+// Stream proxy: forwards Range requests, handles chunked streaming, bypasses CORS for direct media and HLS streams (.m3u8, .ts, .mp4, audio)
 app.get('/api/stream', async (req, res) => {
   const target = cleanUrl(req.query.url);
   if (!target) return res.status(400).send('Invalid or private URL');
@@ -415,21 +490,34 @@ app.get('/api/stream', async (req, res) => {
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
       Referer: targetUrl.origin + '/',
+      Accept: '*/*',
     };
-    let upstream = await fetch(target, { headers, redirect: 'follow' });
+    // CRITICAL FIX FOR BUFFERING: Forward Range header so browser receives 206 Partial Content and fast chunk caching
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
+    const controller = new AbortController();
+    req.on('close', () => controller.abort());
+
+    let upstream = await fetch(target, { headers, redirect: 'follow', signal: controller.signal });
     if (!upstream.ok && (upstream.status === 403 || upstream.status === 401)) {
       const fallbackHeaders = { ...headers, Referer: target };
-      const fallback = await fetch(target, { headers: fallbackHeaders, redirect: 'follow' });
+      const fallback = await fetch(target, { headers: fallbackHeaders, redirect: 'follow', signal: controller.signal });
       if (fallback.ok) upstream = fallback;
     }
+
     res.status(upstream.status);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', '*');
-    for (const h of ['content-type', 'content-length', 'content-range', 'accept-ranges']) {
+    res.set('Accept-Ranges', 'bytes');
+
+    for (const h of ['content-type', 'content-length', 'content-range']) {
       const v = upstream.headers.get(h);
       if (v) res.set(h, v);
     }
-    const ct = upstream.headers.get('content-type') || '';
+
+    const ct = (upstream.headers.get('content-type') || '').toLowerCase();
     if (ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8')) {
       let text = await upstream.text();
       const base = new URL(target);
@@ -453,6 +541,7 @@ app.get('/api/stream', async (req, res) => {
       });
       return res.send(text);
     }
+
     if (upstream.body) {
       const { Readable } = require('stream');
       Readable.fromWeb(upstream.body).pipe(res);
@@ -460,6 +549,7 @@ app.get('/api/stream', async (req, res) => {
       res.end();
     }
   } catch (err) {
+    if (err.name === 'AbortError') return;
     res.status(502).send('Stream proxy error: ' + err.message);
   }
 });

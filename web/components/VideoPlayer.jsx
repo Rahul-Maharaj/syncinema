@@ -258,11 +258,20 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       import('hls.js').then(({ default: H }) => {
         const h = new H({
           enableWorker: true,
-          lowLatencyMode: true,
-          backBufferLength: 60,
-          manifestLoadingMaxRetry: 4,
-          levelLoadingMaxRetry: 4,
-          fragLoadingMaxRetry: 5,
+          lowLatencyMode: false,
+          backBufferLength: 90,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120,
+          maxBufferSize: 60 * 1000 * 1000,
+          maxBufferHole: 0.5,
+          highBufferWatchdogPeriod: 2,
+          manifestLoadingMaxRetry: 6,
+          manifestLoadingRetryDelay: 1000,
+          levelLoadingMaxRetry: 6,
+          levelLoadingRetryDelay: 1000,
+          fragLoadingMaxRetry: 8,
+          fragLoadingRetryDelay: 1000,
+          startFragPrefetch: true,
         });
         hlsRef.current = h;
         h.loadSource(media.src);
@@ -766,6 +775,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           ref={vref}
           controls
           playsInline
+          preload="auto"
           className={`absolute inset-0 h-full w-full ${show(['file', 'hls', 'dash', 'local'].includes(T))}`}
           style={{ transform: 'translateZ(0)' }}
         >
@@ -779,6 +789,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
             referrerPolicy="no-referrer-when-downgrade"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
+            loading="eager"
             className="absolute inset-0 h-full w-full bg-black/90"
           />
         )}
@@ -977,7 +988,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       {(T === 'embed' || T === 'proxy') && !stream && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs opacity-75">
           <p>
-            {T === 'proxy' ? 'Proxy Mode: blocks bypassed. ' : 'Embedded page: '}
+            {T === 'proxy' ? '🛡️ Unblocked Proxy Active: ISP & ad blocks bypassed. ' : 'Embedded player: '}
             If playback is blocked, try{' '}
             <button
               type="button"
@@ -991,7 +1002,12 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
             </button>{' '}
             or use <b>Share screen</b>.
           </p>
-          <a href={media.orig || media.src} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">
+          <a
+            href={media.orig || (media.src?.startsWith('/api/proxy') ? (new URLSearchParams(media.src.split('?')[1] || '').get('url') || media.src) : media.src)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 underline text-[#ff6fa0] hover:text-white"
+          >
             Open in new tab <ExternalLink className="h-3 w-3" />
           </a>
         </div>
@@ -1001,7 +1017,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         <div className="flex flex-wrap gap-2">
           <div className="relative min-w-0 flex-1 basis-60">
             <Link2 className="absolute left-3 top-2.5 h-4 w-4 opacity-50" />
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link: YouTube, Vimeo, mp4, m3u8, movie websites…" className="field !pl-9" />
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link: YouTube, Vimeo, mp4, m3u8, Pornhub, xHamster, movie sites…" className="field !pl-9" />
           </div>
           <button className="btn"><Play className="h-4 w-4" />Play for everyone</button>
         </div>
