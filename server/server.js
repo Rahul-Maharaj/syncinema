@@ -124,14 +124,20 @@ app.get('/api/rooms', (req, res) => {
 });
 app.get('/api/ice', (req, res) => {
   if (locked(ipOf(req))) return res.status(429).json({});
-  if (!keyOk(req.query.key)) { fail(ipOf(req)); return res.status(401).json({}); }                    // STUN + short-lived TURN credentials (coturn use-auth-secret)
-  const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
+  if (!keyOk(req.query.key)) { fail(ipOf(req)); return res.status(401).json({}); }
+  const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.services.mozilla.com' },
+  ];
   if (TURN_URL && TURN_SECRET) {
     const username = `${Math.floor(Date.now() / 1000) + 86400}:sync`;
     const credential = crypto.createHmac('sha1', TURN_SECRET).update(username).digest('base64');
     iceServers.push({ urls: TURN_URL.split(','), username, credential });
   }
-  try { iceServers.push(...JSON.parse(process.env.EXTRA_ICE || '[]')); } catch {}   // e.g. free Open Relay / Metered TURN
+  try { iceServers.push(...JSON.parse(process.env.EXTRA_ICE || '[]')); } catch {}
   res.json({ iceServers, peerKey: PEER_KEY });
 });
 
@@ -1646,6 +1652,17 @@ io.on('connection', (socket) => {
   socket.on('voice:active', ({ active } = {}) => {
     if (joined()) {
       socket.to(rid).emit('voice:active', { active: !!active, by: user.name });
+    }
+  });
+
+  // WebRTC peer call coordination and readiness signaling
+  socket.on('webrtc:signal', (payload = {}) => {
+    if (joined()) {
+      socket.to(rid).emit('webrtc:signal', {
+        ...payload,
+        fromCid: user.cid,
+        fromName: user.name,
+      });
     }
   });
 

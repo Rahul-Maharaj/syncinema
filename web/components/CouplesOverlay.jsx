@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Mic, MicOff, Video, VideoOff, GripHorizontal, Maximize2, Minimize2, EyeOff, Eye, Volume2 } from 'lucide-react';
 import gsap from 'gsap';
 import { Draggable } from 'gsap/Draggable';
@@ -102,15 +102,15 @@ function RemoteAudio({ stream, name, onTalk }) {
 
   return (
     <>
-      <audio ref={audioRef} autoPlay playsInline />
+      <audio ref={audioRef} autoPlay playsInline className="hidden" />
       {blocked && (
         <button
           type="button"
           onClick={() => audioRef.current?.play().then(() => setBlocked(false))}
-          className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#d9467a] to-[#ff6fa0] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xl animate-pulse cursor-pointer"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#d9467a] to-[#ff6fa0] px-4 py-2 text-xs font-semibold text-white shadow-2xl animate-bounce cursor-pointer border border-white/20"
         >
-          <Volume2 className="h-3.5 w-3.5" />
-          <span>Tap to unmute {name || 'Partner'}</span>
+          <Volume2 className="h-4 w-4" />
+          <span>Tap to hear {name || 'Partner'} 🔊</span>
         </button>
       )}
     </>
@@ -118,20 +118,38 @@ function RemoteAudio({ stream, name, onTalk }) {
 }
 
 function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
-  const r = useRef();
+  const videoRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasVideoTrack, setHasVideoTrack] = useState(false);
 
   useEffect(() => {
-    if (r.current) {
-      r.current.srcObject = stream || null;
-      // Remote audio is played via persistent RemoteAudio element to prevent double-audio echo
-      r.current.muted = true;
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (stream) {
+      el.srcObject = stream;
+      el.muted = true; // Video element is muted; audio plays through RemoteAudio
+
+      const vTracks = stream.getVideoTracks();
+      setHasVideoTrack(vTracks.length > 0 && vTracks.some(t => t.enabled));
+
+      const tryPlay = () => {
+        el.play().catch(() => {
+          const resume = () => { el.play().catch(() => {}); };
+          window.addEventListener('click', resume, { once: true });
+          window.addEventListener('touchstart', resume, { once: true });
+        });
+      };
+      tryPlay();
+    } else {
+      el.srcObject = null;
+      setHasVideoTrack(false);
     }
   }, [stream]);
 
   useEffect(() => {
     const handleFsChange = () => {
-      setIsFullscreen(document.fullscreenElement === r.current);
+      setIsFullscreen(document.fullscreenElement === videoRef.current);
     };
     document.addEventListener('fullscreenchange', handleFsChange);
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
@@ -139,12 +157,13 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
 
   const toggleFullscreen = (e) => {
     e?.stopPropagation?.();
-    if (!r.current) return;
+    const el = videoRef.current;
+    if (!el) return;
     if (!document.fullscreenElement) {
-      if (r.current.requestFullscreen) {
-        r.current.requestFullscreen().catch(() => {});
-      } else if (r.current.webkitRequestFullscreen) {
-        r.current.webkitRequestFullscreen();
+      if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
       }
     } else {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
@@ -154,13 +173,14 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
   return (
     <div
       onDoubleClick={toggleFullscreen}
-      className={`vault group relative aspect-video w-36 overflow-hidden rounded-xl bg-black/85 transition-all duration-300 sm:w-40 shrink-0 ${
+      className={`vault group relative aspect-video w-36 overflow-hidden rounded-xl bg-black/90 transition-all duration-300 sm:w-44 shrink-0 ${
         isSpeaking
           ? 'ring-2 ring-[#ff6fa0] shadow-[0_0_15px_rgba(255,111,160,0.6)]'
           : 'ring-1 ring-white/10'
       }`}
       title={isPartner ? 'Double click or tap expand for full screen' : name}
     >
+      {/* Voice Only Mode */}
       {voiceOnly ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-purple-950/80 to-[#160d1f] p-2 text-center">
           <div className={`relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] ${isSpeaking ? 'scale-110 animate-bounce' : 'animate-pulse'}`}>
@@ -169,29 +189,47 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
           <span className="text-[10px] text-white/70">Voice Mode</span>
         </div>
       ) : (
-        <video
-          ref={r}
-          autoPlay
-          playsInline
-          muted
-          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-        />
+        <>
+          {/* Waiting/Connecting placeholder when stream is absent */}
+          {(!stream || !hasVideoTrack) && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-[#1b1526] to-[#0a0810] p-2 text-center z-10 pointer-events-none">
+              <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] animate-pulse">
+                <Video className="h-4 w-4" />
+              </div>
+              <span className="text-[10px] text-white/60">{isPartner ? 'Connecting video…' : 'Starting camera…'}</span>
+            </div>
+          )}
+
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+          />
+        </>
       )}
-      <span className="absolute bottom-1 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm flex items-center gap-1">
+
+      {/* User Name Tag */}
+      <span className="absolute bottom-1 left-1.5 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm flex items-center gap-1 z-20">
         {name}
         {isSpeaking && <i className="h-1.5 w-1.5 rounded-full bg-[#ff6fa0] animate-ping" />}
       </span>
+
+      {/* Speaking Indicator */}
       {isSpeaking && (
-        <span className="absolute top-1 left-1.5 flex items-center gap-0.5 rounded bg-[#d9467a]/90 px-1.5 py-0.5 text-[9px] font-semibold text-white animate-pulse">
+        <span className="absolute top-1 left-1.5 flex items-center gap-0.5 rounded bg-[#d9467a]/90 px-1.5 py-0.5 text-[9px] font-semibold text-white animate-pulse z-20">
           <Mic className="h-2.5 w-2.5" /> Speaking
         </span>
       )}
+
+      {/* Fullscreen Button */}
       {isPartner && stream && !voiceOnly && (
         <button
           type="button"
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit full screen' : 'Full screen partner video'}
-          className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white/80 opacity-80 backdrop-blur transition hover:scale-110 hover:opacity-100"
+          className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white/80 opacity-80 backdrop-blur transition hover:scale-110 hover:opacity-100 z-20"
         >
           {isFullscreen ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
         </button>
@@ -200,7 +238,7 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
   );
 }
 
-export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall, setShowCall, socket, onVoiceActivity }) {
+export default function CouplesOverlay({ me, users = [], peerRef, onScreen, showCall, setShowCall, socket, onVoiceActivity }) {
   const [mine, setMine] = useState(null);
   const [remote, setRemote] = useState({});     // peerId -> MediaStream
   const [ready, setReady] = useState(false);
@@ -211,8 +249,10 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
     if (setShowCall) setShowCall(!val);
     setInternalHidden(val);
   };
-  const box = useRef(), grip = useRef(), local = useRef(), called = useRef(new Set());
-  const usersRef = useRef(users); usersRef.current = users;
+
+  const box = useRef(), grip = useRef(), local = useRef();
+  const activeCalls = useRef(new Map()); // targetPeerId -> PeerJS MediaConnection
+  const knownReadyPeers = useRef(new Set()); // peerIds that announced readiness via socket
 
   // Voice Activity State Tracking (Local + Remote)
   const [localTalking, setLocalTalking] = useState(false);
@@ -233,7 +273,7 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
 
   useStreamVoiceActivity(mine, setLocalTalking);
 
-  // Bandwidth capping for RTCPeerConnection to keep calls smooth on low-end devices & slow 2G/3G networks
+  // Bandwidth capping for RTCPeerConnection to keep calls smooth on mobile & low-bandwidth connections
   const clampBitrates = (pc) => {
     if (!pc || !pc.getSenders) return;
     try {
@@ -242,7 +282,7 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
         const params = sender.getParameters();
         if (!params || !params.encodings || params.encodings.length === 0) return;
         if (sender.track.kind === 'video') {
-          params.encodings[0].maxBitrate = 220000; // 220 kbps for smooth low-spec video
+          params.encodings[0].maxBitrate = 260000; // ~260 kbps for smooth mobile video
           params.encodings[0].maxFramerate = 24;
         } else if (sender.track.kind === 'audio') {
           params.encodings[0].maxBitrate = 32000; // 32 kbps Opus crystal clear voice
@@ -252,50 +292,121 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
     } catch {}
   };
 
+  // Helper to place an outgoing call to a specific peer
+  const callPeer = useCallback((targetId) => {
+    if (!peerRef.current || !ready || !local.current) return;
+    if (activeCalls.current.has(targetId)) {
+      if (remote[targetId]) return; // already connected with remote stream
+      try { activeCalls.current.get(targetId)?.close(); } catch {}
+      activeCalls.current.delete(targetId);
+    }
+
+    try {
+      const c = peerRef.current.call(targetId, local.current, { metadata: { type: 'cam' } });
+      if (!c) return;
+      activeCalls.current.set(targetId, c);
+
+      c.on('stream', (s) => {
+        setRemote((prev) => ({ ...prev, [targetId]: s }));
+        clampBitrates(c.peerConnection);
+      });
+
+      c.on('close', () => {
+        activeCalls.current.delete(targetId);
+        setRemote((prev) => {
+          const next = { ...prev };
+          delete next[targetId];
+          return next;
+        });
+      });
+
+      c.on('error', (err) => {
+        console.warn('Call error with peer', targetId, err);
+        activeCalls.current.delete(targetId);
+      });
+    } catch (e) {
+      console.warn('Failed to initiate call to', targetId, e);
+      activeCalls.current.delete(targetId);
+    }
+  }, [ready, remote]);
+
+  // Main WebRTC & Media Initialization
   useEffect(() => {
-    let peer, dead = false, timer;
+    let peer = null, dead = false, timer = null;
+
     const blank = () => {
       const c = document.createElement('canvas');
-      c.width = c.height = 16;
-      return c.captureStream(1);
+      c.width = 320;
+      c.height = 240;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0f0c18';
+      ctx.fillRect(0, 0, 320, 240);
+      return c.captureStream(5);
     };
-    const u = new URL(serverUrl());
-    let iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
 
-    const open = async () => {
+    const openPeer = async () => {
       const { default: Peer } = await import('peerjs');
       if (dead) return;
-      let peerKey;
+
+      let iceServers = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        { urls: 'stun:stun.services.mozilla.com' },
+      ];
+      let peerKey = 'peerjs';
+
       try {
-        const j = await (await fetch(serverUrl() + '/api/ice?key=' + encodeURIComponent(getKey()))).json();
-        iceServers = j.iceServers;
-        peerKey = j.peerKey;
+        const keyParam = encodeURIComponent(getKey() || '');
+        const res = await fetch(`${serverUrl()}/api/ice?key=${keyParam}`);
+        if (res.ok) {
+          const j = await res.json();
+          if (j.iceServers && j.iceServers.length) iceServers = j.iceServers;
+          if (j.peerKey) peerKey = j.peerKey;
+        }
       } catch {}
 
+      const u = new URL(serverUrl());
       peer = new Peer(me, {
         host: u.hostname,
         port: +u.port || (u.protocol === 'https:' ? 443 : 80),
         path: '/peerjs',
         secure: u.protocol === 'https:',
         config: { iceServers },
-        ...(peerKey && { key: peerKey }),
+        key: peerKey,
       });
       peerRef.current = peer;
 
-      peer.on('open', () => setReady(true));
-      peer.on('disconnected', () => !dead && peer.reconnect());
+      peer.on('open', (id) => {
+        if (dead) return;
+        setReady(true);
+        // Broadcast WebRTC readiness to partner in room via socket
+        socket?.emit('webrtc:signal', { type: 'ready', peerId: id, cid: me });
+      });
+
+      peer.on('disconnected', () => {
+        if (!dead) peer?.reconnect();
+      });
+
       peer.on('error', (e) => {
+        console.warn('PeerJS warning:', e.type, e.message);
         if (e.type === 'unavailable-id') {
-          peer.destroy();
-          timer = setTimeout(open, 2000);
+          peer?.destroy();
+          timer = setTimeout(openPeer, 2000);
+        } else if (e.type === 'peer-unavailable') {
+          const target = e.message.split(' ').pop();
+          if (target) {
+            activeCalls.current.delete(target);
+          }
         }
       });
+
       peer.on('call', (c) => {
         if (c.metadata?.type === 'screen') {
           c.answer();
           c.on('stream', (s) => {
             onScreen(s);
-            // Ultra-low latency: zero-delay playout hint removes receiver buffering
             try {
               c.peerConnection?.getReceivers().forEach((receiver) => {
                 if ('playoutDelayHint' in receiver) {
@@ -306,57 +417,94 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
           });
           c.on('close', () => onScreen(null));
         } else {
-          c.answer(local.current);
-          c.on('stream', (s) => {
-            setRemote((p) => ({ ...p, [c.peer]: s }));
-            clampBitrates(c.peerConnection);
-          });
+          const partnerId = c.peer;
+          activeCalls.current.set(partnerId, c);
+
+          const answerWithStream = (streamToAnswer) => {
+            try {
+              c.answer(streamToAnswer);
+            } catch (err) {
+              console.warn('Error answering call:', err);
+            }
+
+            c.on('stream', (s) => {
+              setRemote((prev) => ({ ...prev, [partnerId]: s }));
+              clampBitrates(c.peerConnection);
+            });
+
+            c.on('close', () => {
+              activeCalls.current.delete(partnerId);
+              setRemote((prev) => {
+                const next = { ...prev };
+                delete next[partnerId];
+                return next;
+              });
+            });
+
+            c.on('error', (err) => {
+              console.warn('Incoming call error with', partnerId, err);
+              activeCalls.current.delete(partnerId);
+            });
+          };
+
+          if (local.current) {
+            answerWithStream(local.current);
+          } else {
+            const checkLocalTimer = setInterval(() => {
+              if (local.current) {
+                clearInterval(checkLocalTimer);
+                answerWithStream(local.current);
+              }
+            }, 100);
+            setTimeout(() => clearInterval(checkLocalTimer), 6000);
+          }
         }
       });
     };
 
+    // Acquire camera & microphone with progressive fallback
     (async () => {
-      let stream;
+      let stream = null;
       try {
-        // Optimized for low-end devices: 480p ideal, 20-24fps, mono audio with AEC & AGC
+        // Ideal standard parameters (good quality + low CPU on phones)
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 480, max: 640 },
-            height: { ideal: 360, max: 480 },
-            frameRate: { ideal: 20, max: 24 }
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            facingMode: 'user',
           },
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
-            channelCount: 1,
           },
         });
-      } catch (e1) {
+      } catch (err1) {
+        console.warn('Standard getUserMedia failed, trying universal fallback:', err1);
         try {
-          // If camera denied or unavailable, capture microphone audio
-          const audioStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-              channelCount: 1,
-            },
-          });
-          const cStream = blank();
-          stream = new MediaStream([
-            ...cStream.getVideoTracks(),
-            ...audioStream.getAudioTracks()
-          ]);
-        } catch (e2) {
-          // Last resort fallback (completely silent canvas)
-          stream = blank();
+          // Universal fallback: basic video + audio without specific constraints
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (err2) {
+          console.warn('Basic video+audio failed, trying audio only:', err2);
+          try {
+            // Audio only fallback
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const cStream = blank();
+            stream = new MediaStream([
+              ...cStream.getVideoTracks(),
+              ...audioStream.getAudioTracks(),
+            ]);
+          } catch (err3) {
+            console.warn('Media capture failed completely, using placeholder:', err3);
+            stream = blank();
+          }
         }
       }
+
       if (dead) return;
       local.current = stream;
       setMine(stream);
-      open();
+      await openPeer();
     })();
 
     return () => {
@@ -368,22 +516,70 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
     };
   }, [me]);
 
+  // Socket signaling listener for immediate and synchronized WebRTC connection
   useEffect(() => {
-    if (!ready) return;
-    users.filter((u) => u.id !== me && me < u.id && !called.current.has(u.sid)).forEach((u) => {
-      called.current.add(u.sid);
-      const c = peerRef.current.call(u.id, local.current, { metadata: { type: 'cam' } });
-      c?.on('stream', (s) => {
-        setRemote((p) => ({ ...p, [u.id]: s }));
-        clampBitrates(c?.peerConnection);
-      });
-    });
-  }, [users, ready]);
+    if (!socket) return;
 
+    const onSignal = (payload = {}) => {
+      const fromPeerId = payload.peerId || payload.fromCid;
+      if (!fromPeerId || fromPeerId === me) return;
+
+      if (payload.type === 'ready') {
+        knownReadyPeers.current.add(fromPeerId);
+        // Deterministic caller: peer with lexicographically smaller ID initiates
+        if (ready && local.current) {
+          if (me < fromPeerId) {
+            callPeer(fromPeerId);
+          } else {
+            // Acknowledge so the other peer knows we are listening and ready
+            socket.emit('webrtc:signal', { type: 'ready_ack', targetId: fromPeerId, peerId: me, cid: me });
+          }
+        }
+      } else if (payload.type === 'ready_ack') {
+        if (payload.targetId === me && ready && local.current && (me < fromPeerId)) {
+          callPeer(fromPeerId);
+        }
+      } else if (payload.type === 'retry') {
+        if (payload.targetId === me && ready && local.current && (me < fromPeerId)) {
+          activeCalls.current.delete(fromPeerId);
+          callPeer(fromPeerId);
+        }
+      }
+    };
+
+    socket.on('webrtc:signal', onSignal);
+    return () => socket.off('webrtc:signal', onSignal);
+  }, [socket, ready, me, callPeer]);
+
+  // Watchdog & Reconnection loop: checks every 3 seconds to ensure every peer has a live stream
+  useEffect(() => {
+    if (!ready || !local.current) return;
+
+    const checkConnections = () => {
+      const partnerUsers = users.filter((u) => u.id !== me);
+      partnerUsers.forEach((partner) => {
+        // If partner is present in room, but we don't have their stream yet:
+        if (!remote[partner.id]) {
+          if (me < partner.id) {
+            callPeer(partner.id);
+          } else {
+            // Signal partner to retry calling us
+            socket?.emit('webrtc:signal', { type: 'retry', targetId: partner.id, fromCid: me });
+          }
+        }
+      });
+    };
+
+    const interval = setInterval(checkConnections, 3200);
+    checkConnections();
+    return () => clearInterval(interval);
+  }, [users, ready, remote, me, socket, callPeer]);
+
+  // GSAP Draggable for video window
   useEffect(() => {
     if (isHidden || !box.current) return;
     const d = Draggable.create(box.current, { trigger: grip.current, bounds: window, inertia: false })[0];
-    gsap.from(box.current, { scale: 0.85, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' });
+    gsap.from(box.current, { scale: 0.85, opacity: 0, duration: 0.35, ease: 'back.out(1.4)' });
     return () => d?.kill?.();
   }, [isHidden]);
 
@@ -409,7 +605,7 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
   return (
     <>
       {/* Persistent Audio for Remote Peers: Always mounted so voice call NEVER drops even when video call is hidden */}
-      <div className="sr-only">
+      <div>
         {users.filter((u) => u.id !== me && remote[u.id]).map((u) => (
           <RemoteAudio
             key={u.id}
@@ -458,7 +654,10 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
           </div>
 
           <div className={`flex ${layout === 'side' ? 'flex-row overflow-x-auto max-w-[85vw]' : 'flex-col'} gap-2`}>
+            {/* Local User Tile */}
             <Tile stream={mine} name="You" isPartner={false} voiceOnly={voiceOnly} isSpeaking={localTalking} />
+
+            {/* Remote Peer Tiles */}
             {users.filter((u) => u.id !== me).map((u) => (
               <Tile
                 key={u.id}
