@@ -97,6 +97,16 @@ body {
 }
 .candle-flame { animation: candleGlow 2s infinite ease-in-out; }
 
+@keyframes candleFlicker {
+  0%, 100% { opacity: 0.85; filter: brightness(1); }
+  25% { opacity: 0.72; filter: brightness(0.92); }
+  50% { opacity: 0.95; filter: brightness(1.06); }
+  75% { opacity: 0.78; filter: brightness(0.95); }
+}
+.candle-flicker {
+  animation: candleFlicker 3.2s ease-in-out infinite !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .floater { display: none; }

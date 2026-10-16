@@ -6,13 +6,16 @@ import gsap from 'gsap';
 import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
-  Video, VideoOff, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings
+  Video, VideoOff, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
+  Timer, Popcorn, Flame, Shield, Star
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
 import VideoPlayer from '@/components/VideoPlayer';
 import CouplesOverlay from '@/components/CouplesOverlay';
 import CoupleGestures from '@/components/CoupleGestures';
+import MovieNightExtras from '@/components/MovieNightExtras';
+import IntimacyMode from '@/components/IntimacyMode';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 
@@ -77,15 +80,50 @@ export default function Room() {
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
   // Mobile enhancements & Video Call control
-  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'gestures' | 'queue'
+  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'gestures' | 'extras' | 'intimacy'
+  const [desktopTab, setDesktopTab] = useState('gestures'); // 'gestures' | 'extras' | 'intimacy'
   const [showMenu, setShowMenu] = useState(false);
   const [showCall, setShowCall] = useState(true);
+
+  // Movie-Night Extras & Intimacy State
+  const [watchlist, setWatchlist] = useState([]);
+  const [timer, setTimer] = useState(null);
+  const [readyCheck, setReadyCheck] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [ambient, setAmbient] = useState({ preset: 'love', intensity: 80, flicker: false });
+  const [adultMode, setAdultMode] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
+  const [currentMedia, setCurrentMedia] = useState(null);
 
   const peerRef = useRef(null), playerRef = useRef(null), listRef = useRef(), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
   const me = typeof window !== 'undefined' ? getCid() : null;
 
   const say = (m) => { setToast({ m, n: Date.now() }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2400); };
+
+  const applyAmbientLighting = (amb) => {
+    if (!amb || typeof document === 'undefined') return;
+    const presets = {
+      love: 'radial-gradient(circle at 50% 20%, rgba(217, 70, 122, 0.32), transparent 70%), #0c0612',
+      candlelight: 'radial-gradient(circle at 50% 30%, rgba(255, 158, 66, 0.35), transparent 70%), #0d0806',
+      midnight: 'radial-gradient(circle at 50% 20%, rgba(138, 43, 226, 0.32), transparent 70%), #08040f',
+      ruby: 'radial-gradient(circle at 50% 25%, rgba(229, 9, 20, 0.3), transparent 70%), #0d0507',
+      sunset: 'radial-gradient(circle at 50% 20%, rgba(255, 110, 127, 0.32), transparent 70%), #0f070a',
+      noir: 'radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.25), transparent 70%), #050307',
+    };
+    const bg = presets[amb.preset] || presets.love;
+    const opacity = (amb.intensity ?? 80) / 100;
+    const ambientEl = document.querySelector('.ambient');
+    if (ambientEl) {
+      ambientEl.style.background = bg;
+      ambientEl.style.opacity = opacity;
+      if (amb.flicker) {
+        ambientEl.classList.add('candle-flicker');
+      } else {
+        ambientEl.classList.remove('candle-flicker');
+      }
+    }
+  };
 
   const doJoin = (overridePass, overrideKey) => {
     if (!socket || !name) return;
@@ -111,7 +149,16 @@ export default function Room() {
       setErr('');
       sessionStorage.tok = r.token;
       if (p) sessionStorage.setItem('rp_' + roomId, p);
-      setQueue(r.queue);
+      setQueue(r.queue || []);
+      setWatchlist(r.watchlist || []);
+      setTimer(r.timer || null);
+      setReadyCheck(r.readyCheck || null);
+      setReviews(r.reviews || []);
+      setAmbient(r.ambient || { preset: 'love', intensity: 80, flicker: false });
+      setAdultMode(!!r.adult);
+      setHasPin(!!r.hasPin);
+      if (r.media) setCurrentMedia(r.media);
+      applyAmbientLighting(r.ambient);
       setLock(r.lock);
       setUsers(r.users);
       setHostId(r.hostId);
@@ -146,6 +193,7 @@ export default function Room() {
     socket.on('presence', (p) => {
       p.users.forEach((u) => { if (u.id !== me && !seen.current.has(u.sid)) { seen.current.add(u.sid); hello(u.name); } });
       setUsers(p.users); setHostId(p.hostId); setLock(p.lock);
+      if (p.adult !== undefined) setAdultMode(!!p.adult);
     });
     socket.on('chat', (m) => setChat((c) => [...c.slice(-99), m]));
     socket.on('chat:cleared', () => setChat([]));
@@ -159,6 +207,20 @@ export default function Room() {
     });
     if (window.Notification?.permission === 'default') Notification.requestPermission();
     socket.on('queue', setQueue);
+    socket.on('watchlist', setWatchlist);
+    socket.on('timer:sync', setTimer);
+    socket.on('ready:update', setReadyCheck);
+    socket.on('ready:all', setReadyCheck);
+    socket.on('reviews:update', setReviews);
+    socket.on('ambient:update', (amb) => {
+      setAmbient(amb);
+      applyAmbientLighting(amb);
+    });
+    socket.on('room:adult_updated', setAdultMode);
+    socket.on('pin:status', (s) => setHasPin(!!s?.hasPin));
+    socket.on('state', (st) => {
+      if (st?.media) setCurrentMedia(st.media);
+    });
     socket.on('nudge', () => {
       navigator.vibrate?.([200, 100, 200]);
       for (let i = 0; i < 14; i++) {
@@ -320,6 +382,39 @@ export default function Room() {
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Active Snack Timer Indicator */}
+          {timer?.running && (
+            <button
+              type="button"
+              onClick={() => { setMobileTab('extras'); setDesktopTab('extras'); }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono animate-pulse hover:bg-emerald-500/30"
+              title="Synchronized snack break in progress"
+            >
+              <Timer className="h-3 w-3" />
+              <span>🍿 {Math.floor(Math.max(0, (timer.endsAt - Date.now()) / 1000) / 60)}:{(Math.floor(Math.max(0, (timer.endsAt - Date.now()) / 1000) % 60) + '').padStart(2, '0')}</span>
+            </button>
+          )}
+
+          {/* Active Ready Check Indicator */}
+          {readyCheck?.active && (
+            <button
+              type="button"
+              onClick={() => { setMobileTab('extras'); setDesktopTab('extras'); }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#d9467a]/25 border border-[#d9467a]/50 text-[#ff8fb3] text-xs font-semibold animate-bounce hover:bg-[#d9467a]/40"
+              title="Ready to watch check-in active"
+            >
+              <Popcorn className="h-3 w-3" />
+              <span className="hidden sm:inline">Ready Check</span>
+            </button>
+          )}
+
+          {/* Adult Mode Indicator */}
+          {adultMode && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 text-[11px] font-bold" title="Adults-Only 18+ Private Couch">
+              18+ 🔥
+            </span>
+          )}
+
           {/* Prominent Video Call Hide/Show Button */}
           <button
             type="button"
@@ -452,11 +547,11 @@ export default function Room() {
             />
 
             {/* MOBILE ONLY: App-like Segmented Tab Bar */}
-            <div className="lg:hidden flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1 my-2.5">
+            <div className="lg:hidden flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1 my-2.5 overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setMobileTab('chat')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                   mobileTab === 'chat'
                     ? 'bg-[#d9467a] text-white shadow-md'
                     : 'text-white/70 hover:text-white'
@@ -469,7 +564,7 @@ export default function Room() {
               <button
                 type="button"
                 onClick={() => setMobileTab('gestures')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                   mobileTab === 'gestures'
                     ? 'bg-[#d9467a] text-white shadow-md'
                     : 'text-white/70 hover:text-white'
@@ -480,16 +575,32 @@ export default function Room() {
               </button>
               <button
                 type="button"
-                onClick={() => setMobileTab('queue')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition ${
-                  mobileTab === 'queue'
+                onClick={() => setMobileTab('extras')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                  mobileTab === 'extras'
                     ? 'bg-[#d9467a] text-white shadow-md'
                     : 'text-white/70 hover:text-white'
                 }`}
               >
-                <ListPlus className="h-3.5 w-3.5" />
-                <span>Queue</span>
-                {queue.length > 0 && <span className="text-[10px] bg-white/20 px-1.5 rounded-full">{queue.length}</span>}
+                <Popcorn className="h-3.5 w-3.5 text-amber-300" />
+                <span>Date Extras</span>
+                {(queue.length > 0 || timer?.running || readyCheck?.active) && (
+                  <span className="text-[10px] bg-amber-400/30 text-amber-200 px-1.5 rounded-full">
+                    {timer?.running ? '⏱️' : readyCheck?.active ? '🍿' : queue.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab('intimacy')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                  mobileTab === 'intimacy'
+                    ? 'bg-[#d9467a] text-white shadow-md'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Flame className="h-3.5 w-3.5 text-rose-400" />
+                <span>Intimacy {adultMode && '🔥'}</span>
               </button>
             </div>
 
@@ -501,41 +612,125 @@ export default function Room() {
                   <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
                 </div>
               )}
-              {mobileTab === 'queue' && (
-                <div className="rise card p-3.5">
-                  <p className="mb-2.5 text-xs font-medium uppercase tracking-wide opacity-60">Up next ({queue.length})</p>
-                  {queue.length === 0 ? (
-                    <p className="text-xs text-white/50 text-center py-4">No movies in queue. Paste a link above and tap &ldquo;Add to queue&rdquo;.</p>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {queue.map((q) => (
-                        <li key={q.id} className="flex items-center gap-2 text-sm rounded-lg bg-white/5 p-2">
-                          <button onClick={() => socket.emit('queue:next', q.id)} aria-label="Play now" className="ghost !p-1.5"><Play className="h-3.5 w-3.5 text-[#ff6fa0]" /></button>
-                          <span className="min-w-0 flex-1 truncate text-xs">{q.src.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                          <button onClick={() => socket.emit('queue:remove', q.id)} aria-label="Remove" className="opacity-50 hover:opacity-100 p-1"><X className="h-4 w-4" /></button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+              {mobileTab === 'extras' && (
+                <div className="rise">
+                  <MovieNightExtras
+                    socket={socket}
+                    me={me}
+                    name={name}
+                    users={users}
+                    queue={queue}
+                    watchlist={watchlist}
+                    currentMedia={currentMedia}
+                    timer={timer}
+                    readyCheck={readyCheck}
+                    reviews={reviews}
+                    isHost={me === hostId}
+                    say={say}
+                  />
+                </div>
+              )}
+              {mobileTab === 'intimacy' && (
+                <div className="rise">
+                  <IntimacyMode
+                    socket={socket}
+                    me={me}
+                    isHost={me === hostId}
+                    adultMode={adultMode}
+                    ambient={ambient}
+                    hasPin={hasPin}
+                    say={say}
+                    onApplyAmbient={applyAmbientLighting}
+                  />
                 </div>
               )}
             </div>
 
-            {/* DESKTOP ONLY: Always Show Gestures and Queue under Video */}
+            {/* DESKTOP ONLY: Lower Tab Switcher and Content */}
             <div className="hidden lg:block space-y-3 mt-3">
-              <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
-              {queue.length > 0 && (
-                <div className="card p-3">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide opacity-60">Up next</p>
-                  <ul className="space-y-1">
-                    {queue.map((q) => (
-                      <li key={q.id} className="flex items-center gap-2 text-sm">
-                        <button onClick={() => socket.emit('queue:next', q.id)} aria-label="Play now" className="ghost !p-1.5"><Play className="h-3.5 w-3.5" /></button>
-                        <span className="min-w-0 flex-1 truncate">{q.src.replace(/^https?:\/\/(www\.)?/, '')}</span>
-                        <button onClick={() => socket.emit('queue:remove', q.id)} aria-label="Remove" className="opacity-50 hover:opacity-100"><X className="h-4 w-4" /></button>
-                      </li>
-                    ))}
-                  </ul>
+              {/* Segmented Desktop Switcher */}
+              <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDesktopTab('gestures')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                    desktopTab === 'gestures'
+                      ? 'bg-[#d9467a] text-white shadow-md'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Heart className="h-4 w-4 text-[#ff6fa0]" />
+                  <span>Romantic Gestures 💕</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesktopTab('extras')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                    desktopTab === 'extras'
+                      ? 'bg-[#d9467a] text-white shadow-md'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Popcorn className="h-4 w-4 text-amber-300" />
+                  <span>Movie-Night Extras 🍿</span>
+                  {(queue.length > 0 || timer?.running || readyCheck?.active) && (
+                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                      {timer?.running ? '⏱️' : readyCheck?.active ? 'Ready?' : queue.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDesktopTab('intimacy')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                    desktopTab === 'intimacy'
+                      ? 'bg-[#d9467a] text-white shadow-md'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Flame className="h-4 w-4 text-rose-400" />
+                  <span>Intimacy &amp; Lighting 🕯️</span>
+                  {adultMode && <span className="text-[10px] bg-rose-500/30 text-rose-200 px-1.5 rounded-full">18+</span>}
+                </button>
+              </div>
+
+              {desktopTab === 'gestures' && (
+                <div className="rise">
+                  <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
+                </div>
+              )}
+
+              {desktopTab === 'extras' && (
+                <div className="rise">
+                  <MovieNightExtras
+                    socket={socket}
+                    me={me}
+                    name={name}
+                    users={users}
+                    queue={queue}
+                    watchlist={watchlist}
+                    currentMedia={currentMedia}
+                    timer={timer}
+                    readyCheck={readyCheck}
+                    reviews={reviews}
+                    isHost={me === hostId}
+                    say={say}
+                  />
+                </div>
+              )}
+
+              {desktopTab === 'intimacy' && (
+                <div className="rise">
+                  <IntimacyMode
+                    socket={socket}
+                    me={me}
+                    isHost={me === hostId}
+                    adultMode={adultMode}
+                    ambient={ambient}
+                    hasPin={hasPin}
+                    say={say}
+                    onApplyAmbient={applyAmbientLighting}
+                  />
                 </div>
               )}
             </div>

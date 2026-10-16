@@ -519,13 +519,42 @@ const io = new Server(server, {
   allowRequest: (req, cb) => cb(null, !CLIENT_ORIGIN || !req.headers.origin || origin.includes(req.headers.origin)),  // block cross-site websockets
 });
 const rooms = new Map();
-const fresh = () => ({ pass: null, users: new Map(), hostId: null, screenBy: null, lock: false, queue: [],
-  media: { type: 'none', src: '' }, playing: false, time: 0, at: Date.now(), chat: [] });
+const fresh = () => ({
+  pass: null,
+  pin: null,
+  users: new Map(),
+  hostId: null,
+  screenBy: null,
+  lock: false,
+  queue: [],
+  watchlist: [],
+  media: { type: 'none', src: '', title: '', poster: '', desc: '' },
+  playing: false,
+  time: 0,
+  at: Date.now(),
+  chat: [],
+  timer: null,
+  readyCheck: null,
+  reviews: [],
+  ambient: { preset: 'love', intensity: 80, flicker: false },
+  adult: false,
+});
 try { for (const [id, v] of Object.entries(JSON.parse(fs.readFileSync(DATA_FILE)))) rooms.set(id, { ...fresh(), ...v }); } catch {}
 let saveT;                                          // persist rooms so "our room" survives restarts
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries([...rooms].map(([id, r]) => [id, { pass: r.pass, media: r.media, queue: r.queue, chat: r.chat, lock: r.lock }]))));
+  fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries([...rooms].map(([id, r]) => [id, {
+    pass: r.pass,
+    pin: r.pin,
+    media: r.media,
+    queue: r.queue,
+    watchlist: r.watchlist || [],
+    chat: r.chat,
+    lock: r.lock,
+    reviews: r.reviews || [],
+    ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
+    adult: !!r.adult,
+  }]))));
 } catch (e) { console.error('save failed', e.message); } }, 1000); };
 // room passkey: stored only as a salted scrypt hash, so even the server file never holds it
 const hashPass = (p) => { const salt = crypto.randomBytes(16); return salt.toString('hex') + ':' + crypto.scryptSync(p, salt, 32).toString('hex'); };
@@ -537,7 +566,7 @@ const passOk = (r, p) => {
 const position = (r) => r.time + (r.playing ? (Date.now() - r.at) / 1000 : 0);
 const snapshot = (r) => ({ media: r.media, playing: r.playing, time: position(r) });
 const roster = (r) => [...r.users.values()].map(({ cid, name, color, sid }) => ({ id: cid, name, color, sid }));
-const presence = (id, r) => io.to(id).emit('presence', { users: roster(r), hostId: r.hostId, lock: r.lock });
+const presence = (id, r) => io.to(id).emit('presence', { users: roster(r), hostId: r.hostId, lock: r.lock, adult: !!r.adult });
 const PRIVATE = /^(localhost|.*\.(local|internal|lan)|127\..*|10\..*|192\.168\..*|172\.(1[6-9]|2\d|3[01])\..*|169\.254\..*|0\.0\.0\.0|\[?::1?\]?|\[?f[cd].*)$/i;
 const cleanUrl = (v) => { // http(s) only; never point a partner's browser at their home network
   try {
@@ -587,7 +616,24 @@ io.on('connection', (socket) => {
     room.users.set(cid, user);
     if (!room.hostId || !room.users.has(room.hostId)) room.hostId = cid;
     socket.join(rid);
-    ack({ me: cid, token: user.token, ...snapshot(room), users: roster(room), hostId: room.hostId, lock: room.lock, queue: room.queue, chat: room.chat, screenBy: room.screenBy });
+    ack({
+      me: cid,
+      token: user.token,
+      ...snapshot(room),
+      users: roster(room),
+      hostId: room.hostId,
+      lock: room.lock,
+      queue: room.queue,
+      watchlist: room.watchlist || [],
+      chat: room.chat,
+      screenBy: room.screenBy,
+      timer: room.timer,
+      readyCheck: room.readyCheck,
+      reviews: room.reviews || [],
+      ambient: room.ambient || { preset: 'love', intensity: 80, flicker: false },
+      adult: !!room.adult,
+      hasPin: !!room.pin,
+    });
     socket.emit('state', snapshot(room));            // re-sync player after reconnect
     presence(rid, room);
   });
@@ -595,23 +641,247 @@ io.on('connection', (socket) => {
   socket.on('media:set', ({ media } = {}) => {
     const local = media?.type === 'local';             // local file: each partner opens their own copy
     const src = local ? '' : cleanUrl(media?.src);
-    if (!canControl() || !(local || src) || ![...TYPES, 'local'].includes(media.type)) return;
-    setMedia(rid, room, { type: media.type, src, ...(local && { name: String(media.name || '').slice(0, 200) }) });
+    if (!canControl() || !(local || src) || ![...TYPES, 'local'].includes(media?.type)) return;
+    setMedia(rid, room, {
+      type: media.type,
+      src,
+      title: String(media.title || media.name || '').slice(0, 200),
+      poster: cleanUrl(media.poster) || '',
+      desc: String(media.desc || '').slice(0, 1000),
+      ...(local && { name: String(media.name || '').slice(0, 200) })
+    });
   });
 
   const pushQ = () => { io.to(rid).emit('queue', room.queue); save(); };
+  const pushWL = () => { io.to(rid).emit('watchlist', room.watchlist); save(); };
+
   socket.on('queue:add', ({ media } = {}) => {
     const src = cleanUrl(media?.src);
-    if (!joined() || !src || !TYPES.includes(media.type) || room.queue.length >= 100) return;
-    room.queue.push({ id: crypto.randomUUID(), type: media.type, src }); pushQ();
+    if (!joined() || !src || !TYPES.includes(media?.type) || room.queue.length >= 100) return;
+    room.queue.push({
+      id: crypto.randomUUID(),
+      type: media.type,
+      src,
+      title: String(media.title || '').slice(0, 200),
+      poster: cleanUrl(media.poster) || '',
+      desc: String(media.desc || '').slice(0, 1000),
+      addedBy: user.name,
+      addedAt: Date.now(),
+    });
+    pushQ();
   });
+
+  socket.on('queue:reorder', ({ fromIndex, toIndex } = {}) => {
+    if (!canControl() || !Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) return;
+    if (fromIndex < 0 || fromIndex >= room.queue.length || toIndex < 0 || toIndex >= room.queue.length) return;
+    const [moved] = room.queue.splice(fromIndex, 1);
+    room.queue.splice(toIndex, 0, moved);
+    pushQ();
+  });
+
   socket.on('queue:remove', (id) => { if (joined()) { room.queue = room.queue.filter((q) => q.id !== id); pushQ(); } });
   socket.on('queue:next', (id) => {                  // play next (or a chosen item)
     if (!canControl()) return;
     const i = id ? room.queue.findIndex((q) => q.id === id) : 0;
     if (i < 0 || !room.queue.length) return;
-    const [q] = room.queue.splice(i, 1); setMedia(rid, room, { type: q.type, src: q.src }); pushQ();
+    const [q] = room.queue.splice(i, 1);
+    setMedia(rid, room, { type: q.type, src: q.src, title: q.title, poster: q.poster, desc: q.desc });
+    pushQ();
   });
+
+  // Watchlist handlers
+  socket.on('watchlist:add', ({ item } = {}) => {
+    if (!joined() || !item?.title || (room.watchlist && room.watchlist.length >= 100)) return;
+    if (!room.watchlist) room.watchlist = [];
+    room.watchlist.push({
+      id: crypto.randomUUID(),
+      title: String(item.title).slice(0, 200),
+      poster: cleanUrl(item.poster) || '',
+      desc: String(item.desc || '').slice(0, 1000),
+      src: cleanUrl(item.src) || '',
+      type: TYPES.includes(item.type) ? item.type : 'embed',
+      addedBy: user.name,
+      addedAt: Date.now(),
+    });
+    pushWL();
+  });
+
+  socket.on('watchlist:remove', (id) => {
+    if (joined() && room.watchlist) {
+      room.watchlist = room.watchlist.filter((w) => w.id !== id);
+      pushWL();
+    }
+  });
+
+  socket.on('watchlist:to_queue', (id) => {
+    if (!joined() || !room.watchlist) return;
+    const item = room.watchlist.find((w) => w.id === id);
+    if (!item) return;
+    room.queue.push({
+      id: crypto.randomUUID(),
+      type: item.type || 'embed',
+      src: item.src || '',
+      title: item.title,
+      poster: item.poster,
+      desc: item.desc,
+      addedBy: user.name,
+      addedAt: Date.now(),
+    });
+    pushQ();
+  });
+
+  // Synchronized Snack / Date-Night Timer
+  socket.on('timer:start', ({ duration, label } = {}) => {
+    if (!joined() || !Number.isFinite(+duration) || +duration <= 0) return;
+    const d = Math.min(3600 * 4, Math.max(10, Math.round(+duration)));
+    room.timer = {
+      duration: d,
+      endsAt: Date.now() + d * 1000,
+      running: true,
+      label: String(label || 'Snack Break 🍿').slice(0, 100),
+      startedBy: user.name,
+    };
+    io.to(rid).emit('timer:sync', room.timer);
+  });
+
+  socket.on('timer:pause', () => {
+    if (!joined() || !room.timer || !room.timer.running) return;
+    const remaining = Math.max(0, room.timer.endsAt - Date.now());
+    room.timer.running = false;
+    room.timer.pausedRemaining = remaining;
+    io.to(rid).emit('timer:sync', room.timer);
+  });
+
+  socket.on('timer:resume', () => {
+    if (!joined() || !room.timer || room.timer.running || !room.timer.pausedRemaining) return;
+    room.timer.running = true;
+    room.timer.endsAt = Date.now() + room.timer.pausedRemaining;
+    delete room.timer.pausedRemaining;
+    io.to(rid).emit('timer:sync', room.timer);
+  });
+
+  socket.on('timer:reset', () => {
+    if (!joined()) return;
+    room.timer = null;
+    io.to(rid).emit('timer:sync', null);
+  });
+
+  // "Ready to Watch?" Confirmation
+  socket.on('ready:start', () => {
+    if (!joined()) return;
+    room.readyCheck = {
+      active: true,
+      readyUsers: [user.cid],
+      startedBy: user.name,
+      startedAt: Date.now(),
+      allReady: false,
+    };
+    io.to(rid).emit('ready:update', room.readyCheck);
+  });
+
+  socket.on('ready:confirm', () => {
+    if (!joined() || !room.readyCheck || !room.readyCheck.active) return;
+    if (!room.readyCheck.readyUsers.includes(user.cid)) {
+      room.readyCheck.readyUsers.push(user.cid);
+    }
+    const needed = Math.min(2, Math.max(1, room.users.size));
+    if (room.readyCheck.readyUsers.length >= needed) {
+      room.readyCheck.allReady = true;
+      io.to(rid).emit('ready:all', room.readyCheck);
+      // Auto-start playback
+      room.playing = true;
+      room.at = Date.now();
+      io.to(rid).emit('player', { action: 'PLAY', time: room.time, by: 'readyCheck' });
+      setTimeout(() => {
+        if (room.readyCheck) {
+          room.readyCheck = null;
+          io.to(rid).emit('ready:update', null);
+        }
+      }, 5000);
+    } else {
+      io.to(rid).emit('ready:update', room.readyCheck);
+    }
+  });
+
+  socket.on('ready:cancel', () => {
+    if (!joined()) return;
+    room.readyCheck = null;
+    io.to(rid).emit('ready:update', null);
+  });
+
+  // End-of-movie rating and memories
+  socket.on('review:prompt', () => {
+    if (joined()) io.to(rid).emit('review:prompt', { title: room.media?.title || room.media?.name || 'Tonight\'s Movie' });
+  });
+
+  socket.on('review:submit', ({ movieTitle, stars, moment, vibe } = {}) => {
+    if (!joined() || !movieTitle) return;
+    if (!room.reviews) room.reviews = [];
+    const title = String(movieTitle).slice(0, 200);
+    let entry = room.reviews.find((r) => r.movieTitle.toLowerCase() === title.toLowerCase());
+    if (!entry) {
+      entry = { id: crypto.randomUUID(), movieTitle: title, ratings: {}, date: Date.now() };
+      room.reviews.unshift(entry);
+    }
+    entry.ratings[user.cid] = {
+      name: user.name,
+      stars: Math.min(5, Math.max(1, +stars || 5)),
+      moment: String(moment || '').slice(0, 500),
+      vibe: String(vibe || 'Cozy Date').slice(0, 50),
+      ts: Date.now(),
+    };
+    io.to(rid).emit('reviews:update', room.reviews);
+    save();
+  });
+
+  // Intimacy Mode & Ambient Lighting
+  socket.on('ambient:set', (ambient = {}) => {
+    if (!joined()) return;
+    room.ambient = {
+      preset: String(ambient.preset || 'love').slice(0, 30),
+      intensity: Math.min(100, Math.max(0, +ambient.intensity || 80)),
+      flicker: !!ambient.flicker,
+    };
+    io.to(rid).emit('ambient:update', room.ambient);
+    save();
+  });
+
+  socket.on('room:toggle_adult', (v) => {
+    if (!joined() || user.cid !== room.hostId) return;
+    room.adult = !!v;
+    io.to(rid).emit('room:adult_updated', room.adult);
+    presence(rid, room);
+    save();
+  });
+
+  socket.on('pin:set', ({ pin } = {}, ack) => {
+    if (typeof ack !== 'function') return;
+    if (!joined() || user.cid !== room.hostId) return ack({ error: 'denied' });
+    const cleanPin = String(pin || '').trim();
+    if (!cleanPin) {
+      room.pin = null;
+      io.to(rid).emit('pin:status', { hasPin: false });
+      save();
+      return ack({ ok: true, hasPin: false });
+    }
+    if (!/^\d{4,8}$/.test(cleanPin)) return ack({ error: 'invalid' });
+    room.pin = hashPass(cleanPin);
+    io.to(rid).emit('pin:status', { hasPin: true });
+    save();
+    ack({ ok: true, hasPin: true });
+  });
+
+  socket.on('pin:verify', ({ pin } = {}, ack) => {
+    if (typeof ack !== 'function') return;
+    if (!joined() || !room.pin) return ack({ ok: true });
+    const cleanPin = String(pin || '').trim();
+    if (passOk(room, cleanPin)) {
+      ack({ ok: true });
+    } else {
+      ack({ error: 'badpin' });
+    }
+  });
+
   socket.on('chat:clear', () => { if (joined()) { room.chat = []; io.to(rid).emit('chat:cleared'); save(); } });   // wipe saved chat for both
   socket.on('nudge', () => { if (joined()) socket.to(rid).emit('nudge', { from: user.name }); });
 
