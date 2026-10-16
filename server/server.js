@@ -234,6 +234,12 @@ async function resolveHubstream(inputUrl) {
   }
 }
 
+// Adult URL detector
+function isAdultUrl(target) {
+  if (!target) return false;
+  return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\./i.test(String(target));
+}
+
 // Tube and adult site embed converters
 function convertTubeUrl(target) {
   try {
@@ -423,13 +429,16 @@ app.get('/api/resolve', async (req, res) => {
     if (resolved) return res.json(resolved);
   }
 
+  const isAdult = isAdultUrl(target);
+
   // 1. Try extracting direct stream for full HTML5 synchronized playback
   const directStream = await extractDirectStream(target);
   if (directStream) {
     return res.json({
       type: directStream.type,
       src: `/api/stream?url=${encodeURIComponent(directStream.stream)}`,
-      origSrc: target,
+      origSrc: isAdult ? '🔒 Private Stream' : target,
+      title: isAdult ? '🔒 Private Stream' : '',
     });
   }
 
@@ -439,7 +448,8 @@ app.get('/api/resolve', async (req, res) => {
     return res.json({
       type: 'proxy',
       src: `/api/proxy?url=${encodeURIComponent(tubeEmbed)}`,
-      origSrc: target,
+      origSrc: isAdult ? '🔒 Private Stream' : target,
+      title: isAdult ? '🔒 Private Stream' : '',
       embedUrl: tubeEmbed,
     });
   }
@@ -743,12 +753,20 @@ io.on('connection', (socket) => {
     const local = media?.type === 'local';             // local file: each partner opens their own copy
     const src = local ? '' : cleanUrl(media?.src);
     if (!canControl() || !(local || src) || ![...TYPES, 'local'].includes(media?.type)) return;
+
+    // Enforce 18+ Adults-Only mode: only allow playing if room.adult is true
+    const isAdult = isAdultUrl(src) || isAdultUrl(media?.orig) || isAdultUrl(media?.origSrc);
+    if (isAdult && !room.adult) {
+      socket.emit('toast', '🔞 18+ Mode is disabled. Enable Adults-Only 18+ in Intimacy settings to play.');
+      return;
+    }
+
     setMedia(rid, room, {
       type: media.type,
       src,
-      title: String(media.title || media.name || '').slice(0, 200),
-      poster: cleanUrl(media.poster) || '',
-      desc: String(media.desc || '').slice(0, 1000),
+      title: isAdult ? '🔒 Private Stream' : String(media.title || media.name || '').slice(0, 200),
+      poster: isAdult ? '' : cleanUrl(media.poster) || '',
+      desc: isAdult ? 'Private adults-only date stream' : String(media.desc || '').slice(0, 1000),
       ...(local && { name: String(media.name || '').slice(0, 200) })
     });
   });
@@ -759,6 +777,14 @@ io.on('connection', (socket) => {
   socket.on('queue:add', ({ media } = {}) => {
     const src = cleanUrl(media?.src);
     if (!joined() || !src || !TYPES.includes(media?.type) || room.queue.length >= 100) return;
+
+    // Enforce 18+ Adults-Only mode: only allow queuing if room.adult is true
+    const isAdult = isAdultUrl(src) || isAdultUrl(media?.orig) || isAdultUrl(media?.origSrc);
+    if (isAdult && !room.adult) {
+      socket.emit('toast', '🔞 18+ Mode is disabled. Enable Adults-Only 18+ in Intimacy settings to add.');
+      return;
+    }
+
     // Prevent duplicate entries in queue
     if (room.queue.some((q) => q.src === src)) {
       socket.emit('toast', 'Already in the queue!');
@@ -768,9 +794,9 @@ io.on('connection', (socket) => {
       id: crypto.randomUUID(),
       type: media.type,
       src,
-      title: String(media.title || '').slice(0, 200),
-      poster: cleanUrl(media.poster) || '',
-      desc: String(media.desc || '').slice(0, 1000),
+      title: isAdult ? '🔒 Private Stream' : String(media.title || '').slice(0, 200),
+      poster: isAdult ? '' : cleanUrl(media.poster) || '',
+      desc: isAdult ? 'Private adults-only date stream' : String(media.desc || '').slice(0, 1000),
       addedBy: user.name,
       addedAt: Date.now(),
       votes: {},

@@ -7,7 +7,7 @@ import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
-  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone
+  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -18,6 +18,7 @@ import MovieNightExtras from '@/components/MovieNightExtras';
 import IntimacyMode from '@/components/IntimacyMode';
 import AiWatchAssistant from '@/components/AiWatchAssistant';
 import WatchHistoryModal from '@/components/WatchHistoryModal';
+import RecentBar from '@/components/RecentBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 
@@ -507,6 +508,21 @@ export default function Room() {
             <span className="hidden sm:inline">Handoff</span>
           </button>
 
+          {/* Quick Recent Bar Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setDesktopTab('recent');
+              setMobileTab('recent');
+              say('Opened Recent Plays Bar 🕒');
+            }}
+            className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-white/10 hover:border-cyan-400/40 text-cyan-300 transition"
+            title="Open Recent Plays Bar"
+          >
+            <History className="h-3.5 w-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Recent</span>
+          </button>
+
           {/* Quick Invite Button */}
           <button onClick={copy} className="btn !py-1.5 !px-3 text-xs" title="Copy the invite link">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -551,6 +567,13 @@ export default function Room() {
             >
               <Smartphone className="h-4 w-4 text-[#ff6fa0]" />
               <span>Mobile Handoff</span>
+            </button>
+            <button
+              onClick={() => { setMobileTab('recent'); setShowMenu(false); }}
+              className="ghost !justify-start !py-2.5 !px-3 text-cyan-300"
+            >
+              <History className="h-4 w-4 text-cyan-400" />
+              <span>Recent Bar</span>
             </button>
             <button
               onClick={() => { socket.emit('nudge'); setShowMenu(false); }}
@@ -629,6 +652,8 @@ export default function Room() {
               screenStream={screen}
               playerRef={playerRef}
               voiceActive={voiceActive}
+              adultMode={adultMode}
+              onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
             />
 
             {/* MOBILE ONLY: App-like Segmented Tab Bar */}
@@ -674,6 +699,18 @@ export default function Room() {
                     {timer?.running ? '⏱️' : readyCheck?.active ? '🍿' : queue.length}
                   </span>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab('recent')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                  mobileTab === 'recent'
+                    ? 'bg-[#d9467a] text-white shadow-md'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <History className="h-3.5 w-3.5 text-cyan-400" />
+                <span>Recent</span>
               </button>
               <button
                 type="button"
@@ -723,6 +760,16 @@ export default function Room() {
                     readyCheck={readyCheck}
                     reviews={reviews}
                     isHost={me === hostId}
+                    say={say}
+                  />
+                </div>
+              )}
+              {mobileTab === 'recent' && (
+                <div className="rise">
+                  <RecentBar
+                    onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
+                    onAddToQueue={(item) => socket.emit('queue:add', { media: item })}
+                    adultMode={adultMode}
                     say={say}
                   />
                 </div>
@@ -789,6 +836,18 @@ export default function Room() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setDesktopTab('recent')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                    desktopTab === 'recent'
+                      ? 'bg-[#d9467a] text-white shadow-md'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <History className="h-4 w-4 text-cyan-400" />
+                  <span>Recent Bar 🕒</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setDesktopTab('intimacy')}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
                     desktopTab === 'intimacy'
@@ -834,6 +893,17 @@ export default function Room() {
                     readyCheck={readyCheck}
                     reviews={reviews}
                     isHost={me === hostId}
+                    say={say}
+                  />
+                </div>
+              )}
+
+              {desktopTab === 'recent' && (
+                <div className="rise">
+                  <RecentBar
+                    onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
+                    onAddToQueue={(item) => socket.emit('queue:add', { media: item })}
+                    adultMode={adultMode}
                     say={say}
                   />
                 </div>

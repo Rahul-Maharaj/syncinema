@@ -1,6 +1,18 @@
 export const ytId = (u) => u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/)?.[1];
 export const vimeoId = (u) => u.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
 
+export const isAdultMedia = (u) => {
+  if (!u) return false;
+  return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\./i.test(String(u));
+};
+
+export const sanitizeDisplayTitle = (titleOrUrl) => {
+  if (!titleOrUrl) return '';
+  const s = String(titleOrUrl);
+  if (isAdultMedia(s)) return '🔒 Private Stream';
+  return s.replace(/^https?:\/\/(www\.)?/, '');
+};
+
 export const isTubeOrEmbedHost = (u) => {
   return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\.|dood\.|d000d\.|do0od\.|streamtape\.|streamwish\.|wishembed\.|filemoon\.|vidmoly\.|voe\.|mixdrop\.|hdstream4u\.|filefly\./i.test(u);
 };

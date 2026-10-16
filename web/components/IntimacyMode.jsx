@@ -15,14 +15,6 @@ const AMBIENT_PRESETS = [
   { id: 'noir', name: 'Deep Cinema Noir', color: '#334155', glow: 'rgba(30, 41, 59, 0.3)', bg: 'radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.25), transparent 70%), #050307' },
 ];
 
-const ADULT_SITES = [
-  { name: 'Pornhub', url: 'https://www.pornhub.com', tip: 'Paste video link or viewkey' },
-  { name: 'XVideos', url: 'https://www.xvideos.com', tip: 'Paste video link' },
-  { name: 'XNXX', url: 'https://www.xnxx.com', tip: 'Paste video link' },
-  { name: 'SpankBang', url: 'https://spankbang.com', tip: 'Paste video link' },
-  { name: 'RedTube', url: 'https://www.redtube.com', tip: 'Paste video link' },
-  { name: 'Mixdrop / Voe / Streamwish', url: '#', tip: 'All adult movie host links are supported' },
-];
 
 export default function IntimacyMode({
   socket,
@@ -334,14 +326,24 @@ export default function IntimacyMode({
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-white/70 mb-2">Supported Adult Video Platforms:</p>
+            <p className="text-xs font-semibold text-white/70 mb-2">Private Streaming Features:</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              {ADULT_SITES.map((site) => (
-                <div key={site.name} className="rounded-lg border border-white/10 bg-white/5 p-2">
-                  <p className="font-semibold text-rose-300 truncate">{site.name}</p>
-                  <p className="text-[10px] text-white/50 truncate">{site.tip}</p>
-                </div>
-              ))}
+              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
+                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-rose-400" /> Zero-Log Privacy</p>
+                <p className="text-[10px] text-white/50 mt-1">Adult site names and links are hidden everywhere across the app</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
+                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-rose-400" /> High-Speed Streams</p>
+                <p className="text-[10px] text-white/50 mt-1">Chunked range prefetching for smooth zero-buffering playback</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
+                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-rose-400" /> Proxy Unblocker</p>
+                <p className="text-[10px] text-white/50 mt-1">Bypasses ISP bans, frame blocks and ad redirects automatically</p>
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-2.5">
+                <p className="font-semibold text-rose-300 flex items-center gap-1.5"><Heart className="h-3.5 w-3.5 text-rose-400" /> Couch Talk Sync</p>
+                <p className="text-[10px] text-white/50 mt-1">Automatic voice audio ducking and micro-rate sync</p>
+              </div>
             </div>
           </div>
 

@@ -4,9 +4,10 @@ import {
   Film, Popcorn, Timer, Star, CheckCircle2, Clock, 
   Play, Plus, Trash2, ArrowUpDown, ChevronUp, ChevronDown,
   Sparkles, MessageSquareHeart, Heart, Share2, AlertCircle,
-  Eye, X, Coffee, Pizza, Wine, ThumbsUp, ThumbsDown, Download, Upload
+  Eye, X, Coffee, Pizza, Wine, ThumbsUp, ThumbsDown, Download, Upload, Lock
 } from 'lucide-react';
 import gsap from 'gsap';
+import { isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
 
 // Romantic audio chime using Web Audio API
 function playChime(freq = 587.33, type = 'sine') {
@@ -264,8 +265,11 @@ export default function MovieNightExtras({
               )}
               <div className="min-w-0 flex-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-[#ff8fb3]">Now Playing</span>
-                <p className="font-semibold text-sm truncate">{currentMedia.title || currentMedia.name || 'Untitled Video'}</p>
-                {currentMedia.desc && <p className="text-xs text-white/60 line-clamp-1">{currentMedia.desc}</p>}
+                <p className="font-semibold text-sm truncate flex items-center gap-1.5">
+                  {isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) && <Lock className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
+                  <span>{isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) ? '🔒 Private Stream' : (currentMedia.title || currentMedia.name || 'Untitled Video')}</span>
+                </p>
+                {currentMedia.desc && !isAdultMedia(currentMedia.src) && <p className="text-xs text-white/60 line-clamp-1">{currentMedia.desc}</p>}
               </div>
               <button
                 type="button"
@@ -364,8 +368,11 @@ export default function MovieNightExtras({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium truncate">{item.title || item.src.replace(/^https?:\/\//, '')}</p>
-                    {item.desc && <p className="text-[10px] text-white/50 truncate">{item.desc}</p>}
+                    <p className="text-xs font-medium truncate flex items-center gap-1">
+                      {isAdultMedia(item.src || item.title) && <Lock className="h-3 w-3 text-rose-400 shrink-0" />}
+                      <span>{isAdultMedia(item.src || item.title) ? '🔒 Private Stream' : (item.title || item.src.replace(/^https?:\/\//, ''))}</span>
+                    </p>
+                    {item.desc && !isAdultMedia(item.src) && <p className="text-[10px] text-white/50 truncate">{item.desc}</p>}
                     <div className="flex items-center gap-2 text-[9px] text-[#ff8fb3]/80">
                       {item.addedBy && <span>Queued by {item.addedBy}</span>}
                     </div>

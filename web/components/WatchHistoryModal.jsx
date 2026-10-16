@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { History, QrCode, Play, Trash2, X, ExternalLink, Smartphone, Copy, Check } from 'lucide-react';
+import { History, QrCode, Play, Trash2, X, ExternalLink, Smartphone, Copy, Check, Lock } from 'lucide-react';
+import { isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
 
 export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, say }) {
   const [history, setHistory] = useState([]);
@@ -126,8 +127,11 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
                     key={idx}
                     className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-black/40 border border-white/10 hover:border-white/20 transition group"
                   >
-                    <span className="truncate text-white/85 text-xs font-mono flex-1 text-left">
-                      {url.replace(/^https?:\/\/(www\.)?/, '')}
+                    <span className="truncate text-white/85 text-xs font-mono flex-1 text-left flex items-center gap-1.5">
+                      {isAdultMedia(url) && <Lock className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
+                      <span className={isAdultMedia(url) ? 'text-rose-300 font-sans font-semibold' : ''}>
+                        {sanitizeDisplayTitle(url)}
+                      </span>
                     </span>
                     <button
                       type="button"

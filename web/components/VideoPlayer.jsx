@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen,
   Captions, ListPlus, Play, Volume2, Sliders, Radio, Zap, Settings,
-  RefreshCw, Sparkles, FastForward, Check, RotateCcw, Mic
+  RefreshCw, Sparkles, FastForward, Check, RotateCcw, Mic, History
 } from 'lucide-react';
-import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia } from '@/lib/media';
+import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia, isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
 
 const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
-export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef, voiceActive }) {
+export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef, voiceActive, adultMode = false, onOpenRecent }) {
   const [media, setMedia] = useState(initial.media);
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
   const [local, setLocal] = useState(null), [error, setError] = useState('');
@@ -572,19 +572,47 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     let src = url.trim();
     if (!src) return null;
     if (!/^https?:\/\//i.test(src) && !src.startsWith('/api/')) src = 'https://' + src;
+
+    // Enforce 18+ Adults-Only mode: only allow playing if adultMode is enabled
+    if (isAdultMedia(src) && !adultMode) {
+      setError('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to play this video.');
+      return null;
+    }
+
     const type = force === 'auto' ? detect(src) : force;
-    if (type === 'proxy') return { type: 'proxy', src: toProxyUrl(src), orig: src };
+    if (type === 'proxy') {
+      return {
+        type: 'proxy',
+        src: toProxyUrl(src),
+        orig: isAdultMedia(src) ? '🔒 Private Stream' : src,
+        title: isAdultMedia(src) ? '🔒 Private Stream' : '',
+      };
+    }
+
     if (type === 'auto' || type === 'embed') {
       const resolved = await resolveMedia(src);
-      if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed')) {
+      if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed' || resolved.type === 'proxy')) {
         if (resolved.subtitle) setSub(resolved.subtitle);
+        if (isAdultMedia(src)) {
+          resolved.title = '🔒 Private Stream';
+          resolved.origSrc = '🔒 Private Stream';
+        }
         return resolved;
       }
     }
-    return { type, src: type === 'embed' ? toEmbed(src) : src };
+    return {
+      type,
+      src: type === 'embed' ? toEmbed(src) : src,
+      title: isAdultMedia(src) ? '🔒 Private Stream' : '',
+    };
   };
 
   const enqueue = async () => {
+    let src = url.trim();
+    if (isAdultMedia(src) && !adultMode) {
+      setError('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to add this video.');
+      return;
+    }
     const m = await build();
     if (m) { socket.emit('queue:add', { media: m }); setUrl(''); }
   };
@@ -654,12 +682,21 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const load = async (e) => {
     e.preventDefault();
     setError('');
+    let src = url.trim();
+    if (isAdultMedia(src) && !adultMode) {
+      setError('🔞 18+ Mode is disabled. Please enable Adults-Only 18+ in the Intimacy tab to play this video.');
+      return;
+    }
     const m = await build();
     if (!m) return;
     socket.emit('media:set', { media: m });
-    const h = [m.origSrc || m.src, ...hist.filter((x) => x !== (m.origSrc || m.src))].slice(0, 6);
+    const targetUrl = m.origSrc || m.orig || m.src;
+    const h = [targetUrl, ...hist.filter((x) => x !== targetUrl)].slice(0, 20);
     setHist(h);
-    localStorage.hist = JSON.stringify(h);
+    try {
+      localStorage.hist = JSON.stringify(h);
+      window.dispatchEvent(new Event('storage'));
+    } catch {}
     setUrl('');
   };
 
@@ -1017,7 +1054,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         <div className="flex flex-wrap gap-2">
           <div className="relative min-w-0 flex-1 basis-60">
             <Link2 className="absolute left-3 top-2.5 h-4 w-4 opacity-50" />
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any link: YouTube, Vimeo, mp4, m3u8, Pornhub, xHamster, movie sites…" className="field !pl-9" />
+            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste any video link: YouTube, Vimeo, mp4, m3u8, movie sites…" className="field !pl-9" />
           </div>
           <button className="btn"><Play className="h-4 w-4" />Play for everyone</button>
         </div>
@@ -1025,6 +1062,12 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           <button type="button" onClick={enqueue} className="ghost" title="Add this link to the Up next list"><ListPlus className="h-4 w-4" />Add to queue</button>
           <label className="ghost cursor-pointer" title="Play a movie file from your own device"><FolderOpen className="h-4 w-4" />My file<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></label>
           <label className="ghost cursor-pointer" title="Add .srt or .vtt subtitles"><Captions className="h-4 w-4" />Subtitles<input type="file" accept=".srt,.vtt" onChange={pickSub} hidden /></label>
+          {onOpenRecent && (
+            <button type="button" onClick={onOpenRecent} className="ghost text-cyan-300 hover:text-white" title="Open Recent Plays Bar">
+              <History className="h-4 w-4 text-cyan-400" />
+              <span>Recent Bar</span>
+            </button>
+          )}
           {audioTracks.length > 1 && (
             <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/90" title="Audio track / language">
               <Volume2 className="h-4 w-4 text-[#ff6fa0]" />
@@ -1041,11 +1084,6 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           </select>
         </div>
       </form>
-      {hist.length > 0 && (
-        <div className="flex flex-wrap gap-2 text-xs opacity-70">
-          {hist.map((h) => <button key={h} onClick={() => setUrl(h)} className="max-w-[16rem] truncate rounded-full border border-current/20 px-2 py-0.5 hover:opacity-100" title={h}>{h.replace(/^https?:\/\/(www\.)?/, '')}</button>)}
-        </div>
-      )}
     </div>
   );
 }
