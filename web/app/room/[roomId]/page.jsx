@@ -83,6 +83,15 @@ export default function Room() {
   const callControlsRef = useRef(null);
   const [callCam, setCallCam] = useState(true);
   const [callMic, setCallMic] = useState(true);
+  const [callMedia, setCallMedia] = useState({
+    mine: null,
+    remote: {},
+    cam: true,
+    mic: true,
+    voiceOnly: false,
+    localTalking: false,
+    remoteTalking: {},
+  });
 
   // Movie-Night Extras & Intimacy State
   const [watchlist, setWatchlist] = useState([]);
@@ -818,6 +827,8 @@ export default function Room() {
                 playerRef={playerRef}
                 voiceActive={voiceActive}
                 adultMode={adultMode}
+                callMedia={callMedia}
+                callControlsRef={callControlsRef}
                 onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
               />
             </div>
@@ -1120,6 +1131,7 @@ export default function Room() {
               callControlsRef={callControlsRef}
               onCamChange={setCallCam}
               onMicChange={setCallMic}
+              onStreamsChange={setCallMedia}
               isMobileCallActive={mobileTab === 'call'}
               onSwitchToCallTab={() => setMobileTab('call')}
             />

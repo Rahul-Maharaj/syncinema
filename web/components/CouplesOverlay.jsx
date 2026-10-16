@@ -137,7 +137,7 @@ function RemoteAudio({ stream, name, onTalk }) {
   );
 }
 
-function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff }) {
+export function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff, className = '', disableFullscreen = false }) {
   const videoRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
@@ -177,6 +177,7 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff }) {
 
   const toggleFullscreen = (e) => {
     e?.stopPropagation?.();
+    if (disableFullscreen) return;
     const el = videoRef.current;
     if (!el) return;
     if (!document.fullscreenElement) {
@@ -192,13 +193,15 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff }) {
 
   return (
     <div
-      onDoubleClick={toggleFullscreen}
-      className={`vault group relative aspect-video w-36 sm:w-44 overflow-hidden rounded-xl bg-black transition-all duration-300 shrink-0 ${
+      onDoubleClick={disableFullscreen ? undefined : toggleFullscreen}
+      className={`vault group relative overflow-hidden rounded-xl bg-black transition-all duration-300 shrink-0 ${
+        className || 'aspect-video w-36 sm:w-44'
+      } ${
         isSpeaking
           ? 'ring-2 ring-[#ff6fa0]'
           : 'ring-1 border border-white/10 ring-transparent'
       }`}
-      title={isPartner ? 'Double click or tap expand for full screen' : name}
+      title={disableFullscreen ? name : isPartner ? 'Double click or tap expand for full screen' : name}
     >
       {/* Voice Only Mode */}
       {voiceOnly ? (
@@ -253,7 +256,7 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff }) {
       )}
 
       {/* Fullscreen Button */}
-      {isPartner && stream && !voiceOnly && !isCamOff && (
+      {isPartner && stream && !voiceOnly && !isCamOff && !disableFullscreen && (
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -279,6 +282,7 @@ export default function CouplesOverlay({
   callControlsRef,
   onCamChange,
   onMicChange,
+  onStreamsChange,
   isMobileCallActive = false,
   onSwitchToCallTab,
 }) {
@@ -763,6 +767,20 @@ export default function CouplesOverlay({
       };
     }
   }, [cam, mic, voiceOnly, camSwitching, callControlsRef]);
+
+  useEffect(() => {
+    onStreamsChange?.({
+      mine,
+      remote,
+      cam,
+      mic,
+      voiceOnly,
+      localTalking,
+      remoteTalking,
+      toggleCam,
+      toggleMic,
+    });
+  }, [mine, remote, cam, mic, voiceOnly, localTalking, remoteTalking, onStreamsChange]);
 
   return (
     <>

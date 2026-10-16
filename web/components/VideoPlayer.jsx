@@ -1,16 +1,33 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen,
   Captions, ListPlus, Play, Volume2, Sliders, Radio, Zap, Settings,
-  RefreshCw, Sparkles, FastForward, Check, RotateCcw, Mic, History
+  RefreshCw, Sparkles, FastForward, Check, RotateCcw, Mic, History,
+  Maximize2, Minimize2, Video, VideoOff, MicOff, Move, X, EyeOff, Eye
 } from 'lucide-react';
 import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia, isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
+import { Tile } from './CouplesOverlay';
 
 const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
-export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef, voiceActive, adultMode = false, onOpenRecent }) {
+export default function VideoPlayer({
+  socket,
+  me,
+  hostId,
+  users = [],
+  peerRef,
+  initial,
+  screenBy,
+  screenStream,
+  playerRef,
+  voiceActive,
+  adultMode = false,
+  callMedia,
+  callControlsRef,
+  onOpenRecent,
+}) {
   const [media, setMedia] = useState(initial.media);
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
   const [local, setLocal] = useState(null), [error, setError] = useState('');
@@ -45,6 +62,122 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const [audioBoost, setAudioBoost] = useState(100); // 100% to 200%
   const [showSettings, setShowSettings] = useState(false);
   const [subStyle, setSubStyle] = useState({ size: 'md', color: '#ffffff', bg: 'rgba(0,0,0,0.75)' });
+
+  // Fullscreen & Floating Video Call PiP State
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFsPip, setShowFsPip] = useState(true);
+  const [pipCorner, setPipCorner] = useState('bottom-right'); // 'bottom-right' | 'bottom-left' | 'top-left' | 'top-right'
+  const [showOverlayControls, setShowOverlayControls] = useState(true);
+  const overlayTimerRef = useRef(null);
+
+  const cornerClasses = {
+    'bottom-right': 'bottom-4 right-4 sm:bottom-6 sm:right-6',
+    'bottom-left': 'bottom-4 left-4 sm:bottom-6 sm:left-6',
+    'top-left': 'top-16 left-4 sm:top-18 sm:left-6',
+    'top-right': 'top-16 right-4 sm:top-18 sm:right-6',
+  };
+
+  const cyclePipCorner = useCallback((e) => {
+    e?.stopPropagation?.();
+    setPipCorner((prev) => {
+      if (prev === 'bottom-right') return 'bottom-left';
+      if (prev === 'bottom-left') return 'top-left';
+      if (prev === 'top-left') return 'top-right';
+      return 'bottom-right';
+    });
+  }, []);
+
+  const resetOverlayTimer = useCallback(() => {
+    setShowOverlayControls(true);
+    if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    overlayTimerRef.current = setTimeout(() => {
+      setShowOverlayControls(false);
+    }, 3500);
+  }, []);
+
+  const toggleFullscreen = useCallback(async (e) => {
+    e?.stopPropagation?.();
+    const el = containerRef.current;
+    if (!el) return;
+
+    try {
+      const isCurrentlyFs = Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+
+      if (!isCurrentlyFs) {
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        } else if (el.mozRequestFullScreen) {
+          await el.mozRequestFullScreen();
+        } else if (el.msRequestFullscreen) {
+          await el.msRequestFullscreen();
+        } else {
+          // In-page fullscreen fallback (e.g. iOS Safari)
+          setIsFullscreen(true);
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.warn('Native fullscreen toggle rejected, falling back to in-page fullscreen:', err);
+      setIsFullscreen((prev) => !prev);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => {
+      const fsEl =
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+      setIsFullscreen(Boolean(fsEl && (fsEl === containerRef.current || containerRef.current?.contains(fsEl))));
+    };
+
+    const onKeyDown = (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) {
+        return;
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === 'Escape' && isFullscreen && !document.fullscreenElement) {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('mozfullscreenchange', onFsChange);
+    document.addEventListener('MSFullscreenChange', onFsChange);
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      document.removeEventListener('mozfullscreenchange', onFsChange);
+      document.removeEventListener('MSFullscreenChange', onFsChange);
+      window.removeEventListener('keydown', onKeyDown);
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    };
+  }, [isFullscreen, toggleFullscreen]);
 
   // Web Audio Context for Local Audio Boost up to 200%
   const audioCtxRef = useRef(null);
@@ -740,9 +873,22 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         }
       `}</style>
 
-      <div className="vault relative aspect-video overflow-hidden rounded-2xl bg-black border border-white/10">
+      <div
+        ref={containerRef}
+        onMouseMove={isFullscreen ? resetOverlayTimer : undefined}
+        onTouchStart={isFullscreen ? resetOverlayTimer : undefined}
+        className={`vault relative overflow-hidden bg-black transition-all ${
+          isFullscreen
+            ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-0 flex items-center justify-center'
+            : 'aspect-video rounded-2xl border border-white/10'
+        }`}
+      >
         {/* Sync Status Badge */}
-        <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-white/10 text-[11px] text-white/90">
+        <div
+          className={`absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-white/10 text-[11px] text-white/90 transition-opacity duration-300 ${
+            isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
           <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-rose-400'}`} />
           <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
           {syncOffset !== 0 && (
@@ -754,7 +900,11 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
         {/* Live Stream Badge */}
         {isLiveStream && (
-          <div className="absolute top-3 left-36 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600 text-[11px] font-bold text-white border border-white/20">
+          <div
+            className={`absolute top-3 left-36 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600 text-[11px] font-bold text-white border border-white/20 transition-opacity duration-300 ${
+              isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             <Radio className="h-3 w-3" />
             <span>LIVE</span>
             <button
@@ -773,7 +923,11 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
         {/* Smart Voice Talk Ducking & Slowdown Banner */}
         {isDucked && (
-          <div className="absolute top-12 left-3 z-30 flex items-center gap-2 rounded-full bg-black border border-white/20 px-3 py-1 text-[11px] font-medium text-white pointer-events-none">
+          <div
+            className={`absolute top-12 left-3 z-30 flex items-center gap-2 rounded-full bg-black border border-white/20 px-3 py-1 text-[11px] font-medium text-white pointer-events-none transition-opacity duration-300 ${
+              isFullscreen && !showOverlayControls ? 'opacity-0' : 'opacity-100'
+            }`}
+          >
             <span className="relative flex h-2 w-2">
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d9467a]"></span>
             </span>
@@ -781,20 +935,86 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           </div>
         )}
 
-        {/* Precision Settings Toggle Button */}
-        <button
-          type="button"
-          onClick={() => setShowSettings(!showSettings)}
-          className={`absolute top-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition ${
-            showSettings
-              ? 'bg-[#d9467a] text-white border-white/30'
-              : 'bg-black text-white/80 hover:text-white border-white/10'
-          }`}
-          title="Precision Sync, Speed & Audio Settings"
-        >
-          <Sliders className="h-3 w-3" />
-          <span>Sync & Audio</span>
-        </button>
+        {/* Screensharing Active Header & Full Screen Toggle */}
+        {stream && (
+          <div
+            className={`absolute top-3 inset-x-3 z-30 flex items-center justify-between gap-2 p-2 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 transition-opacity duration-300 ${
+              isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6fa0] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#d9467a]"></span>
+              </span>
+              <span className="text-xs font-semibold text-white truncate">
+                {screenBy === me
+                  ? '🖥️ You are sharing your screen'
+                  : `🖥️ ${users.find((u) => u.id === screenBy)?.name || 'Partner'} is sharing screen`}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="btn !py-1 !px-3 text-xs flex items-center gap-1.5 bg-[#d9467a] hover:bg-[#b83260] text-white border-0 shadow-md font-semibold cursor-pointer"
+                title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
+              >
+                {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+              </button>
+              {screenBy === me && (
+                <button
+                  type="button"
+                  onClick={stopShare}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-medium cursor-pointer transition"
+                  title="Stop sharing your screen"
+                >
+                  <MonitorOff className="h-3.5 w-3.5 text-rose-400" />
+                  <span className="hidden sm:inline">Stop</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Regular Video Mode: Top-Right Toolbar (Full Screen + Sync & Audio) */}
+        {!stream && (
+          <div
+            className={`absolute top-3 right-3 z-30 flex items-center gap-2 transition-opacity duration-300 ${
+              isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg ${
+                isFullscreen
+                  ? 'bg-[#d9467a] text-white border-white/30'
+                  : 'bg-black/85 hover:bg-black text-white/90 hover:text-white border-white/20 hover:border-white/40'
+              }`}
+              title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
+            >
+              {isFullscreen ? <Minimize2 className="h-3 w-3 text-white" /> : <Maximize2 className="h-3 w-3 text-[#ff6fa0]" />}
+              <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowSettings(!showSettings)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg ${
+                showSettings
+                  ? 'bg-[#d9467a] text-white border-white/30'
+                  : 'bg-black/85 hover:bg-black text-white/80 hover:text-white border-white/10 hover:border-white/30'
+              }`}
+              title="Precision Sync, Speed & Audio Settings"
+            >
+              <Sliders className="h-3 w-3 text-[#ff6fa0]" />
+              <span>Sync & Audio</span>
+            </button>
+          </div>
+        )}
 
         {/* Partner Buffering Alert Banner */}
         {partnerBuffering?.active && (
@@ -885,6 +1105,147 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           </div>
         )}
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
+
+        {/* Floating Video Call PiP inside Full Screen Mode */}
+        {isFullscreen && showFsPip && (
+          <div
+            className={`absolute z-40 transition-all duration-300 ${cornerClasses[pipCorner]}`}
+            onMouseMove={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <div className="relative rounded-2xl bg-black/90 backdrop-blur-md border border-white/20 p-2 shadow-2xl overflow-hidden group/pip">
+              {/* PiP Header Toolbar */}
+              <div className="flex items-center justify-between gap-2 px-1 pb-1.5 text-white/80 border-b border-white/10 mb-1.5 text-[11px]">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-white text-xs font-semibold">Video Call</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={cyclePipCorner}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-white/90 text-[10px] transition cursor-pointer"
+                    title="Move call to next corner (keeps movie subtitles visible)"
+                  >
+                    <Move className="h-3 w-3" />
+                    <span>Move</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFsPip(false)}
+                    className="p-1 rounded-md bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition cursor-pointer"
+                    title="Hide video call (Audio stays active; click 'Show Call' anytime)"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Main Video Call Area: Partner stream + Inset local thumbnail */}
+              <div className="relative">
+                {users.filter((u) => u.id !== me).length > 0 ? (
+                  <div className="flex flex-col gap-1.5">
+                    {users.filter((u) => u.id !== me).map((u) => (
+                      <Tile
+                        key={u.id}
+                        stream={callMedia?.remote?.[u.id]}
+                        name={u.name}
+                        isPartner={true}
+                        voiceOnly={callMedia?.voiceOnly}
+                        isSpeaking={!!callMedia?.remoteTalking?.[u.id]}
+                        isCamOff={false}
+                        disableFullscreen={true}
+                        className="!w-44 sm:!w-60 aspect-video rounded-xl"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-44 sm:w-60 aspect-video rounded-xl bg-black/70 border border-white/10 flex flex-col items-center justify-center p-3 text-center">
+                    <Video className="h-5 w-5 text-[#ff6fa0] opacity-70 mb-1 animate-pulse" />
+                    <p className="text-[11px] text-white/80 font-medium">Solo in Room</p>
+                    <p className="text-[9px] text-white/40">Partner appears when they join</p>
+                  </div>
+                )}
+
+                {/* Local User Inset Preview (bottom-right of the partner tile) */}
+                <div
+                  className="absolute bottom-1.5 right-1.5 z-20 shadow-xl"
+                  title="Your camera preview"
+                >
+                  <Tile
+                    stream={callMedia?.mine}
+                    name="You"
+                    isPartner={false}
+                    voiceOnly={callMedia?.voiceOnly}
+                    isSpeaking={callMedia?.localTalking}
+                    isCamOff={!callMedia?.cam}
+                    disableFullscreen={true}
+                    className="!w-14 sm:!w-18 aspect-video rounded-lg shadow-xl ring-1 ring-white/30 border border-black/80"
+                  />
+                </div>
+              </div>
+
+              {/* Quick In-Call Controls: Mic and Cam toggles */}
+              <div className="flex items-center justify-between gap-1.5 pt-1.5 mt-1 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (callMedia?.toggleMic) callMedia.toggleMic();
+                    else callControlsRef?.current?.toggleMic?.();
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg text-[10px] font-semibold transition ${
+                    callMedia?.mic
+                      ? 'bg-white/10 hover:bg-white/20 text-white'
+                      : 'bg-rose-500/25 border border-rose-500/40 text-rose-300'
+                  }`}
+                  title={callMedia?.mic ? 'Mute microphone' : 'Unmute microphone'}
+                >
+                  {callMedia?.mic ? <Mic className="h-3 w-3 text-white" /> : <MicOff className="h-3 w-3 text-rose-400" />}
+                  <span>{callMedia?.mic ? 'Mic' : 'Muted'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (callMedia?.toggleCam) callMedia.toggleCam();
+                    else callControlsRef?.current?.toggleCam?.();
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-1 py-1 px-2 rounded-lg text-[10px] font-semibold transition ${
+                    callMedia?.cam
+                      ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
+                      : 'bg-rose-500/25 border border-rose-500/40 text-rose-300'
+                  }`}
+                  title={callMedia?.cam ? 'Turn off camera' : 'Turn on camera'}
+                >
+                  {callMedia?.cam ? <Video className="h-3 w-3 text-emerald-400" /> : <VideoOff className="h-3 w-3 text-rose-400" />}
+                  <span>{callMedia?.cam ? 'Cam ON' : 'Cam OFF'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Minimized PiP Pill when user temporarily hid the call */}
+        {isFullscreen && !showFsPip && (
+          <button
+            type="button"
+            onClick={() => setShowFsPip(true)}
+            className={`absolute z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md border border-white/20 text-white text-xs hover:border-[#ff6fa0] transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
+            title="Show Video Call PiP"
+          >
+            <Video className="h-3.5 w-3.5 text-[#ff6fa0]" />
+            <span>Show Call</span>
+            {(callMedia?.localTalking || Object.values(callMedia?.remoteTalking || {}).some(Boolean)) && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Precision Sync & Audio Drawer */}
@@ -1104,6 +1465,17 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           {screenBy === me
             ? <button type="button" onClick={stopShare} className="ghost"><MonitorOff className="h-4 w-4" />Stop sharing</button>
             : <button type="button" onClick={startShare} disabled={!!screenBy} className="ghost" title="Show your screen to your partner"><MonitorUp className="h-4 w-4" />Share screen</button>}
+          {stream && (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="ghost text-[#ff6fa0] hover:text-white"
+              title="Full Screen Screenshare"
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+            </button>
+          )}
           <select value={force} onChange={(e) => setForce(e.target.value)} aria-label="Link type" className="field !w-auto" title="Link type (Auto detects it for you)">
             {TYPES.map((t) => <option key={t} value={t} className="text-black">{t === 'auto' ? 'Type: Auto' : t.toUpperCase()}</option>)}
           </select>
