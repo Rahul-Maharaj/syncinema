@@ -1,13 +1,13 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
-  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History
+  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -72,8 +72,10 @@ const Tool = ({ icon, label, title, onClick, className = '', labelClass = 'hidde
 
 export default function Room() {
   const { roomId } = useParams();
+  const router = useRouter();
   const [name, setName] = useState(null), [draft, setDraft] = useState('');
   const [boot, setBoot] = useState(null), [users, setUsers] = useState([]), [hostId, setHostId] = useState(null);
+  const [maxSeats, setMaxSeats] = useState(2);
   const [chat, setChat] = useState([]), [text, setText] = useState('');
   const [screenBy, setScreenBy] = useState(null), [screen, setScreen] = useState(null);
   const [queue, setQueue] = useState([]), [needKey, setNeedKey] = useState(false), [keyTick, setKeyTick] = useState(0), [keyDraft, setKeyDraft] = useState('');
@@ -138,6 +140,7 @@ export default function Room() {
       : (sessionStorage.getItem('rp_' + roomId) || localStorage.getItem('rp_' + roomId) || '');
     const isCreate = sessionStorage.getItem('is_create_' + roomId) === '1' || (typeof window !== 'undefined' && window.location.hash.includes('create=1'));
     const k = overrideKey !== undefined ? overrideKey : getKey();
+    const maxU = Number(sessionStorage.getItem('max_users_' + roomId) || 2);
     socket.emit('join', {
       roomId,
       cid: me,
@@ -145,6 +148,7 @@ export default function Room() {
       key: k,
       pass: p,
       isCreate,
+      maxUsers: maxU,
       token: sessionStorage.tok || '',
     }, (r) => {
       if (!r) return;
@@ -168,6 +172,7 @@ export default function Room() {
         sessionStorage.setItem('rp_' + roomId, p);
         try { localStorage.setItem('rp_' + roomId, p); } catch {}
       }
+      if (r.maxUsers) setMaxSeats(r.maxUsers);
       setQueue(r.queue || []);
       setWatchlist(r.watchlist || []);
       setTimer(r.timer || null);
@@ -203,12 +208,17 @@ export default function Room() {
       const k = params.get('key');
       const v = params.get('video');
       const createFlag = params.get('create');
+      const maxParam = params.get('max');
       if (p) {
         sessionStorage.setItem('rp_' + roomId, p);
         try { localStorage.setItem('rp_' + roomId, p); } catch {}
       }
       if (createFlag === '1') {
         sessionStorage.setItem('is_create_' + roomId, '1');
+      }
+      if (maxParam && ['2', '3', '4'].includes(maxParam)) {
+        sessionStorage.setItem('max_users_' + roomId, maxParam);
+        setMaxSeats(Number(maxParam));
       }
       if (k) setKey(k);
       if (v) sessionStorage.setItem('init_video_' + roomId, v);
@@ -227,6 +237,7 @@ export default function Room() {
       p.users.forEach((u) => { if (u.id !== me && !seen.current.has(u.sid)) { seen.current.add(u.sid); hello(u.name); } });
       setUsers(p.users); setHostId(p.hostId); setLock(p.lock);
       if (p.adult !== undefined) setAdultMode(!!p.adult);
+      if (p.maxUsers) setMaxSeats(p.maxUsers);
     });
     socket.on('chat', (m) => setChat((c) => [...c.slice(-99), m]));
     socket.on('chat:cleared', () => setChat([]));
@@ -258,6 +269,16 @@ export default function Room() {
     });
     socket.on('room:adult_updated', setAdultMode);
     socket.on('room:pass_updated', () => say('Room password was updated 🔒'));
+    socket.on('room:closed', (info) => {
+      try {
+        sessionStorage.removeItem('rp_' + roomId);
+        localStorage.removeItem('rp_' + roomId);
+      } catch {}
+      say(info?.message || 'The host has closed this room.');
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
+    });
     socket.on('pin:status', (s) => setHasPin(!!s?.hasPin));
     socket.on('state', (st) => {
       if (st?.media) setCurrentMedia(st.media);
@@ -482,6 +503,10 @@ export default function Room() {
             <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs ${online ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/15 text-rose-500'}`}>
               <i className={`h-1.5 w-1.5 rounded-full ${online ? 'animate-pulse bg-emerald-400' : 'bg-rose-500'}`} />{online ? 'Live' : 'Reconnecting'}
             </span>
+            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs bg-white/5 border border-white/10 text-white/80" title={`Room capacity: ${users.length} of ${maxSeats} members`}>
+              <Users className="h-3 w-3 text-[#ff8fb3]" />
+              <span>{users.length}/{maxSeats}</span>
+            </span>
           </div>
         </div>
 
@@ -582,6 +607,34 @@ export default function Room() {
             <span className="hidden sm:inline">{copied ? 'Copied' : 'Invite'}</span>
           </button>
 
+          {/* Host Close Room Button */}
+          {me === hostId && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
+                  socket.emit('room:close', {}, (res) => {
+                    if (res?.ok) {
+                      say('Room closed 🚪');
+                      try {
+                        sessionStorage.removeItem('rp_' + roomId);
+                        localStorage.removeItem('rp_' + roomId);
+                      } catch {}
+                      router.push('/');
+                    } else {
+                      say(res?.message || 'Failed to close room');
+                    }
+                  });
+                }
+              }}
+              className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-rose-500/30 hover:border-rose-500/60 text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition"
+              title="Close room and disconnect all members"
+            >
+              <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Close Room</span>
+            </button>
+          )}
+
           {/* Desktop Toolbar Icons (Hidden on Mobile) */}
           <div className="hidden lg:flex items-center gap-2">
             {me === hostId && <Tool onClick={() => socket.emit('lock', !lock)} title={lock ? 'Only you control playback' : 'Everyone controls playback'} icon={lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />} label={lock ? 'Host controls' : 'Everyone controls'} />}
@@ -640,6 +693,31 @@ export default function Room() {
               <Lock className="h-4 w-4 text-amber-400" />
               <span>Room Password</span>
             </button>
+            {me === hostId && (
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
+                    socket.emit('room:close', {}, (res) => {
+                      if (res?.ok) {
+                        say('Room closed 🚪');
+                        try {
+                          sessionStorage.removeItem('rp_' + roomId);
+                          localStorage.removeItem('rp_' + roomId);
+                        } catch {}
+                        router.push('/');
+                      } else {
+                        say(res?.message || 'Failed to close room');
+                      }
+                    });
+                  }
+                }}
+                className="ghost !justify-start !py-2.5 !px-3 text-rose-400 bg-rose-500/10 border border-rose-500/30"
+              >
+                <DoorClosed className="h-4 w-4 text-rose-400" />
+                <span>Close Room</span>
+              </button>
+            )}
             <button
               onClick={() => { socket.emit('nudge'); setShowMenu(false); }}
               className="ghost !justify-start !py-2.5 !px-3"

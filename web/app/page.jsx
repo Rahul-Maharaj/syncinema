@@ -61,6 +61,7 @@ function Dashboard({ hero, onLock }) {
   const [seam, setSeam] = useState({ x: 0, y: 0 });
   const [tab, setTab] = useState('create');
   const [roomName, setRoomName] = useState('');
+  const [maxUsers, setMaxUsers] = useState(2);
   const [pass, setPass] = useState(''), [showPass, setShowPass] = useState(false), [perr, setPerr] = useState('');
   const [code, setCode] = useState(''), [joinPass, setJoinPass] = useState(''), [showJoinPass, setShowJoinPass] = useState(false);
   const [last, setLast] = useState(''), [err, setErr] = useState(''), [loaded, setLoaded] = useState(false);
@@ -161,8 +162,9 @@ function Dashboard({ hero, onLock }) {
     }
     sessionStorage.setItem('rp_' + id, p);
     sessionStorage.setItem('is_create_' + id, '1');
+    sessionStorage.setItem('max_users_' + id, String(maxUsers));
     try { localStorage.setItem('rp_' + id, p); } catch {}
-    router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1`);
+    router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1&max=${maxUsers}`);
   };
 
   const join = (e) => {
@@ -340,6 +342,38 @@ function Dashboard({ hero, onLock }) {
                   {perr || '🔒 Password is required: no one can enter without this password.'}
                 </p>
               </div>
+
+              <div>
+                <label className="mb-1.5 flex items-center justify-between text-xs font-medium text-white/90">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5 text-rose-400" />
+                    <span>Room Capacity <b className="text-white/50">(Members Allowed)</b></span>
+                  </span>
+                  <span className="text-[11px] font-bold text-[#ff8fb3]">{maxUsers} Members Max</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { count: 2, label: '2 Seats', sub: 'Couples / Date' },
+                    { count: 3, label: '3 Seats', sub: 'Trio / Friends' },
+                    { count: 4, label: '4 Seats', sub: 'Double Date' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.count}
+                      type="button"
+                      onClick={() => setMaxUsers(opt.count)}
+                      className={`rounded-xl p-2.5 text-center border transition ${
+                        maxUsers === opt.count
+                          ? 'bg-[#d9467a]/25 border-[#d9467a] text-white shadow-lg shadow-[#d9467a]/20 ring-1 ring-[#d9467a]'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="block text-xs font-bold">{opt.label}</span>
+                      <span className="block text-[10px] text-white/50">{opt.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 ref={cta}
                 onPointerMove={pull}

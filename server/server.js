@@ -112,7 +112,7 @@ app.get('/api/rooms', (req, res) => {
       activeRooms.push({
         roomId: id,
         userCount: count,
-        maxUsers: MAX_USERS,
+        maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
         hasPass: !!r.pass,
         createdAt: r.createdAt || r.at || Date.now(),
         adult: !!r.adult,
@@ -703,6 +703,7 @@ const fresh = () => ({
   reviews: [],
   ambient: { preset: 'love', intensity: 80, flicker: false },
   adult: false,
+  maxUsers: 2,
 });
 try { for (const [id, v] of Object.entries(JSON.parse(fs.readFileSync(DATA_FILE)))) rooms.set(id, { ...fresh(), ...v }); } catch {}
 let saveT;                                          // persist rooms so "our room" survives restarts
@@ -711,6 +712,7 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
   fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries([...rooms].map(([id, r]) => [id, {
     pass: r.pass,
     pin: r.pin,
+    maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
     media: r.media,
     queue: r.queue,
     watchlist: r.watchlist || [],
@@ -742,7 +744,7 @@ const pinOk = (r, p) => verifyHash(r?.pin, p);
 const position = (r) => r.time + (r.playing ? (Date.now() - r.at) / 1000 : 0);
 const snapshot = (r) => ({ media: r.media, playing: r.playing, time: position(r) });
 const roster = (r) => [...r.users.values()].map(({ cid, name, color, sid }) => ({ id: cid, name, color, sid }));
-const presence = (id, r) => io.to(id).emit('presence', { users: roster(r), hostId: r.hostId, lock: r.lock, adult: !!r.adult });
+const presence = (id, r) => io.to(id).emit('presence', { users: roster(r), hostId: r.hostId, lock: r.lock, adult: !!r.adult, maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2 });
 const PRIVATE = /^(localhost|.*\.(local|internal|lan)|127\..*|10\..*|192\.168\..*|172\.(1[6-9]|2\d|3[01])\..*|169\.254\..*|0\.0\.0\.0|\[?::1?\]?|\[?f[cd].*)$/i;
 const cleanUrl = (v) => { // http(s) only; never point a partner's browser at their home network
   try {
@@ -1003,7 +1005,7 @@ io.on('connection', (socket) => {
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
 
-  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate } = {}, ack) => {
+  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax } = {}, ack) => {
     if (typeof ack !== 'function') return;
     const ip = ipOf(socket.handshake);
     if (locked(ip)) return ack({ error: 'locked' });
@@ -1033,6 +1035,8 @@ io.on('connection', (socket) => {
         r.queue = [];
         r.chat = [];
       }
+      const seatChoice = [2, 3, 4].includes(Number(requestedMax)) ? Number(requestedMax) : 2;
+      r.maxUsers = seatChoice;
       r.pass = hashPass(p);
       r.createdAt = Date.now();
       rooms.set(roomId, r);
@@ -1051,7 +1055,10 @@ io.on('connection', (socket) => {
       }
     }
     fails.delete(ip);                                // successful auth clears strike count
-    if (!r.users.has(cid) && r.users.size >= MAX_USERS) return ack({ error: 'full' });
+    const maxCapacity = [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2;
+    if (!r.users.has(cid) && r.users.size >= maxCapacity) {
+      return ack({ error: 'full', maxUsers: maxCapacity, message: `This room is full (${maxCapacity} members allowed).` });
+    }
     const ex = r.users.get(cid);                      // seat is bound to a secret token: nobody can impersonate you
     if (ex && ex.token !== token) return ack({ error: 'taken' });
     rid = roomId; room = r;
@@ -1067,6 +1074,7 @@ io.on('connection', (socket) => {
       ...snapshot(room),
       users: roster(room),
       hostId: room.hostId,
+      maxUsers: [2, 3, 4].includes(Number(room.maxUsers)) ? Number(room.maxUsers) : 2,
       lock: room.lock,
       queue: room.queue,
       watchlist: room.watchlist || [],
@@ -1414,6 +1422,26 @@ io.on('connection', (socket) => {
     save();
     ack({ ok: true });
     io.to(rid).emit('room:pass_updated', { updated: true });
+  });
+
+  socket.on('room:close', (data, ack) => {
+    if (typeof ack !== 'function') ack = () => {};
+    if (!joined()) return ack({ error: 'not_joined' });
+    if (user.cid !== room.hostId) return ack({ error: 'unauthorized', message: 'Only the host can close the room.' });
+
+    const targetRid = rid;
+    const hostName = user.name || 'Host';
+
+    io.to(targetRid).emit('room:closed', {
+      closedBy: hostName,
+      message: `${hostName} has closed the room.`,
+    });
+
+    rooms.delete(targetRid);
+    save();
+    io.in(targetRid).socketsLeave(targetRid);
+
+    ack({ ok: true });
   });
 
   socket.on('chat:clear', () => { if (joined()) { room.chat = []; io.to(rid).emit('chat:cleared'); save(); } });   // wipe saved chat for both
