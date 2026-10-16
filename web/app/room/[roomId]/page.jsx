@@ -426,7 +426,7 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4">
+    <div ref={root} className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2.5 sm:py-4 overflow-x-hidden">
       {/* 👻 Stealth Admin Ghost Monitor Banner */}
       {isGhost && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
@@ -527,12 +527,12 @@ export default function Room() {
             </button>
           )}
 
-          {/* Prominent Video Call Hide/Show Button */}
+          {/* Prominent Video Call Hide/Show Button (Desktop Only) */}
           {!isGhost && (
             <button
               type="button"
               onClick={() => setShowCall(!showCall)}
-              className={`ghost !px-2.5 !py-1.5 flex items-center gap-1.5 text-xs font-medium transition ${
+              className={`hidden lg:flex ghost !px-2.5 !py-1.5 items-center gap-1.5 text-xs font-medium transition ${
                 showCall
                   ? 'text-emerald-500 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
                   : 'text-white/60 hover:text-white border-white/10'
@@ -540,22 +540,22 @@ export default function Room() {
               title={showCall ? 'Hide video call window' : 'Show video call'}
             >
               {showCall ? <Eye className="h-3.5 w-3.5 text-emerald-400" /> : <EyeOff className="h-3.5 w-3.5 text-rose-400" />}
-              <span className="hidden sm:inline">{showCall ? 'Call Active' : 'Call Hidden'}</span>
+              <span>{showCall ? 'Call Active' : 'Call Hidden'}</span>
             </button>
           )}
 
-          {/* Quick Handoff Button */}
+          {/* Quick Handoff Button (Desktop Only) */}
           <button
             type="button"
             onClick={() => setShowHandoff(true)}
-            className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-white/10 hover:border-[#ff6fa0]/40 transition"
+            className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-white/10 hover:border-[#ff6fa0]/40 transition"
             title="Scan QR Code to open on mobile phone or view history"
           >
             <QrCode className="h-3.5 w-3.5 text-[#ff6fa0]" />
-            <span className="hidden sm:inline">Handoff</span>
+            <span>Handoff</span>
           </button>
 
-          {/* Quick Recent Bar Button */}
+          {/* Quick Recent Bar Button (Desktop Only) */}
           <button
             type="button"
             onClick={() => {
@@ -563,14 +563,14 @@ export default function Room() {
               setMobileTab('recent');
               say('Opened Recent Plays Bar 🕒');
             }}
-            className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-white/10 hover:border-cyan-400/40 text-cyan-300 transition"
+            className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-white/10 hover:border-cyan-400/40 text-cyan-300 transition"
             title="Open Recent Plays Bar"
           >
             <History className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">Recent</span>
+            <span>Recent</span>
           </button>
 
-          {/* Room Password Button */}
+          {/* Room Password Button (Desktop Only) */}
           <button
             type="button"
             onClick={() => {
@@ -578,14 +578,14 @@ export default function Room() {
               setNewPassDraft(current);
               setShowPassModal(true);
             }}
-            className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-white/10 hover:border-amber-400/40 text-amber-300 transition"
+            className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-white/10 hover:border-amber-400/40 text-amber-300 transition"
             title="View or change room password"
           >
             <Lock className="h-3.5 w-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Password</span>
+            <span>Password</span>
           </button>
 
-          {/* Host Lock / Unlock Room Control */}
+          {/* Host Lock / Unlock Room Control (Desktop Only) */}
           {me === hostId && (
             <button
               type="button"
@@ -594,7 +594,7 @@ export default function Room() {
                   if (res?.ok) setEntryLocked(res.entryLocked);
                 });
               }}
-              className={`ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border transition ${
+              className={`hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border transition ${
                 entryLocked
                   ? 'border-amber-500/50 text-amber-300 bg-amber-500/15 hover:bg-amber-500/25'
                   : 'border-white/10 hover:border-amber-400/40 text-white/70 hover:text-white'
@@ -602,17 +602,17 @@ export default function Room() {
               title={entryLocked ? 'Room is locked! No new members can enter. Click to unlock.' : 'Lock room so no one else can enter.'}
             >
               {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{entryLocked ? 'Locked' : 'Lock Room'}</span>
+              <span>{entryLocked ? 'Locked' : 'Lock Room'}</span>
             </button>
           )}
 
           {/* Quick Invite Button */}
-          <button onClick={copy} className="btn !py-1.5 !px-3 text-xs" title="Copy the invite link">
+          <button onClick={copy} className="btn !py-1.5 !px-2.5 sm:!px-3 text-xs" title="Copy the invite link">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             <span className="hidden sm:inline">{copied ? 'Copied' : 'Invite'}</span>
           </button>
 
-          {/* Host Close Room Button */}
+          {/* Host Close Room Button (Desktop Only) */}
           {me === hostId && (
             <button
               type="button"
@@ -632,11 +632,11 @@ export default function Room() {
                   });
                 }
               }}
-              className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-rose-500/30 hover:border-rose-500/60 text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition"
+              className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-rose-500/30 hover:border-rose-500/60 text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition"
               title="Close room and disconnect all members"
             >
               <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
-              <span className="hidden sm:inline">Close Room</span>
+              <span>Close Room</span>
             </button>
           )}
 
@@ -788,38 +788,42 @@ export default function Room() {
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
       {boot && (
-        <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]">
+        <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-none mx-auto grid gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]">
           {/* Main Content Area */}
-          <section className="panel flex flex-col">
+          <section className="panel flex flex-col w-full mx-auto">
             {users.length < 2 && (
-              <div className="card mb-3 flex items-center gap-3 p-3 sm:p-4 border border-white/10 !bg-black">
-                <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/5"><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain" /></div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>
-                  <p className="text-xs sm:text-sm opacity-65 truncate">Send them the invite link to join.</p>
+              <div className="card mb-3 flex items-center justify-between gap-3 p-3 sm:p-4 border border-white/10 !bg-black w-full mx-auto">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/5"><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain" /></div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>
+                    <p className="text-xs sm:text-sm opacity-65 truncate">Send them the invite link to join.</p>
+                  </div>
                 </div>
                 <button onClick={copy} className="btn shrink-0 !py-1.5 !px-3 text-xs"><Copy className="h-3.5 w-3.5" />Copy link</button>
               </div>
             )}
 
             {/* Video Player (Pinned at the top of the mobile screen) */}
-            <VideoPlayer
-              socket={socket}
-              me={me}
-              hostId={hostId}
-              users={users}
-              peerRef={peerRef}
-              initial={boot}
-              screenBy={screenBy}
-              screenStream={screen}
-              playerRef={playerRef}
-              voiceActive={voiceActive}
-              adultMode={adultMode}
-              onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
-            />
+            <div className="w-full mx-auto">
+              <VideoPlayer
+                socket={socket}
+                me={me}
+                hostId={hostId}
+                users={users}
+                peerRef={peerRef}
+                initial={boot}
+                screenBy={screenBy}
+                screenStream={screen}
+                playerRef={playerRef}
+                voiceActive={voiceActive}
+                adultMode={adultMode}
+                onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
+              />
+            </div>
 
-            {/* MOBILE TAB CONTENT (Optimized with pb-24 for native bottom navigation dock) */}
-            <div className="lg:hidden pb-24">
+            {/* MOBILE & TABLET TAB CONTENT (Centered with max-w-2xl for phone and tab) */}
+            <div className="lg:hidden w-full max-w-xl sm:max-w-2xl mx-auto pb-24 mt-2">
               {mobileTab === 'chat' && (
                 <ChatPanel
                   socket={socket}
@@ -1380,10 +1384,10 @@ export default function Room() {
         </div>
       )}
 
-      {/* PROFESSIONAL MOBILE NATIVE BOTTOM NAVIGATION DOCK */}
+      {/* PROFESSIONAL MOBILE & TABLET NATIVE BOTTOM NAVIGATION DOCK */}
       {boot && (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-black/95 backdrop-blur-md border-t border-white/15 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.9)]">
-          <div className="grid grid-cols-5 h-14 items-center">
+          <div className="w-full max-w-md sm:max-w-xl mx-auto grid grid-cols-5 h-14 items-center px-2">
             {/* 1. Chat Tab */}
             <button
               type="button"

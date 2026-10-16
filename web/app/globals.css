@@ -1,18 +1,22 @@
 @tailwind base; @tailwind components; @tailwind utilities;
 
 /* Solid Pure Black Theme */
-body {
+html, body {
   background: #000000 !important;
   color: #f6f3f8;
   font-family: var(--font-body), sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
 }
 
 .dark body {
   background: #000000 !important;
   color: #f8f6fa;
   min-height: 100vh;
+  overflow-x: hidden !important;
 }
 
 @layer components {

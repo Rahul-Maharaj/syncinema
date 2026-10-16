@@ -207,7 +207,7 @@ function Dashboard({ hero, onLock }) {
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8">
+      <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8 max-w-7xl mx-auto w-full">
         <span className="flex items-center gap-2.5 font-display text-lg font-semibold">
           <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 object-contain" />
           <span>SyncCinema</span>
@@ -218,7 +218,7 @@ function Dashboard({ hero, onLock }) {
         </div>
       </nav>
 
-      <section className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-end gap-8 px-5 pb-8 pt-[34vh] md:flex-row md:items-end md:justify-between md:px-10 md:pb-12 md:pt-0">
+      <section className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-end gap-8 px-5 pb-8 pt-[34vh] md:flex-row md:items-end md:justify-between md:px-10 md:pb-12 md:pt-0 max-w-7xl mx-auto w-full">
         <div className="max-w-2xl">
           <h1 className="font-display text-4xl font-semibold leading-[1.05] sm:text-6xl lg:text-7xl">
             {'Same movie. Different cities. One couch.'.split(' ').map((w, i) => (

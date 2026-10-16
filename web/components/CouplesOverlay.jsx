@@ -780,7 +780,7 @@ export default function CouplesOverlay({
 
       {/* 1. MOBILE PHONE LAYOUT: Embedded Full-Sized Call Hub (when user selects Call tab on phone) */}
       {isMobileCallActive && (
-        <div className="lg:hidden card p-4 border border-white/10 !bg-black space-y-4 rounded-2xl mb-24">
+        <div className="lg:hidden card p-4 border border-white/10 !bg-black space-y-4 rounded-2xl mb-24 w-full max-w-xl sm:max-w-2xl mx-auto">
           <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
