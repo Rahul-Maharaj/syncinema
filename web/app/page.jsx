@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
-import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film, Users, RefreshCw, Dice5 } from 'lucide-react';
+import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film, Users, RefreshCw, Dice5, Zap, Video, Shield, CheckCircle2, Play } from 'lucide-react';
 import Floaters from '@/components/Floaters';
 import InstallPrompt from '@/components/InstallPrompt';
 import { getKey, setKey, verify, loadHero, forgetEverything } from '@/lib/vault';
@@ -207,69 +207,124 @@ function Dashboard({ hero, onLock }) {
         <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8 max-w-7xl mx-auto w-full">
-        <span className="flex items-center gap-2.5 font-display text-lg font-semibold">
-          <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 object-contain" />
-          <span>SyncCinema</span>
+      <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 sm:px-8 max-w-[1520px] mx-auto w-full">
+        <span className="flex items-center gap-3 font-display text-lg sm:text-xl font-bold tracking-tight">
+          <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 sm:h-10 sm:w-10 object-contain drop-shadow" />
+          <span className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">SyncCinema</span>
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span>Sync Engine Active</span>
+          </div>
           <InstallPrompt />
-          <button onClick={onLock} className="glass-btn" title="Clear saved room history"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Clear device data</span><span className="sm:hidden">Clear</span></button>
+          <button onClick={onLock} className="glass-btn !py-2 !px-3 text-xs sm:text-sm text-white/70 hover:text-white" title="Clear saved room history">
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Clear device data</span>
+            <span className="sm:hidden">Clear</span>
+          </button>
         </div>
       </nav>
 
-      <section className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-end gap-8 px-5 pb-8 pt-[34vh] md:flex-row md:items-end md:justify-between md:px-10 md:pb-12 md:pt-0 max-w-7xl mx-auto w-full">
-        <div className="max-w-2xl">
-          <h1 className="font-display text-4xl font-semibold leading-[1.05] sm:text-6xl lg:text-7xl">
-            {'Same movie. Different cities. One couch.'.split(' ').map((w, i) => (
-              <span key={i} className="mr-3 inline-block overflow-hidden align-bottom"><span className="word inline-block">{w}</span></span>
+      <section className="relative z-10 flex min-h-[calc(100vh-5rem)] flex-col justify-center gap-10 px-5 pb-12 pt-[28vh] lg:flex-row lg:items-center lg:justify-between lg:px-8 xl:px-14 lg:py-10 max-w-[1520px] mx-auto w-full">
+        {/* Left column: Attractive modern hero & social proof to attract users */}
+        <div className="flex-1 max-w-2xl xl:max-w-3xl space-y-6 lg:space-y-7">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold backdrop-blur-md">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span>Ultra-Low Latency Virtual Cinema</span>
+            <span className="text-white/30">•</span>
+            <span className="text-white/80">No Account Required</span>
+          </div>
+
+          <h1 className="font-display text-4xl sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.06] tracking-tight">
+            {'Same movie. Different cities.'.split(' ').map((w, i) => (
+              <span key={i} className="mr-3 inline-block overflow-hidden align-bottom">
+                <span className="word inline-block">{w}</span>
+              </span>
             ))}
+            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-rose-400 via-pink-400 to-[#ff6fa0] bg-clip-text text-transparent">
+              <span className="word inline-block">One private couch.</span>
+            </span>
           </h1>
-          <p className="sub mt-5 max-w-md text-base text-white/80 sm:text-lg">Your own private room. Watch in sync with video, voice and chat — strictly for two lovers.</p>
-          <ol className="mt-5 flex flex-wrap gap-2 text-sm">
+
+          <p className="sub max-w-xl text-base text-white/80 sm:text-lg lg:text-xl font-normal leading-relaxed">
+            Watch movies, YouTube, anime, series, and video files in synchronized harmony. Live 1080p video calls, floating PiP, synchronized playback, and private rooms built strictly for couples and close friends.
+          </p>
+
+          {/* 3 Modern Feature Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 backdrop-blur-md hover:border-rose-500/30 transition">
+              <div className="flex items-center gap-2 text-rose-400 mb-1.5">
+                <Zap className="h-4 w-4" />
+                <span className="text-xs font-bold text-white uppercase tracking-wider">Zero Drift Sync</span>
+              </div>
+              <p className="text-xs text-white/60 leading-relaxed">Sub-second clock synchronization keeps both devices playing at the exact same millisecond.</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 backdrop-blur-md hover:border-rose-500/30 transition">
+              <div className="flex items-center gap-2 text-rose-400 mb-1.5">
+                <Video className="h-4 w-4" />
+                <span className="text-xs font-bold text-white uppercase tracking-wider">In-Screen Video Call</span>
+              </div>
+              <p className="text-xs text-white/60 leading-relaxed">Floating Picture-in-Picture webcam with corner switching so you never miss a reaction.</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 backdrop-blur-md hover:border-rose-500/30 transition">
+              <div className="flex items-center gap-2 text-rose-400 mb-1.5">
+                <Shield className="h-4 w-4" />
+                <span className="text-xs font-bold text-white uppercase tracking-wider">End-to-End Private</span>
+              </div>
+              <p className="text-xs text-white/60 leading-relaxed">Every room is locked with host passwords and encrypted WebRTC peer-to-peer data.</p>
+            </div>
+          </div>
+
+          {/* Steps guide */}
+          <ol className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-white/70">
             {['Start a room', 'Set room pass', 'Press play together'].map((s, i) => (
-              <li key={s} className="step glass-btn !rounded-full !px-3 !py-1.5"><b className="grid h-5 w-5 place-items-center rounded-full bg-[#d9467a] text-xs">{i + 1}</b>{s}</li>
+              <li key={s} className="step glass-btn !rounded-full !px-3.5 !py-1.5 border border-white/10 bg-white/5 backdrop-blur-sm">
+                <b className="grid h-4 w-4 place-items-center rounded-full bg-[#d9467a] text-[10px] text-white mr-1">{i + 1}</b>
+                <span>{s}</span>
+              </li>
             ))}
           </ol>
         </div>
 
-        <div className="panel glass w-full space-y-4 p-6 md:max-w-md">
+        {/* Right column: Large, modern card on desktop & laptop */}
+        <div className="panel glass w-full space-y-5 p-6 sm:p-7 xl:p-8 lg:w-[480px] xl:w-[540px] 2xl:w-[580px] shrink-0 border border-white/15 bg-[#060608]/95 backdrop-blur-2xl shadow-2xl shadow-rose-950/25 rounded-3xl">
           {/* Tab switcher */}
-          <div className="flex rounded-xl bg-white/5 p-1 border border-white/10 gap-1">
+          <div className="flex rounded-2xl bg-white/5 p-1.5 border border-white/10 gap-1.5">
             <button
               type="button"
               onClick={() => { setTab('create'); setErr(''); setPerr(''); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition ${
                 tab === 'create'
-                  ? 'bg-[#d9467a] text-white'
-                  : 'text-white/70 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#e11d48] to-[#db2777] text-white shadow-md'
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-4 w-4" />
               <span>Create</span>
             </button>
             <button
               type="button"
               onClick={() => { setTab('join'); setErr(''); setPerr(''); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition ${
                 tab === 'join'
-                  ? 'bg-[#d9467a] text-white'
-                  : 'text-white/70 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#e11d48] to-[#db2777] text-white shadow-md'
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <KeyRound className="h-3.5 w-3.5" />
+              <KeyRound className="h-4 w-4" />
               <span>Join</span>
             </button>
             <button
               type="button"
               onClick={() => { setTab('active'); setErr(''); setPerr(''); fetchRooms(); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition relative ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition relative ${
                 tab === 'active'
-                  ? 'bg-[#d9467a] text-white'
-                  : 'text-white/70 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#e11d48] to-[#db2777] text-white shadow-md'
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Film className="h-3.5 w-3.5" />
+              <Film className="h-4 w-4" />
               <span>Rooms ({activeRooms.length})</span>
               {activeRooms.length > 0 && (
                 <span className="h-2 w-2 rounded-full bg-emerald-400 ml-0.5" />
@@ -278,11 +333,13 @@ function Dashboard({ hero, onLock }) {
           </div>
 
           {tab === 'create' && (
-            <form onSubmit={create} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/80">Room Name / ID (optional)</label>
+            <form onSubmit={create} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-medium text-white/90">
+                  Room Name / ID <span className="text-white/40 font-normal">(optional)</span>
+                </label>
                 <div className="relative">
-                  <Film className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Film className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
                   <input
                     type="text"
                     value={roomName}
@@ -290,28 +347,29 @@ function Dashboard({ hero, onLock }) {
                     placeholder="e.g. romantic-night (or leave empty for random)"
                     aria-label="Room name"
                     maxLength={64}
-                    className="field-d !pl-9"
+                    className="field-d !pl-10 !py-3 !text-sm sm:!text-base rounded-xl"
                   />
                 </div>
               </div>
-              <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <label className="block text-xs font-medium text-white/90 flex items-center gap-1">
-                    <Lock className="h-3.5 w-3.5 text-rose-400" />
-                    <span>Room Password <b className="text-rose-400">*Required</b></span>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
+                    <Lock className="h-4 w-4 text-rose-400" />
+                    <span>Room Password <b className="text-rose-400 font-bold">*Required</b></span>
                   </label>
                   <button
                     type="button"
                     onClick={generatePass}
-                    className="text-[11px] text-[#ff8fb3] hover:underline flex items-center gap-1"
+                    className="text-xs text-[#ff8fb3] hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 border border-rose-500/20 transition"
                     title="Generate a random password"
                   >
-                    <Dice5 className="h-3 w-3" />
+                    <Dice5 className="h-3.5 w-3.5 text-rose-400" />
                     <span>Generate</span>
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
                   <input
                     ref={passInputRef}
                     type={showPass ? 'text' : 'password'}
@@ -322,30 +380,32 @@ function Dashboard({ hero, onLock }) {
                     minLength={4}
                     maxLength={64}
                     required
-                    className="field-d !pl-9 !pr-10"
+                    className="field-d !pl-10 !pr-11 !py-3 !text-sm sm:!text-base rounded-xl"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPass(!showPass)}
-                    className="absolute right-2 top-2 rounded-lg p-1 text-white/60 hover:text-white"
+                    className="absolute right-2.5 top-2.5 rounded-lg p-1.5 text-white/60 hover:text-white"
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className={`mt-1 text-xs ${perr ? 'text-rose-300 font-medium' : 'text-white/50'}`}>
+                <p className={`text-xs ${perr ? 'text-rose-300 font-medium' : 'text-white/50'}`}>
                   {perr || '🔒 Password is required: no one can enter without this password.'}
                 </p>
               </div>
 
-              <div>
-                <label className="mb-1.5 flex items-center justify-between text-xs font-medium text-white/90">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5 text-rose-400" />
-                    <span>Room Capacity <b className="text-white/50">(Members Allowed)</b></span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-white/90">
+                  <span className="flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-rose-400" />
+                    <span>Room Capacity <b className="text-white/50 font-normal">(Members Allowed)</b></span>
                   </span>
-                  <span className="text-[11px] font-bold text-[#ff8fb3]">{maxUsers} Members Max</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-xs font-bold text-[#ff8fb3] px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20">
+                    {maxUsers} Members Max
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2.5">
                   {[
                     { count: 2, label: '2 Seats', sub: 'Couples / Date' },
                     { count: 3, label: '3 Seats', sub: 'Trio / Friends' },
@@ -355,14 +415,14 @@ function Dashboard({ hero, onLock }) {
                       key={opt.count}
                       type="button"
                       onClick={() => setMaxUsers(opt.count)}
-                      className={`rounded-xl p-2.5 text-center border transition ${
+                      className={`rounded-2xl p-3 text-center border transition-all ${
                         maxUsers === opt.count
-                          ? 'bg-[#d9467a]/30 border-[#d9467a] text-white'
+                          ? 'bg-[#d9467a]/25 border-[#d9467a] text-white shadow-md'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <span className="block text-xs font-bold">{opt.label}</span>
-                      <span className="block text-[10px] text-white/50">{opt.sub}</span>
+                      <span className="block text-xs sm:text-sm font-bold">{opt.label}</span>
+                      <span className="block text-[10px] sm:text-xs text-white/50 mt-0.5">{opt.sub}</span>
                     </button>
                   ))}
                 </div>
@@ -372,21 +432,21 @@ function Dashboard({ hero, onLock }) {
                 ref={cta}
                 onPointerMove={pull}
                 onPointerLeave={release}
-                className="btn w-full !py-3.5 !text-base"
+                className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-[#e11d48] via-[#e62e6b] to-[#db2777] hover:from-[#f43f5e] hover:to-[#e11d48] shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2"
               >
-                <Sparkles className="h-4 w-4" />
-                Create Room
-                <ArrowRight className="h-4 w-4" />
+                <Sparkles className="h-5 w-5" />
+                <span>Create Room</span>
+                <ArrowRight className="h-5 w-5" />
               </button>
             </form>
           )}
 
           {tab === 'join' && (
-            <form onSubmit={join} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/80">Room Code or Link</label>
+            <form onSubmit={join} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-medium text-white/90">Room Code or Link</label>
                 <div className="relative">
-                  <Film className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Film className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
                   <input
                     autoFocus
                     value={code}
@@ -406,17 +466,17 @@ function Dashboard({ hero, onLock }) {
                     }}
                     placeholder="Paste room code or invite link"
                     aria-label="Room code or link"
-                    className="field-d !pl-9"
+                    className="field-d !pl-10 !py-3 !text-sm sm:!text-base rounded-xl"
                   />
                 </div>
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/90 flex items-center gap-1">
-                  <Lock className="h-3.5 w-3.5 text-rose-400" />
-                  <span>Room Password <b className="text-rose-400">*Required</b></span>
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
+                  <Lock className="h-4 w-4 text-rose-400" />
+                  <span>Room Password <b className="text-rose-400 font-bold">*Required</b></span>
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+                  <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
                   <input
                     ref={joinPassInputRef}
                     type={showJoinPass ? 'text' : 'password'}
@@ -427,42 +487,42 @@ function Dashboard({ hero, onLock }) {
                     minLength={4}
                     maxLength={64}
                     required
-                    className="field-d !pl-9 !pr-10"
+                    className="field-d !pl-10 !pr-11 !py-3 !text-sm sm:!text-base rounded-xl"
                   />
                   <button
                     type="button"
                     onClick={() => setShowJoinPass(!showJoinPass)}
-                    className="absolute right-2 top-2 rounded-lg p-1 text-white/60 hover:text-white"
+                    className="absolute right-2.5 top-2.5 rounded-lg p-1.5 text-white/60 hover:text-white"
                   >
                     {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {err ? (
-                  <p role="alert" className="mt-1 text-xs text-rose-300 font-medium">{err}</p>
+                  <p role="alert" className="text-xs text-rose-300 font-medium">{err}</p>
                 ) : (
-                  <p className="mt-1 text-xs text-white/50">🔒 Protected room: password is required to enter.</p>
+                  <p className="text-xs text-white/50">🔒 Protected room: password is required to enter.</p>
                 )}
               </div>
-              <button className="btn w-full !py-3.5 !text-base">
-                <KeyRound className="h-4 w-4" />
-                Join Room
-                <ArrowRight className="h-4 w-4" />
+              <button className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-[#e11d48] via-[#e62e6b] to-[#db2777] hover:from-[#f43f5e] hover:to-[#e11d48] shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2">
+                <KeyRound className="h-5 w-5" />
+                <span>Join Room</span>
+                <ArrowRight className="h-5 w-5" />
               </button>
             </form>
           )}
 
           {tab === 'active' && (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div className="flex items-center justify-between pb-1">
-                <span className="text-xs font-medium text-white/80 flex items-center gap-1.5">
-                  <Film className="h-3.5 w-3.5 text-[#ff6fa0]" />
+                <span className="text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
+                  <Film className="h-4 w-4 text-[#ff6fa0]" />
                   <span>Active Rooms on Home Screen</span>
                 </span>
                 <button
                   type="button"
                   onClick={fetchRooms}
                   disabled={loadingRooms}
-                  className="text-xs text-white/60 hover:text-white flex items-center gap-1 transition"
+                  className="text-xs text-white/60 hover:text-white flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition"
                   title="Refresh active rooms list"
                 >
                   <RefreshCw className={`h-3 w-3 ${loadingRooms ? 'animate-spin' : ''}`} />
@@ -471,30 +531,30 @@ function Dashboard({ hero, onLock }) {
               </div>
 
               {activeRooms.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center space-y-2">
-                  <p className="text-xs text-white/60">No active rooms right now.</p>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center space-y-3">
+                  <p className="text-xs sm:text-sm text-white/60">No active rooms right now.</p>
                   <button
                     type="button"
                     onClick={() => setTab('create')}
-                    className="btn !py-1.5 !px-3 text-xs mx-auto"
+                    className="btn !py-2 !px-4 text-xs sm:text-sm mx-auto"
                   >
-                    <Sparkles className="h-3 w-3" />
+                    <Sparkles className="h-3.5 w-3.5" />
                     Create First Room
                   </button>
                 </div>
               ) : (
-                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                <div className="max-h-64 space-y-2.5 overflow-y-auto pr-1">
                   {activeRooms.map((r) => {
                     const isFull = (r.userCount || 0) >= (r.maxUsers || 2);
                     return (
                       <div
                         key={r.roomId}
-                        className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center justify-between gap-2 hover:border-[#ff6fa0]/40 transition"
+                        className="rounded-2xl border border-white/10 bg-white/5 p-3.5 flex items-center justify-between gap-2.5 hover:border-[#ff6fa0]/40 transition"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-semibold text-sm truncate text-white">{r.roomId}</span>
-                            {r.adult && <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1 rounded">18+</span>}
+                            {r.adult && <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded font-bold">18+</span>}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
@@ -513,14 +573,14 @@ function Dashboard({ hero, onLock }) {
                         </div>
 
                         {isFull ? (
-                          <span className="text-xs opacity-50 px-2 py-1 bg-white/5 rounded-lg border border-white/10">
+                          <span className="text-xs opacity-50 px-2.5 py-1 bg-white/5 rounded-lg border border-white/10">
                             Full
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => selectActiveRoom(r)}
-                            className="btn !py-1.5 !px-3 text-xs shrink-0"
+                            className="btn !py-1.5 !px-3.5 text-xs shrink-0"
                           >
                             <Lock className="h-3 w-3" />
                             Join
@@ -536,7 +596,7 @@ function Dashboard({ hero, onLock }) {
 
           {/* Quick Active Rooms Preview underneath Create/Join forms */}
           {tab !== 'active' && activeRooms.length > 0 && (
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3 space-y-2">
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs text-white/70">
                 <span className="flex items-center gap-1.5 font-medium text-white/90">
                   <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -545,29 +605,29 @@ function Dashboard({ hero, onLock }) {
                 <button
                   type="button"
                   onClick={() => setTab('active')}
-                  className="text-[11px] text-[#ff8fb3] hover:underline"
+                  className="text-xs text-[#ff8fb3] hover:underline"
                 >
                   View all
                 </button>
               </div>
-              <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-0.5">
+              <div className="flex flex-col gap-1.5 max-h-28 overflow-y-auto pr-0.5">
                 {activeRooms.map((r) => {
                   const isFull = (r.userCount || 0) >= (r.maxUsers || 2);
                   return (
                     <div
                       key={r.roomId}
-                      className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-black/20 hover:bg-black/40 transition text-xs"
+                      className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-black/30 hover:bg-black/50 transition text-xs"
                     >
-                      <span className="font-mono text-white/90 truncate max-w-[120px] sm:max-w-[150px]">{r.roomId}</span>
+                      <span className="font-mono text-white/90 truncate max-w-[140px] sm:max-w-[180px]">{r.roomId}</span>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${isFull ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${isFull ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                           {r.userCount}/{r.maxUsers || 2}
                         </span>
                         {!isFull && (
                           <button
                             type="button"
                             onClick={() => selectActiveRoom(r)}
-                            className="text-[11px] text-[#ff6fa0] hover:text-white px-1.5 py-0.5 rounded bg-white/5 hover:bg-[#d9467a]/40 transition"
+                            className="text-[11px] text-[#ff6fa0] hover:text-white px-2 py-0.5 rounded-lg bg-white/5 hover:bg-[#d9467a]/40 transition"
                           >
                             Join 🔒
                           </button>
@@ -581,12 +641,16 @@ function Dashboard({ hero, onLock }) {
           )}
 
           {last && (
-            <button onClick={() => router.push(`/room/${last}`)} className="glass-btn w-full justify-between">
+            <button onClick={() => router.push(`/room/${last}`)} className="glass-btn w-full justify-between !py-2.5 rounded-xl">
               <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#ff6fa0]" />Back to our room</span>
               <span className="font-mono text-xs text-white/60">{last}</span>
             </button>
           )}
-          <p className="flex items-center gap-1.5 border-t border-white/10 pt-3 text-xs text-white/60"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-300" />Private: 2 seats only, host controls room settings, and password required to enter.</p>
+
+          <p className="flex items-center gap-2 border-t border-white/10 pt-3 text-xs text-white/60">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+            <span>Private: {maxUsers} seats only, host controls room settings, and password required to enter.</span>
+          </p>
         </div>
       </section>
     </main>
