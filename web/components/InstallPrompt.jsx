@@ -68,7 +68,7 @@ export default function InstallPrompt({ className = '' }) {
       </button>
 
       {showIosGuide && (
-        <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-white/20 bg-[#160d1f]/95 p-3 text-xs text-white shadow-2xl backdrop-blur-xl z-50">
+        <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-3 text-xs text-white shadow-2xl backdrop-blur-xl z-50">
           <div className="flex items-center gap-2 mb-1.5">
             <img src="/logo.png" alt="SyncCinema" className="h-5 w-5 object-contain" />
             <p className="font-semibold text-[#ff8fb3]">Install on iPhone / iPad:</p>

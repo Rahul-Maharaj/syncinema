@@ -39,7 +39,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
-      <div className="card vault w-full max-w-md rise space-y-4 p-5 bg-[#160d1f] border border-[#ff6fa0]/30 shadow-2xl rounded-2xl">
+      <div className="card vault w-full max-w-md rise space-y-4 p-5 !bg-gradient-to-b from-[#14121a] via-[#0d0b12] to-[#060509] border border-white/15 shadow-2xl rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">

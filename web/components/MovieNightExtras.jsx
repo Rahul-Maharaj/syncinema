@@ -728,7 +728,7 @@ export default function MovieNightExtras({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
           <form
             onSubmit={handleAddWatchlist}
-            className="card rise w-full max-w-md p-5 space-y-3.5 border border-white/20 bg-[#160d1f]/95 shadow-2xl"
+            className="card rise w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">
@@ -799,7 +799,7 @@ export default function MovieNightExtras({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSubmitReview}
-            className="card rise w-full max-w-md p-5 space-y-3.5 border border-white/20 bg-[#160d1f]/95 shadow-2xl"
+            className="card rise w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">

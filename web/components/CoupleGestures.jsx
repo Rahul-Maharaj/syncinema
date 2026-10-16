@@ -343,7 +343,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
 
             {/* Whisper Dropdown Menu */}
             {showWhispers && (
-              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/20 bg-[#160d1f]/95 p-3 shadow-2xl backdrop-blur-xl z-50 text-white">
+              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-3 shadow-2xl backdrop-blur-xl z-50 text-white">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
                   <span className="text-xs font-semibold text-[#ff8fb3] flex items-center gap-1.5">
                     <Heart className="h-3.5 w-3.5 fill-current" />

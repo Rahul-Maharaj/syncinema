@@ -27,8 +27,8 @@ function Gate({ onUnlock, notice }) {
     if (r === 'denied') { card.current.classList.remove('shake'); void card.current.offsetWidth; card.current.classList.add('shake'); }
   };
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#0c0612] px-6 text-white">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_90%_50%_at_50%_-10%,rgba(235,70,130,0.35),transparent_70%),radial-gradient(ellipse_70%_40%_at_50%_0%,rgba(255,185,115,0.18),transparent_60%),radial-gradient(circle_at_15%_35%,rgba(165,25,85,0.25),transparent_50%),radial-gradient(circle_at_85%_75%,rgba(95,25,125,0.28),transparent_55%)]" />
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)] px-6 text-white">
+      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(217,70,122,0.06),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.05),transparent_40%)]" />
       <Floaters n={16} />
       <form ref={card} onSubmit={submit} className="glass relative w-full max-w-sm space-y-4 p-8 text-center">
         <div className="relative mx-auto h-20 w-20">
@@ -180,7 +180,7 @@ function Dashboard({ hero, onLock }) {
   };
 
   return (
-    <main ref={root} className="relative min-h-screen overflow-hidden bg-[#0c0612] text-white">
+    <main ref={root} className="relative min-h-screen overflow-hidden bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)] text-white">
       {/* picture: top banner on phones, full-screen background on desktop */}
       <div ref={stage} className="absolute inset-x-0 top-0 h-[56vh] md:inset-0 md:h-auto">
         <div className="layer absolute inset-0 will-change-transform">
@@ -195,9 +195,9 @@ function Dashboard({ hero, onLock }) {
           </div>
         </div>
         <Floaters n={18} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0612] via-[#0c0612]/60 to-transparent md:via-[#0c0612]/45" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(8,4,12,.75)_100%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_45%_at_50%_-10%,rgba(235,70,130,0.28),transparent_70%),radial-gradient(ellipse_70%_35%_at_50%_0%,rgba(255,185,115,0.14),transparent_60%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050407] via-[#050407]/70 to-transparent md:via-[#050407]/50" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(2,2,4,.85)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_45%_at_50%_-10%,rgba(60,40,75,0.2),transparent_70%),radial-gradient(ellipse_70%_35%_at_50%_0%,rgba(35,25,45,0.15),transparent_60%)]" />
       </div>
 
       <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8">
@@ -556,7 +556,7 @@ export default function Home() {
   }, []);
   const lock = () => { forgetEverything(); if (hero) URL.revokeObjectURL(hero); setHero(null); setPhase('locked'); };
 
-  if (phase === 'checking') return <main className="grid min-h-screen place-items-center bg-[#120b1a]"><Heart className="beat h-10 w-10 fill-[#d9467a] text-[#d9467a]" aria-label="Loading" /></main>;
+  if (phase === 'checking') return <main className="grid min-h-screen place-items-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#14121a] via-[#09080d] to-[#020204]"><Heart className="beat h-10 w-10 fill-[#d9467a] text-[#d9467a]" aria-label="Loading" /></main>;
   if (phase === 'locked') return <Gate onUnlock={enter} notice={notice} />;
   return <Dashboard hero={hero} onLock={lock} />;
 }

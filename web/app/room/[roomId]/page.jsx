@@ -52,7 +52,7 @@ const hello = (n) => {
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
-  <main className="grid min-h-screen place-items-center px-6">
+  <main className="grid min-h-screen place-items-center px-6 bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)]">
     <form onSubmit={onSubmit} className="glass rise w-full max-w-sm space-y-4 p-7 text-center">
       <div className="relative mx-auto h-16 w-16">
         <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(217,70,122,0.7)]" />
@@ -109,12 +109,12 @@ export default function Room() {
   const applyAmbientLighting = (amb) => {
     if (!amb || typeof document === 'undefined') return;
     const presets = {
-      love: 'radial-gradient(circle at 50% 20%, rgba(217, 70, 122, 0.32), transparent 70%), #0c0612',
-      candlelight: 'radial-gradient(circle at 50% 30%, rgba(255, 158, 66, 0.35), transparent 70%), #0d0806',
-      midnight: 'radial-gradient(circle at 50% 20%, rgba(138, 43, 226, 0.32), transparent 70%), #08040f',
-      ruby: 'radial-gradient(circle at 50% 25%, rgba(229, 9, 20, 0.3), transparent 70%), #0d0507',
-      sunset: 'radial-gradient(circle at 50% 20%, rgba(255, 110, 127, 0.32), transparent 70%), #0f070a',
-      noir: 'radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.25), transparent 70%), #050307',
+      love: 'radial-gradient(circle at 50% 20%, rgba(217, 70, 122, 0.2), transparent 70%), radial-gradient(circle at 50% 80%, rgba(20, 16, 26, 0.5), transparent 70%), #060408',
+      candlelight: 'radial-gradient(circle at 50% 30%, rgba(255, 158, 66, 0.2), transparent 70%), radial-gradient(circle at 50% 80%, rgba(22, 16, 12, 0.5), transparent 70%), #060403',
+      midnight: 'radial-gradient(circle at 50% 20%, rgba(138, 43, 226, 0.18), transparent 70%), radial-gradient(circle at 50% 80%, rgba(18, 12, 28, 0.5), transparent 70%), #040306',
+      ruby: 'radial-gradient(circle at 50% 25%, rgba(229, 9, 20, 0.16), transparent 70%), radial-gradient(circle at 50% 80%, rgba(22, 10, 14, 0.5), transparent 70%), #060305',
+      sunset: 'radial-gradient(circle at 50% 20%, rgba(255, 110, 127, 0.18), transparent 70%), radial-gradient(circle at 50% 80%, rgba(22, 14, 20, 0.5), transparent 70%), #050305',
+      noir: 'radial-gradient(circle at 50% 50%, rgba(35, 40, 55, 0.2), transparent 70%), radial-gradient(circle at 50% 90%, rgba(16, 16, 22, 0.5), transparent 70%), #020204',
     };
     const bg = presets[amb.preset] || presets.love;
     const opacity = (amb.intensity ?? 80) / 100;
@@ -630,7 +630,7 @@ export default function Room() {
           {/* Main Content Area */}
           <section className="panel flex flex-col">
             {users.length < 2 && (
-              <div className="card rise mb-3 flex items-center gap-3 p-3 sm:p-4 border border-[#d9467a]/20 !bg-[#160d1f]/70 backdrop-blur">
+              <div className="card rise mb-3 flex items-center gap-3 p-3 sm:p-4 border border-white/10 !bg-gradient-to-r from-[#14121a]/90 via-[#0d0b12]/92 to-[#060509]/96 backdrop-blur">
                 <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#d9467a]/15"><i className="ring" /><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain drop-shadow-[0_0_8px_rgba(217,70,122,0.8)]" /></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>

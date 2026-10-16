@@ -554,8 +554,8 @@ export default function IntimacyMode({
 
       {/* FULL-SCREEN LOCK OVERLAY */}
       {isLocked && (
-        <div className="fixed inset-0 z-[999] grid place-items-center bg-[#0c0612]/95 backdrop-blur-2xl p-6 text-white text-center">
-          <div className="card rise w-full max-w-sm p-8 space-y-5 border border-white/20 bg-black/60 shadow-2xl">
+        <div className="fixed inset-0 z-[999] grid place-items-center bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)] backdrop-blur-2xl p-6 text-white text-center">
+          <div className="card rise w-full max-w-sm p-8 space-y-5 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl">
             <div className="h-16 w-16 mx-auto rounded-full bg-[#d9467a]/20 border border-[#d9467a]/40 grid place-items-center">
               <Lock className="h-7 w-7 text-[#ff8fb3]" />
             </div>
@@ -602,7 +602,7 @@ export default function IntimacyMode({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSetPin}
-            className="card rise w-full max-w-sm p-6 space-y-4 border border-white/20 bg-[#160d1f]/95 shadow-2xl"
+            className="card rise w-full max-w-sm p-6 space-y-4 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">

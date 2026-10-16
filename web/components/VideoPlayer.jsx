@@ -890,7 +890,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
       {/* Precision Sync & Audio Drawer */}
       {showSettings && (
-        <div className="card rise p-4 bg-[#140c1a]/95 border border-white/15 space-y-4 shadow-xl">
+        <div className="card rise p-4 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 border border-white/10 space-y-4 shadow-xl">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
             <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
               <Sliders className="h-4 w-4 text-[#ff6fa0]" /> Precision Sync &amp; Audio Controls
