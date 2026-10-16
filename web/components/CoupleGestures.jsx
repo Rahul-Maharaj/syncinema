@@ -244,12 +244,12 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
       )}
 
       {/* Couple Gestures Toolbar */}
-      <div className="card my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 bg-gradient-to-r from-[#d9467a]/15 via-[#8a2be2]/10 to-[#ff9a6b]/15 border-[#ff6fa0]/25 shadow-lg shadow-[#d9467a]/10">
+      <div className="card my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 !bg-black border border-white/10">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#d9467a]/25 text-[#ff6fa0]">
-            <Heart className="h-4 w-4 beat fill-current" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[#ff6fa0]">
+            <Heart className="h-4 w-4 fill-current" />
           </div>
-          <span className="font-display text-xs sm:text-sm font-semibold tracking-wide text-[#ff9bbd] dark:text-[#ff9bbd]">
+          <span className="font-display text-xs sm:text-sm font-semibold tracking-wide text-white">
             Couple Gestures
           </span>
         </div>
@@ -284,7 +284,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             title={holdingHand ? 'Holding hands! Tap to release' : 'Hold hands with your partner'}
             className={`ghost !px-2.5 !py-2 text-xs transition active:scale-95 ${
               holdingHand || partnerHolding
-                ? 'bg-gradient-to-r from-[#ff6fa0] to-[#d9467a] text-white shadow-md shadow-[#d9467a]/50 border-transparent font-medium'
+                ? 'bg-[#d9467a] text-white border-transparent font-medium'
                 : 'text-white/90 bg-white/5 hover:bg-[#d9467a]/20'
             }`}
           >
@@ -343,7 +343,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
 
             {/* Whisper Dropdown Menu */}
             {showWhispers && (
-              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-3 shadow-2xl backdrop-blur-xl z-50 text-white">
+              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/15 !bg-black p-3 z-50 text-white">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
                   <span className="text-xs font-semibold text-[#ff8fb3] flex items-center gap-1.5">
                     <Heart className="h-3.5 w-3.5 fill-current" />

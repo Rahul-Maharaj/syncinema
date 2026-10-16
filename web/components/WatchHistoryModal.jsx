@@ -39,11 +39,11 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
-      <div className="card vault w-full max-w-md rise space-y-4 p-5 !bg-gradient-to-b from-[#14121a] via-[#0d0b12] to-[#060509] border border-white/15 shadow-2xl rounded-2xl">
+      <div className="card vault w-full max-w-md space-y-4 p-5 !bg-black border border-white/15 rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-tr from-[#d9467a] to-purple-600 text-white">
+            <div className="grid h-8 w-8 place-items-center rounded-xl bg-[#d9467a] text-white">
               {tab === 'handoff' ? <QrCode className="h-4 w-4" /> : <History className="h-4 w-4" />}
             </div>
             <div>

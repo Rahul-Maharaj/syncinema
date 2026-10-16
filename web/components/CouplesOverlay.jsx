@@ -107,7 +107,7 @@ function RemoteAudio({ stream, name, onTalk }) {
         <button
           type="button"
           onClick={() => audioRef.current?.play().then(() => setBlocked(false))}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#d9467a] to-[#ff6fa0] px-4 py-2 text-xs font-semibold text-white shadow-2xl animate-bounce cursor-pointer border border-white/20"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-[#d9467a] px-4 py-2 text-xs font-semibold text-white cursor-pointer border border-white/20"
         >
           <Volume2 className="h-4 w-4" />
           <span>Tap to hear {name || 'Partner'} 🔊</span>
@@ -175,15 +175,15 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
       onDoubleClick={toggleFullscreen}
       className={`vault group relative aspect-video w-36 overflow-hidden rounded-xl bg-black/90 transition-all duration-300 sm:w-44 shrink-0 ${
         isSpeaking
-          ? 'ring-2 ring-[#ff6fa0] shadow-[0_0_15px_rgba(255,111,160,0.6)]'
+          ? 'ring-2 ring-[#ff6fa0]'
           : 'ring-1 ring-white/10'
       }`}
       title={isPartner ? 'Double click or tap expand for full screen' : name}
     >
       {/* Voice Only Mode */}
       {voiceOnly ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-purple-950/80 to-[#160d1f] p-2 text-center">
-          <div className={`relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] ${isSpeaking ? 'scale-110 animate-bounce' : 'animate-pulse'}`}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-2 text-center">
+          <div className={`relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] ${isSpeaking ? 'scale-105 border-white/60' : ''}`}>
             <Mic className="h-4 w-4" />
           </div>
           <span className="text-[10px] text-white/70">Voice Mode</span>
@@ -192,8 +192,8 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
         <>
           {/* Waiting/Connecting placeholder when stream is absent */}
           {(!stream || !hasVideoTrack) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-[#1b1526] to-[#0a0810] p-2 text-center z-10 pointer-events-none">
-              <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] animate-pulse">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-2 text-center z-10 pointer-events-none">
+              <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3]">
                 <Video className="h-4 w-4" />
               </div>
               <span className="text-[10px] text-white/60">{isPartner ? 'Connecting video…' : 'Starting camera…'}</span>
@@ -213,12 +213,12 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
       {/* User Name Tag */}
       <span className="absolute bottom-1 left-1.5 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm flex items-center gap-1 z-20">
         {name}
-        {isSpeaking && <i className="h-1.5 w-1.5 rounded-full bg-[#ff6fa0] animate-ping" />}
+        {isSpeaking && <i className="h-1.5 w-1.5 rounded-full bg-[#ff6fa0]" />}
       </span>
 
       {/* Speaking Indicator */}
       {isSpeaking && (
-        <span className="absolute top-1 left-1.5 flex items-center gap-0.5 rounded bg-[#d9467a]/90 px-1.5 py-0.5 text-[9px] font-semibold text-white animate-pulse z-20">
+        <span className="absolute top-1 left-1.5 flex items-center gap-0.5 rounded bg-[#d9467a]/90 px-1.5 py-0.5 text-[9px] font-semibold text-white z-20">
           <Mic className="h-2.5 w-2.5" /> Speaking
         </span>
       )}
@@ -620,15 +620,15 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 px-3.5 py-2 text-xs font-medium text-white shadow-2xl backdrop-blur transition hover:scale-105 hover:border-[#ff6fa0]/60 cursor-pointer"
+          className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white transition hover:border-[#ff6fa0]/60 cursor-pointer"
           title="Show video call window"
         >
           <Video className="h-3.5 w-3.5 text-[#ff6fa0]" />
           <span>Show Video Call</span>
-          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-[#ff6fa0] animate-ping" />}
+          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-[#ff6fa0]" />}
         </button>
       ) : (
-        <div ref={box} className={`fixed bottom-5 left-5 z-40 rounded-2xl border border-white/10 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-2.5 shadow-2xl backdrop-blur-md transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+        <div ref={box} className={`fixed bottom-5 left-5 z-40 rounded-2xl border border-white/20 !bg-black p-2.5 transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />

@@ -97,7 +97,7 @@ export default function ChatPanel({
 
   return (
     <div
-      className={`card vault flex flex-col p-3.5 sm:p-4 border border-white/10 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-xl ${
+      className={`card vault flex flex-col p-3.5 sm:p-4 border border-white/10 !bg-black ${
         isMobile ? 'h-[50vh] sm:h-[55vh]' : 'h-full'
       }`}
     >
@@ -179,7 +179,7 @@ export default function ChatPanel({
               <p
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-1.5 text-sm ${
                   mine
-                    ? 'rounded-tr-sm bg-gradient-to-r from-[#d9467a] to-[#c0265f] text-white shadow-md'
+                    ? 'rounded-tr-sm bg-[#d9467a] text-white'
                     : 'rounded-tl-sm bg-white/10 text-white/90 border border-white/5'
                 }`}
               >

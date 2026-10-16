@@ -195,7 +195,7 @@ export default function MovieNightExtras({
   const readyCount = readyCheck?.readyUsers?.length || 0;
 
   return (
-    <div className="card rise p-3 sm:p-4 text-white overflow-hidden">
+    <div className="card p-3 sm:p-4 text-white overflow-hidden !bg-black border border-white/10">
       {/* Top Tabs */}
       <div className="flex items-center gap-1.5 border-b border-white/10 pb-2 mb-3 overflow-x-auto no-scrollbar">
         <button
@@ -259,7 +259,7 @@ export default function MovieNightExtras({
         <div className="space-y-3">
           {/* Currently Playing Card */}
           {currentMedia && currentMedia.type !== 'none' && (
-            <div className="rounded-xl border border-[#d9467a]/40 bg-gradient-to-r from-[#d9467a]/20 to-purple-900/20 p-3 flex gap-3 items-center">
+            <div className="rounded-xl border border-[#d9467a]/40 !bg-black p-3 flex gap-3 items-center">
               {currentMedia.poster ? (
                 <img src={currentMedia.poster} alt="" className="h-14 w-10 rounded-md object-cover border border-white/20 shrink-0" />
               ) : (
@@ -479,7 +479,7 @@ export default function MovieNightExtras({
                   {item.poster ? (
                     <img src={item.poster} alt="" className="h-16 w-12 rounded object-cover border border-white/10 shrink-0" />
                   ) : (
-                    <div className="h-16 w-12 rounded bg-gradient-to-br from-purple-900/40 to-pink-900/40 border border-white/10 grid place-items-center shrink-0">
+                    <div className="h-16 w-12 rounded bg-white/5 border border-white/10 grid place-items-center shrink-0">
                       <Film className="h-5 w-5 text-white/40" />
                     </div>
                   )}
@@ -523,7 +523,7 @@ export default function MovieNightExtras({
             <span className="text-xs uppercase font-bold tracking-wider text-emerald-400">
               {timer?.label || 'Synchronized Snack Timer'}
             </span>
-            <div className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight my-2 text-white drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]">
+            <div className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight my-2 text-white">
               {formatTime(timeLeft)}
             </div>
             {timer?.startedBy && (
@@ -616,7 +616,7 @@ export default function MovieNightExtras({
                   key={u.id}
                   className={`rounded-2xl border p-3.5 text-center transition ${
                     ready
-                      ? 'border-emerald-400/60 bg-emerald-950/30 shadow-[0_0_15px_rgba(52,211,153,0.2)]'
+                      ? 'border-emerald-400/60 bg-emerald-950/30'
                       : 'border-white/15 bg-white/5'
                   }`}
                 >
@@ -640,7 +640,7 @@ export default function MovieNightExtras({
             {!readyCheck?.active ? (
               <button
                 onClick={() => socket.emit('ready:start')}
-                className="btn !py-2.5 !px-6 text-sm font-bold shadow-lg shadow-[#d9467a]/40"
+                className="btn !py-2.5 !px-6 text-sm font-bold"
               >
                 <Popcorn className="h-4 w-4" /> Start Ready Check
               </button>
@@ -649,7 +649,7 @@ export default function MovieNightExtras({
                 {!isMeReady ? (
                   <button
                     onClick={() => socket.emit('ready:confirm')}
-                    className="btn !py-2.5 !px-8 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30"
+                    className="btn !py-2.5 !px-8 text-sm font-bold bg-emerald-600 hover:bg-emerald-500"
                   >
                     <CheckCircle2 className="h-4 w-4" /> I’m Ready! Start Movie
                   </button>
@@ -725,10 +725,10 @@ export default function MovieNightExtras({
 
       {/* MODAL: ADD TO WATCHLIST */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
           <form
             onSubmit={handleAddWatchlist}
-            className="card rise w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl"
+            className="card w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-black"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">
@@ -796,10 +796,10 @@ export default function MovieNightExtras({
 
       {/* MODAL: MOVIE REVIEW / MOMENT LOG */}
       {showReviewModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSubmitReview}
-            className="card rise w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl"
+            className="card w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-black"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">

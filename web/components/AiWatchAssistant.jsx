@@ -106,11 +106,11 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
   }, [activeTab, selectedMood]);
 
   return (
-    <div className="card vault p-4 sm:p-5 space-y-4 bg-gradient-to-b from-[#160d1f] to-[#0e0714] border border-[#ff6fa0]/25 shadow-2xl rounded-2xl">
+    <div className="card vault p-4 sm:p-5 space-y-4 !bg-black border border-white/10 rounded-2xl">
       {/* Header with Title and Mode Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-tr from-[#d9467a] to-purple-600 text-white shadow-lg shadow-[#d9467a]/40">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-[#d9467a] text-white">
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
@@ -267,7 +267,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
       {/* Tab 3: Date Intermission Prompts */}
       {activeTab === 'prompts' && (
         <div className="space-y-3.5 rise text-xs">
-          <div className="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 via-purple-950/30 to-pink-950/40 border border-[#ff6fa0]/30 text-center space-y-3">
+          <div className="p-4 rounded-xl !bg-black border border-white/15 text-center space-y-3">
             <div className="inline-flex items-center justify-center p-2 rounded-full bg-[#d9467a]/20 text-[#ff8fb3] mb-1">
               <MessageSquareHeart className="h-5 w-5" />
             </div>

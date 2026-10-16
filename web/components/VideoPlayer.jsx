@@ -740,10 +740,10 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         }
       `}</style>
 
-      <div className="vault relative aspect-video overflow-hidden rounded-2xl bg-black shadow-[0_20px_80px_-24px_rgba(217,70,122,.55)] ring-1 ring-white/10">
+      <div className="vault relative aspect-video overflow-hidden rounded-2xl bg-black border border-white/10">
         {/* Sync Status Badge */}
-        <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-[11px] text-white/90">
-          <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400 animate-pulse' : 'bg-rose-400 animate-ping'}`} />
+        <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-white/10 text-[11px] text-white/90">
+          <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-rose-400'}`} />
           <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
           {syncOffset !== 0 && (
             <span className="text-[10px] text-[#ff6fa0] font-mono ml-0.5">
@@ -754,7 +754,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
         {/* Live Stream Badge */}
         {isLiveStream && (
-          <div className="absolute top-3 left-36 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600/85 backdrop-blur-md text-[11px] font-bold text-white shadow-lg animate-pulse">
+          <div className="absolute top-3 left-36 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600 text-[11px] font-bold text-white border border-white/20">
             <Radio className="h-3 w-3" />
             <span>LIVE</span>
             <button
@@ -773,9 +773,8 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
         {/* Smart Voice Talk Ducking & Slowdown Banner */}
         {isDucked && (
-          <div className="absolute top-12 left-3 z-30 flex items-center gap-2 rounded-full bg-black/85 border border-[#ff6fa0]/40 px-3 py-1 text-[11px] font-medium text-white shadow-xl backdrop-blur animate-pulse pointer-events-none">
+          <div className="absolute top-12 left-3 z-30 flex items-center gap-2 rounded-full bg-black border border-white/20 px-3 py-1 text-[11px] font-medium text-white pointer-events-none">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff6fa0] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d9467a]"></span>
             </span>
             <span>🎙️ Couch Talk: Audio ducked & video slowed for voice (0.82x)</span>
@@ -786,10 +785,10 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         <button
           type="button"
           onClick={() => setShowSettings(!showSettings)}
-          className={`absolute top-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border text-[11px] font-medium transition ${
+          className={`absolute top-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition ${
             showSettings
-              ? 'bg-[#d9467a] text-white border-white/30 shadow-lg shadow-[#d9467a]/40'
-              : 'bg-black/65 text-white/80 hover:text-white border-white/10'
+              ? 'bg-[#d9467a] text-white border-white/30'
+              : 'bg-black text-white/80 hover:text-white border-white/10'
           }`}
           title="Precision Sync, Speed & Audio Settings"
         >
@@ -799,9 +798,9 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
         {/* Partner Buffering Alert Banner */}
         {partnerBuffering?.active && (
-          <div className="absolute inset-x-4 top-14 z-30 mx-auto max-w-md rise">
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-black/85 backdrop-blur-md border border-amber-500/40 text-amber-200 text-xs shadow-2xl">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+          <div className="absolute inset-x-4 top-14 z-30 mx-auto max-w-md">
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-black border border-amber-500/40 text-amber-200 text-xs">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
               <span><b>{partnerBuffering.name}</b> is buffering… Paused smoothly so you stay in sync 🍿</span>
             </div>
           </div>
@@ -859,10 +858,10 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         {T === 'local' && !localUrl && !stream && (
           <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/90 bg-black/85 backdrop-blur-sm z-20">
             <div className="max-w-sm space-y-3">
-              <FolderOpen className="h-10 w-10 mx-auto text-[#ff6fa0] animate-pulse" />
+              <FolderOpen className="h-10 w-10 mx-auto text-[#ff6fa0]" />
               <p className="font-semibold text-sm sm:text-base">Partner picked: {media.name}</p>
               <p className="text-xs text-white/70">Wait a moment while the file uploads, or tap below to pick this file if you already have it on your phone.</p>
-              <span className="btn !py-2 !px-4 text-xs inline-flex items-center gap-1.5 shadow-lg shadow-[#d9467a]/40">
+              <span className="btn !py-2 !px-4 text-xs inline-flex items-center gap-1.5">
                 <FolderOpen className="h-3.5 w-3.5" />
                 Pick File from Device
                 <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
@@ -871,13 +870,13 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
           </label>
         )}
         {T === 'none' && !stream && (
-          <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(ellipse_at_center,#2a1636,#0b0610)] p-6 text-center text-white">
+          <div className="absolute inset-0 grid place-items-center bg-black p-6 text-center text-white">
             <div>
-              <div className="relative mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#d9467a] shadow-[0_0_50px_rgba(217,70,122,.6)]"><i className="ring" /><Play className="h-7 w-7 fill-white" /></div>
+              <div className="relative mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#d9467a]"><Play className="h-7 w-7 fill-white" /></div>
               <p className="font-display text-xl font-semibold">Pick tonight&apos;s movie</p>
               <ol className="mt-4 space-y-2 text-left text-sm text-white/80">
                 {['Paste any video link in the box below', 'Press “Play for everyone”', 'Or share your screen for any site'].map((t, i) => (
-                  <li key={t} className="rise flex items-center gap-2" style={{ animationDelay: `${0.2 + i * 0.15}s` }}>
+                  <li key={t} className="flex items-center gap-2">
                     <b className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/15 text-xs">{i + 1}</b>{t}
                   </li>
                 ))}
@@ -890,7 +889,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
       {/* Precision Sync & Audio Drawer */}
       {showSettings && (
-        <div className="card rise p-4 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 border border-white/10 space-y-4 shadow-xl">
+        <div className="card p-4 !bg-black border border-white/10 space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
             <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
               <Sliders className="h-4 w-4 text-[#ff6fa0]" /> Precision Sync &amp; Audio Controls
@@ -1030,13 +1029,13 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       )}
 
       {uploading && (
-        <div className="card flex items-center justify-between gap-3 p-3 bg-gradient-to-r from-[#d9467a]/25 via-purple-600/20 to-pink-600/25 border-[#ff6fa0]/40 text-xs text-white shadow-lg shadow-[#d9467a]/20">
+        <div className="card flex items-center justify-between gap-3 p-3 !bg-black border border-white/20 text-xs text-white">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#ff6fa0] animate-ping shrink-0" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#ff6fa0] shrink-0" />
             <span className="truncate">Sharing <b>{uploading.name}</b> with partner&apos;s phone ({uploading.progress}%)…</span>
           </div>
           <div className="h-2 w-28 bg-white/15 rounded-full overflow-hidden shrink-0">
-            <div className="h-full bg-gradient-to-r from-[#ff6fa0] to-[#d9467a] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
+            <div className="h-full bg-[#d9467a] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
           </div>
         </div>
       )}

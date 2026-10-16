@@ -38,9 +38,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body>
-        <div aria-hidden className="ambient" />
-        <div className="pointer-events-none fixed inset-0 z-0"><Floaters n={8} /></div>
+      <body className="bg-black text-white min-h-screen">
         <div className="relative z-10">{children}</div>
       </body>
     </html>

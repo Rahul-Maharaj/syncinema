@@ -91,11 +91,11 @@ export default function RecentBar({
   });
 
   return (
-    <div className={`card rise p-3.5 sm:p-4 text-white overflow-hidden ${className}`}>
+    <div className={`card p-3.5 sm:p-4 text-white overflow-hidden !bg-black border border-white/10 ${className}`}>
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3 mb-3">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-cyan-600 text-white border border-white/10">
             <History className="h-4 w-4" />
           </div>
           <div>

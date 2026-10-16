@@ -33,12 +33,10 @@ function Gate({ onUnlock, notice }) {
     if (r === 'denied') { card.current.classList.remove('shake'); void card.current.offsetWidth; card.current.classList.add('shake'); }
   };
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)] px-6 text-white">
-      <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(217,70,122,0.06),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.05),transparent_40%)]" />
-      <Floaters n={16} />
-      <form ref={card} onSubmit={submit} className="glass relative w-full max-w-sm space-y-4 p-8 text-center">
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-black px-6 text-white">
+      <form ref={card} onSubmit={submit} className="glass relative w-full max-w-sm space-y-4 p-8 text-center !bg-black border border-white/10">
         <div className="relative mx-auto h-20 w-20">
-          <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain drop-shadow-[0_0_30px_rgba(217,70,122,0.8)]" />
+          <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain" />
         </div>
         <h1 className="font-display text-3xl font-semibold">Our private couch</h1>
         <p className="text-sm text-white/70">Only you two know the secret word. Type it to come in.</p>
@@ -193,29 +191,25 @@ function Dashboard({ hero, onLock }) {
   };
 
   return (
-    <main ref={root} className="relative min-h-screen overflow-hidden bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)] text-white">
+    <main ref={root} className="relative min-h-screen overflow-hidden bg-black text-white">
       {/* picture: top banner on phones, full-screen background on desktop */}
       <div ref={stage} className="absolute inset-x-0 top-0 h-[56vh] md:inset-0 md:h-auto">
         <div className="layer absolute inset-0 will-change-transform">
           {hero && <img src={hero} alt="Two people in different rooms watching the same movie on laptops" onLoad={() => setLoaded(true)} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
           <div className="seam" style={{ left: seam.x }}><i /></div>
           <div className="absolute z-[5]" style={{ left: seam.x, top: seam.y, transform: 'translate(-50%,-50%)' }}>
-            <div className="relative grid h-11 w-11 place-items-center rounded-full bg-[#d9467a] shadow-[0_0_40px_#d9467a]">
-              <i className="ring" /><i className="ring" style={{ animationDelay: '1.3s' }} />
-              <Heart className="beat h-5 w-5 fill-white text-white" />
+            <div className="relative grid h-11 w-11 place-items-center rounded-full bg-[#d9467a]">
+              <Heart className="h-5 w-5 fill-white text-white" />
             </div>
-            <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/50 px-2.5 py-0.5 text-[10px] uppercase tracking-widest backdrop-blur">in sync</span>
+            <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/80 px-2.5 py-0.5 text-[10px] uppercase tracking-widest border border-white/10">in sync</span>
           </div>
         </div>
-        <Floaters n={18} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050407] via-[#050407]/70 to-transparent md:via-[#050407]/50" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(2,2,4,.85)_100%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_45%_at_50%_-10%,rgba(60,40,75,0.2),transparent_70%),radial-gradient(ellipse_70%_35%_at_50%_0%,rgba(35,25,45,0.15),transparent_60%)]" />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 md:px-8">
         <span className="flex items-center gap-2.5 font-display text-lg font-semibold">
-          <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 object-contain drop-shadow-[0_0_15px_rgba(217,70,122,0.6)]" />
+          <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 object-contain" />
           <span>SyncCinema</span>
         </span>
         <div className="flex items-center gap-2">
@@ -247,7 +241,7 @@ function Dashboard({ hero, onLock }) {
               onClick={() => { setTab('create'); setErr(''); setPerr(''); }}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
                 tab === 'create'
-                  ? 'bg-[#d9467a] text-white shadow-lg shadow-[#d9467a]/30'
+                  ? 'bg-[#d9467a] text-white'
                   : 'text-white/70 hover:text-white'
               }`}
             >
@@ -259,7 +253,7 @@ function Dashboard({ hero, onLock }) {
               onClick={() => { setTab('join'); setErr(''); setPerr(''); }}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition ${
                 tab === 'join'
-                  ? 'bg-[#d9467a] text-white shadow-lg shadow-[#d9467a]/30'
+                  ? 'bg-[#d9467a] text-white'
                   : 'text-white/70 hover:text-white'
               }`}
             >
@@ -271,14 +265,14 @@ function Dashboard({ hero, onLock }) {
               onClick={() => { setTab('active'); setErr(''); setPerr(''); fetchRooms(); }}
               className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition relative ${
                 tab === 'active'
-                  ? 'bg-[#d9467a] text-white shadow-lg shadow-[#d9467a]/30'
+                  ? 'bg-[#d9467a] text-white'
                   : 'text-white/70 hover:text-white'
               }`}
             >
               <Film className="h-3.5 w-3.5" />
               <span>Rooms ({activeRooms.length})</span>
               {activeRooms.length > 0 && (
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                <span className="h-2 w-2 rounded-full bg-emerald-400 ml-0.5" />
               )}
             </button>
           </div>
@@ -363,7 +357,7 @@ function Dashboard({ hero, onLock }) {
                       onClick={() => setMaxUsers(opt.count)}
                       className={`rounded-xl p-2.5 text-center border transition ${
                         maxUsers === opt.count
-                          ? 'bg-[#d9467a]/25 border-[#d9467a] text-white shadow-lg shadow-[#d9467a]/20 ring-1 ring-[#d9467a]'
+                          ? 'bg-[#d9467a]/30 border-[#d9467a] text-white'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
                       }`}
                     >
@@ -508,7 +502,7 @@ function Dashboard({ hero, onLock }) {
                                 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                                 : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                             }`}>
-                              {!isFull && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                              {!isFull && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
                               {r.userCount}/{r.maxUsers || 2} Seats {isFull ? '(Full)' : ''}
                             </span>
                             <span className="text-[10px] text-white/60 flex items-center gap-0.5">
@@ -545,7 +539,7 @@ function Dashboard({ hero, onLock }) {
             <div className="rounded-xl bg-white/5 border border-white/10 p-3 space-y-2">
               <div className="flex items-center justify-between text-xs text-white/70">
                 <span className="flex items-center gap-1.5 font-medium text-white/90">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   Active Rooms ({activeRooms.length})
                 </span>
                 <button

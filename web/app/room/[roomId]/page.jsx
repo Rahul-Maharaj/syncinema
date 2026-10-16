@@ -39,10 +39,10 @@ const hello = (n) => {
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
-  <main className="grid min-h-screen place-items-center px-6 bg-[radial-gradient(ellipse_100%_80%_at_50%_-20%,rgba(35,30,48,0.45),rgba(12,10,16,0.98)_55%,#020204_100%)]">
+  <main className="grid min-h-screen place-items-center px-6 bg-black">
     <form onSubmit={onSubmit} className="glass rise w-full max-w-sm space-y-4 p-7 text-center">
       <div className="relative mx-auto h-16 w-16">
-        <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(217,70,122,0.7)]" />
+        <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain" />
       </div>
       <h1 className="font-display text-2xl font-semibold">{title}</h1>
       <p className="text-sm opacity-70">{hint}</p>
@@ -98,26 +98,12 @@ export default function Room() {
   const say = (m) => { setToast({ m, n: Date.now() }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2400); };
 
   const applyAmbientLighting = (amb) => {
-    if (!amb || typeof document === 'undefined') return;
-    const presets = {
-      love: 'radial-gradient(circle at 50% 20%, rgba(217, 70, 122, 0.2), transparent 70%), radial-gradient(circle at 50% 80%, rgba(20, 16, 26, 0.5), transparent 70%), #060408',
-      candlelight: 'radial-gradient(circle at 50% 30%, rgba(255, 158, 66, 0.2), transparent 70%), radial-gradient(circle at 50% 80%, rgba(22, 16, 12, 0.5), transparent 70%), #060403',
-      midnight: 'radial-gradient(circle at 50% 20%, rgba(138, 43, 226, 0.18), transparent 70%), radial-gradient(circle at 50% 80%, rgba(18, 12, 28, 0.5), transparent 70%), #040306',
-      ruby: 'radial-gradient(circle at 50% 25%, rgba(229, 9, 20, 0.16), transparent 70%), radial-gradient(circle at 50% 80%, rgba(22, 10, 14, 0.5), transparent 70%), #060305',
-      sunset: 'radial-gradient(circle at 50% 20%, rgba(255, 110, 127, 0.18), transparent 70%), radial-gradient(circle at 50% 80%, rgba(22, 14, 20, 0.5), transparent 70%), #050305',
-      noir: 'radial-gradient(circle at 50% 50%, rgba(35, 40, 55, 0.2), transparent 70%), radial-gradient(circle at 50% 90%, rgba(16, 16, 22, 0.5), transparent 70%), #020204',
-    };
-    const bg = presets[amb.preset] || presets.love;
-    const opacity = (amb.intensity ?? 80) / 100;
+    if (typeof document === 'undefined') return;
     const ambientEl = document.querySelector('.ambient');
     if (ambientEl) {
-      ambientEl.style.background = bg;
-      ambientEl.style.opacity = opacity;
-      if (amb.flicker) {
-        ambientEl.classList.add('candle-flicker');
-      } else {
-        ambientEl.classList.remove('candle-flicker');
-      }
+      ambientEl.style.background = '#000000';
+      ambientEl.style.opacity = '0';
+      ambientEl.classList.remove('candle-flicker');
     }
   };
 
@@ -439,8 +425,8 @@ export default function Room() {
     <div ref={root} className="mx-auto max-w-7xl px-3 sm:px-4 py-3 sm:py-4">
       {/* 👻 Stealth Admin Ghost Monitor Banner */}
       {isGhost && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-purple-950/95 border border-purple-400/60 px-4 py-1.5 text-xs font-semibold text-purple-200 shadow-2xl backdrop-blur-xl flex items-center gap-2 pointer-events-none">
-          <span className="text-base animate-pulse">👻</span>
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
+          <span className="text-base">👻</span>
           <span>Admin Stealth Monitor Active (Invisible to Host &amp; Members)</span>
         </div>
       )}
@@ -449,12 +435,12 @@ export default function Room() {
       <header className="hdr mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/" className="ghost !p-1.5 sm:!p-2 flex items-center" aria-label="Back to home" title="Back to home">
-            <img src="/logo.png" alt="SyncCinema Logo" className="h-6 w-6 sm:h-7 sm:w-7 object-contain drop-shadow-[0_0_8px_rgba(217,70,122,0.6)]" />
+            <img src="/logo.png" alt="SyncCinema Logo" className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
           </Link>
           <div className="flex items-center gap-2">
             <h1 className="font-display text-base sm:text-xl font-semibold">SyncCinema</h1>
             <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs ${online ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/15 text-rose-500'}`}>
-              <i className={`h-1.5 w-1.5 rounded-full ${online ? 'animate-pulse bg-emerald-400' : 'bg-rose-500'}`} />{online ? 'Live' : 'Reconnecting'}
+              <i className={`h-1.5 w-1.5 rounded-full ${online ? 'bg-emerald-400' : 'bg-rose-500'}`} />{online ? 'Live' : 'Reconnecting'}
             </span>
             <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs bg-white/5 border border-white/10 text-white/80" title={`Room capacity: ${users.length} of ${maxSeats} members`}>
               <Users className="h-3 w-3 text-[#ff8fb3]" />
@@ -476,7 +462,7 @@ export default function Room() {
             <button
               type="button"
               onClick={() => { setMobileTab('extras'); setDesktopTab('extras'); }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono animate-pulse hover:bg-emerald-500/30"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono hover:bg-emerald-500/30"
               title="Synchronized snack break in progress"
             >
               <Timer className="h-3 w-3" />
@@ -489,7 +475,7 @@ export default function Room() {
             <button
               type="button"
               onClick={() => { setMobileTab('extras'); setDesktopTab('extras'); }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#d9467a]/25 border border-[#d9467a]/50 text-[#ff8fb3] text-xs font-semibold animate-bounce hover:bg-[#d9467a]/40"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#d9467a]/25 border border-[#d9467a]/50 text-[#ff8fb3] text-xs font-semibold hover:bg-[#d9467a]/40"
               title="Ready to watch check-in active"
             >
               <Popcorn className="h-3 w-3" />
@@ -620,7 +606,7 @@ export default function Room() {
           {/* Desktop Toolbar Icons (Hidden on Mobile) */}
           <div className="hidden lg:flex items-center gap-2">
             {me === hostId && <Tool onClick={() => socket.emit('lock', !lock)} title={lock ? 'Only you control playback' : 'Everyone controls playback'} icon={lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />} label={lock ? 'Host controls' : 'Everyone controls'} />}
-            <Tool onClick={() => socket.emit('nudge')} title="Send hearts to your partner" icon={<Heart className="beat h-4 w-4 text-[#d9467a]" />} label="Miss you" />
+            <Tool onClick={() => socket.emit('nudge')} title="Send hearts to your partner" icon={<Heart className="h-4 w-4 text-[#d9467a]" />} label="Miss you" />
             <Tool onClick={toggleCinema} title="Cinema mode: dim lights" icon={<Film className="h-4 w-4" />} label="Cinema" />
             <Tool onClick={cycleSleep} title="Sleep timer" icon={<Moon className="h-4 w-4" />} label={sleep ? `${sleep}m` : 'Sleep'} />
             <Tool onClick={toggleHide} title={hidden ? 'Show screen' : 'Hide screen (blur)'} icon={hidden ? <EyeOff className="h-4 w-4 text-[#d9467a]" /> : <Eye className="h-4 w-4" />} label={hidden ? 'Hidden' : 'Hide'} />
@@ -643,7 +629,7 @@ export default function Room() {
 
       {/* Mobile Options Slide-down / Dropdown */}
       {showMenu && (
-        <div className="lg:hidden card rise mb-3 p-3.5 space-y-3 bg-[#181120]/95 backdrop-blur-xl border border-white/20">
+        <div className="lg:hidden card mb-3 p-3.5 space-y-3 !bg-black border border-white/20">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
             <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Room Options</span>
             <button onClick={() => setShowMenu(false)} className="opacity-60 hover:opacity-100 p-1"><X className="h-4 w-4" /></button>
@@ -769,8 +755,8 @@ export default function Room() {
           {/* Main Content Area */}
           <section className="panel flex flex-col">
             {users.length < 2 && (
-              <div className="card rise mb-3 flex items-center gap-3 p-3 sm:p-4 border border-white/10 !bg-gradient-to-r from-[#14121a]/90 via-[#0d0b12]/92 to-[#060509]/96 backdrop-blur">
-                <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#d9467a]/15"><i className="ring" /><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain drop-shadow-[0_0_8px_rgba(217,70,122,0.8)]" /></div>
+              <div className="card mb-3 flex items-center gap-3 p-3 sm:p-4 border border-white/10 !bg-black">
+                <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/5"><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain" /></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>
                   <p className="text-xs sm:text-sm opacity-65 truncate">Send them the invite link to join.</p>
@@ -1131,8 +1117,8 @@ export default function Room() {
 
       {/* Room Password Modal */}
       {showPassModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="card rise w-full max-w-sm p-6 space-y-4 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="card w-full max-w-sm p-6 space-y-4 border border-white/15 !bg-black">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">
                 <Lock className="h-4 w-4 text-amber-400" /> Room Password

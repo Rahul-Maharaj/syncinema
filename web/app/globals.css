@@ -1,12 +1,8 @@
 @tailwind base; @tailwind components; @tailwind utilities;
 
-/* Cinema Hall & Love Soft Black Gradient Theme */
+/* Solid Pure Black Theme */
 body {
-  background: radial-gradient(ellipse 100% 70% at 50% -10%, rgba(35, 30, 48, 0.45), transparent 70%),
-              radial-gradient(ellipse 80% 50% at 50% 100%, rgba(20, 16, 28, 0.6), transparent 70%),
-              radial-gradient(circle at 12% 30%, rgba(25, 20, 35, 0.4), transparent 50%),
-              radial-gradient(circle at 88% 75%, rgba(22, 18, 30, 0.4), transparent 50%),
-              #040306;
+  background: #000000 !important;
   color: #f6f3f8;
   font-family: var(--font-body), sans-serif;
   min-height: 100vh;
@@ -14,125 +10,102 @@ body {
 }
 
 .dark body {
-  background: radial-gradient(ellipse 100% 70% at 50% -10%, rgba(32, 28, 44, 0.45), transparent 70%),
-              radial-gradient(ellipse 80% 50% at 50% 100%, rgba(18, 15, 26, 0.6), transparent 70%),
-              radial-gradient(circle at 10% 25%, rgba(24, 19, 34, 0.4), transparent 50%),
-              radial-gradient(circle at 90% 70%, rgba(20, 16, 28, 0.4), transparent 50%),
-              #020204;
+  background: #000000 !important;
   color: #f8f6fa;
   min-height: 100vh;
 }
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-white/10 backdrop-blur-xl text-white shadow-xl shadow-black/60;
-    background: linear-gradient(180deg, rgba(20, 18, 26, 0.92) 0%, rgba(13, 11, 18, 0.95) 50%, rgba(6, 5, 9, 0.98) 100%);
+    @apply rounded-2xl border border-white/10 text-white;
+    background: #09090b !important;
+    box-shadow: none !important;
   }
-  .btn { @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#d9467a] to-[#c0265f] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[#d9467a]/30 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-[.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9467a] disabled:opacity-50; }
-  .ghost { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 active:scale-[.96] dark:border-white/15 dark:hover:bg-white/10; }
-  .field { @apply w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder-white/40 outline-none transition focus:border-[#d9467a] focus:ring-2 focus:ring-[#d9467a]/20 dark:border-white/15; }
-  /* dark-glass look used on the home screen */
+  .btn {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl bg-[#d9467a] px-4 py-2 text-sm font-medium text-white transition duration-150 hover:bg-[#c0265f] active:scale-[.98] disabled:opacity-50;
+    box-shadow: none !important;
+  }
+  .ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/10 active:scale-[.98];
+    box-shadow: none !important;
+  }
+  .field {
+    @apply w-full rounded-xl border border-white/15 bg-black px-3 py-2 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40;
+    box-shadow: none !important;
+  }
   .glass {
-    @apply rounded-3xl border border-white/10 shadow-2xl backdrop-blur-2xl text-white;
-    background: linear-gradient(180deg, rgba(22, 19, 28, 0.88) 0%, rgba(12, 10, 16, 0.93) 50%, rgba(4, 3, 6, 0.98) 100%);
+    @apply rounded-3xl border border-white/10 text-white;
+    background: #060608 !important;
+    box-shadow: none !important;
   }
-  .glass-btn { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white/20 active:scale-[.97]; }
-  .field-d { @apply w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-[#ff6fa0] focus:ring-2 focus:ring-[#ff6fa0]/25; }
+  .glass-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/20 active:scale-[.98];
+    box-shadow: none !important;
+  }
+  .field-d {
+    @apply w-full rounded-xl border border-white/15 bg-black px-3 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40;
+    box-shadow: none !important;
+  }
 }
 
-/* shimmer sweep on primary buttons */
-.btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%); transform: translateX(-120%); transition: transform .7s; }
-.btn:hover::after { transform: translateX(120%); }
+/* Remove glowing button sweep animation */
+.btn::after { display: none !important; }
 
-/* ambient background: lightweight, hardware-accelerated cinema atmosphere */
-.ambient {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background: radial-gradient(circle at 15% 15%, rgba(45, 30, 55, 0.2), transparent 50%),
-              radial-gradient(circle at 85% 25%, rgba(30, 20, 45, 0.2), transparent 50%),
-              radial-gradient(circle at 50% 85%, rgba(18, 14, 28, 0.2), transparent 60%);
+/* Disable ambient background lighting & glowing elements completely */
+.ambient { display: none !important; }
+.dark .ambient { display: none !important; }
+
+/* Disable all glowing / pulsating / bouncing / flickering animations */
+.beat { animation: none !important; }
+.ring { display: none !important; }
+.candle-flame { animation: none !important; filter: none !important; }
+.candle-flicker { animation: none !important; filter: none !important; }
+.hug-active { animation: none !important; box-shadow: none !important; }
+.seam { display: none !important; }
+.floater { display: none !important; }
+
+/* Globally disable glowing, pulsing, bouncing, and pinging animations */
+.animate-pulse,
+.animate-bounce,
+.animate-ping {
+  animation: none !important;
 }
-.dark .ambient {
-  background: radial-gradient(circle at 15% 15%, rgba(45, 30, 55, 0.2), transparent 50%),
-              radial-gradient(circle at 85% 25%, rgba(30, 20, 45, 0.2), transparent 50%),
-              radial-gradient(circle at 50% 85%, rgba(18, 14, 28, 0.2), transparent 60%);
-}
 
-/* small reusable motions */
-.beat { animation: beat 1.6s ease-in-out infinite; }
-@keyframes beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.25); } 28% { transform: scale(1); } 42% { transform: scale(1.18); } 70% { transform: scale(1); } }
-.ring { position: absolute; inset: 0; border-radius: 9999px; border: 1.5px solid #ff6fa0; animation: ring 2.6s ease-out infinite; pointer-events: none; }
-@keyframes ring { from { transform: scale(1); opacity: .7; } to { transform: scale(3); opacity: 0; } }
-.shake { animation: shake .5s; }
-@keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-8px); } 40%, 60% { transform: translateX(8px); } }
-.rise { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes rise { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
-.toast { animation: rise .35s both; }
-
-/* glowing line + travelling light on the split between the two cities */
-.seam { position: absolute; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); background: linear-gradient(to bottom, transparent, rgba(255,120,170,.6) 20%, rgba(255,120,170,.6) 80%, transparent); overflow: hidden; }
-.seam i { position: absolute; left: 0; width: 100%; height: 120px; background: linear-gradient(to bottom, transparent, #fff, transparent); animation: travel 3.4s linear infinite; }
-@keyframes travel { from { top: -120px; } to { top: 100%; } }
-
-/* privacy: blur the screen + chat until you hover them */
+/* Privacy */
 .vault { transition: filter .35s; }
 .hide-screen .vault { filter: blur(24px) saturate(.5); }
 .hide-screen .vault:hover { filter: none; }
 
-/* cinema mode: dim everything except the screen */
+/* Cinema mode */
 .cinema header, .cinema aside { opacity: .12; transition: opacity .6s; }
 .cinema header:hover, .cinema aside:hover { opacity: 1; }
-.cinema .ambient { display: none; }
-.cinema body, body.cinema { background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(28, 24, 36, 0.25), transparent 70%), #000000 !important; }
-
-/* Romantic couple gestures animations */
-@keyframes hugEmbrace {
-  0% { box-shadow: inset 0 0 0 0 rgba(225, 70, 125, 0.7); }
-  40% { box-shadow: inset 0 0 70px 25px rgba(225, 70, 125, 0.5); }
-  100% { box-shadow: inset 0 0 0 0 rgba(225, 70, 125, 0); }
-}
-.hug-active { animation: hugEmbrace 3.5s ease-out forwards; pointer-events: none; }
-
-@keyframes candleGlow {
-  0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 10px #ff9a3c); }
-  50% { opacity: 1; filter: drop-shadow(0 0 18px #ff7518); }
-}
-.candle-flame { animation: candleGlow 2s infinite ease-in-out; }
-
-@keyframes candleFlicker {
-  0%, 100% { opacity: 0.85; filter: brightness(1); }
-  25% { opacity: 0.72; filter: brightness(0.92); }
-  50% { opacity: 0.95; filter: brightness(1.06); }
-  75% { opacity: 0.78; filter: brightness(0.95); }
-}
-.candle-flicker {
-  animation: candleFlicker 3.2s ease-in-out infinite !important;
-}
+.cinema .ambient { display: none !important; }
+.cinema body, body.cinema { background: #000000 !important; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-  .floater { display: none; }
+  .floater { display: none !important; }
 }
 
-/* Low-end device & mobile performance optimization: Eliminates GPU lag and phone heating */
+/* Mobile optimizations */
 @media (max-width: 768px) {
   .card, .glass, .glass-btn, .vault, .toast, .hdr {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   .card {
-    background-color: rgba(16, 14, 20, 0.98) !important;
+    background-color: #09090b !important;
+    box-shadow: none !important;
   }
   .dark .card {
-    background-color: rgba(12, 10, 16, 0.98) !important;
+    background-color: #09090b !important;
+    box-shadow: none !important;
   }
   .glass {
-    background-color: rgba(10, 8, 14, 0.99) !important;
+    background-color: #060608 !important;
+    box-shadow: none !important;
   }
   .ambient {
-    opacity: 0.2 !important;
+    display: none !important;
   }
 }
