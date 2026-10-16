@@ -79,6 +79,7 @@ export default function Room() {
   const [queue, setQueue] = useState([]), [needKey, setNeedKey] = useState(false), [keyTick, setKeyTick] = useState(0), [keyDraft, setKeyDraft] = useState('');
   const [sleep, setSleep] = useState(0), seen = useRef(new Set());
   const [err, setErr] = useState(''), [lock, setLock] = useState(false), [needPass, setNeedPass] = useState(null), [passDraft, setPassDraft] = useState('');
+  const [showPassModal, setShowPassModal] = useState(false), [newPassDraft, setNewPassDraft] = useState(''), [passVisible, setPassVisible] = useState(false);
   const [online, setOnline] = useState(true), [copied, setCopied] = useState(false);
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
@@ -132,7 +133,10 @@ export default function Room() {
 
   const doJoin = (overridePass, overrideKey) => {
     if (!socket || !name) return;
-    const p = overridePass !== undefined ? overridePass : (sessionStorage.getItem('rp_' + roomId) || '');
+    const p = overridePass !== undefined
+      ? overridePass
+      : (sessionStorage.getItem('rp_' + roomId) || localStorage.getItem('rp_' + roomId) || '');
+    const isCreate = sessionStorage.getItem('is_create_' + roomId) === '1' || (typeof window !== 'undefined' && window.location.hash.includes('create=1'));
     const k = overrideKey !== undefined ? overrideKey : getKey();
     socket.emit('join', {
       roomId,
@@ -140,20 +144,30 @@ export default function Room() {
       name,
       key: k,
       pass: p,
+      isCreate,
       token: sessionStorage.tok || '',
     }, (r) => {
       if (!r) return;
       if (r.error === 'denied') return setNeedKey(true);
       if (['needpass', 'badpass'].includes(r.error)) {
         sessionStorage.removeItem('rp_' + roomId);
+        try { localStorage.removeItem('rp_' + roomId); } catch {}
         return setNeedPass(r.error);
       }
+      if (r.error === 'room_taken') {
+        sessionStorage.removeItem('is_create_' + roomId);
+        return setNeedPass('room_taken');
+      }
       if (r.error) return setErr(r.error);
+      sessionStorage.removeItem('is_create_' + roomId);
       setNeedKey(false);
       setNeedPass(null);
       setErr('');
       sessionStorage.tok = r.token;
-      if (p) sessionStorage.setItem('rp_' + roomId, p);
+      if (p) {
+        sessionStorage.setItem('rp_' + roomId, p);
+        try { localStorage.setItem('rp_' + roomId, p); } catch {}
+      }
       setQueue(r.queue || []);
       setWatchlist(r.watchlist || []);
       setTimer(r.timer || null);
@@ -188,7 +202,14 @@ export default function Room() {
       const p = params.get('pass');
       const k = params.get('key');
       const v = params.get('video');
-      if (p) sessionStorage.setItem('rp_' + roomId, p);
+      const createFlag = params.get('create');
+      if (p) {
+        sessionStorage.setItem('rp_' + roomId, p);
+        try { localStorage.setItem('rp_' + roomId, p); } catch {}
+      }
+      if (createFlag === '1') {
+        sessionStorage.setItem('is_create_' + roomId, '1');
+      }
       if (k) setKey(k);
       if (v) sessionStorage.setItem('init_video_' + roomId, v);
     } catch {}
@@ -236,6 +257,7 @@ export default function Room() {
       applyAmbientLighting(amb);
     });
     socket.on('room:adult_updated', setAdultMode);
+    socket.on('room:pass_updated', () => say('Room password was updated 🔒'));
     socket.on('pin:status', (s) => setHasPin(!!s?.hasPin));
     socket.on('state', (st) => {
       if (st?.media) setCurrentMedia(st.media);
@@ -304,7 +326,7 @@ export default function Room() {
   };
   const ask = () => socket.emit('chat', { text: '💬 ' + QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)], vt: playerRef.current?.time?.() || 0 });
   const copy = () => {
-    const rp = sessionStorage.getItem('rp_' + roomId);
+    const rp = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
     const sk = getKey();
     const parts = [];
     if (rp) parts.push(`pass=${encodeURIComponent(rp)}`);
@@ -314,7 +336,7 @@ export default function Room() {
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
-    say('Invite link copied — send it to your partner 💗');
+    say('Invite link with password copied — send it to your partner 💗');
   };
   const clearChat = () => { if (confirm('Delete the chat history for both of you? This cannot be undone.')) socket.emit('chat:clear'); };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
@@ -338,10 +360,26 @@ export default function Room() {
 
   if (needPass) return (
     <Gate icon={<Lock className="h-6 w-6" />} cta="Enter room"
-      title="Room passkey"
-      hint={needPass === 'badpass' ? 'Wrong passkey. Try again.' : 'This room is locked with a passkey. Type it to enter.'}
-      onSubmit={(e) => { e.preventDefault(); const v = passDraft.trim(); if (!v) return; sessionStorage.setItem('rp_' + roomId, v); setNeedPass(null); setPassDraft(''); doJoin(v); }}>
-      <input autoFocus type="password" minLength={4} maxLength={64} value={passDraft} onChange={(e) => setPassDraft(e.target.value)} placeholder="Room passkey" className="field text-center" />
+      title="Room password"
+      hint={
+        needPass === 'badpass'
+          ? 'Wrong room password. Please try again.'
+          : needPass === 'room_taken'
+          ? 'A room with this name is already active. Enter its password to join.'
+          : 'This room is protected with a password. Type it to enter.'
+      }
+      onSubmit={(e) => {
+        e.preventDefault();
+        const v = passDraft.trim();
+        if (!v || v.length < 4) return;
+        sessionStorage.setItem('rp_' + roomId, v);
+        try { localStorage.setItem('rp_' + roomId, v); } catch {}
+        setNeedPass(null);
+        setPassDraft('');
+        doJoin(v);
+      }}
+    >
+      <input autoFocus type="password" minLength={4} maxLength={64} value={passDraft} onChange={(e) => setPassDraft(e.target.value)} placeholder="Room password (min 4 characters)" className="field text-center" />
     </Gate>
   );
 
@@ -523,6 +561,21 @@ export default function Room() {
             <span className="hidden sm:inline">Recent</span>
           </button>
 
+          {/* Room Password Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
+              setNewPassDraft(current);
+              setShowPassModal(true);
+            }}
+            className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-white/10 hover:border-amber-400/40 text-amber-300 transition"
+            title="View or change room password"
+          >
+            <Lock className="h-3.5 w-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Password</span>
+          </button>
+
           {/* Quick Invite Button */}
           <button onClick={copy} className="btn !py-1.5 !px-3 text-xs" title="Copy the invite link">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -574,6 +627,18 @@ export default function Room() {
             >
               <History className="h-4 w-4 text-cyan-400" />
               <span>Recent Bar</span>
+            </button>
+            <button
+              onClick={() => {
+                const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
+                setNewPassDraft(current);
+                setShowPassModal(true);
+                setShowMenu(false);
+              }}
+              className="ghost !justify-start !py-2.5 !px-3 text-amber-300"
+            >
+              <Lock className="h-4 w-4 text-amber-400" />
+              <span>Room Password</span>
             </button>
             <button
               onClick={() => { socket.emit('nudge'); setShowMenu(false); }}
@@ -967,6 +1032,101 @@ export default function Room() {
         onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
         say={say}
       />
+
+      {/* Room Password Modal */}
+      {showPassModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="card rise w-full max-w-sm p-6 space-y-4 border border-white/15 !bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">
+                <Lock className="h-4 w-4 text-amber-400" /> Room Password
+              </h3>
+              <button type="button" onClick={() => setShowPassModal(false)} className="text-white/60 hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-white/70 font-medium block mb-1">
+                  {me === hostId ? 'Room Password (Host Control)' : 'Room Password'}
+                </label>
+                <div className="relative">
+                  <input
+                    type={passVisible ? 'text' : 'password'}
+                    value={newPassDraft}
+                    onChange={(e) => setNewPassDraft(e.target.value)}
+                    readOnly={me !== hostId}
+                    placeholder="Room password"
+                    minLength={4}
+                    maxLength={64}
+                    className="field !pr-20 text-center font-mono text-base"
+                  />
+                  <div className="absolute right-2 top-2 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPassVisible(!passVisible)}
+                      className="p-1 text-white/60 hover:text-white"
+                      title={passVisible ? 'Hide' : 'Show'}
+                    >
+                      {passVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (newPassDraft) {
+                          navigator.clipboard.writeText(newPassDraft);
+                          say('Room password copied 📋');
+                        }
+                      }}
+                      className="p-1 text-white/60 hover:text-white"
+                      title="Copy password"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-white/50 mt-1">
+                  {me === hostId
+                    ? 'As the room host, you can edit this password at any time.'
+                    : 'Share this password only with your partner.'}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowPassModal(false)} className="ghost !py-2 text-xs">
+                  Close
+                </button>
+                {me === hostId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = newPassDraft.trim();
+                      if (!p || p.length < 4) {
+                        say('Password must be at least 4 characters');
+                        return;
+                      }
+                      socket.emit('room:update_pass', { pass: p }, (res) => {
+                        if (res?.ok) {
+                          sessionStorage.setItem('rp_' + roomId, p);
+                          try { localStorage.setItem('rp_' + roomId, p); } catch {}
+                          setShowPassModal(false);
+                          say('Room password updated successfully 🔒');
+                        } else {
+                          say(res?.message || 'Failed to update password');
+                        }
+                      });
+                    }}
+                    className="btn !py-2 text-xs"
+                  >
+                    Save New Password
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast notifications */}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">

@@ -723,11 +723,22 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
 } catch (e) { console.error('save failed', e.message); } }, 1000); };
 // room passkey: stored only as a salted scrypt hash, so even the server file never holds it
 const hashPass = (p) => { const salt = crypto.randomBytes(16); return salt.toString('hex') + ':' + crypto.scryptSync(p, salt, 32).toString('hex'); };
-const passOk = (r, p) => {
-  const [salt, h] = String(r.pass).split(':');
-  const a = crypto.scryptSync(p, Buffer.from(salt, 'hex'), 32), b = Buffer.from(h, 'hex');
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+const verifyHash = (storedHash, input) => {
+  try {
+    if (!storedHash || !input) return false;
+    const parts = String(storedHash).split(':');
+    if (parts.length !== 2) return false;
+    const [salt, h] = parts;
+    if (!salt || !h) return false;
+    const a = crypto.scryptSync(String(input).trim(), Buffer.from(salt, 'hex'), 32);
+    const b = Buffer.from(h, 'hex');
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 };
+const passOk = (r, p) => verifyHash(r?.pass, p);
+const pinOk = (r, p) => verifyHash(r?.pin, p);
 const position = (r) => r.time + (r.playing ? (Date.now() - r.at) / 1000 : 0);
 const snapshot = (r) => ({ media: r.media, playing: r.playing, time: position(r) });
 const roster = (r) => [...r.users.values()].map(({ cid, name, color, sid }) => ({ id: cid, name, color, sid }));
@@ -992,7 +1003,7 @@ io.on('connection', (socket) => {
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
 
-  socket.on('join', ({ roomId, cid, name, key, token, pass } = {}, ack) => {
+  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate } = {}, ack) => {
     if (typeof ack !== 'function') return;
     const ip = ipOf(socket.handshake);
     if (locked(ip)) return ack({ error: 'locked' });
@@ -1008,16 +1019,36 @@ io.on('connection', (socket) => {
     if (!ROOM_RE.test(roomId) || !/^\w{4,32}$/.test(cid)) return ack({ error: 'invalid' });
     const r = rooms.get(roomId) || fresh();
     const p = typeof pass === 'string' ? pass.trim() : '';
-    if (r.pass) {                                    // locked room: right passkey or no entry
-      if (!p) return ack({ error: 'needpass' });
-      if (!passOk(r, p)) { fail(ip); return ack({ error: 'badpass' }); }
-    } else if (p.length >= 4 && p.length <= 64) {
+    const activeUsersCount = [...(r.users?.values() || [])].filter(u => io.sockets.sockets.has(u.sid)).length;
+
+    if (isCreate) {
+      if (activeUsersCount > 0 && r.pass && !passOk(r, p)) {
+        return ack({ error: 'room_taken', message: 'A room with this name is currently active. Please join with its password or choose another name.' });
+      }
+      if (!p || p.length < 4 || p.length > 64) {
+        return ack({ error: 'needpass', message: 'Room password must be at least 4 characters.' });
+      }
+      if (activeUsersCount === 0) {
+        r.users.clear();
+        r.queue = [];
+        r.chat = [];
+      }
       r.pass = hashPass(p);
       r.createdAt = Date.now();
       rooms.set(roomId, r);
-      save();   // user locks it with a passkey
+      save();
     } else {
-      return ack({ error: 'needpass' });
+      if (r.pass) {                                    // locked room: right passkey or no entry
+        if (!p) return ack({ error: 'needpass' });
+        if (!passOk(r, p)) { fail(ip); return ack({ error: 'badpass' }); }
+      } else if (p.length >= 4 && p.length <= 64) {
+        r.pass = hashPass(p);
+        r.createdAt = Date.now();
+        rooms.set(roomId, r);
+        save();   // user locks it with a passkey
+      } else {
+        return ack({ error: 'needpass' });
+      }
     }
     fails.delete(ip);                                // successful auth clears strike count
     if (!r.users.has(cid) && r.users.size >= MAX_USERS) return ack({ error: 'full' });
@@ -1367,11 +1398,22 @@ io.on('connection', (socket) => {
     if (typeof ack !== 'function') return;
     if (!joined() || !room.pin) return ack({ ok: true });
     const cleanPin = String(pin || '').trim();
-    if (passOk(room, cleanPin)) {
+    if (pinOk(room, cleanPin)) {
       ack({ ok: true });
     } else {
       ack({ error: 'badpin' });
     }
+  });
+
+  socket.on('room:update_pass', ({ pass: newPass } = {}, ack) => {
+    if (typeof ack !== 'function') return;
+    if (!canControl()) return ack({ error: 'unauthorized', message: 'Only the host can update the room password.' });
+    const p = typeof newPass === 'string' ? newPass.trim() : '';
+    if (!p || p.length < 4 || p.length > 64) return ack({ error: 'invalid', message: 'Password must be between 4 and 64 characters.' });
+    room.pass = hashPass(p);
+    save();
+    ack({ ok: true });
+    io.to(rid).emit('room:pass_updated', { updated: true });
   });
 
   socket.on('chat:clear', () => { if (joined()) { room.chat = []; io.to(rid).emit('chat:cleared'); save(); } });   // wipe saved chat for both

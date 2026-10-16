@@ -6,10 +6,16 @@ import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, 
 import Floaters from '@/components/Floaters';
 import InstallPrompt from '@/components/InstallPrompt';
 import { getKey, setKey, verify, loadHero, forgetEverything } from '@/lib/vault';
-import { serverUrl } from '@/lib/socket';
+import { serverUrl, safeId } from '@/lib/socket';
 
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const slug = (v) => v.trim().split('?')[0].split('/').filter(Boolean).pop() || '';   // accepts a code or a whole pasted link
+const slug = (v) => {
+  if (!v) return '';
+  let str = String(v).trim();
+  str = str.split('?')[0].split('#')[0];
+  const last = str.split('/').filter(Boolean).pop() || '';
+  return last.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+};
 const IMG_W = 1710, IMG_H = 919;                                                    // the split between the two rooms is the centre line
 
 /* ---------------- locked screen ---------------- */
@@ -147,18 +153,22 @@ function Dashboard({ hero, onLock }) {
     let id = roomName.trim();
     if (id) {
       id = slug(id);
-      if (!/^[\w-]{2,64}$/.test(id)) return setPerr('Room name must be 2-64 letters, numbers or dashes.');
+      if (id.length < 2 || id.length > 64) {
+        return setPerr('Room name must be between 2 and 64 letters, numbers, or dashes.');
+      }
     } else {
-      id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+      id = safeId(12);
     }
     sessionStorage.setItem('rp_' + id, p);
-    router.push(`/room/${id}#pass=${encodeURIComponent(p)}`);
+    sessionStorage.setItem('is_create_' + id, '1');
+    try { localStorage.setItem('rp_' + id, p); } catch {}
+    router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1`);
   };
 
   const join = (e) => {
     e.preventDefault();
     const c = slug(code);
-    if (!/^[\w-]{2,64}$/.test(c)) return setErr('Please enter a valid room code or link.');
+    if (!c || c.length < 2) return setErr('Please enter a valid room code or link.');
     const jp = joinPass.trim();
     if (!jp || jp.length < 4) {
       setErr('Room password is required to enter (at least 4 characters).');
@@ -166,6 +176,7 @@ function Dashboard({ hero, onLock }) {
       return;
     }
     sessionStorage.setItem('rp_' + c, jp);
+    try { localStorage.setItem('rp_' + c, jp); } catch {}
     router.push(`/room/${c}#pass=${encodeURIComponent(jp)}`);
   };
 
@@ -351,7 +362,20 @@ function Dashboard({ hero, onLock }) {
                   <input
                     autoFocus
                     value={code}
-                    onChange={(e) => { setCode(e.target.value); setErr(''); }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCode(val);
+                      setErr('');
+                      try {
+                        if (val.includes('#') || val.includes('?')) {
+                          const hashPart = val.includes('#') ? val.split('#')[1] : '';
+                          const searchPart = val.includes('?') ? val.split('?')[1].split('#')[0] : '';
+                          const sp = new URLSearchParams(hashPart || searchPart);
+                          const embeddedPass = sp.get('pass');
+                          if (embeddedPass) setJoinPass(embeddedPass);
+                        }
+                      } catch {}
+                    }}
                     placeholder="Paste room code or invite link"
                     aria-label="Room code or link"
                     className="field-d !pl-9"
