@@ -4,7 +4,7 @@ import {
   Film, Popcorn, Timer, Star, CheckCircle2, Clock, 
   Play, Plus, Trash2, ArrowUpDown, ChevronUp, ChevronDown,
   Sparkles, MessageSquareHeart, Heart, Share2, AlertCircle,
-  Eye, X, Coffee, Pizza, Wine
+  Eye, X, Coffee, Pizza, Wine, ThumbsUp, ThumbsDown, Download, Upload
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -279,10 +279,68 @@ export default function MovieNightExtras({
             </div>
           )}
 
-          {/* Up Next List */}
-          <div className="flex items-center justify-between">
+          {/* Up Next List Header with Export, Import, and Clear */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/60">Up Next in Queue</span>
-            <span className="text-xs text-white/40">{queue.length} items</span>
+            <div className="flex items-center gap-2 text-[11px]">
+              {queue.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(queue, null, 2));
+                      const dlAnchor = document.createElement('a');
+                      dlAnchor.setAttribute('href', dataStr);
+                      dlAnchor.setAttribute('download', `syncinema_playlist_${new Date().toISOString().slice(0, 10)}.json`);
+                      dlAnchor.click();
+                      dlAnchor.remove();
+                      say?.('Playlist exported!');
+                    }}
+                    className="text-white/65 hover:text-white flex items-center gap-1"
+                    title="Export queue as JSON playlist"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span>Export</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('Clear the entire queue?')) socket.emit('queue:clear');
+                    }}
+                    className="text-rose-400/80 hover:text-rose-300 flex items-center gap-1"
+                    title="Clear queue"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>Clear</span>
+                  </button>
+                </>
+              )}
+              <label className="text-[#ff8fb3] hover:underline cursor-pointer flex items-center gap-1" title="Import JSON playlist">
+                <Upload className="h-3 w-3" />
+                <span>Import</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const text = await file.text();
+                      const items = JSON.parse(text);
+                      if (Array.isArray(items)) {
+                        socket.emit('queue:import', { items });
+                        say?.(`Imported ${items.length} videos to queue!`);
+                      }
+                    } catch {
+                      say?.('Invalid playlist file');
+                    }
+                    e.target.value = '';
+                  }}
+                  hidden
+                />
+              </label>
+              <span className="text-xs text-white/40">({queue.length})</span>
+            </div>
           </div>
 
           {queue.length === 0 ? (
@@ -308,7 +366,32 @@ export default function MovieNightExtras({
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium truncate">{item.title || item.src.replace(/^https?:\/\//, '')}</p>
                     {item.desc && <p className="text-[10px] text-white/50 truncate">{item.desc}</p>}
-                    {item.addedBy && <span className="text-[9px] text-[#ff8fb3]/80">Queued by {item.addedBy}</span>}
+                    <div className="flex items-center gap-2 text-[9px] text-[#ff8fb3]/80">
+                      {item.addedBy && <span>Queued by {item.addedBy}</span>}
+                    </div>
+                  </div>
+
+                  {/* Voting Buttons */}
+                  <div className="flex items-center gap-0.5 bg-black/40 rounded-lg px-1.5 py-0.5 border border-white/10 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => socket.emit('queue:vote', { id: item.id, dir: 'up' })}
+                      className={`p-1 hover:text-[#ff6fa0] transition ${item.votes?.[me] === 1 ? 'text-[#ff6fa0]' : 'text-white/40'}`}
+                      title="Vote up"
+                    >
+                      <ThumbsUp className="h-3 w-3" />
+                    </button>
+                    <span className="text-[10px] font-mono font-bold text-white/90 min-w-[12px] text-center">
+                      {item.score || 0}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => socket.emit('queue:vote', { id: item.id, dir: 'down' })}
+                      className={`p-1 hover:text-rose-400 transition ${item.votes?.[me] === -1 ? 'text-rose-400' : 'text-white/40'}`}
+                      title="Vote down"
+                    >
+                      <ThumbsDown className="h-3 w-3" />
+                    </button>
                   </div>
 
                   {/* Actions */}

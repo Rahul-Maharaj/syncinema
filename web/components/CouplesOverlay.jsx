@@ -7,7 +7,7 @@ import { serverUrl } from '@/lib/socket';
 import { getKey } from '@/lib/vault';
 gsap.registerPlugin(Draggable);
 
-function Tile({ stream, name, muted, isPartner }) {
+function Tile({ stream, name, muted, isPartner, voiceOnly }) {
   const r = useRef();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -40,20 +40,29 @@ function Tile({ stream, name, muted, isPartner }) {
   return (
     <div
       onDoubleClick={toggleFullscreen}
-      className="vault group relative aspect-video w-36 overflow-hidden rounded-xl bg-black/70 ring-1 ring-white/10 sm:w-40"
+      className="vault group relative aspect-video w-36 overflow-hidden rounded-xl bg-black/75 ring-1 ring-white/10 sm:w-40 shrink-0"
       title={isPartner ? 'Double click or tap expand for full screen' : name}
     >
-      <video
-        ref={r}
-        autoPlay
-        playsInline
-        muted={muted}
-        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-      />
+      {voiceOnly ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-purple-950/80 to-[#160d1f] p-2 text-center">
+          <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] animate-pulse">
+            <Mic className="h-4 w-4" />
+          </div>
+          <span className="text-[10px] text-white/70">Voice Mode</span>
+        </div>
+      ) : (
+        <video
+          ref={r}
+          autoPlay
+          playsInline
+          muted={muted}
+          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+        />
+      )}
       <span className="absolute bottom-1 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm">
         {name}
       </span>
-      {isPartner && stream && (
+      {isPartner && stream && !voiceOnly && (
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -178,6 +187,19 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
     kind === 'mic' ? setMic(on) : setCam(on);
   };
 
+  const [voiceOnly, setVoiceOnly] = useState(false);
+  const [layout, setLayout] = useState('floating'); // 'floating' | 'side'
+
+  const toggleVoiceOnly = () => {
+    const next = !voiceOnly;
+    setVoiceOnly(next);
+    local.current?.getVideoTracks().forEach((t) => (t.enabled = !next));
+  };
+
+  const cycleLayout = () => {
+    setLayout((l) => (l === 'floating' ? 'side' : 'floating'));
+  };
+
   if (isHidden) {
     return (
       <button
@@ -193,25 +215,35 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
   }
 
   return (
-    <div ref={box} className="fixed bottom-5 right-5 z-40 rounded-2xl border border-white/10 bg-[#160d1f]/90 p-2.5 shadow-2xl backdrop-blur-md">
-      <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50">
-        <div ref={grip} className="flex flex-1 cursor-grab items-center justify-center active:cursor-grabbing" title="Drag to move">
+    <div ref={box} className={`fixed bottom-5 right-5 z-40 rounded-2xl border border-white/10 bg-[#160d1f]/95 p-2.5 shadow-2xl backdrop-blur-md transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+      <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
+        <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
           <GripHorizontal className="h-4 w-4" />
         </div>
-        <button
-          type="button"
-          onClick={() => setHide(true)}
-          title="Hide video call (saves battery and screen space)"
-          className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white transition"
-        >
-          <EyeOff className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={cycleLayout}
+            title={layout === 'floating' ? 'Switch to side-by-side layout' : 'Switch to floating stacked layout'}
+            className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white transition text-[10px]"
+          >
+            {layout === 'floating' ? 'Side-by-side' : 'Stack'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setHide(true)}
+            title="Hide video call (saves battery and screen space)"
+            className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white transition"
+          >
+            <EyeOff className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Tile stream={mine} name="You" muted isPartner={false} />
+      <div className={`flex ${layout === 'side' ? 'flex-row overflow-x-auto max-w-[85vw]' : 'flex-col'} gap-2`}>
+        <Tile stream={mine} name="You" muted isPartner={false} voiceOnly={voiceOnly} />
         {users.filter((u) => u.id !== me).map((u) => (
-          <Tile key={u.id} stream={remote[u.id]} name={u.name} isPartner={true} />
+          <Tile key={u.id} stream={remote[u.id]} name={u.name} isPartner={true} voiceOnly={voiceOnly} />
         ))}
       </div>
 
@@ -233,6 +265,19 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
           className={`rounded-full p-2 transition ${cam ? 'bg-white/10 hover:bg-white/20' : 'bg-rose-500/30 text-rose-300 ring-1 ring-rose-500/50'}`}
         >
           {cam ? <Video className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
+        </button>
+        <button
+          type="button"
+          onClick={toggleVoiceOnly}
+          aria-label="Voice-only mode"
+          title={voiceOnly ? 'Switch back to video mode' : 'Voice-only mode (saves bandwidth on low-end connection)'}
+          className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+            voiceOnly
+              ? 'bg-[#d9467a] text-white shadow-md'
+              : 'bg-white/10 text-white/70 hover:bg-white/20'
+          }`}
+        >
+          {voiceOnly ? 'Voice: On' : 'Voice Only'}
         </button>
       </div>
     </div>

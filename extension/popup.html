@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SyncCinema Watch Together</title>
+  <style>
+    :root {
+      --primary: #d9467a;
+      --primary-hover: #ff6fa0;
+      --bg: #0f0714;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.65);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 340px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .logo {
+      width: 32px;
+      height: 32px;
+      filter: drop-shadow(0 0 8px rgba(217, 70, 122, 0.6));
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .detected-url {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #ff8fb3;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, var(--primary), #a21caf);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(217, 70, 122, 0.4);
+    }
+    .btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: none;
+      border: 1px solid var(--border);
+      margin-top: 8px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.5);
+      color: #ffffff;
+      font-size: 12px;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--primary);
+    }
+    .btn-small {
+      padding: 8px 12px;
+      width: auto;
+    }
+    .settings-toggle {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: underline;
+      cursor: pointer;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .settings-box {
+      display: none;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+    }
+    .settings-box.open {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon-48.png" alt="SyncCinema" class="logo">
+    <div>
+      <div class="title">SyncCinema</div>
+      <div class="subtitle">Couple Watch Party Companion</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Current Video / Tab</div>
+    <div id="tabTitle" class="detected-url">Detecting video...</div>
+    <div id="tabDomain" style="font-size: 10px; color: var(--text-muted); margin-top: 2px;"></div>
+  </div>
+
+  <button id="btnStartParty" class="btn">
+    <span>🍿 Start 1-Click Watch Party</span>
+  </button>
+
+  <button id="btnCopyInvite" class="btn btn-secondary">
+    <span>📋 Copy Room Invite Link</span>
+  </button>
+
+  <div class="card" style="margin-top: 12px;">
+    <div class="card-title">Join Existing Room</div>
+    <div class="input-row">
+      <input id="inputRoomId" placeholder="Room ID (e.g. 883a9f)" />
+      <button id="btnJoinRoom" class="btn btn-small">Join</button>
+    </div>
+  </div>
+
+  <div style="text-align: center;">
+    <span id="toggleSettings" class="settings-toggle">Server Settings</span>
+    <div id="settingsBox" class="settings-box">
+      <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-align: left;">Server Domain:</div>
+      <input id="inputServerUrl" value="http://localhost:8080" />
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

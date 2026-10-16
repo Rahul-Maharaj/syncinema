@@ -10,6 +10,7 @@ const os = require('os');
 const { Server } = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
+const { handleAiQuery } = require('./aiAssistant');
 
 const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json' } = process.env;
 const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 4;     // couple mode: small rooms
@@ -78,6 +79,16 @@ app.get('/api/ice', (req, res) => {
   }
   try { iceServers.push(...JSON.parse(process.env.EXTRA_ICE || '[]')); } catch {}   // e.g. free Open Relay / Metered TURN
   res.json({ iceServers, peerKey: PEER_KEY });
+});
+
+app.post('/api/ai/assistant', express.json(), (req, res) => {
+  const { action, payload } = req.body || {};
+  try {
+    const data = handleAiQuery(action, payload);
+    res.json({ ok: true, data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Room file sharing (My file): uploads video and streams it to everyone in the room
@@ -658,6 +669,11 @@ io.on('connection', (socket) => {
   socket.on('queue:add', ({ media } = {}) => {
     const src = cleanUrl(media?.src);
     if (!joined() || !src || !TYPES.includes(media?.type) || room.queue.length >= 100) return;
+    // Prevent duplicate entries in queue
+    if (room.queue.some((q) => q.src === src)) {
+      socket.emit('toast', 'Already in the queue!');
+      return;
+    }
     room.queue.push({
       id: crypto.randomUUID(),
       type: media.type,
@@ -667,7 +683,54 @@ io.on('connection', (socket) => {
       desc: String(media.desc || '').slice(0, 1000),
       addedBy: user.name,
       addedAt: Date.now(),
+      votes: {},
+      score: 0,
     });
+    pushQ();
+  });
+
+  socket.on('queue:vote', ({ id, dir } = {}) => {
+    if (!joined() || !id) return;
+    const item = room.queue.find((q) => q.id === id);
+    if (!item) return;
+    if (!item.votes) item.votes = {};
+    if (item.votes[user.cid] === (dir === 'down' ? -1 : 1)) {
+      delete item.votes[user.cid]; // toggle off if tapped again
+    } else {
+      item.votes[user.cid] = dir === 'down' ? -1 : 1;
+    }
+    item.score = Object.values(item.votes).reduce((a, b) => a + b, 0);
+    // Sort by score descending if any items have votes
+    room.queue.sort((a, b) => (b.score || 0) - (a.score || 0));
+    pushQ();
+  });
+
+  socket.on('queue:clear', () => {
+    if (canControl()) {
+      room.queue = [];
+      pushQ();
+    }
+  });
+
+  socket.on('queue:import', ({ items } = {}) => {
+    if (!canControl() || !Array.isArray(items)) return;
+    const existing = new Set(room.queue.map((q) => q.src));
+    const valid = items
+      .filter((m) => m && TYPES.includes(m.type) && cleanUrl(m.src) && !existing.has(cleanUrl(m.src)))
+      .slice(0, 50)
+      .map((m) => ({
+        id: crypto.randomUUID(),
+        type: m.type,
+        src: cleanUrl(m.src),
+        title: String(m.title || 'Video').slice(0, 200),
+        poster: cleanUrl(m.poster) || '',
+        desc: String(m.desc || '').slice(0, 1000),
+        addedBy: user.name,
+        addedAt: Date.now(),
+        votes: {},
+        score: 0,
+      }));
+    room.queue.push(...valid);
     pushQ();
   });
 
@@ -916,6 +979,57 @@ io.on('connection', (socket) => {
   });
   socket.on('screen:start', () => { if (joined()) { room.screenBy = user.cid; io.to(rid).emit('screen', room.screenBy); } });
   socket.on('screen:stop', () => { if (joined() && room.screenBy === user.cid) { room.screenBy = null; io.to(rid).emit('screen', null); } });
+
+  // Ultra-Precise Sync: RTT ping/pong
+  socket.on('sync:ping', ({ clientTime } = {}, ack) => {
+    if (typeof ack === 'function') ack({ clientTime, serverTime: Date.now() });
+  });
+
+  // Shared Playback Speed Sync
+  socket.on('player:speed', ({ speed } = {}) => {
+    if (!canControl() || !Number.isFinite(+speed)) return;
+    const s = Math.min(3, Math.max(0.25, +speed));
+    room.speed = s;
+    socket.to(rid).emit('player:speed', { speed: s, by: user.cid });
+  });
+
+  // Smart Network Recovery & Buffering Notification
+  socket.on('player:buffering', ({ buffering, time } = {}) => {
+    if (!joined()) return;
+    socket.to(rid).emit('player:buffering', { cid: user.cid, name: user.name, buffering: !!buffering, time: num(time) });
+  });
+
+  // Host Handover
+  socket.on('host:handover', ({ targetId } = {}) => {
+    if (!joined() || user.cid !== room.hostId || !room.users.has(targetId)) return;
+    room.hostId = targetId;
+    presence(rid, room);
+  });
+
+  // Time-Stamped floating synchronized reaction
+  socket.on('reaction:timed', ({ emoji, vt } = {}) => {
+    if (joined() && ['❤️', '😂', '😮', '😢', '🔥', '👏', '🍿', '🥰', '🥺'].includes(emoji)) {
+      io.to(rid).emit('reaction:timed', {
+        id: crypto.randomUUID(),
+        emoji,
+        vt: num(vt),
+        from: user.name,
+        fromId: user.cid,
+        ts: Date.now(),
+      });
+    }
+  });
+
+  // AI Watch Assistant query
+  socket.on('ai:query', ({ action, payload } = {}, ack) => {
+    if (typeof ack !== 'function') return;
+    try {
+      const data = handleAiQuery(action, payload);
+      ack({ ok: true, data });
+    } catch (e) {
+      ack({ error: e.message });
+    }
+  });
 
   socket.on('disconnect', () => {
     if (!joined() || user.sid !== socket.id) return;  // a newer socket already took over

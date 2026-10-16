@@ -1,9 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen, Captions, ListPlus, Play, Volume2 } from 'lucide-react';
+import {
+  Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen,
+  Captions, ListPlus, Play, Volume2, Sliders, Radio, Zap, Settings,
+  RefreshCw, Sparkles, FastForward, Check, RotateCcw
+} from 'lucide-react';
 import { detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl, toStreamProxyUrl, resolveMedia } from '@/lib/media';
 
 const TYPES = ['auto', 'file', 'hls', 'dash', 'embed', 'proxy'];
+const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
 export default function VideoPlayer({ socket, me, hostId, users, peerRef, initial, screenBy, screenStream, playerRef }) {
   const [media, setMedia] = useState(initial.media);
@@ -11,7 +16,7 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const [local, setLocal] = useState(null), [error, setError] = useState('');
   const [audioTracks, setAudioTracks] = useState([]), [curAudio, setCurAudio] = useState(0);
   const vref = useRef(), ytBox = useRef(), vmBox = useRef(), shareEl = useRef(), hlsRef = useRef(null);
-  const api = useRef({ time: () => 0, play() {}, pause() {}, seek() {} });
+  const api = useRef({ time: () => 0, play() {}, pause() {}, seek() {}, setSpeed() {} });
   const st = useRef(initial);          // last known room state
   const quiet = useRef(false);         // true while applying remote commands (prevents echo loops)
   const playing = useRef(false);
@@ -23,7 +28,70 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
   const hostRef = useRef(false); hostRef.current = me === hostId;
   const rateTimer = useRef(null);
 
+  // Precision Sync & Settings State
+  const [syncLatency, setSyncLatency] = useState(16); // ms (one-way latency estimate)
+  const [syncOffset, setSyncOffset] = useState(0); // user manual adjustment (-2.0s to +2.0s)
+  const [syncStatus, setSyncStatus] = useState('in_sync'); // 'in_sync' | 'syncing' | 'buffering' | 'desync'
+  const [sharedSpeed, setSharedSpeed] = useState(1.0);
+  const [partnerBuffering, setPartnerBuffering] = useState(null); // { name: string, active: boolean } | null
+  const [isLiveStream, setIsLiveStream] = useState(false);
+  const [audioBoost, setAudioBoost] = useState(100); // 100% to 200%
+  const [showSettings, setShowSettings] = useState(false);
+  const [subStyle, setSubStyle] = useState({ size: 'md', color: '#ffffff', bg: 'rgba(0,0,0,0.75)' });
+
+  // Web Audio Context for Local Audio Boost up to 200%
+  const audioCtxRef = useRef(null);
+  const gainNodeRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+
   useEffect(() => setHist(JSON.parse(localStorage.hist || '[]')), []);
+
+  // Latency RTT measurement via socket sync:ping
+  useEffect(() => {
+    if (!socket) return;
+    const ping = () => {
+      const now = Date.now();
+      socket.emit('sync:ping', { clientTime: now }, (res) => {
+        if (res) {
+          const rtt = Math.max(2, Date.now() - now);
+          setSyncLatency(Math.round(rtt / 2));
+        }
+      });
+    };
+    ping();
+    const interval = setInterval(ping, 10000);
+    return () => clearInterval(interval);
+  }, [socket]);
+
+  // Handle partner buffering & speed synchronization
+  useEffect(() => {
+    if (!socket) return;
+    const onBuffering = ({ cid, name, buffering }) => {
+      if (cid !== me) {
+        if (buffering) {
+          setPartnerBuffering({ name, active: true });
+          silently(() => api.current.pause());
+        } else {
+          setPartnerBuffering(null);
+          if (st.current.playing) {
+            silently(() => api.current.play());
+          }
+        }
+      }
+    };
+    const onSpeed = ({ speed, by }) => {
+      if (by !== me) {
+        setSharedSpeed(speed);
+        setPlaybackSpeed(speed);
+      }
+    };
+    socket.on('player:buffering', onBuffering);
+    socket.on('player:speed', onSpeed);
+    return () => {
+      socket.off('player:buffering', onBuffering);
+      socket.off('player:speed', onSpeed);
+    };
+  }, [socket, me]);
 
   const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 800); };
   const send = (action) => {
@@ -37,14 +105,52 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     if (v && v.playbackRate !== speed) {
       try { v.playbackRate = speed; } catch {}
     }
+    if (api.current?.setSpeed) {
+      try { api.current.setSpeed(speed); } catch {}
+    }
   };
 
-  // State-of-the-art sync: soft rate adjustment for minor drift, hard seek only for major skips (>2.8s)
+  const changeSharedSpeed = (s) => {
+    setSharedSpeed(s);
+    setPlaybackSpeed(s);
+    socket.emit('player:speed', { speed: s });
+  };
+
+  const handleAudioBoost = (val) => {
+    const boost = Math.min(200, Math.max(0, +val));
+    setAudioBoost(boost);
+    const v = vref.current;
+    if (!v) return;
+    try {
+      if (!audioCtxRef.current) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const gain = ctx.createGain();
+        const src = ctx.createMediaElementSource(v);
+        src.connect(gain);
+        gain.connect(ctx.destination);
+        audioCtxRef.current = ctx;
+        gainNodeRef.current = gain;
+        sourceNodeRef.current = src;
+      }
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = boost / 100;
+      }
+    } catch {
+      v.volume = Math.min(1, boost / 100);
+    }
+  };
+
+  // Ultra-Precise Sync: Network latency compensation + micro-rate adjustment + manual offset
   const correct = (targetTime, shouldPlay) => silently(() => {
     const a = api.current;
     const v = vref.current;
     const curTime = a.time();
-    const drift = curTime - targetTime;
+
+    // Latency compensation: add estimated one-way trip and manual syncOffset
+    const latencySec = (syncLatency || 16) / 1000;
+    const compensatedTarget = Math.max(0, targetTime + (shouldPlay ? latencySec : 0) + (syncOffset || 0));
+    const drift = curTime - compensatedTarget;
     const absDrift = Math.abs(drift);
 
     // Sync play/pause state
@@ -56,31 +162,36 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     // If element is already buffering or seeking, let it finish loading first
     if (v && (v.seeking || v.readyState < 2)) return;
 
-    // 1. Minor drift (< 0.4s): Inaudible/invisible difference, stay at normal 1.0x speed
-    if (absDrift < 0.4) {
-      setPlaybackSpeed(1.0);
+    // 1. Minor drift (< 0.35s): Inaudible difference, stay at shared speed
+    if (absDrift < 0.35) {
+      setSyncStatus('in_sync');
+      setPlaybackSpeed(sharedSpeed);
       return;
     }
 
-    // 2. Soft Sync (0.4s to 2.8s) while playing:
-    // Nudge playback speed by 6% to converge without buffer dumping or video freezing!
+    // 2. Soft Sync (0.35s to 2.8s) while playing:
+    // Micro-adjust playback speed by 6% to converge without stutter or buffer dumping
     if (absDrift <= 2.8 && shouldPlay) {
+      setSyncStatus('syncing');
       if (drift < 0) {
-        setPlaybackSpeed(1.06); // Behind: catch up smoothly
+        setPlaybackSpeed(sharedSpeed * 1.06); // Behind: catch up smoothly
       } else {
-        setPlaybackSpeed(0.94); // Ahead: wait smoothly
+        setPlaybackSpeed(sharedSpeed * 0.94); // Ahead: wait smoothly
       }
       clearTimeout(rateTimer.current);
       rateTimer.current = setTimeout(() => {
-        setPlaybackSpeed(1.0);
-      }, 1800);
+        setPlaybackSpeed(sharedSpeed);
+        setSyncStatus('in_sync');
+      }, 1600);
       return;
     }
 
-    // 3. Hard Sync: only for major jumps (> 2.8s, e.g. intentional user skip forward/backward)
+    // 3. Hard Sync (> 2.8s): intentional user skip or big gap
     if (absDrift > 2.8) {
-      setPlaybackSpeed(1.0);
-      a.seek(targetTime);
+      setSyncStatus('desync');
+      setPlaybackSpeed(sharedSpeed);
+      a.seek(compensatedTarget);
+      setTimeout(() => setSyncStatus('in_sync'), 700);
     }
   });
 
@@ -151,10 +262,28 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     else if (T === 'dash') import('dashjs').then(({ MediaPlayer }) => { const d = MediaPlayer().create(); d.initialize(v, media.src, false); dispose = () => d.reset(); });
     else v.src = T === 'local' ? localUrl : media.src;
 
-    api.current = { time: () => v.currentTime, play: () => v.play().catch(() => {}), pause: () => v.pause(), seek: (t) => (v.currentTime = t) };
-    const evs = [['play', 'PLAY'], ['playing', 'PLAY'], ['pause', 'PAUSE'], ['seeked', 'SEEK'], ['waiting', 'BUFFERING']]
+    api.current = {
+      time: () => v.currentTime,
+      play: () => v.play().catch(() => {}),
+      pause: () => v.pause(),
+      seek: (t) => (v.currentTime = t),
+      setSpeed: (s) => (v.playbackRate = s),
+    };
+    const evs = [['play', 'PLAY'], ['playing', 'PLAY'], ['pause', 'PAUSE'], ['seeked', 'SEEK']]
       .map(([e, a]) => { const f = () => send(a); v.addEventListener(e, f); return () => v.removeEventListener(e, f); });
     
+    const onWait = () => {
+      send('BUFFERING');
+      socket.emit('player:buffering', { buffering: true, time: v.currentTime });
+    };
+    const onResume = () => {
+      socket.emit('player:buffering', { buffering: false, time: v.currentTime });
+    };
+    v.addEventListener('waiting', onWait);
+    v.addEventListener('stalled', onWait);
+    v.addEventListener('canplay', onResume);
+    v.addEventListener('playing', onResume);
+
     // Clear errors when frames actually load or play
     v.onplaying = () => setError('');
     v.oncanplay = () => setError('');
@@ -171,9 +300,17 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
     };
     v.onloadedmetadata = () => {
       setError('');
+      setIsLiveStream(v.duration === Infinity || (hlsRef.current && !!hlsRef.current.liveSyncPosition));
       correct(st.current.time, st.current.playing);
     };
-    return () => { evs.forEach((o) => o()); dispose(); };
+    return () => {
+      evs.forEach((o) => o());
+      v.removeEventListener('waiting', onWait);
+      v.removeEventListener('stalled', onWait);
+      v.removeEventListener('canplay', onResume);
+      v.removeEventListener('playing', onResume);
+      dispose();
+    };
   }, [media, localUrl]);
 
   // ---------- YouTube ----------
@@ -188,10 +325,22 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         events: {
           onReady: () => {
             setError('');
-            api.current = { time: () => p.getCurrentTime(), play: () => p.playVideo(), pause: () => p.pauseVideo(), seek: (t) => p.seekTo(t, true) };
+            api.current = {
+              time: () => p.getCurrentTime(),
+              play: () => p.playVideo(),
+              pause: () => p.pauseVideo(),
+              seek: (t) => p.seekTo(t, true),
+              setSpeed: (s) => p.setPlaybackRate?.(s),
+            };
             correct(st.current.time, st.current.playing);
           },
-          onStateChange: (e) => { const a = { 1: 'PLAY', 2: 'PAUSE', 3: 'BUFFERING' }[e.data]; if (a) send(a); if (e.data === 0 && hostRef.current) socket.emit('queue:next'); },
+          onStateChange: (e) => {
+            const a = { 1: 'PLAY', 2: 'PAUSE', 3: 'BUFFERING' }[e.data];
+            if (a) send(a);
+            if (e.data === 3) socket.emit('player:buffering', { buffering: true, time: api.current.time() });
+            if (e.data === 1) socket.emit('player:buffering', { buffering: false, time: api.current.time() });
+            if (e.data === 0 && hostRef.current) socket.emit('queue:next');
+          },
           onError: () => setError('YouTube refused to play this video here (embedding disabled). Open it in another tab and use Share screen to show it anyway.'),
         },
       });
@@ -207,12 +356,26 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       if (dead) return;
       vmBox.current.innerHTML = '';
       p = new window.Vimeo.Player(vmBox.current, { id: vimeoId(media.src), responsive: true, autopause: false });
-      api.current = { time: () => p.getCurrentTime(), play: () => p.play(), pause: () => p.pause(), seek: (t) => p.setCurrentTime(t) };
+      api.current = {
+        time: () => p.getCurrentTime(),
+        play: () => p.play(),
+        pause: () => p.pause(),
+        seek: (t) => p.setCurrentTime(t),
+        setSpeed: (s) => p.setPlaybackRate?.(s),
+      };
       p.ready().then(() => {
         setError('');
         correct(st.current.time, st.current.playing);
-        p.on('play', () => send('PLAY'));
+        p.on('play', () => {
+          send('PLAY');
+          socket.emit('player:buffering', { buffering: false, time: api.current.time() });
+        });
         p.on('pause', () => send('PAUSE'));
+        p.on('bufferstart', () => {
+          send('BUFFERING');
+          socket.emit('player:buffering', { buffering: true, time: api.current.time() });
+        });
+        p.on('bufferend', () => socket.emit('player:buffering', { buffering: false, time: api.current.time() }));
         p.on('seeked', () => send('SEEK'));
         p.on('ended', () => hostRef.current && socket.emit('queue:next'));
       });
@@ -434,7 +597,91 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Subtitle Cue Custom Styles */}
+      <style jsx global>{`
+        video::cue {
+          font-size: ${subStyle.size === 'sm' ? '14px' : subStyle.size === 'lg' ? '24px' : '18px'} !important;
+          color: ${subStyle.color} !important;
+          background-color: ${subStyle.bg} !important;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+        }
+      `}</style>
+
       <div className="vault relative aspect-video overflow-hidden rounded-2xl bg-black shadow-[0_20px_80px_-24px_rgba(217,70,122,.55)] ring-1 ring-white/10">
+        {/* Sync Status Badge */}
+        <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-[11px] text-white/90">
+          <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400 animate-pulse' : 'bg-rose-400 animate-ping'}`} />
+          <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
+          {syncOffset !== 0 && (
+            <span className="text-[10px] text-[#ff6fa0] font-mono ml-0.5">
+              ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
+            </span>
+          )}
+        </div>
+
+        {/* Live Stream Badge */}
+        {isLiveStream && (
+          <div className="absolute top-3 left-36 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600/85 backdrop-blur-md text-[11px] font-bold text-white shadow-lg animate-pulse">
+            <Radio className="h-3 w-3" />
+            <span>LIVE</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (hlsRef.current?.liveSyncPosition) vref.current.currentTime = hlsRef.current.liveSyncPosition;
+                else if (vref.current && Number.isFinite(vref.current.duration)) vref.current.currentTime = vref.current.duration;
+              }}
+              className="ml-1 underline hover:text-white/80 text-[10px]"
+              title="Jump to live edge"
+            >
+              Catch up
+            </button>
+          </div>
+        )}
+
+        {/* Precision Settings Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setShowSettings(!showSettings)}
+          className={`absolute top-3 right-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border text-[11px] font-medium transition ${
+            showSettings
+              ? 'bg-[#d9467a] text-white border-white/30 shadow-lg shadow-[#d9467a]/40'
+              : 'bg-black/65 text-white/80 hover:text-white border-white/10'
+          }`}
+          title="Precision Sync, Speed & Audio Settings"
+        >
+          <Sliders className="h-3 w-3" />
+          <span>Sync & Audio</span>
+        </button>
+
+        {/* Partner Buffering Alert Banner */}
+        {partnerBuffering?.active && (
+          <div className="absolute inset-x-4 top-14 z-30 mx-auto max-w-md rise">
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-black/85 backdrop-blur-md border border-amber-500/40 text-amber-200 text-xs shadow-2xl">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+              <span><b>{partnerBuffering.name}</b> is buffering… Paused smoothly so you stay in sync 🍿</span>
+            </div>
+          </div>
+        )}
+
+        {/* Desync Recovery Banner */}
+        {syncStatus === 'desync' && (
+          <div className="absolute inset-x-4 bottom-14 z-30 mx-auto max-w-sm rise">
+            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-black/90 backdrop-blur-md border border-[#ff6fa0]/40 text-white text-xs shadow-2xl">
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                <span>Drift detected</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => correct(st.current.time, st.current.playing)}
+                className="btn !py-1 !px-2.5 text-[11px] flex items-center gap-1"
+              >
+                <RotateCcw className="h-3 w-3" /> Resync
+              </button>
+            </div>
+          </div>
+        )}
+
         <video
           ref={shareEl}
           autoPlay
@@ -494,6 +741,128 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
         )}
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
       </div>
+
+      {/* Precision Sync & Audio Drawer */}
+      {showSettings && (
+        <div className="card rise p-4 bg-[#140c1a]/95 border border-white/15 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="h-4 w-4 text-[#ff6fa0]" /> Precision Sync &amp; Audio Controls
+            </span>
+            <button onClick={() => setShowSettings(false)} className="text-xs opacity-60 hover:opacity-100">✕ Close</button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            {/* Playback Speed (Synced) */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-white/80">
+                <span className="font-semibold flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-[#ff6fa0]" /> Shared Speed</span>
+                <span className="font-mono text-[#ff8fb3]">{sharedSpeed}x</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {SPEEDS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => changeSharedSpeed(s)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                      sharedSpeed === s
+                        ? 'bg-[#d9467a] text-white shadow-md'
+                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    }`}
+                  >
+                    {s}x
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Local Audio Boost (Independent) */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-white/80">
+                <span className="font-semibold flex items-center gap-1"><Volume2 className="h-3.5 w-3.5 text-emerald-400" /> Local Audio Boost</span>
+                <span className="font-mono text-emerald-300">{audioBoost}%</span>
+              </div>
+              <input
+                type="range"
+                min="50"
+                max="200"
+                step="5"
+                value={audioBoost}
+                onChange={(e) => handleAudioBoost(e.target.value)}
+                className="w-full accent-emerald-500 cursor-pointer"
+              />
+              <p className="text-[10px] text-white/50">Boosts volume up to 200% for quiet phone/laptop speakers without affecting your partner.</p>
+            </div>
+
+            {/* Manual Sync Offset */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-white/80">
+                <span className="font-semibold flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5 text-amber-400" /> Manual Sync Offset</span>
+                <span className="font-mono text-amber-300">{syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="-2.0"
+                  max="2.0"
+                  step="0.05"
+                  value={syncOffset}
+                  onChange={(e) => setSyncOffset(+e.target.value)}
+                  className="w-full accent-[#d9467a] cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSyncOffset(0)}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] shrink-0"
+                  title="Reset to 0s"
+                >
+                  Reset
+                </button>
+              </div>
+              <p className="text-[10px] text-white/50">Compensate for personal Bluetooth headphones or wireless speaker delay.</p>
+            </div>
+
+            {/* Subtitle Appearance */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-white/80">
+                <span className="font-semibold flex items-center gap-1"><Captions className="h-3.5 w-3.5 text-indigo-400" /> Subtitles Style</span>
+                <span className="text-[10px] text-white/60">Independent</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={subStyle.size}
+                  onChange={(e) => setSubStyle({ ...subStyle, size: e.target.value })}
+                  className="bg-white/10 rounded px-2 py-1 text-xs text-white border border-white/10"
+                >
+                  <option value="sm" className="text-black">Small text</option>
+                  <option value="md" className="text-black">Normal text</option>
+                  <option value="lg" className="text-black">Large text</option>
+                </select>
+                <select
+                  value={subStyle.color}
+                  onChange={(e) => setSubStyle({ ...subStyle, color: e.target.value })}
+                  className="bg-white/10 rounded px-2 py-1 text-xs text-white border border-white/10"
+                >
+                  <option value="#ffffff" className="text-black">White text</option>
+                  <option value="#ffd700" className="text-black">Yellow text</option>
+                  <option value="#00e5ff" className="text-black">Cyan text</option>
+                  <option value="#ff6fa0" className="text-black">Pink text</option>
+                </select>
+                <select
+                  value={subStyle.bg}
+                  onChange={(e) => setSubStyle({ ...subStyle, bg: e.target.value })}
+                  className="bg-white/10 rounded px-2 py-1 text-xs text-white border border-white/10"
+                >
+                  <option value="transparent" className="text-black">No Box</option>
+                  <option value="rgba(0,0,0,0.5)" className="text-black">Semi-Dark</option>
+                  <option value="rgba(0,0,0,0.85)" className="text-black">Dark Box</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {uploading && (
         <div className="card flex items-center justify-between gap-3 p-3 bg-gradient-to-r from-[#d9467a]/25 via-purple-600/20 to-pink-600/25 border-[#ff6fa0]/40 text-xs text-white shadow-lg shadow-[#d9467a]/20">

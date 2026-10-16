@@ -7,7 +7,7 @@ import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
-  Timer, Popcorn, Flame, Shield, Star
+  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -16,6 +16,8 @@ import CouplesOverlay from '@/components/CouplesOverlay';
 import CoupleGestures from '@/components/CoupleGestures';
 import MovieNightExtras from '@/components/MovieNightExtras';
 import IntimacyMode from '@/components/IntimacyMode';
+import AiWatchAssistant from '@/components/AiWatchAssistant';
+import WatchHistoryModal from '@/components/WatchHistoryModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 
@@ -80,10 +82,11 @@ export default function Room() {
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
   // Mobile enhancements & Video Call control
-  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'gestures' | 'extras' | 'intimacy'
-  const [desktopTab, setDesktopTab] = useState('gestures'); // 'gestures' | 'extras' | 'intimacy'
+  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'gestures' | 'extras' | 'intimacy' | 'ai'
+  const [desktopTab, setDesktopTab] = useState('gestures'); // 'gestures' | 'extras' | 'intimacy' | 'ai'
   const [showMenu, setShowMenu] = useState(false);
   const [showCall, setShowCall] = useState(true);
+  const [showHandoff, setShowHandoff] = useState(false);
 
   // Movie-Night Extras & Intimacy State
   const [watchlist, setWatchlist] = useState([]);
@@ -166,6 +169,11 @@ export default function Room() {
       setScreenBy(r.screenBy);
       setBoot(r);
       setOnline(true);
+      const initVid = sessionStorage.getItem('init_video_' + roomId);
+      if (initVid && (!r.media || r.media.type === 'none')) {
+        sessionStorage.removeItem('init_video_' + roomId);
+        socket.emit('media:set', { media: { type: 'auto', src: initVid } });
+      }
     });
   };
 
@@ -177,8 +185,10 @@ export default function Room() {
       const params = new URLSearchParams(hash || (typeof window !== 'undefined' ? window.location.search : ''));
       const p = params.get('pass');
       const k = params.get('key');
+      const v = params.get('video');
       if (p) sessionStorage.setItem('rp_' + roomId, p);
       if (k) setKey(k);
+      if (v) sessionStorage.setItem('init_video_' + roomId, v);
     } catch {}
   }, [roomId]);
 
@@ -200,7 +210,14 @@ export default function Room() {
     socket.on('screen', (by) => { setScreenBy(by); if (!by) setScreen(null); });
     socket.on('reaction', (e) => {
       const el = Object.assign(document.createElement('div'), { textContent: e });
-      el.className = 'absolute bottom-4 text-4xl';
+      el.className = 'absolute bottom-4 text-4xl pointer-events-none select-none z-30';
+      el.style.left = 8 + Math.random() * 80 + '%';
+      document.getElementById('reaction-layer')?.append(el);
+      gsap.to(el, { y: -260, x: gsap.utils.random(-30, 30), opacity: 0, duration: 2.2, ease: 'power1.out', onComplete: () => el.remove() });
+    });
+    socket.on('reaction:timed', (data) => {
+      const el = Object.assign(document.createElement('div'), { textContent: data.emoji });
+      el.className = 'absolute bottom-4 text-4xl pointer-events-none select-none z-30';
       el.style.left = 8 + Math.random() * 80 + '%';
       document.getElementById('reaction-layer')?.append(el);
       gsap.to(el, { y: -260, x: gsap.utils.random(-30, 30), opacity: 0, duration: 2.2, ease: 'power1.out', onComplete: () => el.remove() });
@@ -329,7 +346,24 @@ export default function Room() {
         <span className="flex items-center gap-1 text-xs opacity-60"><Users className="h-3.5 w-3.5" />{users.length} here</span>
         {users.map((u) => (
           <span key={u.id} className="flex items-center gap-1 rounded-full border border-black/10 dark:border-white/10 px-2 py-0.5 text-xs">
-            <i className="h-2 w-2 rounded-full" style={{ background: u.color }} />{u.name}{u.id === hostId && <Crown className="h-3 w-3 text-amber-500" />}
+            <i className="h-2 w-2 rounded-full" style={{ background: u.color }} />
+            {u.name}
+            {u.id === hostId && <Crown className="h-3 w-3 text-amber-500" title="Room Host" />}
+            {me === hostId && u.id !== me && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Pass host controls to ${u.name}?`)) {
+                    socket.emit('host:handover', { targetId: u.id });
+                    say?.(`Handed host controls to ${u.name}`);
+                  }
+                }}
+                className="opacity-40 hover:opacity-100 hover:text-amber-400 p-0.5 ml-0.5 transition"
+                title={`Transfer host controls to ${u.name}`}
+              >
+                <Crown className="h-2.5 w-2.5" />
+              </button>
+            )}
           </span>
         ))}
         {chat.length > 0 && (
@@ -353,9 +387,36 @@ export default function Room() {
           );
         })}
       </div>
-      <div className="my-2 flex justify-between">
-        {EMOJI.map((e) => <button key={e} onClick={() => socket.emit('reaction', e)} aria-label={`React ${e}`} className="rounded-lg p-1 text-xl transition hover:-translate-y-1 hover:scale-125 active:scale-90">{e}</button>)}
-        <button onClick={ask} aria-label="Conversation starter" title="Conversation starter" className="rounded-lg p-1 text-xl transition hover:-translate-y-1 hover:scale-125 active:scale-90">💬</button>
+      <div className="my-2 flex items-center justify-between">
+        <div className="flex gap-1">
+          {EMOJI.map((e) => (
+            <button
+              key={e}
+              onClick={() => {
+                socket.emit('reaction', e);
+                socket.emit('reaction:timed', { emoji: e, vt: playerRef.current?.time?.() || 0 });
+              }}
+              aria-label={`React ${e}`}
+              className="rounded-lg p-1 text-xl transition hover:-translate-y-1 hover:scale-125 active:scale-90"
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              const cur = playerRef.current?.time?.() || 0;
+              setText((prev) => `[${fmt(cur)}] ` + prev);
+            }}
+            title="Attach current video timestamp"
+            className="rounded-lg text-[11px] text-[#ff6fa0] bg-white/5 hover:bg-white/10 border border-[#ff6fa0]/30 px-2 py-1 font-mono transition"
+          >
+            ⏱️ {fmt(playerRef.current?.time?.() || 0)}
+          </button>
+          <button onClick={ask} aria-label="Conversation starter" title="Conversation starter" className="rounded-lg p-1 text-xl transition hover:-translate-y-1 hover:scale-125 active:scale-90">💬</button>
+        </div>
       </div>
       <form onSubmit={send} className="flex gap-2">
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Say something sweet…" className="field" />
@@ -430,6 +491,17 @@ export default function Room() {
             <span>{showCall ? 'Hide Call' : 'Show Call'}</span>
           </button>
 
+          {/* Quick Handoff Button */}
+          <button
+            type="button"
+            onClick={() => setShowHandoff(true)}
+            className="ghost !py-1.5 !px-2.5 text-xs flex items-center gap-1.5 border-white/10 hover:border-[#ff6fa0]/40 transition"
+            title="Scan QR Code to open on mobile phone or view history"
+          >
+            <QrCode className="h-3.5 w-3.5 text-[#ff6fa0]" />
+            <span className="hidden sm:inline">Handoff</span>
+          </button>
+
           {/* Quick Invite Button */}
           <button onClick={copy} className="btn !py-1.5 !px-3 text-xs" title="Copy the invite link">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -468,6 +540,13 @@ export default function Room() {
             <button onClick={() => setShowMenu(false)} className="opacity-60 hover:opacity-100 p-1"><X className="h-4 w-4" /></button>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              onClick={() => { setShowHandoff(true); setShowMenu(false); }}
+              className="ghost !justify-start !py-2.5 !px-3"
+            >
+              <Smartphone className="h-4 w-4 text-[#ff6fa0]" />
+              <span>Mobile Handoff</span>
+            </button>
             <button
               onClick={() => { socket.emit('nudge'); setShowMenu(false); }}
               className="ghost !justify-start !py-2.5 !px-3"
@@ -602,6 +681,18 @@ export default function Room() {
                 <Flame className="h-3.5 w-3.5 text-rose-400" />
                 <span>Intimacy {adultMode && '🔥'}</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setMobileTab('ai')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                  mobileTab === 'ai'
+                    ? 'bg-[#d9467a] text-white shadow-md'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-purple-300" />
+                <span>AI Copilot ✨</span>
+              </button>
             </div>
 
             {/* MOBILE TAB CONTENT */}
@@ -641,6 +732,17 @@ export default function Room() {
                     hasPin={hasPin}
                     say={say}
                     onApplyAmbient={applyAmbientLighting}
+                  />
+                </div>
+              )}
+              {mobileTab === 'ai' && (
+                <div className="rise">
+                  <AiWatchAssistant
+                    socket={socket}
+                    currentMedia={currentMedia}
+                    onAddToQueue={(item) => socket.emit('queue:add', { media: { type: 'auto', src: item.title, title: item.title, desc: item.why } })}
+                    onAddToWatchlist={(item) => socket.emit('watchlist:add', { item: { type: 'embed', src: '', title: item.title, desc: item.why } })}
+                    say={say}
                   />
                 </div>
               )}
@@ -692,6 +794,18 @@ export default function Room() {
                   <span>Intimacy &amp; Lighting 🕯️</span>
                   {adultMode && <span className="text-[10px] bg-rose-500/30 text-rose-200 px-1.5 rounded-full">18+</span>}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setDesktopTab('ai')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                    desktopTab === 'ai'
+                      ? 'bg-[#d9467a] text-white shadow-md'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="h-4 w-4 text-purple-300" />
+                  <span>AI Copilot ✨</span>
+                </button>
               </div>
 
               {desktopTab === 'gestures' && (
@@ -733,6 +847,18 @@ export default function Room() {
                   />
                 </div>
               )}
+
+              {desktopTab === 'ai' && (
+                <div className="rise">
+                  <AiWatchAssistant
+                    socket={socket}
+                    currentMedia={currentMedia}
+                    onAddToQueue={(item) => socket.emit('queue:add', { media: { type: 'auto', src: item.title, title: item.title, desc: item.why } })}
+                    onAddToWatchlist={(item) => socket.emit('watchlist:add', { item: { type: 'embed', src: '', title: item.title, desc: item.why } })}
+                    say={say}
+                  />
+                </div>
+              )}
             </div>
           </section>
 
@@ -754,6 +880,15 @@ export default function Room() {
           setShowCall={setShowCall}
         />
       )}
+
+      {/* Cross-Device Handoff & Watch History Modal */}
+      <WatchHistoryModal
+        isOpen={showHandoff}
+        onClose={() => setShowHandoff(false)}
+        roomId={roomId}
+        onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
+        say={say}
+      />
 
       {/* Toast notifications */}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
