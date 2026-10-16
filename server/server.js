@@ -12,6 +12,36 @@ const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 
+// Auto-load .env if present in root or server directory
+try {
+  const envCandidates = [
+    path.resolve(__dirname, '../.env'),
+    path.resolve(__dirname, '.env'),
+    path.resolve(process.cwd(), '.env'),
+  ];
+  for (const envPath of envCandidates) {
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const rawLine of content.split('\n')) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
+        const eqIdx = line.indexOf('=');
+        if (eqIdx > 0) {
+          const k = line.slice(0, eqIdx).trim();
+          let v = line.slice(eqIdx + 1).trim();
+          if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+            v = v.slice(1, -1);
+          }
+          if (process.env[k] === undefined) {
+            process.env[k] = v;
+          }
+        }
+      }
+      break;
+    }
+  }
+} catch (e) {}
+
 const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json', ADMIN_KEY = process.env.ADMIN_KEY || 'admin123' } = process.env;
 const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: strictly 2 seats (host & partner)
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
