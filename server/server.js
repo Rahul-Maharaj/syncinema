@@ -12,7 +12,7 @@ const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 
-const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json' } = process.env;
+const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json', ADMIN_KEY = process.env.ADMIN_KEY || 'admin123' } = process.env;
 const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: strictly 2 seats (host & partner)
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
 const origin = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(',') : true;
@@ -26,6 +26,12 @@ const ROOM_RE = /^[\w-]{2,64}$/;
 const keyOk = (k) => { // private mode: shared passphrase gates rooms + TURN creds
   if (!ACCESS_KEY) return true;
   const a = Buffer.from(String(k || '')), b = Buffer.from(ACCESS_KEY);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
+const adminKeyOk = (k) => {
+  const expected = ADMIN_KEY || ACCESS_KEY || 'admin123';
+  if (!k) return false;
+  const a = Buffer.from(String(k).trim()), b = Buffer.from(String(expected).trim());
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 const fails = new Map();                             // brute-force lockout: 8 wrong tries → 15 min ban per IP
@@ -709,6 +715,246 @@ const cleanUrl = (v) => { // http(s) only; never point a partner's browser at th
 const setMedia = (id, r, m) => { r.media = m; r.time = 0; r.playing = false; r.at = Date.now(); io.to(id).emit('state', snapshot(r)); save(); };
 const num = (v) => (Number.isFinite(+v) && +v >= 0 && +v < 1e6 ? +v : 0);
 
+// --- ADMIN SYSTEM & SECURITY ENGINE ---
+const blockedUsers = new Map();  // cid -> { reason, at, ip }
+const blockedIps = new Set();
+const blockedRooms = new Map();  // roomId -> { reason, at }
+const blockedVideos = new Set(); // url strings or keywords
+
+const isVideoBlocked = (url) => {
+  if (!url) return false;
+  const target = String(url).toLowerCase();
+  for (const b of blockedVideos) {
+    if (b && target.includes(b.toLowerCase())) return true;
+  }
+  return false;
+};
+
+const adminGate = (req, res, next) => {
+  const k = req.get('x-admin-key') || req.query.adminKey || req.body?.adminKey;
+  if (!adminKeyOk(k)) {
+    return res.status(401).json({ error: 'unauthorized', message: 'Invalid admin credentials' });
+  }
+  next();
+};
+
+app.use('/api/admin', express.json());
+
+app.post('/api/admin/verify', adminGate, (req, res) => {
+  res.json({ ok: true, message: 'Authenticated' });
+});
+
+app.get('/api/admin/overview', adminGate, (req, res) => {
+  const roomList = [];
+  let totalConnectedUsers = 0;
+  let activePlayingCount = 0;
+
+  for (const [id, r] of rooms.entries()) {
+    const userList = [];
+    if (r.users) {
+      for (const u of r.users.values()) {
+        userList.push({
+          cid: u.cid,
+          name: u.name,
+          color: u.color,
+          sid: u.sid,
+          ip: u.ip || 'Unknown',
+          isHost: u.cid === r.hostId,
+        });
+      }
+    }
+    const userCount = userList.length;
+    totalConnectedUsers += userCount;
+    if (r.playing) activePlayingCount++;
+
+    roomList.push({
+      roomId: id,
+      hostId: r.hostId,
+      userCount,
+      users: userList,
+      media: r.media || { type: 'none', src: '', title: '' },
+      playing: Boolean(r.playing),
+      currentTime: Math.round(position(r) || 0),
+      queue: r.queue || [],
+      watchlist: r.watchlist || [],
+      adult: Boolean(r.adult),
+      hasPass: Boolean(r.pass),
+      lock: Boolean(r.lock),
+      ambient: r.ambient,
+      createdAt: r.createdAt || r.at || Date.now(),
+    });
+  }
+
+  roomList.sort((a, b) => b.createdAt - a.createdAt);
+
+  res.json({
+    ok: true,
+    stats: {
+      totalRooms: roomList.length,
+      totalConnectedUsers,
+      activePlayingCount,
+      blockedUsersCount: blockedUsers.size,
+      blockedRoomsCount: blockedRooms.size,
+      blockedVideosCount: blockedVideos.size,
+    },
+    rooms: roomList,
+    blocked: {
+      users: [...blockedUsers.entries()].map(([cid, v]) => ({ cid, ...v })),
+      ips: [...blockedIps],
+      rooms: [...blockedRooms.entries()].map(([roomId, v]) => ({ roomId, ...v })),
+      videos: [...blockedVideos],
+    },
+  });
+});
+
+app.post('/api/admin/room/block', adminGate, (req, res) => {
+  const { roomId, reason = 'Closed by administrator for safety' } = req.body || {};
+  if (!roomId) return res.status(400).json({ error: 'Missing roomId' });
+
+  blockedRooms.set(roomId, { reason, at: Date.now() });
+
+  const r = rooms.get(roomId);
+  if (r) {
+    io.to(roomId).emit('toast', `⛔ ${reason}`);
+    io.to(roomId).emit('room:closed', { reason });
+    io.in(roomId).disconnectSockets(true);
+    rooms.delete(roomId);
+    save();
+  }
+
+  res.json({ ok: true, roomId, message: `Room ${roomId} has been blocked and closed` });
+});
+
+app.post('/api/admin/room/unblock', adminGate, (req, res) => {
+  const { roomId } = req.body || {};
+  if (!roomId) return res.status(400).json({ error: 'Missing roomId' });
+  blockedRooms.delete(roomId);
+  res.json({ ok: true, roomId, message: `Room ${roomId} unblocked` });
+});
+
+app.post('/api/admin/user/block', adminGate, (req, res) => {
+  const { cid, ip, roomId, reason = 'Blocked by administrator' } = req.body || {};
+  if (!cid && !ip) return res.status(400).json({ error: 'Missing cid or ip' });
+
+  if (cid) blockedUsers.set(cid, { reason, at: Date.now(), ip });
+  if (ip && !isLocalIp(ip)) blockedIps.add(ip);
+
+  // Kick user from rooms immediately
+  for (const [rId, r] of rooms.entries()) {
+    if (r.users && cid && r.users.has(cid)) {
+      const u = r.users.get(cid);
+      if (u.sid) {
+        const s = io.sockets.sockets.get(u.sid);
+        if (s) {
+          s.emit('toast', `⛔ ${reason}`);
+          s.emit('kicked', { reason });
+          s.disconnect(true);
+        }
+      }
+      r.users.delete(cid);
+      presence(rId, r);
+    }
+  }
+
+  res.json({ ok: true, cid, ip, message: `User blocked and removed from all rooms` });
+});
+
+app.post('/api/admin/user/unblock', adminGate, (req, res) => {
+  const { cid, ip } = req.body || {};
+  if (cid) blockedUsers.delete(cid);
+  if (ip) blockedIps.delete(ip);
+  res.json({ ok: true, cid, ip, message: 'User unblocked' });
+});
+
+app.post('/api/admin/video/control', adminGate, (req, res) => {
+  const { roomId, action, payload = {} } = req.body || {};
+  if (!roomId || !action) return res.status(400).json({ error: 'Missing roomId or action' });
+
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+
+  if (action === 'pause') {
+    r.playing = false;
+    r.time = position(r);
+    r.at = Date.now();
+    io.to(roomId).emit('state', snapshot(r));
+    save();
+  } else if (action === 'play') {
+    r.playing = true;
+    r.at = Date.now();
+    io.to(roomId).emit('state', snapshot(r));
+    save();
+  } else if (action === 'stop') {
+    setMedia(roomId, r, { type: 'none', src: '', title: '' });
+  } else if (action === 'seek') {
+    r.time = num(payload.time);
+    r.at = Date.now();
+    io.to(roomId).emit('state', snapshot(r));
+    save();
+  } else if (action === 'block') {
+    const src = payload.src || r.media?.src;
+    if (src) {
+      blockedVideos.add(src);
+      if (r.media && r.media.src === src) {
+        setMedia(roomId, r, { type: 'none', src: '', title: '' });
+      }
+      if (r.queue) {
+        r.queue = r.queue.filter(q => q.src !== src);
+        io.to(roomId).emit('queue', r.queue);
+      }
+      save();
+    }
+  }
+
+  res.json({ ok: true, roomId, action, state: snapshot(r) });
+});
+
+app.post('/api/admin/video/unblock', adminGate, (req, res) => {
+  const { src } = req.body || {};
+  if (!src) return res.status(400).json({ error: 'Missing src' });
+  blockedVideos.delete(src);
+  res.json({ ok: true, src, message: 'Video URL unblocked' });
+});
+
+app.post('/api/admin/video/override', adminGate, (req, res) => {
+  const { roomId, media } = req.body || {};
+  if (!roomId || !media?.src) return res.status(400).json({ error: 'Missing roomId or media.src' });
+
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+
+  setMedia(roomId, r, {
+    type: media.type || 'auto',
+    src: cleanUrl(media.src) || media.src,
+    title: String(media.title || 'Broadcast Video').slice(0, 200),
+    poster: cleanUrl(media.poster) || '',
+    desc: String(media.desc || '').slice(0, 1000),
+  });
+
+  res.json({ ok: true, roomId, media: r.media });
+});
+
+app.post('/api/admin/queue/clear', adminGate, (req, res) => {
+  const { roomId } = req.body || {};
+  if (!roomId) return res.status(400).json({ error: 'Missing roomId' });
+
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+
+  r.queue = [];
+  io.to(roomId).emit('queue', []);
+  save();
+
+  res.json({ ok: true, roomId, message: 'Queue cleared' });
+});
+
+app.post('/api/admin/broadcast', adminGate, (req, res) => {
+  const { message } = req.body || {};
+  if (!message) return res.status(400).json({ error: 'Missing message' });
+  io.emit('toast', `📢 System Notice: ${message}`);
+  res.json({ ok: true, message });
+});
+
 io.on('connection', (socket) => {
   let rid, room, user, n = 0, t = Date.now();
   socket.on('error', () => {});
@@ -721,6 +967,14 @@ io.on('connection', (socket) => {
     const ip = ipOf(socket.handshake);
     if (locked(ip)) return ack({ error: 'locked' });
     if (!keyOk(key)) { fail(ip); return ack({ error: 'denied' }); }
+    if (blockedIps.has(ip) || blockedUsers.has(cid)) {
+      const b = blockedUsers.get(cid);
+      return ack({ error: 'banned', message: b?.reason || 'You have been blocked by administrator.' });
+    }
+    if (blockedRooms.has(roomId)) {
+      const b = blockedRooms.get(roomId);
+      return ack({ error: 'blocked_room', message: b?.reason || 'This room has been closed by administrator.' });
+    }
     if (!ROOM_RE.test(roomId) || !/^\w{4,32}$/.test(cid)) return ack({ error: 'invalid' });
     const r = rooms.get(roomId) || fresh();
     const p = typeof pass === 'string' ? pass.trim() : '';
@@ -742,7 +996,7 @@ io.on('connection', (socket) => {
     rid = roomId; room = r;
     user = room.users.get(cid) || { cid, token: crypto.randomBytes(16).toString('hex'), color: `hsl(${Math.random() * 360 | 0} 70% 62%)` };
     clearTimeout(user.timer);                        // reconnect within grace → same seat
-    Object.assign(user, { name: (String(name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24) || 'Guest'), sid: socket.id });
+    Object.assign(user, { name: (String(name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24) || 'Guest'), sid: socket.id, ip });
     room.users.set(cid, user);
     if (!room.hostId || !room.users.has(room.hostId)) room.hostId = cid;
     socket.join(rid);
@@ -773,6 +1027,11 @@ io.on('connection', (socket) => {
     const src = local ? '' : cleanUrl(media?.src);
     if (!canControl() || !(local || src) || ![...TYPES, 'local'].includes(media?.type)) return;
 
+    if (isVideoBlocked(src) || isVideoBlocked(media?.orig) || isVideoBlocked(media?.origSrc)) {
+      socket.emit('toast', '🚫 This video is blocked by administrator for safety.');
+      return;
+    }
+
     // Enforce 18+ Adults-Only mode: only allow playing if room.adult is true
     const isAdult = isAdultUrl(src) || isAdultUrl(media?.orig) || isAdultUrl(media?.origSrc);
     if (isAdult && !room.adult) {
@@ -796,6 +1055,11 @@ io.on('connection', (socket) => {
   socket.on('queue:add', ({ media } = {}) => {
     const src = cleanUrl(media?.src);
     if (!joined() || !src || !TYPES.includes(media?.type) || room.queue.length >= 100) return;
+
+    if (isVideoBlocked(src) || isVideoBlocked(media?.orig) || isVideoBlocked(media?.origSrc)) {
+      socket.emit('toast', '🚫 This video is blocked by administrator for safety.');
+      return;
+    }
 
     // Enforce 18+ Adults-Only mode: only allow queuing if room.adult is true
     const isAdult = isAdultUrl(src) || isAdultUrl(media?.orig) || isAdultUrl(media?.origSrc);
