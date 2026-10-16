@@ -46,20 +46,14 @@ const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE
 const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: strictly 2 seats (host & partner)
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
 const origin = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(',') : true;
-if (process.env.NODE_ENV === 'production' && (!ACCESS_KEY || ACCESS_KEY.length < 10)) {
-  console.error('Refusing to start: set ACCESS_KEY (10+ chars) so strangers cannot enter.'); process.exit(1);
-}
 const PEER_KEY = ACCESS_KEY ? crypto.createHmac('sha256', ACCESS_KEY).update('peer').digest('hex').slice(0, 32) : 'peerjs';
 const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const ROOM_RE = /^[\w-]{2,64}$/;
 
-const keyOk = (k) => { // private mode: shared passphrase gates rooms + TURN creds
-  if (!ACCESS_KEY) return true;
-  const a = Buffer.from(String(k || '')), b = Buffer.from(ACCESS_KEY);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-};
+// Secret word access removed: open access to website, room security handled by room passwords
+const keyOk = (k) => true;
 const adminKeyOk = (k) => {
-  const expected = ADMIN_KEY || ACCESS_KEY || 'admin123';
+  const expected = ADMIN_KEY || 'admin123';
   if (!k) return false;
   const a = Buffer.from(String(k).trim()), b = Buffer.from(String(expected).trim());
   return a.length === b.length && crypto.timingSafeEqual(a, b);
@@ -94,15 +88,23 @@ app.use('/peerjs', ExpressPeerServer(server, {
 
 app.get('/health', (_, res) => res.send('ok'));
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
-app.use('/api', (_, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
-const gate = (req, res, next) => {                   // every private asset needs the secret word (sent as a header, never in the URL)
-  const ip = ipOf(req);
-  if (locked(ip)) return res.status(429).json({ error: 'locked' });
-  if (!keyOk(req.get('x-access-key'))) { fail(ip); return res.status(401).json({ error: 'denied' }); }
+app.use('/api', (req, res, next) => {
+  // Allow caching for media streams; no-store for API states
+  if (!req.path.startsWith('/stream')) {
+    res.set('Cache-Control', 'no-store');
+  }
   next();
-};
-app.get('/api/verify', gate, (_, res) => res.json({ ok: true }));
-app.get('/api/hero', gate, (_, res) => res.type('jpg').sendFile(path.join(__dirname, 'private', 'hero.jpg')));
+});
+const gate = (req, res, next) => next();
+app.get('/api/verify', (_, res) => res.json({ ok: true }));
+app.get('/api/hero', (_, res) => {
+  const heroPath = path.join(__dirname, 'private', 'hero.jpg');
+  if (fs.existsSync(heroPath)) {
+    res.type('jpg').sendFile(heroPath);
+  } else {
+    res.status(404).send('Not found');
+  }
+});
 app.post('/api/rooms', (_, res) => res.json({ roomId: crypto.randomBytes(4).toString('hex') }));
 app.get('/api/rooms', (req, res) => {
   const activeRooms = [];
@@ -123,8 +125,6 @@ app.get('/api/rooms', (req, res) => {
   res.json({ rooms: activeRooms });
 });
 app.get('/api/ice', (req, res) => {
-  if (locked(ipOf(req))) return res.status(429).json({});
-  if (!keyOk(req.query.key)) { fail(ipOf(req)); return res.status(401).json({}); }
   const iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -133,9 +133,9 @@ app.get('/api/ice', (req, res) => {
     { urls: 'stun:stun.services.mozilla.com' },
   ];
   if (TURN_URL && TURN_SECRET) {
-    const username = `${Math.floor(Date.now() / 1000) + 86400}:sync`;
+    const username = `${Math.floor(Date.now() / 1000) + 86400}:synccinema`;
     const credential = crypto.createHmac('sha1', TURN_SECRET).update(username).digest('base64');
-    iceServers.push({ urls: TURN_URL.split(','), username, credential });
+    iceServers.push({ urls: TURN_URL.includes(',') ? TURN_URL.split(',') : TURN_URL, username, credential });
   }
   try { iceServers.push(...JSON.parse(process.env.EXTRA_ICE || '[]')); } catch {}
   res.json({ iceServers, peerKey: PEER_KEY });
@@ -627,7 +627,14 @@ app.get('/api/stream', async (req, res) => {
     }
 
     const ct = (upstream.headers.get('content-type') || '').toLowerCase();
-    if (ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8')) {
+    const isPlaylist = ct.includes('mpegurl') || target.toLowerCase().includes('.m3u8');
+    if (isPlaylist) {
+      res.set('Cache-Control', 'no-cache');
+    } else {
+      res.set('Cache-Control', 'public, max-age=86400');
+    }
+
+    if (isPlaylist) {
       let text = await upstream.text();
       const base = new URL(target);
       // Ensure at least one audio track is DEFAULT=YES, AUTOSELECT=YES so video never plays silently

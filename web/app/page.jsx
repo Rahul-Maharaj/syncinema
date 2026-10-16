@@ -214,7 +214,7 @@ function Dashboard({ hero, onLock }) {
         </span>
         <div className="flex items-center gap-2">
           <InstallPrompt />
-          <button onClick={onLock} className="glass-btn" title="Lock and forget this device"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Lock &amp; forget this device</span><span className="sm:hidden">Lock</span></button>
+          <button onClick={onLock} className="glass-btn" title="Clear saved room history"><LogOut className="h-4 w-4" /><span className="hidden sm:inline">Clear device data</span><span className="sm:hidden">Clear</span></button>
         </div>
       </nav>
 
@@ -595,20 +595,16 @@ function Dashboard({ hero, onLock }) {
 
 /* ---------------- page ---------------- */
 export default function Home() {
-  const [phase, setPhase] = useState('checking');     // checking | locked | open
-  const [hero, setHero] = useState(null), [notice, setNotice] = useState('');
-  const enter = (k) => { loadHero(k).then(setHero).catch(() => {}); setPhase('open'); };
+  const [hero, setHero] = useState(null);
   useEffect(() => {
-    (async () => {
-      const r = await verify(getKey());               // no secret word set on the server → opens straight away
-      if (r === 'ok') return enter(getKey());
-      if (r === 'offline') setNotice('Cannot reach the server. Is it running?');
-      setPhase('locked');
-    })();
+    loadHero('').then(setHero).catch(() => {});
   }, []);
-  const lock = () => { forgetEverything(); if (hero) URL.revokeObjectURL(hero); setHero(null); setPhase('locked'); };
+  const lock = () => {
+    forgetEverything();
+    if (hero) URL.revokeObjectURL(hero);
+    setHero(null);
+    window.location.reload();
+  };
 
-  if (phase === 'checking') return <main className="grid min-h-screen place-items-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#14121a] via-[#09080d] to-[#020204]"><Heart className="beat h-10 w-10 fill-[#d9467a] text-[#d9467a]" aria-label="Loading" /></main>;
-  if (phase === 'locked') return <Gate onUnlock={enter} notice={notice} />;
   return <Dashboard hero={hero} onLock={lock} />;
 }

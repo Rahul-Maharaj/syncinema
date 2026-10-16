@@ -197,60 +197,95 @@ export default function MovieNightExtras({
   return (
     <div className="card p-3 sm:p-4 text-white overflow-hidden !bg-black border border-white/10">
       {/* Top Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-white/10 pb-2 mb-3 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 border-b border-white/10 pb-2.5 mb-3 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setActiveTab('queue')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'queue' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+            activeTab === 'queue'
+              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
           <Film className="h-3.5 w-3.5" />
-          <span>Queue ({queue.length})</span>
+          <span>Queue</span>
+          {queue.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20 font-mono">
+              {queue.length}
+            </span>
+          )}
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('watchlist')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'watchlist' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+            activeTab === 'watchlist'
+              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
           <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-          <span>Watchlist ({watchlist.length})</span>
+          <span>Watchlist</span>
+          {watchlist.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20 font-mono">
+              {watchlist.length}
+            </span>
+          )}
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('timer')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'timer' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+            activeTab === 'timer'
+              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
           <Timer className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Snack Timer {timer?.running && `(${formatTime(timeLeft)})`}</span>
+          <span>Timer</span>
+          {timer?.running && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-500/30 text-emerald-300 font-mono">
+              {formatTime(timeLeft)}
+            </span>
+          )}
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('ready')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'ready' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+            activeTab === 'ready'
+              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
           <CheckCircle2 className="h-3.5 w-3.5 text-pink-400" />
-          <span>Ready Check {readyCheck?.active && `(${readyCount}/${totalUsers})`}</span>
+          <span>Ready Check</span>
+          {readyCheck?.active && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-pink-500/30 text-pink-200 font-mono">
+              {readyCount}/{totalUsers}
+            </span>
+          )}
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('reviews')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'reviews' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
+            activeTab === 'reviews'
+              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
           <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-          <span>Memories ({reviews.length})</span>
+          <span>Memories</span>
+          {reviews.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20 font-mono">
+              {reviews.length}
+            </span>
+          )}
         </button>
       </div>
 

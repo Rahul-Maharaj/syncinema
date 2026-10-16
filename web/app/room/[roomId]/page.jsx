@@ -377,12 +377,6 @@ export default function Room() {
     </Gate>
   );
 
-  if (needKey) return (
-    <Gate icon={<KeyRound className="h-6 w-6" />} title="Our secret word" hint="This room is private. Type the word only you two know." cta="Unlock"
-      onSubmit={(e) => { e.preventDefault(); setKey(keyDraft); setNeedKey(false); doJoin(undefined, keyDraft); }}>
-      <input autoFocus type="password" value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} placeholder="Secret word" className="field text-center" />
-    </Gate>
-  );
 
   if (needPass) return (
     <Gate icon={<Lock className="h-6 w-6" />} cta="Enter room"
@@ -877,44 +871,47 @@ export default function Room() {
                 </div>
               )}
               {mobileTab === 'tools' && (
-                <div className="rise space-y-3">
-                  {/* Sub-navigation inside Tools */}
-                  <div className="flex rounded-xl bg-black border border-white/10 p-1 gap-1">
+                <div className="rise space-y-3.5">
+                  {/* Segmented Sub-navigation inside Tools */}
+                  <div className="grid grid-cols-3 rounded-2xl bg-black border border-white/15 p-1 gap-1 shadow-md">
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('controls')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
-                        toolsSubTab === 'controls' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60'
+                      className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                        toolsSubTab === 'controls' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
                       }`}
                     >
-                      Room Tools
+                      <Sliders className="h-3.5 w-3.5" />
+                      <span>Tools</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('intimacy')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
-                        toolsSubTab === 'intimacy' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60'
+                      className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                        toolsSubTab === 'intimacy' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
                       }`}
                     >
-                      Intimacy {adultMode && '🔥'}
+                      <Flame className="h-3.5 w-3.5 text-rose-400" />
+                      <span>Intimacy {adultMode && '🔥'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('ai')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
-                        toolsSubTab === 'ai' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60'
+                      className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                        toolsSubTab === 'ai' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
                       }`}
                     >
-                      AI Copilot ✨
+                      <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                      <span>Copilot</span>
                     </button>
                   </div>
 
                   {toolsSubTab === 'controls' && (
                     <div className="space-y-3">
                       {/* Quick Stream / Video URL Loader */}
-                      <div className="card p-3.5 space-y-2 border border-white/10 !bg-black">
-                        <label className="text-xs font-semibold text-white/80 flex items-center gap-1.5">
-                          <Play className="h-3.5 w-3.5 text-[#ff6fa0]" /> Stream Video URL
+                      <div className="card p-3.5 space-y-2 border border-white/10 !bg-black rounded-2xl shadow-md">
+                        <label className="text-xs font-semibold text-white/90 flex items-center gap-1.5">
+                          <Play className="h-3.5 w-3.5 text-[#ff6fa0]" /> Stream Video Link
                         </label>
                         <form
                           onSubmit={(e) => {
@@ -932,31 +929,31 @@ export default function Room() {
                             name="mediaUrl"
                             type="url"
                             placeholder="Paste direct MP4, HLS, or YouTube URL…"
-                            className="field !py-1.5 !text-xs flex-1"
+                            className="field !py-2 !text-xs flex-1 rounded-xl"
                           />
-                          <button type="submit" className="btn !py-1.5 !px-3 text-xs shrink-0">Play</button>
+                          <button type="submit" className="btn !py-2 !px-4 text-xs font-semibold shrink-0 rounded-xl">Play</button>
                         </form>
                       </div>
 
                       {/* Hardware Camera & Mic Control Card */}
-                      <div className="card p-3.5 space-y-2.5 border border-white/10 !bg-black">
+                      <div className="card p-3.5 space-y-2.5 border border-white/10 !bg-black rounded-2xl shadow-md">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Video className="h-4 w-4 text-[#ff6fa0]" />
-                            <span className="text-xs font-semibold text-white">Device Camera Status</span>
+                            <span className="text-xs font-semibold text-white">Call Hardware State</span>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${callCam ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-rose-500/30 text-rose-300 bg-rose-500/10'}`}>
                             {callCam ? 'Camera Active' : 'Camera Sensor OFF'}
                           </span>
                         </div>
                         <p className="text-[11px] text-white/60">
-                          Turning camera off stops the physical hardware sensor on your phone so the indicator light turns completely off.
+                          Turning camera off stops the physical hardware sensor on your phone so device indicators turn completely off.
                         </p>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => callControlsRef.current?.toggleCam?.()}
-                            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-medium transition ${
+                            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer active:scale-95 ${
                               callCam
                                 ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'
                                 : 'border-rose-500/30 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20'
@@ -968,9 +965,9 @@ export default function Room() {
                           <button
                             type="button"
                             onClick={() => callControlsRef.current?.toggleMic?.()}
-                            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-medium transition ${
+                            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer active:scale-95 ${
                               callMic
-                                ? 'border-white/15 text-white bg-white/5'
+                                ? 'border-white/15 text-white bg-white/5 hover:bg-white/10'
                                 : 'border-amber-500/30 text-amber-300 bg-amber-500/10'
                             }`}
                           >
@@ -981,7 +978,7 @@ export default function Room() {
                       </div>
 
                       {/* Recent Plays Bar */}
-                      <div className="card p-3 space-y-2 border border-white/10 !bg-black">
+                      <div className="card p-3.5 space-y-2 border border-white/10 !bg-black rounded-2xl shadow-md">
                         <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
                           <History className="h-4 w-4 text-cyan-400" />
                           <span>Recent Plays Bar</span>
@@ -995,7 +992,7 @@ export default function Room() {
                       </div>
 
                       {/* Room Security & Quick Actions */}
-                      <div className="card p-3 space-y-2 border border-white/10 !bg-black">
+                      <div className="card p-3.5 space-y-3 border border-white/10 !bg-black rounded-2xl shadow-md">
                         <span className="text-xs font-semibold text-white/80">Room Security &amp; Actions</span>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <button
@@ -1005,10 +1002,10 @@ export default function Room() {
                               setNewPassDraft(current);
                               setShowPassModal(true);
                             }}
-                            className="ghost !justify-start !py-2 !px-2.5 text-amber-300"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-amber-300 text-left transition cursor-pointer active:scale-95"
                           >
-                            <Lock className="h-3.5 w-3.5 text-amber-400" />
-                            <span>Room Password</span>
+                            <Lock className="h-4 w-4 text-amber-400 shrink-0" />
+                            <span className="font-medium text-xs">Room Password</span>
                           </button>
 
                           {me === hostId && (
@@ -1019,47 +1016,51 @@ export default function Room() {
                                   if (res?.ok) setEntryLocked(res.entryLocked);
                                 });
                               }}
-                              className={`ghost !justify-start !py-2 !px-2.5 ${entryLocked ? 'text-amber-300 bg-amber-500/15 border border-amber-500/40' : 'text-white/80'}`}
+                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition cursor-pointer active:scale-95 ${
+                                entryLocked
+                                  ? 'text-amber-300 bg-amber-500/15 border-amber-500/40'
+                                  : 'text-white/80 bg-white/5 border-white/10 hover:bg-white/10'
+                              }`}
                             >
-                              {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5" />}
-                              <span>{entryLocked ? 'Unlock Room' : 'Lock Room'}</span>
+                              {entryLocked ? <Lock className="h-4 w-4 text-amber-400 shrink-0" /> : <Unlock className="h-4 w-4 shrink-0" />}
+                              <span className="font-medium text-xs">{entryLocked ? 'Unlock Room' : 'Lock Room'}</span>
                             </button>
                           )}
 
                           <button
                             type="button"
                             onClick={copy}
-                            className="ghost !justify-start !py-2 !px-2.5 text-white/80"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/80 text-left transition cursor-pointer active:scale-95"
                           >
-                            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                            <span>{copied ? 'Link Copied' : 'Invite Partner'}</span>
+                            {copied ? <Check className="h-4 w-4 text-emerald-400 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
+                            <span className="font-medium text-xs">{copied ? 'Link Copied' : 'Invite Partner'}</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => setShowHandoff(true)}
-                            className="ghost !justify-start !py-2 !px-2.5 text-[#ff6fa0]"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[#ff6fa0] text-left transition cursor-pointer active:scale-95"
                           >
-                            <QrCode className="h-3.5 w-3.5" />
-                            <span>QR Handoff</span>
+                            <QrCode className="h-4 w-4 shrink-0" />
+                            <span className="font-medium text-xs">QR Handoff</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={toggleCinema}
-                            className="ghost !justify-start !py-2 !px-2.5 text-white/80"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/80 text-left transition cursor-pointer active:scale-95"
                           >
-                            <Film className="h-3.5 w-3.5 text-amber-400" />
-                            <span>Cinema Mode</span>
+                            <Film className="h-4 w-4 text-amber-400 shrink-0" />
+                            <span className="font-medium text-xs">Cinema Mode</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={cycleSleep}
-                            className="ghost !justify-start !py-2 !px-2.5 text-white/80"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/80 text-left transition cursor-pointer active:scale-95"
                           >
-                            <Moon className="h-3.5 w-3.5 text-indigo-400" />
-                            <span>{sleep ? `Sleep: ${sleep}m` : 'Sleep Timer'}</span>
+                            <Moon className="h-4 w-4 text-indigo-400 shrink-0" />
+                            <span className="font-medium text-xs">{sleep ? `Sleep: ${sleep}m` : 'Sleep Timer'}</span>
                           </button>
 
                           {me === hostId && (
@@ -1081,10 +1082,10 @@ export default function Room() {
                                   });
                                 }
                               }}
-                              className="ghost !justify-start !py-2 !px-2.5 text-rose-400 bg-rose-500/10 border border-rose-500/30 col-span-2"
+                              className="flex items-center justify-center gap-2 p-2.5 rounded-xl text-rose-400 bg-rose-500/10 border border-rose-500/30 col-span-2 text-center transition cursor-pointer active:scale-95 hover:bg-rose-500/20"
                             >
-                              <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
-                              <span>Close Room (Permanent)</span>
+                              <DoorClosed className="h-4 w-4 text-rose-400 shrink-0" />
+                              <span className="font-semibold text-xs">Close Room (Permanent)</span>
                             </button>
                           )}
                         </div>

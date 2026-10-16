@@ -62,6 +62,7 @@ export default function VideoPlayer({
   const [audioBoost, setAudioBoost] = useState(100); // 100% to 200%
   const [showSettings, setShowSettings] = useState(false);
   const [subStyle, setSubStyle] = useState({ size: 'md', color: '#ffffff', bg: 'rgba(0,0,0,0.75)' });
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   // Fullscreen & Floating Video Call PiP State
   const containerRef = useRef(null);
@@ -203,19 +204,19 @@ export default function VideoPlayer({
     return () => clearInterval(interval);
   }, [socket]);
 
-  // Handle partner buffering & speed synchronization
+  // Handle partner buffering status & speed synchronization (non-blocking)
   useEffect(() => {
     if (!socket) return;
+    let partnerBufferTimeout = null;
     const onBuffering = ({ cid, name, buffering }) => {
       if (cid !== me) {
         if (buffering) {
           setPartnerBuffering({ name, active: true });
-          silently(() => api.current.pause());
+          clearTimeout(partnerBufferTimeout);
+          partnerBufferTimeout = setTimeout(() => setPartnerBuffering(null), 4000);
         } else {
+          clearTimeout(partnerBufferTimeout);
           setPartnerBuffering(null);
-          if (st.current.playing) {
-            silently(() => api.current.play());
-          }
         }
       }
     };
@@ -230,8 +231,24 @@ export default function VideoPlayer({
     return () => {
       socket.off('player:buffering', onBuffering);
       socket.off('player:speed', onSpeed);
+      if (partnerBufferTimeout) clearTimeout(partnerBufferTimeout);
     };
   }, [socket, me]);
+
+  // Global listener: first touch anywhere on screen unlocks mobile autoplay if room is playing
+  useEffect(() => {
+    const handleFirstTouch = () => {
+      if (st.current?.playing && vref.current && vref.current.paused) {
+        vref.current.play().then(() => setAutoplayBlocked(false)).catch(() => {});
+      }
+    };
+    window.addEventListener('click', handleFirstTouch, { passive: true });
+    window.addEventListener('touchstart', handleFirstTouch, { passive: true });
+    return () => {
+      window.removeEventListener('click', handleFirstTouch);
+      window.removeEventListener('touchstart', handleFirstTouch);
+    };
+  }, []);
 
   const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 800); };
   const send = (action) => {
@@ -327,25 +344,29 @@ export default function VideoPlayer({
 
     // Sync play/pause state
     if (shouldPlay !== playing.current) {
-      shouldPlay ? a.play() : a.pause();
+      if (shouldPlay) {
+        a.play();
+      } else {
+        a.pause();
+      }
       playing.current = shouldPlay;
     }
 
     // If element is already buffering or seeking, let it finish loading first
     if (v && (v.seeking || v.readyState < 2)) return;
 
-    // 1. Rock-Solid Deadband (<= 1.0s):
-    // Inaudible difference. Absolutely zero speed shifts or seeking! Completely eliminates back-and-forth jitter.
-    if (absDrift <= 1.0) {
+    // 1. Rock-Solid Deadband (<= 0.5s):
+    // Inaudible difference. Zero rate shift, zero seeking. Keeps both phones rock-solid in sync.
+    if (absDrift <= 0.5) {
       setSyncStatus('in_sync');
       driftHistory.current = [];
       if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       return;
     }
 
-    // 2. Soft Sync (1.0s to 3.5s) while playing:
-    // Gently glide back into sync using imperceptible +/- 4% speed micro-adjustment. NO hard seeking!
-    if (absDrift <= 3.5 && shouldPlay) {
+    // 2. Soft Sync (0.5s to 2.2s) while playing:
+    // Gently glide back into sync using imperceptible +/- 4% speed micro-adjustment. NO hard pauses or seeking!
+    if (absDrift <= 2.2 && shouldPlay) {
       setSyncStatus('syncing');
       driftHistory.current.push(drift);
       if (driftHistory.current.length > 2) driftHistory.current.shift();
@@ -362,18 +383,18 @@ export default function VideoPlayer({
       rateTimer.current = setTimeout(() => {
         if (!voiceActive) setPlaybackSpeed(sharedSpeed);
         setSyncStatus('in_sync');
-      }, 2000);
+      }, 1500);
       return;
     }
 
-    // 3. Hard Sync (> 3.5s): intentional user skip or large chapter jump
-    if (absDrift > 3.5) {
-      setSyncStatus('desync');
+    // 3. Hard Sync (> 2.2s): user skip, track change, or major network lag
+    if (absDrift > 2.2) {
+      setSyncStatus('syncing');
       lastProgrammaticSeek.current = Date.now();
       if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       a.seek(compensatedTarget);
       driftHistory.current = [];
-      setTimeout(() => setSyncStatus('in_sync'), 800);
+      setTimeout(() => setSyncStatus('in_sync'), 600);
     }
   });
 
@@ -392,10 +413,10 @@ export default function VideoPlayer({
         const h = new H({
           enableWorker: true,
           lowLatencyMode: false,
-          backBufferLength: 90,
-          maxBufferLength: 60,
-          maxMaxBufferLength: 120,
-          maxBufferSize: 60 * 1000 * 1000,
+          backBufferLength: 30,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          maxBufferSize: 30 * 1000 * 1000,
           maxBufferHole: 0.5,
           highBufferWatchdogPeriod: 2,
           manifestLoadingMaxRetry: 6,
@@ -455,8 +476,20 @@ export default function VideoPlayer({
 
     api.current = {
       time: () => v.currentTime,
-      play: () => v.play().catch(() => {}),
-      pause: () => v.pause(),
+      play: () => {
+        const p = v.play();
+        if (p && typeof p.catch === 'function') {
+          p.then(() => setAutoplayBlocked(false)).catch((err) => {
+            if (err?.name === 'NotAllowedError') {
+              setAutoplayBlocked(true);
+            }
+          });
+        }
+      },
+      pause: () => {
+        v.pause();
+        setAutoplayBlocked(false);
+      },
       seek: (t) => (v.currentTime = t),
       setSpeed: (s) => (v.playbackRate = s),
     };
@@ -471,21 +504,23 @@ export default function VideoPlayer({
         return () => v.removeEventListener(e, f);
       });
     
+    let waitTimer = null;
     const onWait = () => {
-      // Do not send('BUFFERING') as a pause command to other viewers!
-      // Only emit gentle player:buffering status indicator
-      socket.emit('player:buffering', { buffering: true, time: v.currentTime });
+      clearTimeout(waitTimer);
+      waitTimer = setTimeout(() => {
+        socket.emit('player:buffering', { buffering: true, time: v.currentTime });
+      }, 700);
     };
     const onResume = () => {
+      clearTimeout(waitTimer);
       socket.emit('player:buffering', { buffering: false, time: v.currentTime });
     };
     v.addEventListener('waiting', onWait);
-    v.addEventListener('stalled', onWait);
     v.addEventListener('canplay', onResume);
     v.addEventListener('playing', onResume);
 
     // Clear errors when frames actually load or play
-    v.onplaying = () => setError('');
+    v.onplaying = () => { setError(''); setAutoplayBlocked(false); };
     v.oncanplay = () => setError('');
     v.onloadeddata = () => setError('');
     v.onended = () => hostRef.current && socket.emit('queue:next');
@@ -505,8 +540,8 @@ export default function VideoPlayer({
     };
     return () => {
       evs.forEach((o) => o());
+      clearTimeout(waitTimer);
       v.removeEventListener('waiting', onWait);
-      v.removeEventListener('stalled', onWait);
       v.removeEventListener('canplay', onResume);
       v.removeEventListener('playing', onResume);
       dispose();
@@ -618,12 +653,12 @@ export default function VideoPlayer({
     socket.on('player', onPlayer);
     socket.on('heartbeat', onBeat);
 
-    // Host emits periodic heartbeat with timestamp only while playing
+    // Periodic heartbeat with timestamp while playing to keep all devices tightly in sync
     const beat = setInterval(() => {
-      if (me === hostId && playing.current) {
+      if ((me === hostId || !hostId) && playing.current) {
         socket.emit('heartbeat', { time: api.current.time(), playing: true, sentAt: Date.now() });
       }
-    }, 4000);
+    }, 1500);
 
     playerRef.current = {
       pause: () => { api.current.pause(); send('PAUSE'); setPlaybackSpeed(1.0); },
@@ -1104,6 +1139,27 @@ export default function VideoPlayer({
             </div>
           </div>
         )}
+        {/* Mobile Autoplay Permission Overlay: Unlocks audio/video on tap if browser blocked playback */}
+        {autoplayBlocked && (
+          <div
+            onClick={() => {
+              if (vref.current) {
+                vref.current.play().then(() => setAutoplayBlocked(false)).catch(() => {});
+              } else if (api.current?.play) {
+                api.current.play();
+                setAutoplayBlocked(false);
+              }
+            }}
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer p-4 text-center transition"
+          >
+            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-full bg-[#d9467a] shadow-[0_0_30px_rgba(217,70,122,0.8)] animate-pulse">
+              <Play className="h-8 w-8 fill-white text-white ml-1" />
+            </div>
+            <p className="font-semibold text-base sm:text-lg text-white">Tap to Sync &amp; Play</p>
+            <p className="text-xs text-white/70 mt-1 max-w-xs">Your partner is watching! Tap anywhere to join in real-time sync 🍿</p>
+          </div>
+        )}
+
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
 
         {/* Floating Video Call PiP inside Full Screen Mode */}
