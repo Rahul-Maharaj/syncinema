@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Flame, Moon, Shield, Lock, Unlock, Eye, EyeOff,
   Sparkles, KeyRound, Copy, Check, QrCode, Sliders,
-  Share2, Heart, AlertTriangle, Fingerprint, RefreshCw, X
+  Share2, Heart, AlertTriangle, Fingerprint, RefreshCw, X, Crown
 } from 'lucide-react';
 
 const AMBIENT_PRESETS = [
@@ -66,8 +66,12 @@ export default function IntimacyMode({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [stealthActive]);
 
-  // Handle ambient lighting broadcast and local apply
+  // Handle ambient lighting broadcast and local apply (Host Only)
   const handleUpdateAmbient = (newP, newI, newF) => {
+    if (!isHost) {
+      say?.('👑 Only the room host can adjust ambient lighting settings');
+      return;
+    }
     setPreset(newP);
     setIntensity(newI);
     setFlicker(newF);
@@ -237,6 +241,12 @@ export default function IntimacyMode({
       {/* TAB 1: AMBIENT LIGHTING */}
       {activeTab === 'lighting' && (
         <div className="space-y-4">
+          {!isHost && (
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-400 shrink-0" />
+              <span>Room lighting is controlled by the host.</span>
+            </div>
+          )}
           <div>
             <p className="text-xs font-bold text-white/80">Romantic Ambient Presets</p>
             <p className="text-[11px] text-white/50">Changes the room glow and background lighting synchronously for both devices</p>
@@ -273,9 +283,10 @@ export default function IntimacyMode({
               type="range"
               min="10"
               max="100"
+              disabled={!isHost}
               value={intensity}
               onChange={(e) => handleUpdateAmbient(preset, +e.target.value, flicker)}
-              className="w-full accent-[#d9467a] cursor-pointer"
+              className="w-full accent-[#d9467a] cursor-pointer disabled:opacity-50"
             />
           </div>
 
@@ -287,8 +298,9 @@ export default function IntimacyMode({
             </div>
             <button
               type="button"
+              disabled={!isHost}
               onClick={() => handleUpdateAmbient(preset, intensity, !flicker)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition ${
+              className={`px-3 py-1 rounded-full text-xs font-bold transition disabled:opacity-50 ${
                 flicker ? 'bg-[#ff9e42] text-black' : 'bg-white/10 text-white/60'
               }`}
             >
@@ -301,6 +313,12 @@ export default function IntimacyMode({
       {/* TAB 2: ADULTS-ONLY 18+ MODE */}
       {activeTab === 'adult' && (
         <div className="space-y-3.5">
+          {!isHost && (
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-400 shrink-0" />
+              <span>Adults-Only 18+ mode can only be enabled by the room host.</span>
+            </div>
+          )}
           <div className="flex items-center justify-between p-3 rounded-xl border border-rose-500/30 bg-rose-950/20">
             <div>
               <span className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
@@ -310,7 +328,7 @@ export default function IntimacyMode({
                 Enables unblocked adult streaming, romantic gestures, and discreet zero-log privacy.
               </p>
             </div>
-            {isHost && (
+            {isHost ? (
               <button
                 type="button"
                 onClick={() => socket?.emit('room:toggle_adult', !adultMode)}
@@ -322,6 +340,10 @@ export default function IntimacyMode({
               >
                 {adultMode ? 'Enabled 🔥' : 'Enable 18+'}
               </button>
+            ) : (
+              <span className="text-xs px-2.5 py-1 rounded-lg bg-white/10 text-white/60 font-semibold">
+                {adultMode ? '18+ Active 🔥' : 'Host Disabled'}
+              </span>
             )}
           </div>
 

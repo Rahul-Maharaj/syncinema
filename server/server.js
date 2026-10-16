@@ -13,7 +13,7 @@ const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 
 const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json' } = process.env;
-const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 4;     // couple mode: small rooms
+const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: strictly 2 seats (host & partner)
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
 const origin = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(',') : true;
 if (process.env.NODE_ENV === 'production' && (!ACCESS_KEY || ACCESS_KEY.length < 10)) {
@@ -68,6 +68,24 @@ const gate = (req, res, next) => {                   // every private asset need
 app.get('/api/verify', gate, (_, res) => res.json({ ok: true }));
 app.get('/api/hero', gate, (_, res) => res.type('jpg').sendFile(path.join(__dirname, 'private', 'hero.jpg')));
 app.post('/api/rooms', (_, res) => res.json({ roomId: crypto.randomBytes(4).toString('hex') }));
+app.get('/api/rooms', (req, res) => {
+  const activeRooms = [];
+  for (const [id, r] of rooms.entries()) {
+    const count = r.users ? r.users.size : 0;
+    if (count > 0) {
+      activeRooms.push({
+        roomId: id,
+        userCount: count,
+        maxUsers: MAX_USERS,
+        hasPass: !!r.pass,
+        createdAt: r.createdAt || r.at || Date.now(),
+        adult: !!r.adult,
+      });
+    }
+  }
+  activeRooms.sort((a, b) => b.createdAt - a.createdAt);
+  res.json({ rooms: activeRooms });
+});
 app.get('/api/ice', (req, res) => {
   if (locked(ipOf(req))) return res.status(429).json({});
   if (!keyOk(req.query.key)) { fail(ipOf(req)); return res.status(401).json({}); }                    // STUN + short-lived TURN credentials (coturn use-auth-secret)
@@ -710,11 +728,12 @@ io.on('connection', (socket) => {
       if (!p) return ack({ error: 'needpass' });
       if (!passOk(r, p)) { fail(ip); return ack({ error: 'badpass' }); }
     } else if (p.length >= 4 && p.length <= 64) {
-      r.pass = hashPass(p); rooms.set(roomId, r); save();   // user locks it with a passkey
-    } else if (p.length === 0) {
-      rooms.set(roomId, r);                          // open room: no passkey required
+      r.pass = hashPass(p);
+      r.createdAt = Date.now();
+      rooms.set(roomId, r);
+      save();   // user locks it with a passkey
     } else {
-      return ack({ error: 'badpass' });
+      return ack({ error: 'needpass' });
     }
     fails.delete(ip);                                // successful auth clears strike count
     if (!r.users.has(cid) && r.users.size >= MAX_USERS) return ack({ error: 'full' });
@@ -822,7 +841,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('queue:clear', () => {
-    if (canControl()) {
+    if (joined() && user.cid === room.hostId) {
       room.queue = [];
       pushQ();
     }
@@ -909,9 +928,9 @@ io.on('connection', (socket) => {
     pushQ();
   });
 
-  // Synchronized Snack / Date-Night Timer
+  // Synchronized Snack / Date-Night Timer (Host Only)
   socket.on('timer:start', ({ duration, label } = {}) => {
-    if (!joined() || !Number.isFinite(+duration) || +duration <= 0) return;
+    if (!joined() || user.cid !== room.hostId || !Number.isFinite(+duration) || +duration <= 0) return;
     const d = Math.min(3600 * 4, Math.max(10, Math.round(+duration)));
     room.timer = {
       duration: d,
@@ -924,7 +943,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('timer:pause', () => {
-    if (!joined() || !room.timer || !room.timer.running) return;
+    if (!joined() || user.cid !== room.hostId || !room.timer || !room.timer.running) return;
     const remaining = Math.max(0, room.timer.endsAt - Date.now());
     room.timer.running = false;
     room.timer.pausedRemaining = remaining;
@@ -932,7 +951,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('timer:resume', () => {
-    if (!joined() || !room.timer || room.timer.running || !room.timer.pausedRemaining) return;
+    if (!joined() || user.cid !== room.hostId || !room.timer || room.timer.running || !room.timer.pausedRemaining) return;
     room.timer.running = true;
     room.timer.endsAt = Date.now() + room.timer.pausedRemaining;
     delete room.timer.pausedRemaining;
@@ -940,14 +959,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('timer:reset', () => {
-    if (!joined()) return;
+    if (!joined() || user.cid !== room.hostId) return;
     room.timer = null;
     io.to(rid).emit('timer:sync', null);
   });
 
-  // "Ready to Watch?" Confirmation
+  // "Ready to Watch?" Confirmation (Host Only)
   socket.on('ready:start', () => {
-    if (!joined()) return;
+    if (!joined() || user.cid !== room.hostId) return;
     room.readyCheck = {
       active: true,
       readyUsers: [user.cid],
@@ -1013,9 +1032,9 @@ io.on('connection', (socket) => {
     save();
   });
 
-  // Intimacy Mode & Ambient Lighting
+  // Intimacy Mode & Ambient Lighting (Host Only)
   socket.on('ambient:set', (ambient = {}) => {
-    if (!joined()) return;
+    if (!joined() || user.cid !== room.hostId) return;
     room.ambient = {
       preset: String(ambient.preset || 'love').slice(0, 30),
       intensity: Math.min(100, Math.max(0, +ambient.intensity || 80)),

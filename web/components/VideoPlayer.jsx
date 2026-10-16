@@ -530,27 +530,29 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
 
   const startShare = async () => {
     try {
-      // 720p 30fps ideal constraints prevent GPU throttling and network stalls on low-end devices
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        setError('Screen sharing is not supported on this mobile browser. Note: iOS Safari restricts screen capture. Please use Android Chrome 107+ or desktop Chrome/Edge/Firefox.');
+        return;
+      }
+
+      // Robust progressive fallback for mobile and desktop screenshare
       let s;
       try {
         s = await navigator.mediaDevices.getDisplayMedia({
           video: {
-            cursor: 'motion',
             frameRate: { ideal: 30, max: 30 },
             width: { ideal: 1280, max: 1920 },
             height: { ideal: 720, max: 1080 },
           },
           audio: true,
         });
-      } catch {
-        s = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            cursor: 'motion',
-            frameRate: { ideal: 30, max: 30 },
-            width: { ideal: 1280, max: 1920 },
-            height: { ideal: 720, max: 1080 },
-          },
-        });
+      } catch (e1) {
+        try {
+          s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        } catch (e2) {
+          // Pure video mode (most reliable on Android Chrome)
+          s = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        }
       }
 
       s.getVideoTracks().forEach((track) => {
@@ -561,11 +563,35 @@ export default function VideoPlayer({ socket, me, hostId, users, peerRef, initia
       setLocal(s);
       s.getVideoTracks()[0].onended = stopShare;
       socket.emit('screen:start');
+
       users.filter((u) => u.id !== me).forEach((u) => {
         called.current.add(u.sid);
-        peerRef.current?.call(u.id, s, { metadata: { type: 'screen' } });
+        const call = peerRef.current?.call(u.id, s, { metadata: { type: 'screen' } });
+        if (call) {
+          call.on('error', () => {});
+          setTimeout(() => {
+            try {
+              const senders = call.peerConnection?.getSenders() || [];
+              senders.forEach((sender) => {
+                if (sender.track?.kind === 'video') {
+                  const params = sender.getParameters();
+                  if (params.encodings && params.encodings[0]) {
+                    params.encodings[0].maxBitrate = 1800000;
+                    params.encodings[0].priority = 'high';
+                    params.encodings[0].networkPriority = 'high';
+                    sender.setParameters(params).catch(() => {});
+                  }
+                }
+              });
+            } catch {}
+          }, 500);
+        }
       });
-    } catch { /* cancelled by user */ }
+    } catch (err) {
+      if (err?.name !== 'NotAllowedError' && err?.name !== 'AbortError') {
+        setError('Screen share error: ' + (err?.message || err?.name || 'Failed to capture screen'));
+      }
+    }
   };
 
   const build = async () => {

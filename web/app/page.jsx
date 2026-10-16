@@ -2,10 +2,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
-import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film } from 'lucide-react';
+import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film, Users, RefreshCw, Dice5 } from 'lucide-react';
 import Floaters from '@/components/Floaters';
 import InstallPrompt from '@/components/InstallPrompt';
 import { getKey, setKey, verify, loadHero, forgetEverything } from '@/lib/vault';
+import { serverUrl } from '@/lib/socket';
 
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const slug = (v) => v.trim().split('?')[0].split('/').filter(Boolean).pop() || '';   // accepts a code or a whole pasted link
@@ -57,7 +58,42 @@ function Dashboard({ hero, onLock }) {
   const [pass, setPass] = useState(''), [showPass, setShowPass] = useState(false), [perr, setPerr] = useState('');
   const [code, setCode] = useState(''), [joinPass, setJoinPass] = useState(''), [showJoinPass, setShowJoinPass] = useState(false);
   const [last, setLast] = useState(''), [err, setErr] = useState(''), [loaded, setLoaded] = useState(false);
+  const [activeRooms, setActiveRooms] = useState([]), [loadingRooms, setLoadingRooms] = useState(false);
+  const passInputRef = useRef(null), joinPassInputRef = useRef(null);
+
   useEffect(() => setLast(localStorage.getItem('lastRoom') || ''), []);
+
+  // Poll active rooms created by users
+  const fetchRooms = async () => {
+    try {
+      setLoadingRooms(true);
+      const res = await fetch(serverUrl() + '/api/rooms', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveRooms(Array.isArray(data.rooms) ? data.rooms : []);
+      }
+    } catch {
+      // offline / quiet
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRooms();
+    const interval = setInterval(fetchRooms, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const generatePass = () => {
+    const words = ['love', 'cozy', 'star', 'kiss', 'rose', 'cinema', 'date', 'heart'];
+    const pick = words[Math.floor(Math.random() * words.length)];
+    const num = Math.floor(100 + Math.random() * 900);
+    const gen = `${pick}${num}`;
+    setPass(gen);
+    setShowPass(true);
+    setPerr('');
+  };
 
   // keep the glowing seam + heart exactly on the picture's split line, on any screen shape
   useLayoutEffect(() => {
@@ -103,7 +139,11 @@ function Dashboard({ hero, onLock }) {
   const create = (e) => {
     e?.preventDefault?.();
     const p = pass.trim();
-    if (p.length > 0 && p.length < 4) return setPerr('Room password needs at least 4 characters (or leave empty).');
+    if (!p || p.length < 4) {
+      setPerr('A room password (at least 4 characters) is required to secure your room.');
+      passInputRef.current?.focus();
+      return;
+    }
     let id = roomName.trim();
     if (id) {
       id = slug(id);
@@ -111,16 +151,32 @@ function Dashboard({ hero, onLock }) {
     } else {
       id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     }
-    if (p) sessionStorage.setItem('rp_' + id, p);
-    router.push(`/room/${id}${p ? '#pass=' + encodeURIComponent(p) : ''}`);
+    sessionStorage.setItem('rp_' + id, p);
+    router.push(`/room/${id}#pass=${encodeURIComponent(p)}`);
   };
+
   const join = (e) => {
     e.preventDefault();
     const c = slug(code);
     if (!/^[\w-]{2,64}$/.test(c)) return setErr('Please enter a valid room code or link.');
     const jp = joinPass.trim();
-    if (jp) sessionStorage.setItem('rp_' + c, jp);
-    router.push(`/room/${c}${jp ? '#pass=' + encodeURIComponent(jp) : ''}`);
+    if (!jp || jp.length < 4) {
+      setErr('Room password is required to enter (at least 4 characters).');
+      joinPassInputRef.current?.focus();
+      return;
+    }
+    sessionStorage.setItem('rp_' + c, jp);
+    router.push(`/room/${c}#pass=${encodeURIComponent(jp)}`);
+  };
+
+  const selectActiveRoom = (r) => {
+    if (r.userCount >= (r.maxUsers || 2)) return;
+    setCode(r.roomId);
+    setTab('join');
+    setErr('');
+    setTimeout(() => {
+      joinPassInputRef.current?.focus();
+    }, 150);
   };
 
   return (
@@ -162,9 +218,9 @@ function Dashboard({ hero, onLock }) {
               <span key={i} className="mr-3 inline-block overflow-hidden align-bottom"><span className="word inline-block">{w}</span></span>
             ))}
           </h1>
-          <p className="sub mt-5 max-w-md text-base text-white/80 sm:text-lg">Your own private room. Watch in sync with video, voice and chat — no sign-up.</p>
+          <p className="sub mt-5 max-w-md text-base text-white/80 sm:text-lg">Your own private room. Watch in sync with video, voice and chat — strictly for two lovers.</p>
           <ol className="mt-5 flex flex-wrap gap-2 text-sm">
-            {['Start a room', 'Send the link', 'Press play together'].map((s, i) => (
+            {['Start a room', 'Set room pass', 'Press play together'].map((s, i) => (
               <li key={s} className="step glass-btn !rounded-full !px-3 !py-1.5"><b className="grid h-5 w-5 place-items-center rounded-full bg-[#d9467a] text-xs">{i + 1}</b>{s}</li>
             ))}
           </ol>
@@ -172,7 +228,7 @@ function Dashboard({ hero, onLock }) {
 
         <div className="panel glass w-full space-y-4 p-6 md:max-w-md">
           {/* Tab switcher */}
-          <div className="flex rounded-xl bg-white/5 p-1 border border-white/10">
+          <div className="flex rounded-xl bg-white/5 p-1 border border-white/10 gap-1">
             <button
               type="button"
               onClick={() => { setTab('create'); setErr(''); setPerr(''); }}
@@ -183,7 +239,7 @@ function Dashboard({ hero, onLock }) {
               }`}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Create Room
+              <span>Create</span>
             </button>
             <button
               type="button"
@@ -195,11 +251,26 @@ function Dashboard({ hero, onLock }) {
               }`}
             >
               <KeyRound className="h-3.5 w-3.5" />
-              Join Room
+              <span>Join</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab('active'); setErr(''); setPerr(''); fetchRooms(); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition relative ${
+                tab === 'active'
+                  ? 'bg-[#d9467a] text-white shadow-lg shadow-[#d9467a]/30'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <Film className="h-3.5 w-3.5" />
+              <span>Rooms ({activeRooms.length})</span>
+              {activeRooms.length > 0 && (
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+              )}
             </button>
           </div>
 
-          {tab === 'create' ? (
+          {tab === 'create' && (
             <form onSubmit={create} className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-white/80">Room Name / ID (optional)</label>
@@ -209,7 +280,7 @@ function Dashboard({ hero, onLock }) {
                     type="text"
                     value={roomName}
                     onChange={(e) => { setRoomName(e.target.value); setPerr(''); }}
-                    placeholder="e.g. movie-couch (or leave empty for random)"
+                    placeholder="e.g. romantic-night (or leave empty for random)"
                     aria-label="Room name"
                     maxLength={64}
                     className="field-d !pl-9"
@@ -217,16 +288,33 @@ function Dashboard({ hero, onLock }) {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-white/80">Room Password (optional)</label>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-medium text-white/90 flex items-center gap-1">
+                    <Lock className="h-3.5 w-3.5 text-rose-400" />
+                    <span>Room Password <b className="text-rose-400">*Required</b></span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={generatePass}
+                    className="text-[11px] text-[#ff8fb3] hover:underline flex items-center gap-1"
+                    title="Generate a random password"
+                  >
+                    <Dice5 className="h-3 w-3" />
+                    <span>Generate</span>
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
                   <input
+                    ref={passInputRef}
                     type={showPass ? 'text' : 'password'}
                     value={pass}
                     onChange={(e) => { setPass(e.target.value); setPerr(''); }}
-                    placeholder="Room password (optional)"
+                    placeholder="Password (min 4 characters)"
                     aria-label="Room password"
+                    minLength={4}
                     maxLength={64}
+                    required
                     className="field-d !pl-9 !pr-10"
                   />
                   <button
@@ -237,8 +325,8 @@ function Dashboard({ hero, onLock }) {
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className={`mt-1 text-xs ${perr ? 'text-rose-300' : 'text-white/50'}`}>
-                  {perr || 'Leave blank for an open room, or set a password.'}
+                <p className={`mt-1 text-xs ${perr ? 'text-rose-300 font-medium' : 'text-white/50'}`}>
+                  {perr || '🔒 Password is required: no one can enter without this password.'}
                 </p>
               </div>
               <button
@@ -252,7 +340,9 @@ function Dashboard({ hero, onLock }) {
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
-          ) : (
+          )}
+
+          {tab === 'join' && (
             <form onSubmit={join} className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-white/80">Room Code or Link</label>
@@ -269,15 +359,22 @@ function Dashboard({ hero, onLock }) {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-white/80">Room Password (if protected)</label>
+                <label className="mb-1 block text-xs font-medium text-white/90 flex items-center gap-1">
+                  <Lock className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Room Password <b className="text-rose-400">*Required</b></span>
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-white/50" />
                   <input
+                    ref={joinPassInputRef}
                     type={showJoinPass ? 'text' : 'password'}
                     value={joinPass}
                     onChange={(e) => { setJoinPass(e.target.value); setErr(''); }}
-                    placeholder="Room password (optional)"
+                    placeholder="Enter room password"
                     aria-label="Room password"
+                    minLength={4}
+                    maxLength={64}
+                    required
                     className="field-d !pl-9 !pr-10"
                   />
                   <button
@@ -288,7 +385,11 @@ function Dashboard({ hero, onLock }) {
                     {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {err && <p role="alert" className="mt-1 text-xs text-rose-300">{err}</p>}
+                {err ? (
+                  <p role="alert" className="mt-1 text-xs text-rose-300 font-medium">{err}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-white/50">🔒 Protected room: password is required to enter.</p>
+                )}
               </div>
               <button className="btn w-full !py-3.5 !text-base">
                 <KeyRound className="h-4 w-4" />
@@ -298,13 +399,142 @@ function Dashboard({ hero, onLock }) {
             </form>
           )}
 
+          {tab === 'active' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-xs font-medium text-white/80 flex items-center gap-1.5">
+                  <Film className="h-3.5 w-3.5 text-[#ff6fa0]" />
+                  <span>Active Rooms on Home Screen</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={fetchRooms}
+                  disabled={loadingRooms}
+                  className="text-xs text-white/60 hover:text-white flex items-center gap-1 transition"
+                  title="Refresh active rooms list"
+                >
+                  <RefreshCw className={`h-3 w-3 ${loadingRooms ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {activeRooms.length === 0 ? (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center space-y-2">
+                  <p className="text-xs text-white/60">No active rooms right now.</p>
+                  <button
+                    type="button"
+                    onClick={() => setTab('create')}
+                    className="btn !py-1.5 !px-3 text-xs mx-auto"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    Create First Room
+                  </button>
+                </div>
+              ) : (
+                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                  {activeRooms.map((r) => {
+                    const isFull = (r.userCount || 0) >= (r.maxUsers || 2);
+                    return (
+                      <div
+                        key={r.roomId}
+                        className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center justify-between gap-2 hover:border-[#ff6fa0]/40 transition"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-sm truncate text-white">{r.roomId}</span>
+                            {r.adult && <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1 rounded">18+</span>}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                              isFull
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            }`}>
+                              {!isFull && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                              {r.userCount}/{r.maxUsers || 2} Seats {isFull ? '(Full)' : ''}
+                            </span>
+                            <span className="text-[10px] text-white/60 flex items-center gap-0.5">
+                              <Lock className="h-2.5 w-2.5 text-amber-400" />
+                              <span>Password req</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {isFull ? (
+                          <span className="text-xs opacity-50 px-2 py-1 bg-white/5 rounded-lg border border-white/10">
+                            Full
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => selectActiveRoom(r)}
+                            className="btn !py-1.5 !px-3 text-xs shrink-0"
+                          >
+                            <Lock className="h-3 w-3" />
+                            Join
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quick Active Rooms Preview underneath Create/Join forms */}
+          {tab !== 'active' && activeRooms.length > 0 && (
+            <div className="rounded-xl bg-white/5 border border-white/10 p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs text-white/70">
+                <span className="flex items-center gap-1.5 font-medium text-white/90">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Active Rooms ({activeRooms.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTab('active')}
+                  className="text-[11px] text-[#ff8fb3] hover:underline"
+                >
+                  View all
+                </button>
+              </div>
+              <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-0.5">
+                {activeRooms.map((r) => {
+                  const isFull = (r.userCount || 0) >= (r.maxUsers || 2);
+                  return (
+                    <div
+                      key={r.roomId}
+                      className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-black/20 hover:bg-black/40 transition text-xs"
+                    >
+                      <span className="font-mono text-white/90 truncate max-w-[120px] sm:max-w-[150px]">{r.roomId}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${isFull ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                          {r.userCount}/{r.maxUsers || 2}
+                        </span>
+                        {!isFull && (
+                          <button
+                            type="button"
+                            onClick={() => selectActiveRoom(r)}
+                            className="text-[11px] text-[#ff6fa0] hover:text-white px-1.5 py-0.5 rounded bg-white/5 hover:bg-[#d9467a]/40 transition"
+                          >
+                            Join 🔒
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {last && (
             <button onClick={() => router.push(`/room/${last}`)} className="glass-btn w-full justify-between">
               <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#ff6fa0]" />Back to our room</span>
               <span className="font-mono text-xs text-white/60">{last}</span>
             </button>
           )}
-          <p className="flex items-center gap-1.5 border-t border-white/10 pt-3 text-xs text-white/60"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-300" />Private: secret word to enter, and video &amp; voice go straight between you two.</p>
+          <p className="flex items-center gap-1.5 border-t border-white/10 pt-3 text-xs text-white/60"><ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-300" />Private: 2 seats only, host controls room settings, and password required to enter.</p>
         </div>
       </section>
     </main>

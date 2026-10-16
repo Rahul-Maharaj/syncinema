@@ -291,10 +291,19 @@ export default function CouplesOverlay({ me, users, peerRef, onScreen, showCall,
         }
       });
       peer.on('call', (c) => {
-        if (!usersRef.current.some((u) => u.id === c.peer)) return c.close();
         if (c.metadata?.type === 'screen') {
           c.answer();
-          c.on('stream', onScreen);
+          c.on('stream', (s) => {
+            onScreen(s);
+            // Ultra-low latency: zero-delay playout hint removes receiver buffering
+            try {
+              c.peerConnection?.getReceivers().forEach((receiver) => {
+                if ('playoutDelayHint' in receiver) {
+                  receiver.playoutDelayHint = 0;
+                }
+              });
+            } catch {}
+          });
           c.on('close', () => onScreen(null));
         } else {
           c.answer(local.current);

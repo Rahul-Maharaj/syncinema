@@ -4,7 +4,7 @@ import {
   Film, Popcorn, Timer, Star, CheckCircle2, Clock, 
   Play, Plus, Trash2, ArrowUpDown, ChevronUp, ChevronDown,
   Sparkles, MessageSquareHeart, Heart, Share2, AlertCircle,
-  Eye, X, Coffee, Pizza, Wine, ThumbsUp, ThumbsDown, Download, Upload, Lock
+  Eye, X, Coffee, Pizza, Wine, ThumbsUp, ThumbsDown, Download, Upload, Lock, Crown
 } from 'lucide-react';
 import gsap from 'gsap';
 import { isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
@@ -155,8 +155,12 @@ export default function MovieNightExtras({
     say?.('Added movie to our shared watchlist ✨');
   };
 
-  // Start Timer
+  // Start Timer (Host Only)
   const handleStartTimer = (secs, label) => {
+    if (!isHost) {
+      say?.('👑 Only the room host can start the snack timer');
+      return;
+    }
     if (autoPauseMovie) {
       socket.emit('player', { action: 'PAUSE', time: 0 });
     }
@@ -509,6 +513,12 @@ export default function MovieNightExtras({
       {/* TAB 3: SYNCHRONIZED SNACK & DATE TIMER */}
       {activeTab === 'timer' && (
         <div className="space-y-4">
+          {!isHost && (
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-2">
+              <Crown className="h-4 w-4 text-amber-400 shrink-0" />
+              <span>Date night timer is controlled by the room host.</span>
+            </div>
+          )}
           <div className="text-center py-2">
             <span className="text-xs uppercase font-bold tracking-wider text-emerald-400">
               {timer?.label || 'Synchronized Snack Timer'}
@@ -524,29 +534,33 @@ export default function MovieNightExtras({
           {/* Quick Preset Buttons */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <button
+              disabled={!isHost}
               onClick={() => handleStartTimer(3 * 60, 'Popcorn Refill 🍿')}
-              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400"
+              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400 disabled:opacity-50"
             >
               <Popcorn className="h-4 w-4 text-amber-300" />
               <span>3m Popcorn</span>
             </button>
             <button
+              disabled={!isHost}
               onClick={() => handleStartTimer(5 * 60, 'Snack Break 🍕')}
-              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400"
+              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400 disabled:opacity-50"
             >
               <Pizza className="h-4 w-4 text-rose-400" />
               <span>5m Snacks</span>
             </button>
             <button
+              disabled={!isHost}
               onClick={() => handleStartTimer(10 * 60, 'Coffee & Tea ☕')}
-              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400"
+              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400 disabled:opacity-50"
             >
               <Coffee className="h-4 w-4 text-amber-400" />
               <span>10m Coffee</span>
             </button>
             <button
+              disabled={!isHost}
               onClick={() => handleStartTimer(15 * 60, 'Intermission 🛋️')}
-              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400"
+              className="glass-btn !py-2 text-xs flex flex-col items-center gap-1 hover:border-emerald-400 disabled:opacity-50"
             >
               <Wine className="h-4 w-4 text-purple-400" />
               <span>15m Intermission</span>
