@@ -47,7 +47,7 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(
 
 const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
   <main className="grid min-h-screen place-items-center px-6">
-    <form onSubmit={onSubmit} className="card rise w-full max-w-sm space-y-4 p-7 text-center">
+    <form onSubmit={onSubmit} className="glass rise w-full max-w-sm space-y-4 p-7 text-center">
       <div className="relative mx-auto h-16 w-16">
         <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(217,70,122,0.7)]" />
       </div>
@@ -428,7 +428,7 @@ export default function Room() {
           {/* Main Content Area */}
           <section className="panel flex flex-col">
             {users.length < 2 && (
-              <div className="card rise mb-3 flex items-center gap-3 p-3 sm:p-4">
+              <div className="card rise mb-3 flex items-center gap-3 p-3 sm:p-4 border border-[#d9467a]/20 !bg-[#160d1f]/70 backdrop-blur">
                 <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#d9467a]/15"><i className="ring" /><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain drop-shadow-[0_0_8px_rgba(217,70,122,0.8)]" /></div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>
