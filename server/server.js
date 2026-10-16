@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { Server } = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
@@ -80,8 +81,20 @@ app.get('/api/ice', (req, res) => {
 });
 
 // Room file sharing (My file): uploads video and streams it to everyone in the room
-const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+let UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(path.dirname(path.resolve(DATA_FILE)), 'uploads');
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+} catch (err) {
+  console.warn('Could not create UPLOADS_DIR at', UPLOADS_DIR, err.message);
+  try {
+    const tmpUploads = path.join(os.tmpdir(), 'synccinema-uploads');
+    if (!fs.existsSync(tmpUploads)) fs.mkdirSync(tmpUploads, { recursive: true });
+    UPLOADS_DIR = tmpUploads;
+    console.log('Using fallback UPLOADS_DIR at', UPLOADS_DIR);
+  } catch (e) {
+    console.error('Failed to create fallback UPLOADS_DIR:', e.message);
+  }
+}
 
 app.post('/api/upload', (req, res) => {
   const fileName = req.headers['x-file-name'] ? decodeURIComponent(req.headers['x-file-name']) : 'video.mp4';

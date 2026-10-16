@@ -8,8 +8,8 @@ COPY web/package*.json web/
 RUN npm --prefix web install --include=dev
 COPY . .
 RUN npm --prefix web run build
-RUN mkdir -p /app/data && chown -R node:node /app/data /app/web/.next
-ENV PORT=10000 TRUST_PROXY=1 DATA_FILE=/app/data/rooms.json
+RUN mkdir -p /app/data/uploads /app/server/data/uploads && chown -R node:node /app/data /app/server /app/web/.next
+ENV PORT=10000 TRUST_PROXY=1 DATA_FILE=/app/data/rooms.json UPLOADS_DIR=/app/data/uploads
 USER node
 EXPOSE 10000
 HEALTHCHECK --interval=30s CMD node -e "fetch('http://localhost:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
