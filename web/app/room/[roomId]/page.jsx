@@ -6,7 +6,7 @@ import gsap from 'gsap';
 import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
-  Video, VideoOff, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
+  Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
   Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
@@ -74,11 +74,15 @@ export default function Room() {
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
   // Mobile enhancements & Video Call control
-  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'gestures' | 'extras' | 'intimacy' | 'ai'
+  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'gestures' | 'extras' | 'tools'
+  const [toolsSubTab, setToolsSubTab] = useState('controls'); // 'controls' | 'intimacy' | 'ai'
   const [desktopTab, setDesktopTab] = useState('gestures'); // 'gestures' | 'extras' | 'intimacy' | 'ai'
   const [showMenu, setShowMenu] = useState(false);
   const [showCall, setShowCall] = useState(true);
   const [showHandoff, setShowHandoff] = useState(false);
+  const callControlsRef = useRef(null);
+  const [callCam, setCallCam] = useState(true);
+  const [callMic, setCallMic] = useState(true);
 
   // Movie-Night Extras & Intimacy State
   const [watchlist, setWatchlist] = useState([]);
@@ -490,6 +494,39 @@ export default function Room() {
             </span>
           )}
 
+          {/* Quick 1-Tap Camera Off/On Toggle (Physical hardware sensor release) */}
+          {!isGhost && (
+            <button
+              type="button"
+              onClick={() => callControlsRef.current?.toggleCam?.()}
+              className={`ghost !px-2.5 !py-1.5 flex items-center gap-1.5 text-xs font-medium transition border ${
+                callCam
+                  ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'
+                  : 'border-rose-500/40 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20'
+              }`}
+              title={callCam ? 'Turn Camera OFF (Hardware sensor stops completely)' : 'Turn Camera ON'}
+            >
+              {callCam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
+              <span>{callCam ? 'Cam On' : 'Cam Off'}</span>
+            </button>
+          )}
+
+          {/* Quick Mic Mute Toggle */}
+          {!isGhost && (
+            <button
+              type="button"
+              onClick={() => callControlsRef.current?.toggleMic?.()}
+              className={`ghost !px-2 !py-1.5 flex items-center gap-1 text-xs font-medium transition border ${
+                callMic
+                  ? 'border-white/15 text-white/80 hover:text-white'
+                  : 'border-amber-500/40 text-amber-300 bg-amber-500/10'
+              }`}
+              title={callMic ? 'Mute Microphone' : 'Unmute Microphone'}
+            >
+              {callMic ? <Mic className="h-3.5 w-3.5 text-white/70" /> : <MicOff className="h-3.5 w-3.5 text-amber-400" />}
+            </button>
+          )}
+
           {/* Prominent Video Call Hide/Show Button */}
           {!isGhost && (
             <button
@@ -500,10 +537,10 @@ export default function Room() {
                   ? 'text-emerald-500 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
                   : 'text-white/60 hover:text-white border-white/10'
               }`}
-              title={showCall ? 'Hide video call to save space and battery' : 'Show video call'}
+              title={showCall ? 'Hide video call window' : 'Show video call'}
             >
-              {showCall ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-              <span>{showCall ? 'Hide Call' : 'Show Call'}</span>
+              {showCall ? <Eye className="h-3.5 w-3.5 text-emerald-400" /> : <EyeOff className="h-3.5 w-3.5 text-rose-400" />}
+              <span className="hidden sm:inline">{showCall ? 'Call Active' : 'Call Hidden'}</span>
             </button>
           )}
 
@@ -781,90 +818,8 @@ export default function Room() {
               onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
             />
 
-            {/* MOBILE ONLY: App-like Segmented Tab Bar */}
-            <div className="lg:hidden flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1 my-2.5 overflow-x-auto no-scrollbar">
-              <button
-                type="button"
-                onClick={() => setMobileTab('chat')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  mobileTab === 'chat'
-                    ? 'bg-[#d9467a] text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>Chat</span>
-                {chat.length > 0 && <span className="text-[10px] bg-white/20 px-1.5 rounded-full">{chat.length}</span>}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('gestures')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  mobileTab === 'gestures'
-                    ? 'bg-[#d9467a] text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Heart className="h-3.5 w-3.5 text-[#ff6fa0]" />
-                <span>Gestures</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('extras')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  mobileTab === 'extras'
-                    ? 'bg-[#d9467a] text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Popcorn className="h-3.5 w-3.5 text-amber-300" />
-                <span>Date Extras</span>
-                {(queue.length > 0 || timer?.running || readyCheck?.active) && (
-                  <span className="text-[10px] bg-amber-400/30 text-amber-200 px-1.5 rounded-full">
-                    {timer?.running ? '⏱️' : readyCheck?.active ? '🍿' : queue.length}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('recent')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  mobileTab === 'recent'
-                    ? 'bg-[#d9467a] text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <History className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Recent</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('intimacy')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  mobileTab === 'intimacy'
-                    ? 'bg-[#d9467a] text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Flame className="h-3.5 w-3.5 text-rose-400" />
-                <span>Intimacy {adultMode && '🔥'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileTab('ai')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  mobileTab === 'ai'
-                    ? 'bg-[#d9467a] text-white shadow-md'
-                    : 'text-white/70 hover:text-white'
-                }`}
-              >
-                <Sparkles className="h-3.5 w-3.5 text-purple-300" />
-                <span>AI Copilot ✨</span>
-              </button>
-            </div>
-
-            {/* MOBILE TAB CONTENT */}
-            <div className="lg:hidden">
+            {/* MOBILE TAB CONTENT (Optimized with pb-24 for native bottom navigation dock) */}
+            <div className="lg:hidden pb-24">
               {mobileTab === 'chat' && (
                 <ChatPanel
                   socket={socket}
@@ -877,6 +832,11 @@ export default function Room() {
                   say={say}
                   isMobile={true}
                 />
+              )}
+              {mobileTab === 'call' && (
+                <div className="rise">
+                  {/* CouplesOverlay renders the dedicated Mobile Call Hub directly below */}
+                </div>
               )}
               {mobileTab === 'gestures' && (
                 <div className="rise">
@@ -901,42 +861,264 @@ export default function Room() {
                   />
                 </div>
               )}
-              {mobileTab === 'recent' && (
-                <div className="rise">
-                  <RecentBar
-                    onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
-                    onAddToQueue={(item) => socket.emit('queue:add', { media: item })}
-                    adultMode={adultMode}
-                    say={say}
-                  />
-                </div>
-              )}
-              {mobileTab === 'intimacy' && (
-                <div className="rise">
-                  <IntimacyMode
-                    socket={socket}
-                    me={me}
-                    isHost={me === hostId}
-                    adultMode={adultMode}
-                    ambient={ambient}
-                    hasPin={hasPin}
-                    say={say}
-                    onApplyAmbient={applyAmbientLighting}
-                  />
-                </div>
-              )}
-              {mobileTab === 'ai' && (
-                <div className="rise">
-                  <AiWatchAssistant
-                    socket={socket}
-                    currentMedia={currentMedia}
-                    onAddToQueue={(item) => socket.emit('queue:add', { media: { type: 'auto', src: item.title, title: item.title, desc: item.why } })}
-                    onAddToWatchlist={(item) => socket.emit('watchlist:add', { item: { type: 'embed', src: '', title: item.title, desc: item.why } })}
-                    say={say}
-                  />
+              {mobileTab === 'tools' && (
+                <div className="rise space-y-3">
+                  {/* Sub-navigation inside Tools */}
+                  <div className="flex rounded-xl bg-black border border-white/10 p-1 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setToolsSubTab('controls')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
+                        toolsSubTab === 'controls' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60'
+                      }`}
+                    >
+                      Room Tools
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setToolsSubTab('intimacy')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
+                        toolsSubTab === 'intimacy' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60'
+                      }`}
+                    >
+                      Intimacy {adultMode && '🔥'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setToolsSubTab('ai')}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
+                        toolsSubTab === 'ai' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60'
+                      }`}
+                    >
+                      AI Copilot ✨
+                    </button>
+                  </div>
+
+                  {toolsSubTab === 'controls' && (
+                    <div className="space-y-3">
+                      {/* Quick Stream / Video URL Loader */}
+                      <div className="card p-3.5 space-y-2 border border-white/10 !bg-black">
+                        <label className="text-xs font-semibold text-white/80 flex items-center gap-1.5">
+                          <Play className="h-3.5 w-3.5 text-[#ff6fa0]" /> Stream Video URL
+                        </label>
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const input = e.target.elements.mediaUrl;
+                            if (input?.value?.trim()) {
+                              socket.emit('media:set', { media: { type: 'auto', src: input.value.trim() } });
+                              say('Playing video 🎬');
+                              input.value = '';
+                            }
+                          }}
+                          className="flex gap-2"
+                        >
+                          <input
+                            name="mediaUrl"
+                            type="url"
+                            placeholder="Paste direct MP4, HLS, or YouTube URL…"
+                            className="field !py-1.5 !text-xs flex-1"
+                          />
+                          <button type="submit" className="btn !py-1.5 !px-3 text-xs shrink-0">Play</button>
+                        </form>
+                      </div>
+
+                      {/* Hardware Camera & Mic Control Card */}
+                      <div className="card p-3.5 space-y-2.5 border border-white/10 !bg-black">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4 text-[#ff6fa0]" />
+                            <span className="text-xs font-semibold text-white">Device Camera Status</span>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${callCam ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-rose-500/30 text-rose-300 bg-rose-500/10'}`}>
+                            {callCam ? 'Camera Active' : 'Camera Sensor OFF'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-white/60">
+                          Turning camera off stops the physical hardware sensor on your phone so the indicator light turns completely off.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleCam?.()}
+                            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-medium transition ${
+                              callCam
+                                ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'
+                                : 'border-rose-500/30 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20'
+                            }`}
+                          >
+                            {callCam ? <Video className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5" />}
+                            <span>{callCam ? 'Turn Cam Off' : 'Turn Cam On'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleMic?.()}
+                            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-medium transition ${
+                              callMic
+                                ? 'border-white/15 text-white bg-white/5'
+                                : 'border-amber-500/30 text-amber-300 bg-amber-500/10'
+                            }`}
+                          >
+                            {callMic ? <Mic className="h-3.5 w-3.5" /> : <MicOff className="h-3.5 w-3.5" />}
+                            <span>{callMic ? 'Mute Mic' : 'Unmute Mic'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Recent Plays Bar */}
+                      <div className="card p-3 space-y-2 border border-white/10 !bg-black">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-cyan-300">
+                          <History className="h-4 w-4 text-cyan-400" />
+                          <span>Recent Plays Bar</span>
+                        </div>
+                        <RecentBar
+                          onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
+                          onAddToQueue={(item) => socket.emit('queue:add', { media: item })}
+                          adultMode={adultMode}
+                          say={say}
+                        />
+                      </div>
+
+                      {/* Room Security & Quick Actions */}
+                      <div className="card p-3 space-y-2 border border-white/10 !bg-black">
+                        <span className="text-xs font-semibold text-white/80">Room Security &amp; Actions</span>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
+                              setNewPassDraft(current);
+                              setShowPassModal(true);
+                            }}
+                            className="ghost !justify-start !py-2 !px-2.5 text-amber-300"
+                          >
+                            <Lock className="h-3.5 w-3.5 text-amber-400" />
+                            <span>Room Password</span>
+                          </button>
+
+                          {me === hostId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
+                                  if (res?.ok) setEntryLocked(res.entryLocked);
+                                });
+                              }}
+                              className={`ghost !justify-start !py-2 !px-2.5 ${entryLocked ? 'text-amber-300 bg-amber-500/15 border border-amber-500/40' : 'text-white/80'}`}
+                            >
+                              {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5" />}
+                              <span>{entryLocked ? 'Unlock Room' : 'Lock Room'}</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={copy}
+                            className="ghost !justify-start !py-2 !px-2.5 text-white/80"
+                          >
+                            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                            <span>{copied ? 'Link Copied' : 'Invite Partner'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setShowHandoff(true)}
+                            className="ghost !justify-start !py-2 !px-2.5 text-[#ff6fa0]"
+                          >
+                            <QrCode className="h-3.5 w-3.5" />
+                            <span>QR Handoff</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={toggleCinema}
+                            className="ghost !justify-start !py-2 !px-2.5 text-white/80"
+                          >
+                            <Film className="h-3.5 w-3.5 text-amber-400" />
+                            <span>Cinema Mode</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={cycleSleep}
+                            className="ghost !justify-start !py-2 !px-2.5 text-white/80"
+                          >
+                            <Moon className="h-3.5 w-3.5 text-indigo-400" />
+                            <span>{sleep ? `Sleep: ${sleep}m` : 'Sleep Timer'}</span>
+                          </button>
+
+                          {me === hostId && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
+                                  socket.emit('room:close', {}, (res) => {
+                                    if (res?.ok) {
+                                      say('Room closed 🚪');
+                                      try {
+                                        sessionStorage.removeItem('rp_' + roomId);
+                                        localStorage.removeItem('rp_' + roomId);
+                                      } catch {}
+                                      router.push('/');
+                                    } else {
+                                      say(res?.message || 'Failed to close room');
+                                    }
+                                  });
+                                }
+                              }}
+                              className="ghost !justify-start !py-2 !px-2.5 text-rose-400 bg-rose-500/10 border border-rose-500/30 col-span-2"
+                            >
+                              <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
+                              <span>Close Room (Permanent)</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {toolsSubTab === 'intimacy' && (
+                    <IntimacyMode
+                      socket={socket}
+                      me={me}
+                      isHost={me === hostId}
+                      adultMode={adultMode}
+                      ambient={ambient}
+                      hasPin={hasPin}
+                      say={say}
+                      onApplyAmbient={applyAmbientLighting}
+                    />
+                  )}
+
+                  {toolsSubTab === 'ai' && (
+                    <AiWatchAssistant
+                      socket={socket}
+                      currentMedia={currentMedia}
+                      onAddToQueue={(item) => socket.emit('queue:add', { media: { type: 'auto', src: item.title, title: item.title, desc: item.why } })}
+                      onAddToWatchlist={(item) => socket.emit('watchlist:add', { item: { type: 'embed', src: '', title: item.title, desc: item.why } })}
+                      say={say}
+                    />
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Video Call Overlay (CouplesOverlay) - Always mounted for continuous WebRTC audio & seamless tab switching */}
+            <CouplesOverlay
+              me={me}
+              users={users}
+              peerRef={peerRef}
+              onScreen={setScreen}
+              showCall={showCall}
+              setShowCall={setShowCall}
+              socket={socket}
+              onVoiceActivity={setVoiceActive}
+              callControlsRef={callControlsRef}
+              onCamChange={setCallCam}
+              onMicChange={setCallMic}
+              isMobileCallActive={mobileTab === 'call'}
+              onSwitchToCallTab={() => setMobileTab('call')}
+            />
 
             {/* DESKTOP ONLY: Lower Tab Switcher and Content */}
             <div className="hidden lg:block space-y-3 mt-3">
@@ -1092,19 +1274,7 @@ export default function Room() {
         </div>
       )}
 
-      {/* Video Call Overlay with External Hide Control */}
-      {boot && (
-        <CouplesOverlay
-          me={me}
-          users={users}
-          peerRef={peerRef}
-          onScreen={setScreen}
-          showCall={showCall}
-          setShowCall={setShowCall}
-          socket={socket}
-          onVoiceActivity={setVoiceActive}
-        />
-      )}
+
 
       {/* Cross-Device Handoff & Watch History Modal */}
       <WatchHistoryModal
@@ -1210,8 +1380,103 @@ export default function Room() {
         </div>
       )}
 
+      {/* PROFESSIONAL MOBILE NATIVE BOTTOM NAVIGATION DOCK */}
+      {boot && (
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-black/95 backdrop-blur-md border-t border-white/15 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.9)]">
+          <div className="grid grid-cols-5 h-14 items-center">
+            {/* 1. Chat Tab */}
+            <button
+              type="button"
+              onClick={() => setMobileTab('chat')}
+              className={`relative flex flex-col items-center justify-center h-full transition ${
+                mobileTab === 'chat' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <div className="relative">
+                <MessageSquare className={`h-5 w-5 ${mobileTab === 'chat' ? 'text-[#ff6fa0]' : ''}`} />
+                {chat.length > 0 && (
+                  <span className="absolute -top-1 -right-2.5 bg-[#d9467a] text-white text-[9px] font-bold px-1 min-w-[15px] h-[15px] rounded-full flex items-center justify-center">
+                    {chat.length > 99 ? '99+' : chat.length}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] mt-0.5 ${mobileTab === 'chat' ? 'font-bold text-white' : 'font-medium'}`}>Chat</span>
+              {mobileTab === 'chat' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
+            </button>
+
+            {/* 2. Call Tab */}
+            <button
+              type="button"
+              onClick={() => setMobileTab('call')}
+              className={`relative flex flex-col items-center justify-center h-full transition ${
+                mobileTab === 'call' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <div className="relative">
+                {callCam ? (
+                  <Video className={`h-5 w-5 ${mobileTab === 'call' ? 'text-emerald-400' : 'text-emerald-400/80'}`} />
+                ) : (
+                  <VideoOff className={`h-5 w-5 ${mobileTab === 'call' ? 'text-rose-400' : 'text-rose-400/80'}`} />
+                )}
+                <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${callCam ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+              </div>
+              <span className={`text-[10px] mt-0.5 ${mobileTab === 'call' ? 'font-bold text-white' : 'font-medium'}`}>
+                {callCam ? 'Call' : 'Cam Off'}
+              </span>
+              {mobileTab === 'call' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-emerald-400" />}
+            </button>
+
+            {/* 3. Love / Gestures Tab */}
+            <button
+              type="button"
+              onClick={() => setMobileTab('gestures')}
+              className={`relative flex flex-col items-center justify-center h-full transition ${
+                mobileTab === 'gestures' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Heart className={`h-5 w-5 ${mobileTab === 'gestures' ? 'text-[#ff6fa0] fill-[#ff6fa0]' : 'text-white/50'}`} />
+              <span className={`text-[10px] mt-0.5 ${mobileTab === 'gestures' ? 'font-bold text-white' : 'font-medium'}`}>Love</span>
+              {mobileTab === 'gestures' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
+            </button>
+
+            {/* 4. Watch / Extras Tab */}
+            <button
+              type="button"
+              onClick={() => setMobileTab('extras')}
+              className={`relative flex flex-col items-center justify-center h-full transition ${
+                mobileTab === 'extras' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <div className="relative">
+                <Popcorn className={`h-5 w-5 ${mobileTab === 'extras' ? 'text-amber-300' : ''}`} />
+                {(queue.length > 0 || timer?.running || readyCheck?.active) && (
+                  <span className="absolute -top-1 -right-2 bg-amber-500 text-black text-[9px] font-extrabold px-1 rounded-full">
+                    {timer?.running ? '⏱' : readyCheck?.active ? '!' : queue.length}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] mt-0.5 ${mobileTab === 'extras' ? 'font-bold text-white' : 'font-medium'}`}>Watch</span>
+              {mobileTab === 'extras' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-amber-400" />}
+            </button>
+
+            {/* 5. Tools / Room Settings Tab */}
+            <button
+              type="button"
+              onClick={() => setMobileTab('tools')}
+              className={`relative flex flex-col items-center justify-center h-full transition ${
+                mobileTab === 'tools' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Sliders className={`h-5 w-5 ${mobileTab === 'tools' ? 'text-cyan-400' : ''}`} />
+              <span className={`text-[10px] mt-0.5 ${mobileTab === 'tools' ? 'font-bold text-white' : 'font-medium'}`}>Tools</span>
+              {mobileTab === 'tools' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-cyan-400" />}
+            </button>
+          </div>
+        </nav>
+      )}
+
       {/* Toast notifications */}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-16 sm:bottom-6 z-50 flex justify-center px-4">
         {toast && <div key={toast.n} className="toast rounded-full bg-black/85 px-4 py-2 text-xs sm:text-sm text-white shadow-2xl backdrop-blur-md border border-white/10">{toast.m}</div>}
       </div>
     </div>

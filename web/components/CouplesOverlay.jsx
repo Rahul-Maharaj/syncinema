@@ -7,6 +7,26 @@ import { serverUrl } from '@/lib/socket';
 import { getKey } from '@/lib/vault';
 gsap.registerPlugin(Draggable);
 
+// Helper to generate a blank canvas video track when camera hardware is powered off
+function createBlankVideoTrack() {
+  if (typeof document === 'undefined') return null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 240;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, 320, 240);
+    }
+    const stream = canvas.captureStream ? canvas.captureStream(5) : null;
+    return stream ? stream.getVideoTracks()[0] : null;
+  } catch (err) {
+    console.warn('Could not create dummy blank track:', err);
+    return null;
+  }
+}
+
 // Lightweight Voice Activity Detection (VAD) hook using Web Audio Analyser
 function useStreamVoiceActivity(stream, onTalkChange) {
   useEffect(() => {
@@ -117,7 +137,7 @@ function RemoteAudio({ stream, name, onTalk }) {
   );
 }
 
-function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
+function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff }) {
   const videoRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasVideoTrack, setHasVideoTrack] = useState(false);
@@ -126,12 +146,12 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
     const el = videoRef.current;
     if (!el) return;
 
-    if (stream) {
+    if (stream && !isCamOff) {
       el.srcObject = stream;
       el.muted = true; // Video element is muted; audio plays through RemoteAudio
 
       const vTracks = stream.getVideoTracks();
-      setHasVideoTrack(vTracks.length > 0 && vTracks.some(t => t.enabled));
+      setHasVideoTrack(vTracks.length > 0 && vTracks.some((t) => t.enabled && t.readyState === 'live'));
 
       const tryPlay = () => {
         el.play().catch(() => {
@@ -145,7 +165,7 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
       el.srcObject = null;
       setHasVideoTrack(false);
     }
-  }, [stream]);
+  }, [stream, isCamOff]);
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -173,10 +193,10 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
   return (
     <div
       onDoubleClick={toggleFullscreen}
-      className={`vault group relative aspect-video w-36 overflow-hidden rounded-xl bg-black/90 transition-all duration-300 sm:w-44 shrink-0 ${
+      className={`vault group relative aspect-video w-36 sm:w-44 overflow-hidden rounded-xl bg-black transition-all duration-300 shrink-0 ${
         isSpeaking
           ? 'ring-2 ring-[#ff6fa0]'
-          : 'ring-1 ring-white/10'
+          : 'ring-1 border border-white/10 ring-transparent'
       }`}
       title={isPartner ? 'Double click or tap expand for full screen' : name}
     >
@@ -187,6 +207,14 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
             <Mic className="h-4 w-4" />
           </div>
           <span className="text-[10px] text-white/70">Voice Mode</span>
+        </div>
+      ) : isCamOff ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-2 text-center z-10 pointer-events-none">
+          <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-white/10 border border-white/20 text-white/60">
+            <VideoOff className="h-4 w-4 text-rose-400" />
+          </div>
+          <span className="text-[10px] text-white/70 font-medium">Camera Off</span>
+          <span className="text-[9px] text-white/40">Hardware released</span>
         </div>
       ) : (
         <>
@@ -204,14 +232,15 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
             ref={videoRef}
             autoPlay
             playsInline
+            webkit-playsinline="true"
             muted
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+            className={`h-full w-full object-cover transition-transform duration-200 group-hover:scale-105 ${(!hasVideoTrack || isCamOff) ? 'hidden' : 'block'}`}
           />
         </>
       )}
 
       {/* User Name Tag */}
-      <span className="absolute bottom-1 left-1.5 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm flex items-center gap-1 z-20">
+      <span className="absolute bottom-1 left-1.5 rounded bg-black/80 border border-white/10 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm flex items-center gap-1 z-20">
         {name}
         {isSpeaking && <i className="h-1.5 w-1.5 rounded-full bg-[#ff6fa0]" />}
       </span>
@@ -224,7 +253,7 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
       )}
 
       {/* Fullscreen Button */}
-      {isPartner && stream && !voiceOnly && (
+      {isPartner && stream && !voiceOnly && !isCamOff && (
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -238,7 +267,21 @@ function Tile({ stream, name, isPartner, voiceOnly, isSpeaking }) {
   );
 }
 
-export default function CouplesOverlay({ me, users = [], peerRef, onScreen, showCall, setShowCall, socket, onVoiceActivity }) {
+export default function CouplesOverlay({
+  me,
+  users = [],
+  peerRef,
+  onScreen,
+  showCall,
+  setShowCall,
+  socket,
+  onVoiceActivity,
+  callControlsRef,
+  onCamChange,
+  onMicChange,
+  isMobileCallActive = false,
+  onSwitchToCallTab,
+}) {
   const [mine, setMine] = useState(null);
   const [remote, setRemote] = useState({});     // peerId -> MediaStream
   const [ready, setReady] = useState(false);
@@ -583,28 +626,147 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
     return () => d?.kill?.();
   }, [isHidden]);
 
-  const toggle = (kind) => {
-    const on = kind === 'mic' ? !mic : !cam;
-    local.current?.[kind === 'mic' ? 'getAudioTracks' : 'getVideoTracks']().forEach((t) => (t.enabled = on));
-    kind === 'mic' ? setMic(on) : setCam(on);
-  };
-
+  const [camSwitching, setCamSwitching] = useState(false);
   const [voiceOnly, setVoiceOnly] = useState(false);
   const [layout, setLayout] = useState('floating'); // 'floating' | 'side'
 
-  const toggleVoiceOnly = () => {
+  // Physical Camera Hardware Toggle: Stops hardware sensor to completely power down device camera light
+  const toggleCam = async () => {
+    if (camSwitching) return;
+    setCamSwitching(true);
+
+    try {
+      if (cam) {
+        // --- TURN CAMERA OFF: STOP PHYSICAL CAMERA HARDWARE SENSOR ---
+        const currentVideoTracks = local.current ? local.current.getVideoTracks() : [];
+        currentVideoTracks.forEach((track) => {
+          try {
+            track.stop(); // Powers off the physical camera light and sensor on device
+          } catch {}
+          try {
+            local.current?.removeTrack(track);
+          } catch {}
+        });
+
+        // Insert blank dummy canvas track so WebRTC RTCPeerConnection stays connected
+        const dummyTrack = createBlankVideoTrack();
+        if (dummyTrack && local.current) {
+          local.current.addTrack(dummyTrack);
+        }
+
+        // Replace track on all active PeerJS RTCPeerConnection video senders
+        activeCalls.current.forEach((call) => {
+          try {
+            const senders = call.peerConnection?.getSenders?.() || [];
+            const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
+            if (videoSender) {
+              videoSender.replaceTrack(dummyTrack || null).catch((e) => console.warn('replaceTrack off error:', e));
+            }
+          } catch {}
+        });
+
+        if (local.current) {
+          setMine(new MediaStream(local.current.getTracks()));
+        }
+        setCam(false);
+      } else {
+        // --- TURN CAMERA ON: RE-ACQUIRE FROM USER MEDIA ---
+        let freshStream = null;
+        try {
+          freshStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: 'user',
+            },
+          });
+        } catch {
+          try {
+            freshStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          } catch (err) {
+            console.warn('Failed to re-acquire camera:', err);
+            alert('Could not start camera. Please ensure camera permissions are granted.');
+            setCamSwitching(false);
+            return;
+          }
+        }
+
+        const freshTrack = freshStream?.getVideoTracks()?.[0];
+        if (freshTrack && local.current) {
+          // Stop and remove dummy blank tracks
+          local.current.getVideoTracks().forEach((track) => {
+            try { track.stop(); } catch {}
+            try { local.current.removeTrack(track); } catch {}
+          });
+
+          local.current.addTrack(freshTrack);
+
+          // Update active WebRTC calls with the fresh real camera track
+          activeCalls.current.forEach((call) => {
+            try {
+              const senders = call.peerConnection?.getSenders?.() || [];
+              const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
+              if (videoSender) {
+                videoSender.replaceTrack(freshTrack).catch((e) => console.warn('replaceTrack on error:', e));
+              }
+            } catch {}
+          });
+
+          setMine(new MediaStream(local.current.getTracks()));
+          setCam(true);
+        }
+      }
+    } finally {
+      setCamSwitching(false);
+    }
+  };
+
+  const toggleMic = () => {
+    const next = !mic;
+    local.current?.getAudioTracks().forEach((t) => (t.enabled = next));
+    setMic(next);
+  };
+
+  const toggleVoiceOnly = async () => {
     const next = !voiceOnly;
     setVoiceOnly(next);
-    local.current?.getVideoTracks().forEach((t) => (t.enabled = !next));
+    if (next) {
+      if (cam) await toggleCam();
+    } else {
+      if (!cam) await toggleCam();
+    }
   };
 
   const cycleLayout = () => {
     setLayout((l) => (l === 'floating' ? 'side' : 'floating'));
   };
 
+  // Sync state to parent controls if provided
+  useEffect(() => {
+    onCamChange?.(cam);
+  }, [cam, onCamChange]);
+
+  useEffect(() => {
+    onMicChange?.(mic);
+  }, [mic, onMicChange]);
+
+  useEffect(() => {
+    if (callControlsRef) {
+      callControlsRef.current = {
+        toggleCam,
+        toggleMic,
+        toggleVoiceOnly,
+        cam,
+        mic,
+        voiceOnly,
+        camSwitching,
+      };
+    }
+  }, [cam, mic, voiceOnly, camSwitching, callControlsRef]);
+
   return (
     <>
-      {/* Persistent Audio for Remote Peers: Always mounted so voice call NEVER drops even when video call is hidden */}
+      {/* Persistent Audio for Remote Peers: Always mounted so call audio NEVER drops even when video is hidden or minimized */}
       <div>
         {users.filter((u) => u.id !== me && remote[u.id]).map((u) => (
           <RemoteAudio
@@ -616,11 +778,109 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
         ))}
       </div>
 
+      {/* 1. MOBILE PHONE LAYOUT: Embedded Full-Sized Call Hub (when user selects Call tab on phone) */}
+      {isMobileCallActive && (
+        <div className="lg:hidden card p-4 border border-white/10 !bg-black space-y-4 rounded-2xl mb-24">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              <span className="font-semibold text-sm text-white">Live Video Call</span>
+              <span className="text-[11px] text-white/50">({users.length} connected)</span>
+            </div>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${cam ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-rose-500/30 text-rose-300 bg-rose-500/10'}`}>
+              {cam ? 'Camera Live' : 'Camera Off (Hardware Released)'}
+            </span>
+          </div>
+
+          {/* Large Video Grid for Mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* Local Preview Tile */}
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/10">
+              <Tile
+                stream={mine}
+                name="You"
+                isPartner={false}
+                voiceOnly={voiceOnly}
+                isSpeaking={localTalking}
+                isCamOff={!cam}
+              />
+            </div>
+
+            {/* Remote Partner Tiles */}
+            {users.filter((u) => u.id !== me).map((u) => (
+              <div key={u.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/10">
+                <Tile
+                  key={u.id}
+                  stream={remote[u.id]}
+                  name={u.name}
+                  isPartner={true}
+                  voiceOnly={voiceOnly}
+                  isSpeaking={!!remoteTalking[u.id]}
+                  isCamOff={false}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Easy-to-tap Mobile Controls Bar */}
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={toggleMic}
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border transition ${
+                mic ? 'bg-white/10 border-white/15 text-white' : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+              }`}
+            >
+              {mic ? <Mic className="h-5 w-5 mb-1 text-white" /> : <MicOff className="h-5 w-5 mb-1 text-rose-400" />}
+              <span className="text-[11px] font-semibold">{mic ? 'Mute Mic' : 'Unmuted'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleCam}
+              disabled={camSwitching}
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border transition ${
+                cam ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+              }`}
+            >
+              {cam ? <Video className="h-5 w-5 mb-1 text-emerald-400" /> : <VideoOff className="h-5 w-5 mb-1 text-rose-400" />}
+              <span className="text-[11px] font-semibold">{camSwitching ? 'Switching…' : cam ? 'Cam: ON' : 'Cam: OFF'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleVoiceOnly}
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border transition ${
+                voiceOnly ? 'bg-[#d9467a]/30 border-[#d9467a] text-white' : 'bg-white/10 border-white/15 text-white/70'
+              }`}
+            >
+              <Volume2 className="h-5 w-5 mb-1 text-[#ff6fa0]" />
+              <span className="text-[11px] font-semibold">{voiceOnly ? 'Voice Only' : 'Video Mode'}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 2. MOBILE PHONE FLOATING MINI-PIP (Shown when user is on another tab like Chat or Watch, so call never covers typing) */}
+      {!isMobileCallActive && showCall && (
+        <button
+          type="button"
+          onClick={() => onSwitchToCallTab?.()}
+          className="lg:hidden fixed bottom-20 right-3 z-30 flex items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white shadow-xl cursor-pointer hover:border-[#ff6fa0]/60 active:scale-95 transition"
+          title="Open Video Call Tab"
+        >
+          {cam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
+          <span>Video Call</span>
+          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
+        </button>
+      )}
+
+      {/* 3. DESKTOP FLOATING WINDOW (Hidden on mobile phones, preserved for desktop displays) */}
       {isHidden ? (
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white transition hover:border-[#ff6fa0]/60 cursor-pointer"
+          className="hidden lg:flex fixed bottom-5 left-5 z-40 items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white transition hover:border-[#ff6fa0]/60 cursor-pointer"
           title="Show video call window"
         >
           <Video className="h-3.5 w-3.5 text-[#ff6fa0]" />
@@ -628,7 +888,7 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
           {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-[#ff6fa0]" />}
         </button>
       ) : (
-        <div ref={box} className={`fixed bottom-5 left-5 z-40 rounded-2xl border border-white/20 !bg-black p-2.5 transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+        <div ref={box} className={`hidden lg:block fixed bottom-5 left-5 z-40 rounded-2xl border border-white/20 !bg-black p-2.5 transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />
@@ -655,7 +915,7 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
 
           <div className={`flex ${layout === 'side' ? 'flex-row overflow-x-auto max-w-[85vw]' : 'flex-col'} gap-2`}>
             {/* Local User Tile */}
-            <Tile stream={mine} name="You" isPartner={false} voiceOnly={voiceOnly} isSpeaking={localTalking} />
+            <Tile stream={mine} name="You" isPartner={false} voiceOnly={voiceOnly} isSpeaking={localTalking} isCamOff={!cam} />
 
             {/* Remote Peer Tiles */}
             {users.filter((u) => u.id !== me).map((u) => (
@@ -666,6 +926,7 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
                 isPartner={true}
                 voiceOnly={voiceOnly}
                 isSpeaking={!!remoteTalking[u.id]}
+                isCamOff={false}
               />
             ))}
           </div>
@@ -673,7 +934,7 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
           <div className="mt-2 flex items-center justify-center gap-2 text-white">
             <button
               type="button"
-              onClick={() => toggle('mic')}
+              onClick={toggleMic}
               aria-label="Toggle microphone"
               title={mic ? 'Mute mic' : 'Unmute mic'}
               className={`rounded-full p-2 transition ${mic ? 'bg-white/10 hover:bg-white/20' : 'bg-rose-500/30 text-rose-300 ring-1 ring-rose-500/50'}`}
@@ -682,9 +943,10 @@ export default function CouplesOverlay({ me, users = [], peerRef, onScreen, show
             </button>
             <button
               type="button"
-              onClick={() => toggle('cam')}
+              onClick={toggleCam}
+              disabled={camSwitching}
               aria-label="Toggle camera"
-              title={cam ? 'Turn off camera' : 'Turn on camera'}
+              title={cam ? 'Turn off camera (releases hardware)' : 'Turn on camera'}
               className={`rounded-full p-2 transition ${cam ? 'bg-white/10 hover:bg-white/20' : 'bg-rose-500/30 text-rose-300 ring-1 ring-rose-500/50'}`}
             >
               {cam ? <Video className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
