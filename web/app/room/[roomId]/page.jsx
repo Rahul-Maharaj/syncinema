@@ -467,21 +467,15 @@ export default function Room() {
       {/* Responsive Top Header */}
       {/* Modern Unified Cinema Navbar */}
       <header className="hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b border-slate-800/80 bg-[#090a1e]/90 backdrop-blur-xl z-20">
-        {/* Left: Brand + Status + Dynamic Capacity Pill */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link href="/" className="ghost !p-1.5 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
+        {/* Left: Brand + Status + Capacity Pill */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+          <Link href="/" className="ghost !p-1 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
             <img src="/logo.png" alt="SyncCinema Logo" className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
           </Link>
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <h1 className="font-display text-sm sm:text-base font-bold text-white tracking-wide truncate hidden xs:inline sm:inline">SyncCinema</h1>
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold border ${
-              online ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-            }`}>
-              <i className={`h-1.5 w-1.5 rounded-full ${online ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
-              <span className="hidden sm:inline">{online ? 'Live' : 'Reconnecting'}</span>
-            </span>
+            <h1 className="font-display text-sm sm:text-base font-bold text-white tracking-wide truncate hidden sm:inline">SyncCinema</h1>
 
-            {/* Interactive Room Capacity Pill (Clickable for Host) */}
+            {/* Interactive Room Capacity & Live Pill */}
             <button
               type="button"
               onClick={() => {
@@ -492,16 +486,17 @@ export default function Room() {
                   say(`Room Capacity: ${users.length} of ${maxSeats} members (Host can increase up to 30)`);
                 }
               }}
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold border transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-2 sm:px-2.5 py-1 text-xs font-semibold border transition shrink-0 ${
                 me === hostId
                   ? 'bg-white/10 hover:bg-rose-500/20 border-white/15 hover:border-rose-500/40 text-white cursor-pointer active:scale-95'
                   : 'bg-white/5 border-white/10 text-white/80 cursor-default'
               }`}
               title={me === hostId ? `Capacity: ${users.length}/${maxSeats} members. Click to change (2 to 30 seats)` : `Capacity: ${users.length}/${maxSeats} members`}
             >
-              <Users className="h-3 w-3 text-rose-400" />
+              <i className={`h-2 w-2 rounded-full shrink-0 ${online ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+              <Users className="h-3 w-3 text-rose-400 shrink-0" />
               <span>{users.length}/{maxSeats}</span>
-              {me === hostId && <span className="text-[10px] text-white/60">⚙️</span>}
+              {me === hostId && <span className="text-[10px] text-white/60 hidden xs:inline">⚙️</span>}
             </button>
 
             {entryLocked && (
@@ -514,7 +509,7 @@ export default function Room() {
         </div>
 
         {/* Right: Consolidated Action Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* View Modes Switcher (Theater, Duo Date, Party Grid, Focus) */}
           <div className="hidden xl:flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 p-0.5 rounded-xl">
             {[
@@ -540,15 +535,15 @@ export default function Room() {
             ))}
           </div>
 
-          {/* Cinema Plugins Suite Launcher Button */}
+          {/* Cinema Plugins Suite Launcher Button (Visible on sm+; mobile uses reaction bar or tabs) */}
           <button
             type="button"
             onClick={() => setShowPlugins(true)}
-            className="h-7 sm:h-8 px-2 sm:px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
+            className="hidden sm:flex h-7 sm:h-8 px-2 sm:px-3 rounded-xl text-xs font-bold items-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
             title="Open Cinema Plugins (Atmosphere, Keepsakes, Trivia & Intermission)"
           >
             <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
-            <span className="hidden xs:inline sm:inline">Plugins</span>
+            <span>Plugins</span>
           </button>
 
           {/* Active Snack Timer Indicator */}
@@ -566,11 +561,11 @@ export default function Room() {
 
           {/* Quick AV Cluster: Uniform h-8 Cam & Mic Toggles */}
           {!isGhost && (
-            <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-0.5 rounded-xl">
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-white/5 border border-white/10 p-0.5 rounded-xl shrink-0">
               <button
                 type="button"
                 onClick={() => callControlsRef.current?.toggleCam?.()}
-                className={`h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
+                className={`h-7 sm:h-8 w-7 sm:w-auto px-1 sm:px-2.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition ${
                   callCam
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                     : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
@@ -584,7 +579,7 @@ export default function Room() {
               <button
                 type="button"
                 onClick={() => callControlsRef.current?.toggleMic?.()}
-                className={`h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
+                className={`h-7 sm:h-8 w-7 sm:w-auto px-1 sm:px-2.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition ${
                   callMic
                     ? 'text-white/80 hover:text-white hover:bg-white/10'
                     : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
@@ -617,7 +612,7 @@ export default function Room() {
           {/* Primary Quick Invite Button */}
           <button
             onClick={copy}
-            className="btn h-8 !py-0 !px-3 text-xs font-semibold rounded-xl flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-700 shadow-md hover:opacity-95 shrink-0"
+            className="btn h-7 sm:h-8 !py-0 !px-2.5 sm:!px-3 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-700 shadow-md hover:opacity-95 shrink-0"
             title="Copy room invite link"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -627,7 +622,7 @@ export default function Room() {
           {/* Mobile Quick Exit */}
           <Link
             href="/"
-            className="lg:hidden h-8 w-8 rounded-xl bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 text-zinc-400 hover:text-white flex items-center justify-center transition shrink-0"
+            className="lg:hidden h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 text-zinc-400 hover:text-white flex items-center justify-center transition shrink-0"
             title="Leave room"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -637,11 +632,11 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowMenu(true)}
-            className="h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+            className="hidden sm:flex h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold items-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white shrink-0"
             title="Room Controls &amp; Settings"
           >
             <Sliders className="h-3.5 w-3.5 text-rose-400" />
-            <span className="hidden sm:inline">Settings</span>
+            <span>Settings</span>
           </button>
         </div>
       </header>
@@ -887,21 +882,21 @@ export default function Room() {
           {/* Main Cinema Auditorium (Left / Center) */}
           <section className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden min-w-0">
             {users.length < maxSeats && (
-              <div className="shrink-0 mb-2 flex items-center justify-between gap-2 px-3 py-1.5 border border-white/10 bg-black/80 rounded-xl w-full shadow-md backdrop-blur-xl text-xs">
-                <div className="flex items-center gap-2 min-w-0">
+              <div className="shrink-0 mb-1.5 flex items-center justify-between gap-2 px-3 py-1 border border-white/10 bg-black/70 rounded-xl w-full text-xs shadow-sm backdrop-blur-md">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <Users className="h-3.5 w-3.5 text-rose-400 shrink-0" />
-                  <span className="text-white truncate">
-                    {users.length === 1 ? 'Waiting for members to join…' : `Watch Party Active (${users.length} of ${maxSeats} joined)`}
+                  <span className="text-white text-xs truncate">
+                    {users.length === 1 ? 'Waiting for partner to join…' : `Watch Party Active (${users.length}/${maxSeats})`}
                   </span>
                 </div>
-                <button onClick={copy} className="btn !py-1 !px-2.5 text-[11px] shrink-0">
-                  {copied ? 'Copied' : 'Invite'}
+                <button onClick={copy} className="btn !py-0.5 !px-2.5 text-[11px] shrink-0 font-semibold">
+                  {copied ? 'Copied ✓' : 'Invite'}
                 </button>
               </div>
             )}
 
-            {/* Video Player Container */}
-            <div className="flex-1 min-h-0 w-full flex flex-col justify-center min-w-0">
+            {/* Video Player Container (Fixed 16:9 on mobile, flex-1 on desktop) */}
+            <div className="w-full shrink-0 aspect-video lg:flex-1 lg:min-h-0 lg:aspect-auto lg:flex lg:flex-col lg:justify-center min-w-0">
               <VideoPlayer
                 socket={socket}
                 me={me}
@@ -922,7 +917,7 @@ export default function Room() {
             </div>
 
             {/* Quick Synchronized Floating Reaction Bar */}
-            <div className="shrink-0 my-2 flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
+            <div className="shrink-0 my-1.5 flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
                   Reactions:
@@ -1024,8 +1019,8 @@ export default function Room() {
               </div>
             )}
 
-            {/* Mobile Tab Content (Only visible on mobile lg:hidden) */}
-            <div className="lg:hidden flex-1 min-h-0 flex flex-col overflow-hidden mt-2">
+            {/* Mobile Tab Content (Fills remaining screen height on phone) */}
+            <div className="lg:hidden flex-1 min-h-0 flex flex-col overflow-hidden mt-1">
               <div className="flex-1 min-h-0 overflow-y-auto">
                 {mobileTab === 'chat' && (
                   <ChatPanel
@@ -1041,20 +1036,20 @@ export default function Room() {
                   />
                 )}
                 {mobileTab === 'call' && (
-                  <div className="p-3 text-center text-xs text-slate-300 space-y-2">
+                  <div className="h-full p-3 flex flex-col items-center justify-center text-center text-xs text-slate-300 space-y-2">
                     <p className="font-semibold text-white">WebRTC Video Call Hub</p>
-                    <div className="aspect-video w-full max-w-xs mx-auto rounded-xl overflow-hidden bg-black border border-slate-800">
+                    <div className="aspect-video w-full max-w-xs rounded-xl overflow-hidden bg-black border border-slate-800">
                       <Tile stream={callMedia.mine} name="You" isPartner={false} isCamOff={!callCam} />
                     </div>
                   </div>
                 )}
                 {mobileTab === 'gestures' && (
-                  <div className="p-2">
+                  <div className="p-2 h-full overflow-y-auto">
                     <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
                   </div>
                 )}
                 {mobileTab === 'extras' && (
-                  <div className="p-2">
+                  <div className="p-2 h-full overflow-y-auto">
                     <MovieNightExtras
                       socket={socket}
                       me={me}
@@ -1073,11 +1068,11 @@ export default function Room() {
                 )}
               </div>
 
-              {/* Mobile Bottom Tab Dock */}
-              <div className="shrink-0 h-12 flex items-center justify-around border-t border-slate-800 bg-[#090a1e] rounded-2xl mt-1">
+              {/* Mobile Single Native Bottom Navigation Dock */}
+              <div className="shrink-0 h-13 sm:h-14 flex items-center justify-around border-t border-slate-800 bg-[#090a1e] rounded-2xl mt-1 px-1">
                 {[
-                  { id: 'chat', label: 'Chat', icon: MessageSquare },
-                  { id: 'call', label: 'Call', icon: Video },
+                  { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
+                  { id: 'call', label: 'Call', icon: Video, activeDot: callCam },
                   { id: 'gestures', label: 'Love', icon: Heart },
                   { id: 'extras', label: 'Extras', icon: Popcorn },
                 ].map((tab) => {
@@ -1088,12 +1083,23 @@ export default function Room() {
                       key={tab.id}
                       type="button"
                       onClick={() => setMobileTab(tab.id)}
-                      className={`flex flex-col items-center gap-0.5 py-1 px-3 text-[11px] font-semibold transition ${
+                      className={`relative flex-1 flex flex-col items-center justify-center py-1 transition cursor-pointer ${
                         active ? 'text-pink-400 font-bold' : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span>{tab.label}</span>
+                      <div className="relative">
+                        <Icon className="h-5 w-5" />
+                        {tab.badge > 0 && (
+                          <span className="absolute -top-1 -right-2 bg-rose-600 text-white text-[9px] font-bold px-1 min-w-[14px] h-[14px] rounded-full flex items-center justify-center">
+                            {tab.badge > 99 ? '99+' : tab.badge}
+                          </span>
+                        )}
+                        {tab.activeDot !== undefined && (
+                          <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${tab.activeDot ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+                        )}
+                      </div>
+                      <span className="text-[10px] mt-0.5 font-medium">{tab.label}</span>
+                      {active && <span className="absolute bottom-0 w-6 h-0.5 rounded-full bg-pink-500" />}
                     </button>
                   );
                 })}
@@ -1502,87 +1508,7 @@ export default function Room() {
         </div>
       )}
 
-      {/* PROFESSIONAL MOBILE & TABLET NATIVE BOTTOM NAVIGATION DOCK */}
-      {boot && (
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-black/95 backdrop-blur-md border-t border-white/15 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.9)]">
-          <div className="w-full max-w-md sm:max-w-xl mx-auto grid grid-cols-4 h-14 items-center px-2">
-            {/* 1. Chat Tab */}
-            <button
-              type="button"
-              onClick={() => setMobileTab('chat')}
-              className={`relative flex flex-col items-center justify-center h-full transition ${
-                mobileTab === 'chat' ? 'text-white' : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              <div className="relative">
-                <MessageSquare className={`h-5 w-5 ${mobileTab === 'chat' ? 'text-rose-400' : ''}`} />
-                {chat.length > 0 && (
-                  <span className="absolute -top-1 -right-2.5 bg-rose-600 text-white text-[9px] font-bold px-1 min-w-[15px] h-[15px] rounded-full flex items-center justify-center">
-                    {chat.length > 99 ? '99+' : chat.length}
-                  </span>
-                )}
-              </div>
-              <span className={`text-[10px] mt-0.5 ${mobileTab === 'chat' ? 'font-bold text-white' : 'font-medium'}`}>Chat</span>
-              {mobileTab === 'chat' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
-            </button>
 
-            {/* 2. Call Tab */}
-            <button
-              type="button"
-              onClick={() => setMobileTab('call')}
-              className={`relative flex flex-col items-center justify-center h-full transition ${
-                mobileTab === 'call' ? 'text-white' : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              <div className="relative">
-                {callCam ? (
-                  <Video className={`h-5 w-5 ${mobileTab === 'call' ? 'text-emerald-400' : 'text-emerald-400/80'}`} />
-                ) : (
-                  <VideoOff className={`h-5 w-5 ${mobileTab === 'call' ? 'text-rose-400' : 'text-rose-400/80'}`} />
-                )}
-                <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${callCam ? 'bg-emerald-400' : 'bg-rose-500'}`} />
-              </div>
-              <span className={`text-[10px] mt-0.5 ${mobileTab === 'call' ? 'font-bold text-white' : 'font-medium'}`}>
-                {callCam ? 'Call' : 'Cam Off'}
-              </span>
-              {mobileTab === 'call' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-emerald-400" />}
-            </button>
-
-            {/* 3. Love / Gestures Tab */}
-            <button
-              type="button"
-              onClick={() => setMobileTab('gestures')}
-              className={`relative flex flex-col items-center justify-center h-full transition ${
-                mobileTab === 'gestures' ? 'text-white' : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              <Heart className={`h-5 w-5 ${mobileTab === 'gestures' ? 'text-rose-400 fill-rose-500/20' : 'text-white/50'}`} />
-              <span className={`text-[10px] mt-0.5 ${mobileTab === 'gestures' ? 'font-bold text-white' : 'font-medium'}`}>Love</span>
-              {mobileTab === 'gestures' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
-            </button>
-
-            {/* 4. Tools / Room Settings Tab */}
-            <button
-              type="button"
-              onClick={() => setMobileTab('tools')}
-              className={`relative flex flex-col items-center justify-center h-full transition ${
-                mobileTab === 'tools' ? 'text-white' : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              <div className="relative">
-                <Sliders className={`h-5 w-5 ${mobileTab === 'tools' ? 'text-cyan-400' : ''}`} />
-                {(queue.length > 0 || timer?.running || readyCheck?.active) && (
-                  <span className="absolute -top-1 -right-2 bg-amber-500 text-black text-[9px] font-extrabold px-1 rounded-full">
-                    {timer?.running ? '⏱' : readyCheck?.active ? '!' : queue.length}
-                  </span>
-                )}
-              </div>
-              <span className={`text-[10px] mt-0.5 ${mobileTab === 'tools' ? 'font-bold text-white' : 'font-medium'}`}>Tools</span>
-              {mobileTab === 'tools' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-cyan-400" />}
-            </button>
-          </div>
-        </nav>
-      )}
 
       {/* Modular Cinema Plugins Suite Modal */}
       <CinemaPlugins

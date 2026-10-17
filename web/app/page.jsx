@@ -201,9 +201,17 @@ export default function SynCinemaPlatform() {
         </div>
       )}
 
+      {/* Dynamic Couple Cinema Background from User Image */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-40 mix-blend-screen scale-105"
+        style={{ backgroundImage: `url('/home-bg.jpg')` }}
+      />
+      {/* High-end Cinema Vignette Overlay to ensure text readability */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-[#060713]/85 via-[#070817]/75 to-[#060713]/95 pointer-events-none" />
+
       {/* Ambient Cinema Lighting Backdrop */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-gradient-to-b from-purple-600/15 via-pink-600/10 to-transparent blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[450px] bg-gradient-to-b from-purple-600/20 via-pink-600/15 to-transparent blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Modern Top Cinema Header */}
       <header className="relative z-20 px-5 sm:px-8 py-4 border-b border-slate-800/80 bg-[#070817]/90 backdrop-blur-xl flex items-center justify-between gap-4">

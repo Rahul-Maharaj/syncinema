@@ -45,9 +45,14 @@ export default function VideoPlayer({
   const playing = useRef(false);
   const share = useRef(null), called = useRef(new Set());
   const stream = screenBy === me ? local : screenStream;
-  const T = media.type;
+  const effectiveType = (() => {
+    if (media?.type && media.type !== 'auto') return media.type;
+    if (media?.src) return detect(media.src);
+    return 'none';
+  })();
+  const T = effectiveType;
   const [localUrl, setLocalUrl] = useState(null), [sub, setSub] = useState(null), [hist, setHist] = useState([]);
-  const [uploading, setUploading] = useState(null); // { progress: number, name: string } | null
+  const [uploading, setUploading] = useState(null);
   const hostRef = useRef(false); hostRef.current = me === hostId;
   const rateTimer = useRef(null);
   const lastProgrammaticSeek = useRef(0);
@@ -1044,6 +1049,20 @@ export default function VideoPlayer({
     }
   };
 
+  // Auto-resolve when room boots with media.type === 'auto' or direct unparsed link
+  useEffect(() => {
+    if ((media?.type === 'auto' || !media?.type) && media?.src) {
+      buildMedia(media.src).then((resolved) => {
+        if (resolved) {
+          setMedia(resolved);
+          if (hostRef.current) {
+            socket?.emit('media:set', { media: resolved });
+          }
+        }
+      });
+    }
+  }, [media?.src, media?.type]);
+
   const handlePasteAndPlay = (e) => {
     const pasted = e.clipboardData?.getData?.('text')?.trim?.();
     if (pasted) {
@@ -1405,18 +1424,14 @@ export default function VideoPlayer({
           </label>
         )}
         {T === 'none' && !stream && (
-          <div className="absolute inset-0 grid place-items-center bg-black p-6 text-center text-white">
-            <div>
-              <div className="relative mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-rose-600"><Play className="h-7 w-7 fill-white" /></div>
-              <p className="font-display text-xl font-semibold">Pick tonight&apos;s movie</p>
-              <ol className="mt-4 space-y-2 text-left text-sm text-white/80">
-                {['Paste any video link in the box below', 'Press “Play for everyone”', 'Or share your screen for any site'].map((t, i) => (
-                  <li key={t} className="flex items-center gap-2">
-                    <b className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/15 text-xs">{i + 1}</b>{t}
-                  </li>
-                ))}
-              </ol>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0c0d24] via-black to-[#060714] p-4 text-center text-white">
+            <div className="relative mb-2 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-tr from-rose-600 to-pink-600 shadow-xl shadow-rose-950/70 animate-pulse">
+              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-white text-white ml-0.5" />
             </div>
+            <p className="font-display text-sm sm:text-base font-bold text-white tracking-wide">Ready to Stream</p>
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 max-w-xs">
+              Paste any movie or video link below to watch together in 0ms sync
+            </p>
           </div>
         )}
         {/* Mobile Autoplay Permission Overlay: Unlocks audio/video on tap if browser blocked playback */}
@@ -1810,7 +1825,7 @@ export default function VideoPlayer({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="hidden sm:flex flex-wrap items-center gap-2">
           <button type="button" onClick={enqueue} className="ghost" title="Add this link to the Up next list"><ListPlus className="h-4 w-4" />Add to queue</button>
           <label className="ghost cursor-pointer" title="Play a movie file from your own device"><FolderOpen className="h-4 w-4" />My file<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></label>
           <label className="ghost cursor-pointer" title="Add .srt or .vtt subtitles"><Captions className="h-4 w-4" />Subtitles<input type="file" accept=".srt,.vtt" onChange={pickSub} hidden /></label>
