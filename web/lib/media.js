@@ -38,6 +38,39 @@ export const getOttPlatform = (u) => {
 
 export const isOttPlatform = (u) => Boolean(getOttPlatform(u));
 
+export const extractOttTitle = (u) => {
+  if (!u) return '';
+  const s = String(u).trim();
+  try {
+    // 1. Disney+ Hotstar: /movies/chhaava/12345 or /shows/title/12345
+    const hotstarMatch = s.match(/hotstar\.com\/[^/]+\/(?:movies|shows|clips)\/([^/]+)/i);
+    if (hotstarMatch && hotstarMatch[1]) {
+      return decodeURIComponent(hotstarMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+    // 2. Amazon Prime Video: /detail/The-Boys/... or /gp/video/detail/B0...
+    const primeMatch = s.match(/primevideo\.com\/detail\/([^/?#]+)/i) || s.match(/amazon\.[a-z.]+\/gp\/video\/detail\/([^/?#]+)/i);
+    if (primeMatch && primeMatch[1]) {
+      return decodeURIComponent(primeMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+    // 3. JioCinema: /movies/title/123 or /tv-shows/title/123
+    const jioMatch = s.match(/jiocinema\.com\/(?:movies|tv-shows)\/([^/?#]+)/i);
+    if (jioMatch && jioMatch[1]) {
+      return decodeURIComponent(jioMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+    // 4. Zee5: /movies/details/title/123
+    const zeeMatch = s.match(/zee5\.com\/(?:movies|tv-shows)\/details\/([^/?#]+)/i);
+    if (zeeMatch && zeeMatch[1]) {
+      return decodeURIComponent(zeeMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+    // 5. Netflix: /title/123456 or /watch/123456
+    const netflixMatch = s.match(/netflix\.com\/(?:title|watch)\/(\d+)/i);
+    if (netflixMatch) {
+      return `Netflix Movie (${netflixMatch[1]})`;
+    }
+  } catch {}
+  return '';
+};
+
 // any link works: known platforms get full sync, media files/streams get full sync, tube/blocked hosts get proxy bypass, OTT gets hybrid
 export const detect = (u) => {
   if (ytId(u)) return 'youtube';
@@ -159,8 +192,8 @@ export const getCloudMirrorSources = (query) => {
   if (!query) return [];
   const clean = encodeURIComponent(query.trim());
   return [
-    { name: 'VidSrc Cloud', url: `https://vidsrc.to/embed/movie/${clean}` },
-    { name: 'SuperEmbed Mirror', url: `https://multiembed.mov/?video_id=${clean}` },
-    { name: '2Embed Cloud', url: `https://www.2embed.cc/embed/${clean}` },
+    { name: 'Server 1 (VidSrc)', url: toProxyUrl(`https://vidsrc.to/embed/movie/${clean}`) },
+    { name: 'Server 2 (EmbedSU)', url: toProxyUrl(`https://embed.su/embed/movie/${clean}`) },
+    { name: 'Server 3 (2Embed)', url: toProxyUrl(`https://www.2embed.cc/embed/${clean}`) },
   ];
 };

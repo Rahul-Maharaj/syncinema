@@ -10,7 +10,7 @@ import {
 import {
   detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl,
   toStreamProxyUrl, resolveMedia, isAdultMedia, sanitizeDisplayTitle,
-  getOttPlatform, isOttPlatform, OTT_PLATFORMS, getCloudMirrorSources
+  getOttPlatform, isOttPlatform, extractOttTitle, OTT_PLATFORMS, getCloudMirrorSources
 } from '@/lib/media';
 import { Tile } from './CouplesOverlay';
 
@@ -71,6 +71,7 @@ export default function VideoPlayer({
   const [resolvingStatus, setResolvingStatus] = useState('');
   const [showOttModal, setShowOttModal] = useState(false);
   const [ottSearchQuery, setOttSearchQuery] = useState('');
+  const [screenAudioLocked, setScreenAudioLocked] = useState(false);
 
   // Fullscreen & Floating Video Call PiP State
   const containerRef = useRef(null);
@@ -683,10 +684,45 @@ export default function VideoPlayer({
     };
   }, [me, hostId]);
 
-  // ---------- screen share (WebRTC optimized for low-end devices) ----------
+  // ---------- screen share (WebRTC mobile-optimized with zero black screen) ----------
   useEffect(() => {
-    if (shareEl.current) shareEl.current.srcObject = stream || null;
-  }, [stream]);
+    const v = shareEl.current;
+    if (!v) return;
+    if (stream) {
+      v.srcObject = stream;
+      v.playsInline = true;
+      v.setAttribute('playsinline', 'true');
+      v.setAttribute('webkit-playsinline', 'true');
+
+      // Attempt immediate playback
+      v.play().catch(() => {
+        // Autoplay blocked on mobile: temporarily mute so video frames start rendering IMMEDIATELY (NO BLACK SCREEN!)
+        v.muted = true;
+        v.play().then(() => {
+          if (screenBy !== me) setScreenAudioLocked(true);
+        }).catch(() => {});
+      });
+
+      // Any user touch or click unblocks unmuted audio
+      const unlockAudio = () => {
+        if (v && screenBy !== me) {
+          v.muted = false;
+          v.play().catch(() => {});
+          setScreenAudioLocked(false);
+        }
+      };
+      window.addEventListener('touchstart', unlockAudio, { once: true });
+      window.addEventListener('click', unlockAudio, { once: true });
+
+      return () => {
+        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('click', unlockAudio);
+      };
+    } else {
+      v.srcObject = null;
+      setScreenAudioLocked(false);
+    }
+  }, [stream, screenBy, me]);
 
   useEffect(() => {
     if (!share.current) return;
@@ -783,13 +819,13 @@ export default function VideoPlayer({
 
       let s;
       try {
-        // High quality tab audio + video capture (best for Hotstar, Netflix, Prime Video)
+        // High quality tab audio + video capture (optimized for mobile phone partners)
         s = await navigator.mediaDevices.getDisplayMedia({
           video: {
             displaySurface: 'browser',
-            frameRate: { ideal: 60, max: 60 },
-            width: { ideal: 1920, max: 1920 },
-            height: { ideal: 1080, max: 1080 },
+            frameRate: { ideal: 30, max: 30 },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
           },
           audio: {
             echoCancellation: false,
@@ -826,7 +862,7 @@ export default function VideoPlayer({
                 if (sender.track?.kind === 'video') {
                   const params = sender.getParameters();
                   if (params.encodings && params.encodings[0]) {
-                    params.encodings[0].maxBitrate = 4000000;
+                    params.encodings[0].maxBitrate = 1800000;
                     params.encodings[0].priority = 'high';
                     params.encodings[0].networkPriority = 'high';
                     sender.setParameters(params).catch(() => {});
@@ -844,6 +880,20 @@ export default function VideoPlayer({
     }
   };
 
+  const playCloudMovie = (query) => {
+    if (!query) return;
+    const clean = query.trim();
+    const cloudUrl = toProxyUrl(`https://vidsrc.to/embed/movie/${encodeURIComponent(clean)}`);
+    socket.emit('media:set', {
+      media: {
+        type: 'proxy',
+        src: cloudUrl,
+        orig: clean,
+        title: clean,
+      },
+    });
+  };
+
   const buildMedia = async (rawUrl) => {
     let src = (rawUrl || url).trim();
     if (!src) return null;
@@ -854,6 +904,7 @@ export default function VideoPlayer({
     // 0. OTT platforms (Disney+ Hotstar, Netflix, Prime Video, JioCinema, Zee5, SonyLIV, etc.)
     const ott = getOttPlatform(src);
     if (ott || force === 'hybrid') {
+      const extracted = extractOttTitle(src);
       return {
         type: 'hybrid',
         src,
@@ -861,7 +912,8 @@ export default function VideoPlayer({
         platform: ott?.name || 'Hybrid OTT',
         icon: ott?.icon || '🍿',
         color: ott?.color || '#d9467a',
-        title: ott ? `${ott.name} Cinema` : 'Hybrid Cinema',
+        title: extracted ? `${ott?.name || 'OTT'}: ${extracted}` : (ott ? `${ott.name} Cinema` : 'Hybrid Cinema'),
+        movieTitle: extracted || '',
       };
     }
 
@@ -1093,9 +1145,9 @@ export default function VideoPlayer({
             : 'aspect-video rounded-2xl border border-white/10'
         }`}
       >
-        {/* Sync Status Badge */}
+        {/* Sync Status Badge (Hidden on mobile phones to keep display clean) */}
         <div
-          className={`absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-white/10 text-[11px] text-white/90 transition-opacity duration-300 ${
+          className={`absolute top-3 left-3 z-30 hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-white/10 text-[11px] text-white/90 transition-opacity duration-300 ${
             isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         >
@@ -1128,20 +1180,6 @@ export default function VideoPlayer({
             >
               Catch up
             </button>
-          </div>
-        )}
-
-        {/* Smart Voice Talk Ducking & Slowdown Banner */}
-        {isDucked && (
-          <div
-            className={`absolute top-12 left-3 z-30 flex items-center gap-2 rounded-full bg-black border border-white/20 px-3 py-1 text-[11px] font-medium text-white pointer-events-none transition-opacity duration-300 ${
-              isFullscreen && !showOverlayControls ? 'opacity-0' : 'opacity-100'
-            }`}
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d9467a]"></span>
-            </span>
-            <span>🎙️ Couch Talk: Audio ducked & video slowed for voice (0.82x)</span>
           </div>
         )}
 
@@ -1263,6 +1301,23 @@ export default function VideoPlayer({
           className={`absolute inset-0 h-full w-full bg-black object-contain will-change-transform ${stream ? '' : 'hidden'}`}
           style={{ transform: 'translateZ(0)' }}
         />
+        {/* Tap for Sound Button (Mobile Autoplay Unmute) */}
+        {screenAudioLocked && stream && screenBy !== me && (
+          <button
+            type="button"
+            onClick={() => {
+              if (shareEl.current) {
+                shareEl.current.muted = false;
+                shareEl.current.play().catch(() => {});
+                setScreenAudioLocked(false);
+              }
+            }}
+            className="absolute bottom-4 right-4 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#d9467a] text-white text-xs font-semibold shadow-2xl cursor-pointer"
+          >
+            <Volume2 className="h-3.5 w-3.5" />
+            <span>Tap for Sound 🔊</span>
+          </button>
+        )}
         <video
           ref={vref}
           controls
@@ -1286,106 +1341,51 @@ export default function VideoPlayer({
           />
         )}
         {T === 'hybrid' && !stream && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/95 p-4 sm:p-6 text-center text-white overflow-y-auto">
-            <div className="max-w-md w-full space-y-4">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold shadow-inner">
-                <span className="text-base">{media.icon || '🍿'}</span>
-                <span>{media.platform || 'Hybrid OTT Cinema'}</span>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black p-4 text-center text-white">
+            <div className="max-w-xs w-full space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl">{media.icon || '🍿'}</span>
+                <span className="font-bold text-sm text-white">{media.platform || 'OTT Cinema'}</span>
               </div>
 
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">
-                  {media.platform ? `${media.platform} Cinema` : 'Hybrid Movie Stream'}
-                </h3>
-                <p className="text-xs text-white/70 mt-1.5 leading-relaxed">
-                  Stream DRM-protected movies (Hotstar, Netflix, Prime Video) with 1080p video + crystal-clear synchronized stereo tab audio directly to your partner.
+              {media.movieTitle && (
+                <p className="text-xs text-rose-300 font-semibold truncate">
+                  🎬 {media.movieTitle}
                 </p>
-              </div>
+              )}
 
+              {/* Action Buttons: Tab Stream or Cloud Movie */}
               <div className="flex flex-col gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => startHybridTabShare(media.src)}
-                  className="btn !py-2.5 !px-5 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-lg"
+                  className="btn !py-2.5 !px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg"
                 >
                   <MonitorUp className="h-4 w-4" />
-                  <span>Start Tab Audio Stream (1080p Stereo)</span>
+                  <span>Stream Tab with Audio</span>
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const title = media.movieTitle || extractOttTitle(media.origSrc || media.src) || media.title || 'Movie';
+                      playCloudMovie(title);
+                    }}
+                    className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition border border-white/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Film className="h-3.5 w-3.5 text-[#ff6fa0]" />
+                    <span>Watch Movie Stream</span>
+                  </button>
+
                   <a
-                    href={media.src}
+                    href={media.origSrc || media.src}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition border border-white/15"
+                    className="py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-xs font-medium transition border border-white/10 flex items-center justify-center gap-1"
                   >
-                    <span>Open in {media.platform || 'Platform'}</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <span>Open ↗</span>
                   </a>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      socket.emit('media:set', {
-                        media: {
-                          type: 'proxy',
-                          src: toProxyUrl(media.src),
-                          orig: media.src,
-                          title: media.platform || 'Proxy Stream',
-                        },
-                      });
-                    }}
-                    className="py-2 px-3 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white text-xs font-medium transition border border-white/10"
-                    title="Attempt unblocked proxy iframe embed"
-                  >
-                    Try Proxy Embed
-                  </button>
-                </div>
-              </div>
-
-              {/* Cloud Movie Mirror Alternative */}
-              <div className="pt-3 border-t border-white/10 text-left space-y-2">
-                <p className="text-[11px] font-semibold text-white/80 uppercase tracking-wider flex items-center gap-1">
-                  <Film className="h-3.5 w-3.5 text-[#ff6fa0]" /> No Account? Play Cloud Movie Mirror
-                </p>
-                <div className="flex gap-1.5">
-                  <input
-                    value={ottSearchQuery}
-                    onChange={(e) => setOttSearchQuery(e.target.value)}
-                    placeholder="Search movie title (e.g. Inception, Stranger Things)…"
-                    className="field !py-1.5 !px-2.5 text-xs flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (!ottSearchQuery.trim()) return;
-                        socket.emit('media:set', {
-                          media: {
-                            type: 'embed',
-                            src: `https://multiembed.mov/?video_id=${encodeURIComponent(ottSearchQuery.trim())}`,
-                            orig: ottSearchQuery.trim(),
-                            title: `Cloud Movie: ${ottSearchQuery.trim()}`,
-                          },
-                        });
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!ottSearchQuery.trim()) return;
-                      socket.emit('media:set', {
-                        media: {
-                          type: 'embed',
-                          src: `https://multiembed.mov/?video_id=${encodeURIComponent(ottSearchQuery.trim())}`,
-                          orig: ottSearchQuery.trim(),
-                          title: `Cloud Movie: ${ottSearchQuery.trim()}`,
-                        },
-                      });
-                    }}
-                    className="btn !py-1.5 !px-3 text-xs shrink-0"
-                  >
-                    Play Mirror
-                  </button>
                 </div>
               </div>
             </div>
@@ -1729,34 +1729,6 @@ export default function VideoPlayer({
         </p>
       )}
 
-      {(T === 'embed' || T === 'proxy') && !stream && (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs opacity-75">
-          <p>
-            {T === 'proxy' ? '🛡️ Unblocked Proxy Active: ISP & ad blocks bypassed. ' : 'Embedded player: '}
-            If playback is blocked, try{' '}
-            <button
-              type="button"
-              onClick={() => {
-                const target = media.orig || media.src;
-                socket.emit('media:set', { media: { type: 'proxy', src: toProxyUrl(target), orig: target } });
-              }}
-              className="font-semibold underline hover:text-[#d9467a]"
-            >
-              Proxy Mode
-            </button>{' '}
-            or use <b>Share screen</b>.
-          </p>
-          <a
-            href={media.orig || (media.src?.startsWith('/api/proxy') ? (new URLSearchParams(media.src.split('?')[1] || '').get('url') || media.src) : media.src)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 underline text-[#ff6fa0] hover:text-white"
-          >
-            Open in new tab <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      )}
-
       <form onSubmit={load} className="flex flex-col gap-2">
         {resolvingStatus && (
           <div className="flex items-center gap-2 text-xs text-rose-300 font-medium py-1.5 px-3 rounded-xl bg-rose-500/15 border border-rose-500/30">
@@ -1851,17 +1823,12 @@ export default function VideoPlayer({
             </div>
 
             {/* Section 1: Tab Audio Mirror for DRM Platforms */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
-                  <MonitorUp className="h-3.5 w-3.5 text-[#ff6fa0]" /> 1-Click OTT Tab Audio Mirror (Zero DRM Blocks)
-                </span>
-              </div>
-              <p className="text-[11px] text-white/70 leading-relaxed">
-                Click any platform below to open it and mirror the browser tab with <b>stereo audio &amp; 1080p 60fps video</b>. Both partners watch together in real time!
-              </p>
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
+                <MonitorUp className="h-3.5 w-3.5 text-[#ff6fa0]" /> Stream Tab with Audio (Netflix, Prime, Hotstar)
+              </span>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
                 {[
                   { name: 'Disney+ Hotstar', url: 'https://www.hotstar.com', icon: '🌟', color: '#123962' },
                   { name: 'Netflix', url: 'https://www.netflix.com', icon: '🔴', color: '#E50914' },
@@ -1901,13 +1868,10 @@ export default function VideoPlayer({
             </div>
 
             {/* Section 2: Free Cloud Movie Mirror (Zero Accounts Needed) */}
-            <div className="pt-3 border-t border-white/10 space-y-2.5">
+            <div className="pt-3 border-t border-white/10 space-y-2">
               <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
-                <Film className="h-3.5 w-3.5 text-[#ff6fa0]" /> Unblocked Cloud Movie Mirror (No Account Required)
+                <Film className="h-3.5 w-3.5 text-[#ff6fa0]" /> Watch via Cloud Stream (No Account Needed)
               </span>
-              <p className="text-[11px] text-white/70">
-                Don&apos;t have an account? Search any movie or web series title (e.g. <i>Inception, Stranger Things, Mirzapur, Leo</i>) to stream together directly:
-              </p>
 
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1915,21 +1879,14 @@ export default function VideoPlayer({
                   <input
                     value={ottSearchQuery}
                     onChange={(e) => setOttSearchQuery(e.target.value)}
-                    placeholder="Search movie or TV show title…"
+                    placeholder="Search movie or show title (e.g. Inception, Stranger Things)…"
                     className="field !pl-9 !py-2 text-xs"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         if (!ottSearchQuery.trim()) return;
                         setShowOttModal(false);
-                        socket.emit('media:set', {
-                          media: {
-                            type: 'embed',
-                            src: `https://multiembed.mov/?video_id=${encodeURIComponent(ottSearchQuery.trim())}`,
-                            orig: ottSearchQuery.trim(),
-                            title: `Cloud Movie: ${ottSearchQuery.trim()}`,
-                          },
-                        });
+                        playCloudMovie(ottSearchQuery);
                       }
                     }}
                   />
@@ -1939,14 +1896,7 @@ export default function VideoPlayer({
                   onClick={() => {
                     if (!ottSearchQuery.trim()) return;
                     setShowOttModal(false);
-                    socket.emit('media:set', {
-                      media: {
-                        type: 'embed',
-                        src: `https://multiembed.mov/?video_id=${encodeURIComponent(ottSearchQuery.trim())}`,
-                        orig: ottSearchQuery.trim(),
-                        title: `Cloud Movie: ${ottSearchQuery.trim()}`,
-                      },
-                    });
+                    playCloudMovie(ottSearchQuery);
                   }}
                   className="btn !py-2 !px-4 text-xs font-semibold shrink-0"
                 >
@@ -1964,14 +1914,7 @@ export default function VideoPlayer({
                     type="button"
                     onClick={() => {
                       setShowOttModal(false);
-                      socket.emit('media:set', {
-                        media: {
-                          type: 'embed',
-                          src: `https://multiembed.mov/?video_id=${encodeURIComponent(title)}`,
-                          orig: title,
-                          title: `Cloud Movie: ${title}`,
-                        },
-                      });
+                      playCloudMovie(title);
                     }}
                     className="px-2 py-0.5 rounded-md bg-white/10 hover:bg-[#d9467a]/20 text-white/80 hover:text-white border border-white/10 text-[10px] transition"
                   >
@@ -1981,13 +1924,14 @@ export default function VideoPlayer({
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-white/50">
+              <span>💡 Chrome tip: Turn off "Hardware Acceleration" if screen is black.</span>
               <button
                 type="button"
                 onClick={() => setShowOttModal(false)}
-                className="btn !py-1.5 !px-4 text-xs"
+                className="btn !py-1 !px-3 text-xs"
               >
-                Done
+                Close
               </button>
             </div>
           </div>
