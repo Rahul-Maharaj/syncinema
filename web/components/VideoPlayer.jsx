@@ -1278,14 +1278,16 @@ export default function VideoPlayer({
         {/* Regular Video Mode: Top-Right Toolbar (Full Screen + Sync & Audio) */}
         {!stream && (
           <div
-            className={`absolute top-3 right-3 z-30 flex items-center gap-2 transition-opacity duration-300 ${
-              isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            className={`absolute top-3 right-3 z-20 flex items-center gap-2 transition-all duration-300 ${
+              isFullscreen
+                ? (!showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100')
+                : 'opacity-0 group-hover:opacity-100 hover:opacity-100 focus-within:opacity-100 pointer-events-auto'
             }`}
           >
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 isFullscreen
                   ? 'bg-rose-600 text-white border-white/30'
                   : 'bg-black/85 hover:bg-black text-white/90 hover:text-white border-white/20 hover:border-white/40'
@@ -1299,7 +1301,7 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 showSettings
                   ? 'bg-rose-600 text-white border-white/30'
                   : 'bg-black/85 hover:bg-black text-white/80 hover:text-white border-white/10 hover:border-white/30'

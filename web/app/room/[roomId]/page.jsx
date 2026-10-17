@@ -455,7 +455,7 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2.5 sm:py-4 overflow-x-hidden">
+    <div ref={root} className="h-screen h-[100dvh] w-screen w-full max-w-[1920px] mx-auto overflow-hidden flex flex-col bg-[#070814] text-slate-100 font-sans selection:bg-purple-600 selection:text-white antialiased">
       {/* 👻 Stealth Admin Ghost Monitor Banner */}
       {isGhost && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
@@ -466,7 +466,7 @@ export default function Room() {
 
       {/* Responsive Top Header */}
       {/* Modern Unified Cinema Navbar */}
-      <header className="hdr mb-3 flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-2xl">
+      <header className="hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b border-slate-800/80 bg-[#090a1e]/90 backdrop-blur-xl z-20">
         {/* Left: Brand + Status + Dynamic Capacity Pill */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link href="/" className="ghost !p-1.5 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
@@ -633,251 +633,275 @@ export default function Room() {
             <LogOut className="h-3.5 w-3.5" />
           </Link>
 
-          {/* Unified Room Controls Popover Menu (Desktop only - mobile uses dedicated ribbon) */}
-          <div className="relative hidden lg:block">
-            <button
-              type="button"
-              onClick={() => setShowMenu(!showMenu)}
-              className={`h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition cursor-pointer ${
-                showMenu
-                  ? 'bg-rose-600 text-white border-rose-500 shadow-md'
-                  : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white'
-              }`}
-              title="Room Controls &amp; Settings"
-            >
-              <Sliders className="h-3.5 w-3.5 text-rose-400" />
-              <span>Controls</span>
-            </button>
+          {/* Room Settings Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setShowMenu(true)}
+            className="h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white"
+            title="Room Controls &amp; Settings"
+          >
+            <Sliders className="h-3.5 w-3.5 text-rose-400" />
+            <span className="hidden sm:inline">Settings</span>
+          </button>
+        </div>
+      </header>
 
-            {/* Dropdown Menu (Uniform across Desktop and Mobile) */}
-            {showMenu && (
-              <div className="absolute right-0 top-10 z-50 w-72 sm:w-80 rounded-2xl bg-zinc-950/95 border border-zinc-800 p-3.5 space-y-3 shadow-2xl backdrop-blur-2xl rise">
-                <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-white tracking-wide uppercase">
-                    <Sliders className="h-3.5 w-3.5 text-rose-400" />
-                    <span>Room Controls</span>
+      {/* Centered, Modern Room Controls & Settings Modal (No clipping, no overlapping) */}
+      {showMenu && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="card w-full max-w-lg p-5 sm:p-6 space-y-5 rounded-3xl bg-[#0b0c20]/95 border border-purple-500/30 shadow-2xl rise text-slate-100 my-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <Sliders className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-base sm:text-lg text-white">Room Controls &amp; Settings</h3>
+                  <p className="text-[11px] text-slate-400">Manage security, capacity, sync mode &amp; viewing options</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMenu(false)}
+                className="h-8 w-8 rounded-full bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Quick Status Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+                <span className="text-[10px] text-slate-400 block font-medium">Room ID:</span>
+                <span className="font-mono font-bold text-purple-300 truncate block">{roomId}</span>
+              </div>
+              <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+                <span className="text-[10px] text-slate-400 block font-medium">Capacity:</span>
+                <span className="font-bold text-emerald-400 block">{users.length} / {maxSeats} Members</span>
+              </div>
+              <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 col-span-2 sm:col-span-1">
+                <span className="text-[10px] text-slate-400 block font-medium">Sync Mode:</span>
+                <span className="font-bold text-pink-400 block">{lock ? '🔒 Host Sync' : '🔓 Free Sync'}</span>
+              </div>
+            </div>
+
+            {/* Main Action Grid */}
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              {/* Room Password */}
+              <button
+                type="button"
+                onClick={() => {
+                  const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
+                  setNewPassDraft(current);
+                  setShowPassModal(true);
+                  setShowMenu(false);
+                }}
+                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/40 text-left flex items-start gap-2.5 transition group"
+              >
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Room Password</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">View or edit passcode</div>
+                </div>
+              </button>
+
+              {/* Host: Capacity Manager */}
+              {me === hostId ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCapacityDraft(maxSeats);
+                    setShowCapacityModal(true);
+                    setShowMenu(false);
+                  }}
+                  className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-purple-400/40 text-left flex items-start gap-2.5 transition group"
+                >
+                  <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:scale-105 transition">
+                    <Users className="h-4 w-4" />
                   </div>
-                  <button onClick={() => setShowMenu(false)} className="text-white/60 hover:text-white p-1">
-                    <X className="h-4 w-4" />
-                  </button>
+                  <div>
+                    <div className="font-bold text-white">Room Capacity</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Expand up to 30 seats</div>
+                  </div>
+                </button>
+              ) : (
+                <div className="p-3 rounded-2xl bg-slate-900/30 border border-slate-800/50 text-left flex items-start gap-2.5 opacity-60">
+                  <div className="p-2 rounded-xl bg-slate-800 text-slate-400">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-300">Room Capacity</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">{maxSeats} seats (Host only)</div>
+                  </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {/* Host: Capacity Manager */}
-                  {me === hostId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCapacityDraft(maxSeats);
-                        setShowCapacityModal(true);
-                        setShowMenu(false);
-                      }}
-                      className="ghost !justify-start !py-2.5 !px-3 text-white/90 hover:text-white border border-white/10 hover:border-rose-500/40"
-                    >
-                      <Users className="h-4 w-4 text-rose-400" />
-                      <span>Capacity ({maxSeats}p)</span>
-                    </button>
-                  )}
+              {/* Host: Lock Entry */}
+              {me === hostId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
+                      if (res?.ok) setEntryLocked(res.entryLocked);
+                    });
+                  }}
+                  className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group ${
+                    entryLocked ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className={`p-2 rounded-xl border ${entryLocked ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                    {entryLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-white">{entryLocked ? 'Entry Locked' : 'Entry Open'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{entryLocked ? 'Click to allow joins' : 'Click to lock joins'}</div>
+                  </div>
+                </button>
+              )}
 
-                  {/* Room Password */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
-                      setNewPassDraft(current);
-                      setShowPassModal(true);
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 text-amber-300 border border-white/10 hover:border-amber-400/40"
-                  >
-                    <Lock className="h-4 w-4 text-amber-400" />
-                    <span>Password</span>
-                  </button>
+              {/* Host: Sync Mode */}
+              {me === hostId && (
+                <button
+                  type="button"
+                  onClick={() => socket.emit('lock', !lock)}
+                  className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-left flex items-start gap-2.5 transition group"
+                >
+                  <div className={`p-2 rounded-xl border ${lock ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
+                    {lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <div className="font-bold text-white">{lock ? 'Host-Only Control' : 'Everyone Control'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">Toggle seek &amp; pause lock</div>
+                  </div>
+                </button>
+              )}
 
-                  {/* Host: Lock Room Entry */}
-                  {me === hostId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
-                          if (res?.ok) setEntryLocked(res.entryLocked);
-                        });
-                        setShowMenu(false);
-                      }}
-                      className={`ghost !justify-start !py-2.5 !px-3 border ${
-                        entryLocked ? 'text-amber-300 border-amber-500/50 bg-amber-500/15' : 'text-white/80 border-white/10 hover:border-amber-400/40'
-                      }`}
-                    >
-                      {entryLocked ? <Lock className="h-4 w-4 text-amber-400" /> : <Unlock className="h-4 w-4" />}
-                      <span>{entryLocked ? 'Unlock Entry' : 'Lock Entry'}</span>
-                    </button>
-                  )}
-
-                  {/* Host: Control Mode */}
-                  {me === hostId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        socket.emit('lock', !lock);
-                        setShowMenu(false);
-                      }}
-                      className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
-                    >
-                      {lock ? <Lock className="h-4 w-4 text-emerald-400" /> : <Unlock className="h-4 w-4" />}
-                      <span>{lock ? 'Host Control' : 'Everyone'}</span>
-                    </button>
-                  )}
-
-                  {/* Mobile Handoff */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowHandoff(true);
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 hover:border-rose-500/40 text-rose-300"
-                  >
-                    <Smartphone className="h-4 w-4" />
-                    <span>QR Handoff</span>
-                  </button>
-
-                  {/* Recent Bar */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDesktopTab('recent');
-                      setMobileTab('recent');
-                      say('Opened Recent Plays Bar 🕒');
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 text-cyan-300 border border-white/10 hover:border-cyan-400/40"
-                  >
-                    <History className="h-4 w-4 text-cyan-400" />
-                    <span>Recent Plays</span>
-                  </button>
-
-                  {/* Cinema Mode */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleCinema();
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 hover:border-amber-400/40"
-                  >
-                    <Film className="h-4 w-4 text-amber-400" />
-                    <span>Cinema Mode</span>
-                  </button>
-
-                  {/* Sleep Timer */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      cycleSleep();
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
-                  >
-                    <Moon className="h-4 w-4 text-indigo-400" />
-                    <span>{sleep ? `Sleep: ${sleep}m` : 'Sleep Timer'}</span>
-                  </button>
-
-                  {/* Hide Screen */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleHide();
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
-                  >
-                    {hidden ? <EyeOff className="h-4 w-4 text-rose-400" /> : <Eye className="h-4 w-4" />}
-                    <span>{hidden ? 'Show Screen' : 'Hide Screen'}</span>
-                  </button>
-
-                  {/* Miss you Hearts */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      socket.emit('nudge');
-                      setShowMenu(false);
-                    }}
-                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 text-rose-300"
-                  >
-                    <Heart className="h-4 w-4 text-rose-500 fill-rose-500/20" />
-                    <span>Miss You 💕</span>
-                  </button>
+              {/* Mobile QR Handoff */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHandoff(true);
+                  setShowMenu(false);
+                }}
+                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-rose-400/40 text-left flex items-start gap-2.5 transition group"
+              >
+                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:scale-105 transition">
+                  <Smartphone className="h-4 w-4" />
                 </div>
+                <div>
+                  <div className="font-bold text-white">QR Phone Handoff</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Scan to move to phone</div>
+                </div>
+              </button>
 
-                {/* Host: Close Room */}
-                {me === hostId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
-                        socket.emit('room:close', {}, (res) => {
-                          if (res?.ok) {
-                            say('Room closed 🚪');
-                            try {
-                              sessionStorage.removeItem('rp_' + roomId);
-                              localStorage.removeItem('rp_' + roomId);
-                            } catch {}
-                            router.push('/');
-                          } else {
-                            say(res?.message || 'Failed to close room');
-                          }
-                        });
-                      }
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer"
-                  >
-                    <DoorClosed className="h-4 w-4 text-rose-400" />
-                    <span>Close Room (Permanent)</span>
-                  </button>
-                )}
+              {/* Sleep Timer */}
+              <button
+                type="button"
+                onClick={cycleSleep}
+                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group ${
+                  sleep ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300' : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className={`p-2 rounded-xl border ${sleep ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                  <Moon className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">{sleep ? `Sleep in ${sleep}m` : 'Sleep Timer'}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Auto-pause movie timer</div>
+                </div>
+              </button>
+
+              {/* Cinema Lights Mode */}
+              <button
+                type="button"
+                onClick={toggleCinema}
+                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/40 text-left flex items-start gap-2.5 transition group"
+              >
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition">
+                  <Film className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Cinema Lights</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Dim background lights</div>
+                </div>
+              </button>
+
+              {/* Hide Screen */}
+              <button
+                type="button"
+                onClick={toggleHide}
+                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group ${
+                  hidden ? 'bg-rose-500/15 border-rose-500/40 text-rose-300' : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className={`p-2 rounded-xl border ${hidden ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                  {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </div>
+                <div>
+                  <div className="font-bold text-white">{hidden ? 'Screen Hidden' : 'Hide Screen'}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Quick boss-key toggle</div>
+                </div>
+              </button>
+            </div>
+
+            {/* Host Danger Zone: Close Room */}
+            {me === hostId && (
+              <div className="pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
+                      socket.emit('room:close', {}, (res) => {
+                        if (res?.ok) {
+                          say('Room closed 🚪');
+                          try {
+                            sessionStorage.removeItem('rp_' + roomId);
+                            localStorage.removeItem('rp_' + roomId);
+                          } catch {}
+                          router.push('/');
+                        } else {
+                          say(res?.message || 'Failed to close room');
+                        }
+                      });
+                    }
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs font-bold text-rose-300 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer"
+                >
+                  <DoorClosed className="h-4 w-4 text-rose-400" />
+                  <span>Permanently Close Room</span>
+                </button>
               </div>
             )}
           </div>
         </div>
-      </header>
+      )}
 
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
       {boot && (
-        <div className={`w-full mx-auto transition-all ${
-          viewMode === 'focus'
-            ? 'max-w-5xl flex flex-col gap-3'
-            : viewMode === 'duo'
-            ? 'max-w-2xl sm:max-w-3xl lg:max-w-none grid gap-3 sm:gap-4 lg:grid-cols-[1fr_360px]'
-            : 'max-w-2xl sm:max-w-3xl lg:max-w-none grid gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]'
-        }`}>
-          {/* Main Content Area */}
-          <section className="panel flex flex-col w-full mx-auto">
+        <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col lg:flex-row p-2 sm:p-3 gap-2.5 sm:gap-3">
+          {/* Main Cinema Auditorium (Left / Center) */}
+          <section className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden min-w-0">
             {users.length < maxSeats && (
-              <div className="card mb-3 flex items-center justify-between gap-3 p-3.5 sm:p-4 border border-white/10 !bg-black/80 rounded-2xl w-full mx-auto shadow-md backdrop-blur-xl">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/5 border border-white/10">
-                    <img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm sm:text-base font-semibold text-white">
-                      {users.length === 1 ? 'Waiting for members to join…' : `Watch Party Active (${users.length} of ${maxSeats} joined)`}
-                    </p>
-                    <p className="text-xs sm:text-sm opacity-65 truncate">
-                      Share the invite link so your friends or partner can stream together.
-                    </p>
-                  </div>
+              <div className="shrink-0 mb-2 flex items-center justify-between gap-2 px-3 py-1.5 border border-white/10 bg-black/80 rounded-xl w-full shadow-md backdrop-blur-xl text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Users className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                  <span className="text-white truncate">
+                    {users.length === 1 ? 'Waiting for members to join…' : `Watch Party Active (${users.length} of ${maxSeats} joined)`}
+                  </span>
                 </div>
-                <button onClick={copy} className="btn shrink-0 !py-1.5 !px-3 text-xs flex items-center gap-1.5">
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copied ? 'Copied' : 'Invite'}</span>
+                <button onClick={copy} className="btn !py-1 !px-2.5 text-[11px] shrink-0">
+                  {copied ? 'Copied' : 'Invite'}
                 </button>
               </div>
             )}
 
-            {/* Video Player (Pinned at the top of the mobile screen) */}
-            <div className="w-full mx-auto">
+            {/* Video Player Container */}
+            <div className="flex-1 min-h-0 w-full flex flex-col justify-center min-w-0">
               <VideoPlayer
                 socket={socket}
                 me={me}
@@ -898,7 +922,7 @@ export default function Room() {
             </div>
 
             {/* Quick Synchronized Floating Reaction Bar */}
-            <div className="w-full mx-auto my-2 flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
+            <div className="shrink-0 my-2 flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
               <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
                   Reactions:
@@ -926,94 +950,9 @@ export default function Room() {
                 ))}
               </div>
 
-              {/* Quick Plugins Button inside Reaction Ribbon */}
-              <button
-                type="button"
-                onClick={() => setShowPlugins(true)}
-                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 text-purple-200 text-xs font-semibold hover:from-purple-600/50 hover:to-pink-600/50 transition cursor-pointer"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-pink-400" />
-                <span className="text-[11px]">Plugins</span>
-              </button>
-            </div>
-
-            {/* Party Grid Mode: Multi-Seat Participant Gallery (up to 30 members) */}
-            {viewMode === 'party' && (
-              <div className="w-full mx-auto my-2 p-3 sm:p-4 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl space-y-3 rise">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-purple-400" />
-                    <span className="font-bold text-xs sm:text-sm text-white">Watch Party Member Gallery</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                      {users.length} of {maxSeats} Members Joined
-                    </span>
-                  </div>
-                  {me === hostId && (
-                    <button
-                      type="button"
-                      onClick={() => { setCapacityDraft(maxSeats); setShowCapacityModal(true); }}
-                      className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 font-semibold cursor-pointer"
-                    >
-                      <span>Expand Seats</span>
-                      <Users className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Webcam / Tile Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {/* Local User Tile */}
-                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
-                    <Tile
-                      stream={callMedia.mine}
-                      name="You"
-                      isPartner={false}
-                      voiceOnly={callMedia.voiceOnly}
-                      isSpeaking={callMedia.localTalking}
-                      isCamOff={!callCam}
-                    />
-                    <span className="absolute bottom-1.5 left-2 text-[10px] font-semibold text-white/90 bg-black/70 px-1.5 py-0.5 rounded backdrop-blur-sm">
-                      You {me === hostId ? '👑' : ''}
-                    </span>
-                  </div>
-
-                  {/* Remote Users */}
-                  {users.filter(u => u.id !== me).map((u) => (
-                    <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
-                      <Tile
-                        stream={callMedia.remote[u.id]}
-                        name={u.name}
-                        isPartner={true}
-                        voiceOnly={callMedia.voiceOnly}
-                        isSpeaking={!!callMedia.remoteTalking[u.id]}
-                        isCamOff={false}
-                      />
-                      <span className="absolute bottom-1.5 left-2 text-[10px] font-semibold text-white/90 bg-black/70 px-1.5 py-0.5 rounded backdrop-blur-sm truncate max-w-[85%]">
-                        {u.name} {u.id === hostId ? '👑' : ''}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Always-Visible Cinema Quick Control Deck */}
-            <div className="w-full mx-auto my-2 p-2.5 sm:p-3 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-xl">
-              <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400 flex items-center gap-1.5">
-                  <Sliders className="h-3.5 w-3.5 text-purple-400" />
-                  Cinema Quick Controls
-                </span>
-                <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  ⚡ Auto-Sync Active
-                </span>
-              </div>
-
-              {/* Action Buttons Ribbon (Horizontal Scrollable Deck) */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {/* View UI Mode Selector Pill */}
-                <div className="shrink-0 flex items-center gap-1 bg-[#0d0e24] border border-slate-800 p-0.5 rounded-xl">
-                  <span className="text-[10px] text-slate-400 px-1 font-semibold">UI:</span>
+                <div className="hidden sm:flex items-center gap-0.5 bg-[#0d0e24] border border-slate-800 p-0.5 rounded-xl">
                   {[
                     { id: 'theater', label: 'Theater' },
                     { id: 'duo', label: 'Duo' },
@@ -1024,7 +963,7 @@ export default function Room() {
                       key={m.id}
                       type="button"
                       onClick={() => changeViewMode(m.id)}
-                      className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                      className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
                         viewMode === m.id ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                       }`}
                     >
@@ -1033,245 +972,89 @@ export default function Room() {
                   ))}
                 </div>
 
-                {/* Cinema Plugins Button */}
+                {/* Quick Plugins Button inside Reaction Ribbon */}
                 <button
                   type="button"
                   onClick={() => setShowPlugins(true)}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/40 hover:border-purple-400 text-purple-200 transition cursor-pointer"
-                  title="Open Cinema Plugins"
+                  className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 text-purple-200 text-xs font-semibold hover:from-purple-600/50 hover:to-pink-600/50 transition cursor-pointer"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-pink-400" />
-                  <span>Plugins</span>
+                  <span className="text-[11px]">Plugins</span>
                 </button>
 
-                {/* Cinema Mode */}
                 <button
                   type="button"
                   onClick={toggleCinema}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#0d0e24] border border-slate-800 hover:border-amber-400/50 hover:bg-slate-800/60 text-slate-200 hover:text-amber-300 transition cursor-pointer"
-                  title="Toggle Theatre Cinema Lights"
+                  className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#0d0e24] border border-slate-800 hover:border-amber-400/50 text-slate-200 hover:text-amber-300 text-xs transition cursor-pointer"
+                  title="Toggle Cinema Lights"
                 >
                   <Film className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Cinema</span>
+                  <span className="text-[11px] hidden sm:inline">Cinema</span>
                 </button>
-
-                {/* Room Password */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
-                    setNewPassDraft(current);
-                    setShowPassModal(true);
-                  }}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#0d0e24] border border-slate-800 hover:border-amber-400/50 hover:bg-slate-800/60 text-slate-200 hover:text-amber-300 transition cursor-pointer"
-                  title="View or Change Room Password"
-                >
-                  <Lock className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Password</span>
-                </button>
-
-                {/* Host: Lock Entry */}
-                {me === hostId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
-                        if (res?.ok) setEntryLocked(res.entryLocked);
-                      });
-                    }}
-                    className={`shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl border transition cursor-pointer ${
-                      entryLocked
-                        ? 'bg-amber-500/15 border-amber-500/50 text-amber-300'
-                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
-                    }`}
-                    title={entryLocked ? 'Unlock Room Entry for New Members' : 'Lock Room Entry from New Members'}
-                  >
-                    {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5 text-zinc-400" />}
-                    <span>{entryLocked ? 'Room Locked' : 'Room Open'}</span>
-                  </button>
-                )}
-
-                {/* Host: Control Mode */}
-                {me === hostId && (
-                  <button
-                    type="button"
-                    onClick={() => socket.emit('lock', !lock)}
-                    className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer"
-                    title={lock ? 'Only Host Can Seek/Pause' : 'Everyone Can Seek/Pause'}
-                  >
-                    {lock ? <Lock className="h-3.5 w-3.5 text-rose-400" /> : <Unlock className="h-3.5 w-3.5 text-emerald-400" />}
-                    <span>{lock ? 'Host Sync' : 'Free Sync'}</span>
-                  </button>
-                )}
-
-                {/* Sleep Timer */}
-                <button
-                  type="button"
-                  onClick={cycleSleep}
-                  className={`shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl border transition cursor-pointer ${
-                    sleep 
-                      ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
-                      : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
-                  }`}
-                  title="Cycle Sleep Timer"
-                >
-                  <Moon className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>{sleep ? `Sleep ${sleep}m` : 'Sleep'}</span>
-                </button>
-
-                {/* Recent Plays */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDesktopTab('recent');
-                    setMobileTab('tools');
-                    setToolsSubTab('controls');
-                    say('Opened Recent Plays Bar 🕒');
-                  }}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-cyan-500/40 hover:bg-zinc-800/80 text-zinc-200 hover:text-cyan-300 transition cursor-pointer"
-                  title="Show Recently Played Media"
-                >
-                  <History className="h-3.5 w-3.5 text-cyan-400" />
-                  <span>Recent</span>
-                </button>
-
-                {/* QR Mobile Handoff */}
-                <button
-                  type="button"
-                  onClick={() => setShowHandoff(true)}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-rose-500/40 hover:bg-zinc-800/80 text-zinc-200 hover:text-rose-300 transition cursor-pointer"
-                  title="Scan QR to Move to Phone"
-                >
-                  <Smartphone className="h-3.5 w-3.5 text-rose-400" />
-                  <span>QR Handoff</span>
-                </button>
-
-                {/* Hide Screen */}
-                <button
-                  type="button"
-                  onClick={toggleHide}
-                  className={`shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl border transition cursor-pointer ${
-                    hidden
-                      ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
-                      : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
-                  }`}
-                  title="Boss Key / Hide Video Display"
-                >
-                  {hidden ? <EyeOff className="h-3.5 w-3.5 text-rose-400" /> : <Eye className="h-3.5 w-3.5 text-zinc-400" />}
-                  <span>{hidden ? 'Show' : 'Hide'}</span>
-                </button>
-
-                {/* Miss You */}
-                <button
-                  type="button"
-                  onClick={() => socket.emit('nudge')}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-rose-600/15 border border-rose-500/30 hover:bg-rose-600/25 text-rose-300 hover:text-white transition cursor-pointer"
-                  title="Send Heart Particles to Partner"
-                >
-                  <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-500/30" />
-                  <span>Miss You 💕</span>
-                </button>
-
-                {/* Host: Close Room */}
-                {me === hostId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
-                        socket.emit('room:close', {}, (res) => {
-                          if (res?.ok) {
-                            say('Room closed 🚪');
-                            try {
-                              sessionStorage.removeItem('rp_' + roomId);
-                              localStorage.removeItem('rp_' + roomId);
-                            } catch {}
-                            router.push('/');
-                          } else {
-                            say(res?.message || 'Failed to close room');
-                          }
-                        });
-                      }
-                    }}
-                    className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-rose-950/40 border border-rose-800/40 text-rose-400 hover:bg-rose-900/50 hover:text-rose-200 transition cursor-pointer"
-                    title="Permanently Close Room"
-                  >
-                    <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
-                    <span>Close Room</span>
-                  </button>
-                )}
               </div>
             </div>
 
-            {/* MOBILE & TABLET TAB CONTENT (Centered with max-w-2xl for phone and tab) */}
-            <div className="lg:hidden w-full max-w-xl sm:max-w-2xl mx-auto pb-24 mt-2">
-              {mobileTab === 'chat' && (
-                <ChatPanel
-                  socket={socket}
-                  me={me}
-                  name={name}
-                  users={users}
-                  hostId={hostId}
-                  chat={chat}
-                  playerRef={playerRef}
-                  say={say}
-                  isMobile={true}
-                />
-              )}
-              {mobileTab === 'call' && (
-                <div className="rise">
-                  {/* CouplesOverlay renders the dedicated Mobile Call Hub directly below */}
+            {/* Party Grid Mode (Only in party mode, compact) */}
+            {viewMode === 'party' && (
+              <div className="shrink-0 mt-2 p-2 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1 mb-1.5 text-xs">
+                  <span className="font-bold text-white flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-purple-400" /> Member Gallery ({users.length}/{maxSeats})
+                  </span>
+                  {me === hostId && (
+                    <button
+                      type="button"
+                      onClick={() => { setCapacityDraft(maxSeats); setShowCapacityModal(true); }}
+                      className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
+                    >
+                      Expand Seats
+                    </button>
+                  )}
                 </div>
-              )}
-              {mobileTab === 'gestures' && (
-                <div className="rise">
-                  <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 max-h-24 overflow-y-auto">
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black border border-slate-800">
+                    <Tile stream={callMedia.mine} name="You" isPartner={false} voiceOnly={callMedia.voiceOnly} isSpeaking={callMedia.localTalking} isCamOff={!callCam} />
+                  </div>
+                  {users.filter(u => u.id !== me).map((u) => (
+                    <div key={u.id} className="relative aspect-video rounded-lg overflow-hidden bg-black border border-slate-800">
+                      <Tile stream={callMedia.remote[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia.voiceOnly} isSpeaking={!!callMedia.remoteTalking[u.id]} isCamOff={false} />
+                    </div>
+                  ))}
                 </div>
-              )}
-              {mobileTab === 'extras' && (
-                <div className="rise">
-                  <MovieNightExtras
+              </div>
+            )}
+
+            {/* Mobile Tab Content (Only visible on mobile lg:hidden) */}
+            <div className="lg:hidden flex-1 min-h-0 flex flex-col overflow-hidden mt-2">
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                {mobileTab === 'chat' && (
+                  <ChatPanel
                     socket={socket}
                     me={me}
                     name={name}
                     users={users}
-                    queue={queue}
-                    watchlist={watchlist}
-                    currentMedia={currentMedia}
-                    timer={timer}
-                    readyCheck={readyCheck}
-                    reviews={reviews}
-                    isHost={me === hostId}
+                    hostId={hostId}
+                    chat={chat}
+                    playerRef={playerRef}
                     say={say}
+                    isMobile={true}
                   />
-                </div>
-              )}
-              {mobileTab === 'tools' && (
-                <div className="rise space-y-3.5">
-                  {/* Segmented Sub-navigation inside Tools (Dedicated features, no duplicate controls) */}
-                  <div className="grid grid-cols-3 rounded-2xl bg-zinc-950 border border-zinc-800 p-1 gap-1 shadow-md">
-                    <button
-                      type="button"
-                      onClick={() => setToolsSubTab('extras')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
-                        toolsSubTab === 'extras' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      <Popcorn className="h-3 w-3 text-amber-300" />
-                      <span>Extras</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setToolsSubTab('intimacy')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
-                        toolsSubTab === 'intimacy' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      <Lock className="h-3 w-3 text-rose-400" />
-                      <span>Privacy &amp; Intimacy</span>
-                    </button>
+                )}
+                {mobileTab === 'call' && (
+                  <div className="p-3 text-center text-xs text-slate-300 space-y-2">
+                    <p className="font-semibold text-white">WebRTC Video Call Hub</p>
+                    <div className="aspect-video w-full max-w-xs mx-auto rounded-xl overflow-hidden bg-black border border-slate-800">
+                      <Tile stream={callMedia.mine} name="You" isPartner={false} isCamOff={!callCam} />
+                    </div>
                   </div>
-
-                  {toolsSubTab === 'extras' && (
+                )}
+                {mobileTab === 'gestures' && (
+                  <div className="p-2">
+                    <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
+                  </div>
+                )}
+                {mobileTab === 'extras' && (
+                  <div className="p-2">
                     <MovieNightExtras
                       socket={socket}
                       me={me}
@@ -1286,283 +1069,237 @@ export default function Room() {
                       isHost={me === hostId}
                       say={say}
                     />
-                  )}
-
-                  {toolsSubTab === 'intimacy' && (
-                    <IntimacyMode
-                      socket={socket}
-                      me={me}
-                      isHost={me === hostId}
-                      adultMode={adultMode}
-                      hasPin={hasPin}
-                      say={say}
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Video Call Overlay (CouplesOverlay) - Always mounted for continuous WebRTC audio & seamless tab switching */}
-            <CouplesOverlay
-              me={me}
-              users={users}
-              peerRef={peerRef}
-              onScreen={setScreen}
-              showCall={showCall && viewMode !== 'duo' && viewMode !== 'party'}
-              setShowCall={setShowCall}
-              socket={socket}
-              onVoiceActivity={setVoiceActive}
-              callControlsRef={callControlsRef}
-              onCamChange={setCallCam}
-              onMicChange={setCallMic}
-              onStreamsChange={setCallMedia}
-              isMobileCallActive={mobileTab === 'call'}
-              onSwitchToCallTab={() => setMobileTab('call')}
-            />
-
-            {/* DESKTOP ONLY: Lower Tab Switcher and Content */}
-            <div className="hidden lg:block space-y-3 mt-3">
-              {/* Segmented Desktop Switcher */}
-              <div className="flex rounded-2xl bg-[#090a1e]/90 p-1.5 border border-slate-800/80 gap-1.5 shadow-lg">
-                <button
-                  type="button"
-                  onClick={() => setDesktopTab('extras')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'extras'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Popcorn className="h-4 w-4 text-amber-300" />
-                  <span>Movie-Night Extras 🍿</span>
-                  {(queue.length > 0 || timer?.running || readyCheck?.active) && (
-                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">
-                      {timer?.running ? '⏱️' : readyCheck?.active ? 'Ready?' : queue.length}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDesktopTab('gestures')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'gestures'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Heart className="h-4 w-4 text-rose-400" />
-                  <span>Romantic Gestures 💕</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDesktopTab('recent')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'recent'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <History className="h-4 w-4 text-cyan-400" />
-                  <span>Recent Plays 🕒</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDesktopTab('intimacy')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'intimacy'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Lock className="h-4 w-4 text-rose-400" />
-                  <span>Couples Privacy 🔒</span>
-                </button>
+                  </div>
+                )}
               </div>
 
-              {desktopTab === 'gestures' && (
-                <div className="rise">
-                  <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
-                </div>
-              )}
-
-              {desktopTab === 'extras' && (
-                <div className="rise">
-                  <MovieNightExtras
-                    socket={socket}
-                    me={me}
-                    name={name}
-                    users={users}
-                    queue={queue}
-                    watchlist={watchlist}
-                    currentMedia={currentMedia}
-                    timer={timer}
-                    readyCheck={readyCheck}
-                    reviews={reviews}
-                    isHost={me === hostId}
-                    say={say}
-                  />
-                </div>
-              )}
-
-              {desktopTab === 'recent' && (
-                <div className="rise">
-                  <RecentBar
-                    onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
-                    onAddToQueue={(item) => socket.emit('queue:add', { media: item })}
-                    adultMode={adultMode}
-                    say={say}
-                  />
-                </div>
-              )}
-
-              {desktopTab === 'intimacy' && (
-                <div className="rise">
-                  <IntimacyMode
-                    socket={socket}
-                    me={me}
-                    isHost={me === hostId}
-                    adultMode={adultMode}
-                    hasPin={hasPin}
-                    say={say}
-                  />
-                </div>
-              )}
+              {/* Mobile Bottom Tab Dock */}
+              <div className="shrink-0 h-12 flex items-center justify-around border-t border-slate-800 bg-[#090a1e] rounded-2xl mt-1">
+                {[
+                  { id: 'chat', label: 'Chat', icon: MessageSquare },
+                  { id: 'call', label: 'Call', icon: Video },
+                  { id: 'gestures', label: 'Love', icon: Heart },
+                  { id: 'extras', label: 'Extras', icon: Popcorn },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const active = mobileTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setMobileTab(tab.id)}
+                      className={`flex flex-col items-center gap-0.5 py-1 px-3 text-[11px] font-semibold transition ${
+                        active ? 'text-pink-400 font-bold' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </section>
 
-          {/* DESKTOP ONLY: Right Column (Switches cleanly between standard Chat and Duo Date Cam) */}
+          {/* Desktop Right Column: Interactive Deck */}
           {viewMode !== 'focus' && (
-            <aside className="panel hidden lg:flex flex-col h-[calc(100vh-5.5rem)] gap-2.5">
-              {viewMode === 'duo' && (
-                <div className="card p-3 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl space-y-2.5 shrink-0 rise">
-                  {/* Duo Header */}
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-500/30" />
-                      <span>Date Night Duo Cam</span>
-                    </span>
-                    <span className="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30">
-                      💑 Intimate Stream
-                    </span>
+            <aside className="hidden lg:flex w-80 xl:w-96 shrink-0 h-full flex flex-col overflow-hidden rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 shadow-2xl">
+              {/* Tab Selector Header */}
+              <div className="shrink-0 flex items-center border-b border-slate-800 p-1.5 gap-1 bg-[#070814]/80">
+                {[
+                  { id: 'chat', label: 'Chat', icon: MessageSquare },
+                  { id: 'duo', label: 'Duo Cam', icon: Heart },
+                  { id: 'extras', label: 'Extras', icon: Popcorn },
+                  { id: 'gestures', label: 'Love', icon: Sparkles },
+                ].map((t) => {
+                  const Icon = t.icon;
+                  const active = desktopTab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setDesktopTab(t.id)}
+                      className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        active
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tab Body */}
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {desktopTab === 'chat' && (
+                  <div className="flex-1 min-h-0">
+                    <ChatPanel
+                      socket={socket}
+                      me={me}
+                      name={name}
+                      users={users}
+                      hostId={hostId}
+                      chat={chat}
+                      playerRef={playerRef}
+                      say={say}
+                      isMobile={false}
+                    />
                   </div>
+                )}
 
-                  {/* Partner Video Tile */}
-                  {users.filter(u => u.id !== me).length > 0 ? (
-                    users.filter(u => u.id !== me).slice(0, 1).map(partner => (
-                      <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner">
-                        <Tile
-                          stream={callMedia.remote[partner.id]}
-                          name={partner.name}
-                          isPartner={true}
-                          voiceOnly={callMedia.voiceOnly}
-                          isSpeaking={!!callMedia.remoteTalking[partner.id]}
-                          isCamOff={false}
-                        />
-                        {callMedia.remoteTalking[partner.id] && (
-                          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/80 text-white text-[10px] font-bold shadow-lg animate-pulse">
-                            <span>Speaking</span>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="aspect-video rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-3 text-center space-y-1.5 bg-black/40">
-                      <Heart className="h-6 w-6 text-rose-500/40 animate-pulse" />
-                      <p className="text-[11px] font-semibold text-slate-300">Waiting for your partner to join…</p>
-                      <button onClick={copy} className="btn !py-1 !px-2.5 text-[11px] bg-rose-600">
-                        Copy Invite 💌
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Local User Preview Pip */}
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
-                        <Tile
-                          stream={callMedia.mine}
-                          name="You"
-                          isPartner={false}
-                          voiceOnly={callMedia.voiceOnly}
-                          isSpeaking={callMedia.localTalking}
-                          isCamOff={!callCam}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-bold text-white truncate">You</div>
-                        <div className="text-[9px] text-slate-400">{callCam ? 'Camera Live' : 'Camera Off'}</div>
-                      </div>
+                {desktopTab === 'duo' && (
+                  <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-500/30" />
+                        <span>Date Night Duo Cam</span>
+                      </span>
+                      <span className="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30">
+                        💑 Intimate Stream
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    {users.filter(u => u.id !== me).length > 0 ? (
+                      users.filter(u => u.id !== me).slice(0, 1).map(partner => (
+                        <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner">
+                          <Tile
+                            stream={callMedia.remote[partner.id]}
+                            name={partner.name}
+                            isPartner={true}
+                            voiceOnly={callMedia.voiceOnly}
+                            isSpeaking={!!callMedia.remoteTalking[partner.id]}
+                            isCamOff={false}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="aspect-video rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-3 text-center space-y-1.5 bg-black/40">
+                        <Heart className="h-6 w-6 text-rose-500/40 animate-pulse" />
+                        <p className="text-[11px] font-semibold text-slate-300">Waiting for your partner to join…</p>
+                        <button onClick={copy} className="btn !py-1 !px-2.5 text-[11px] bg-rose-600">
+                          Copy Invite 💌
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Local User Preview Pip */}
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
+                          <Tile
+                            stream={callMedia.mine}
+                            name="You"
+                            isPartner={false}
+                            voiceOnly={callMedia.voiceOnly}
+                            isSpeaking={callMedia.localTalking}
+                            isCamOff={!callCam}
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-white truncate">You</div>
+                          <div className="text-[9px] text-slate-400">{callCam ? 'Camera Live' : 'Camera Off'}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => callControlsRef.current?.toggleCam?.()}
+                          className={`p-1.5 rounded-lg border ${callCam ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}
+                          title="Toggle Cam"
+                        >
+                          {callCam ? <Video className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => callControlsRef.current?.toggleMic?.()}
+                          className={`p-1.5 rounded-lg border ${callMic ? 'bg-slate-800 text-white border-slate-700' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
+                          title="Toggle Mic"
+                        >
+                          {callMic ? <Mic className="h-3 w-3 text-emerald-400" /> : <MicOff className="h-3 w-3 text-amber-400" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Romantic Actions */}
+                    <div className="grid grid-cols-3 gap-1 pt-1">
                       <button
                         type="button"
-                        onClick={() => callControlsRef.current?.toggleCam?.()}
-                        className={`p-1.5 rounded-lg border ${callCam ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}
-                        title="Toggle Cam"
+                        onClick={() => socket?.emit('nudge')}
+                        className="p-1.5 rounded-lg bg-rose-600/15 border border-rose-500/30 hover:bg-rose-600/25 text-rose-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
                       >
-                        {callCam ? <Video className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
+                        <Heart className="h-3 w-3 text-rose-400 fill-rose-500/30" />
+                        <span>Miss You</span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => callControlsRef.current?.toggleMic?.()}
-                        className={`p-1.5 rounded-lg border ${callMic ? 'bg-slate-800 text-white border-slate-700' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
-                        title="Toggle Mic"
+                        onClick={() => triggerReaction('❤️')}
+                        className="p-1.5 rounded-lg bg-purple-600/15 border border-purple-500/30 hover:bg-purple-600/25 text-purple-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
                       >
-                        {callMic ? <Mic className="h-3 w-3 text-emerald-400" /> : <MicOff className="h-3 w-3 text-amber-400" />}
+                        <span>Kiss 💋</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowPlugins(true); setPluginsTab('keepsake'); }}
+                        className="p-1.5 rounded-lg bg-pink-600/15 border border-pink-500/30 hover:bg-pink-600/25 text-pink-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
+                      >
+                        <Camera className="h-3 w-3 text-pink-400" />
+                        <span>Polaroid</span>
                       </button>
                     </div>
                   </div>
+                )}
 
-                  {/* Quick Love Actions */}
-                  <div className="grid grid-cols-3 gap-1">
-                    <button
-                      type="button"
-                      onClick={() => socket?.emit('nudge')}
-                      className="p-1.5 rounded-lg bg-rose-600/15 border border-rose-500/30 hover:bg-rose-600/25 text-rose-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
-                    >
-                      <Heart className="h-3 w-3 text-rose-400 fill-rose-500/30" />
-                      <span>Miss You</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => triggerReaction('❤️')}
-                      className="p-1.5 rounded-lg bg-purple-600/15 border border-purple-500/30 hover:bg-purple-600/25 text-purple-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
-                    >
-                      <span>Kiss 💋</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowPlugins(true); setPluginsTab('keepsake'); }}
-                      className="p-1.5 rounded-lg bg-pink-600/15 border border-pink-500/30 hover:bg-pink-600/25 text-pink-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
-                    >
-                      <Camera className="h-3 w-3 text-pink-400" />
-                      <span>Polaroid</span>
-                    </button>
+                {desktopTab === 'extras' && (
+                  <div className="flex-1 min-h-0 overflow-y-auto p-3">
+                    <MovieNightExtras
+                      socket={socket}
+                      me={me}
+                      name={name}
+                      users={users}
+                      queue={queue}
+                      watchlist={watchlist}
+                      currentMedia={currentMedia}
+                      timer={timer}
+                      readyCheck={readyCheck}
+                      reviews={reviews}
+                      isHost={me === hostId}
+                      say={say}
+                    />
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Chat Panel */}
-              <div className="flex-1 min-h-0">
-                <ChatPanel
-                  socket={socket}
-                  me={me}
-                  name={name}
-                  users={users}
-                  hostId={hostId}
-                  chat={chat}
-                  playerRef={playerRef}
-                  say={say}
-                  isMobile={false}
-                />
+                {desktopTab === 'gestures' && (
+                  <div className="flex-1 min-h-0 overflow-y-auto p-3">
+                    <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
+                  </div>
+                )}
               </div>
             </aside>
           )}
+
+          {/* Video Call Overlay (CouplesOverlay) */}
+          <CouplesOverlay
+            me={me}
+            users={users}
+            peerRef={peerRef}
+            onScreen={setScreen}
+            showCall={showCall && viewMode !== 'duo' && viewMode !== 'party'}
+            setShowCall={setShowCall}
+            socket={socket}
+            onVoiceActivity={setVoiceActive}
+            callControlsRef={callControlsRef}
+            onCamChange={setCallCam}
+            onMicChange={setCallMic}
+            onStreamsChange={setCallMedia}
+            isMobileCallActive={mobileTab === 'call'}
+            onSwitchToCallTab={() => setMobileTab('call')}
+          />
         </div>
       )}
-
-
 
       {/* Cross-Device Handoff & Watch History Modal */}
       <WatchHistoryModal
