@@ -8,7 +8,7 @@ import {
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
   Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv,
-  MonitorPlay, Camera, Music, RefreshCw
+  MonitorPlay, Camera, Music, RefreshCw, Palette
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -24,7 +24,109 @@ import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
 
-
+// Curated Cinema Color Themes (Home screen matches 'midnight')
+export const ROOM_THEMES = {
+  midnight: {
+    id: 'midnight',
+    name: 'Midnight Romance',
+    tag: 'Home Screen Aesthetic • Romantic Ambiance',
+    icon: '💕',
+    bgClass: 'bg-[#050611]',
+    navBg: 'bg-[#070817]/90 border-pink-500/20',
+    asideBg: 'bg-[#070817]/90',
+    tabBg: 'bg-[#050611]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#050611] via-black/40 to-black/60',
+    ambientGlow: 'bg-pink-500/10',
+    borderColor: 'border-pink-500/25',
+    cardBorder: 'border-pink-500/30',
+    accentGradient: 'from-purple-600 via-pink-600 to-rose-600',
+    accentText: 'text-pink-400',
+    accentBg: 'bg-pink-500',
+    themeBtnClass: 'bg-pink-500/15 border-pink-500/30 text-pink-300 hover:bg-pink-500/25',
+    swatches: ['#050611', '#ec4899', '#8b5cf6'],
+    showWallpaperDefault: true,
+  },
+  neon: {
+    id: 'neon',
+    name: 'Cyberpunk Neon',
+    tag: 'Electric Auditorium • Cyan & Magenta',
+    icon: '⚡',
+    bgClass: 'bg-[#060719]',
+    navBg: 'bg-[#070822]/90 border-cyan-500/20',
+    asideBg: 'bg-[#070822]/90',
+    tabBg: 'bg-[#060719]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#060719] via-[#080824]/40 to-[#060719]/70',
+    ambientGlow: 'bg-cyan-500/15',
+    borderColor: 'border-cyan-500/25',
+    cardBorder: 'border-cyan-500/35',
+    accentGradient: 'from-cyan-500 via-purple-600 to-fuchsia-500',
+    accentText: 'text-cyan-400',
+    accentBg: 'bg-cyan-500',
+    themeBtnClass: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25',
+    swatches: ['#060719', '#06b6d4', '#d946ef'],
+    showWallpaperDefault: false,
+  },
+  velvet: {
+    id: 'velvet',
+    name: 'Velvet Lounge',
+    tag: 'Warm Candlelight • Amber & Crimson',
+    icon: '🕯️',
+    bgClass: 'bg-[#0c0705]',
+    navBg: 'bg-[#140b08]/90 border-amber-500/20',
+    asideBg: 'bg-[#140b08]/90',
+    tabBg: 'bg-[#0c0705]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#0c0705] via-[#1a0e0a]/40 to-[#0c0705]/70',
+    ambientGlow: 'bg-amber-500/15',
+    borderColor: 'border-amber-500/25',
+    cardBorder: 'border-amber-500/35',
+    accentGradient: 'from-amber-500 via-rose-600 to-red-700',
+    accentText: 'text-amber-400',
+    accentBg: 'bg-amber-500',
+    themeBtnClass: 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25',
+    swatches: ['#0c0705', '#f59e0b', '#dc2626'],
+    showWallpaperDefault: false,
+  },
+  aurora: {
+    id: 'aurora',
+    name: 'Emerald Aurora',
+    tag: 'Starlight Cinema • Mint & Forest Teal',
+    icon: '✨',
+    bgClass: 'bg-[#040d0a]',
+    navBg: 'bg-[#05140f]/90 border-emerald-500/20',
+    asideBg: 'bg-[#05140f]/90',
+    tabBg: 'bg-[#040d0a]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#040d0a] via-[#061812]/40 to-[#040d0a]/70',
+    ambientGlow: 'bg-emerald-500/15',
+    borderColor: 'border-emerald-500/25',
+    cardBorder: 'border-emerald-500/35',
+    accentGradient: 'from-emerald-500 via-teal-500 to-cyan-500',
+    accentText: 'text-emerald-400',
+    accentBg: 'bg-emerald-500',
+    themeBtnClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25',
+    swatches: ['#040d0a', '#10b981', '#06b6d4'],
+    showWallpaperDefault: false,
+  },
+  obsidian: {
+    id: 'obsidian',
+    name: 'Pure Obsidian',
+    tag: 'OLED Zero Glare • Minimalist Silver',
+    icon: '🌑',
+    bgClass: 'bg-[#000000]',
+    navBg: 'bg-black/95 border-white/10',
+    asideBg: 'bg-black/95',
+    tabBg: 'bg-black/95',
+    overlayGradient: 'bg-black/95',
+    ambientGlow: 'bg-transparent',
+    borderColor: 'border-white/10',
+    cardBorder: 'border-white/15',
+    accentGradient: 'from-zinc-600 via-zinc-400 to-white',
+    accentText: 'text-slate-200',
+    accentBg: 'bg-white',
+    themeBtnClass: 'bg-white/10 border-white/15 text-white hover:bg-white/15',
+    swatches: ['#000000', '#71717a', '#ffffff'],
+    showWallpaperDefault: false,
+  },
+};
 
 const hello = (n) => {
   try {
@@ -120,6 +222,34 @@ export default function Room() {
   const [showPlugins, setShowPlugins] = useState(false);
   const [pluginsTab, setPluginsTab] = useState('soundscapes');
   const [duoRightTab, setDuoRightTab] = useState('cam'); // 'cam' | 'chat'
+
+  // Room Color Themes & Ambiance State (Home Screen matches 'midnight')
+  const [currentThemeId, setCurrentThemeId] = useState('midnight');
+  const [showWallpaper, setShowWallpaper] = useState(true);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem('sc_room_theme');
+      if (savedTheme && ROOM_THEMES[savedTheme]) setCurrentThemeId(savedTheme);
+      const savedWp = localStorage.getItem('sc_show_wallpaper');
+      if (savedWp !== null) setShowWallpaper(savedWp === '1');
+    } catch {}
+  }, []);
+
+  const selectTheme = (themeId, syncWithRoom = false) => {
+    if (!ROOM_THEMES[themeId]) return;
+    setCurrentThemeId(themeId);
+    try { localStorage.setItem('sc_room_theme', themeId); } catch {}
+    if (syncWithRoom && socket && me === hostId) {
+      socket.emit('ambient:set', { preset: themeId, intensity: 80 });
+      say(`Synced "${ROOM_THEMES[themeId].name}" theme to all room members 🎨`);
+    } else {
+      say(`Ambiance switched to ${ROOM_THEMES[themeId].name} ✨`);
+    }
+  };
+
+  const theme = ROOM_THEMES[currentThemeId] || ROOM_THEMES.midnight;
 
   const peerRef = useRef(null), playerRef = useRef(null), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
@@ -227,6 +357,9 @@ export default function Room() {
       setReviews(r.reviews || []);
       setAdultMode(!!r.adult);
       setHasPin(!!r.hasPin);
+      if (r.ambient?.preset && ROOM_THEMES[r.ambient.preset]) {
+        setCurrentThemeId(r.ambient.preset);
+      }
       if (r.ottAccounts) setOttAccounts(r.ottAccounts);
       if (r.media) setCurrentMedia(r.media);
       setLock(r.lock);
@@ -342,6 +475,13 @@ export default function Room() {
     socket.on('voice:active', ({ active } = {}) => {
       setVoiceActive(!!active);
     });
+    socket.on('ambient:update', (amb) => {
+      if (amb?.preset && ROOM_THEMES[amb.preset]) {
+        setCurrentThemeId(amb.preset);
+        try { localStorage.setItem('sc_room_theme', amb.preset); } catch {}
+        say(`Room ambiance changed to ${ROOM_THEMES[amb.preset].name} 🎨`);
+      }
+    });
     socket.on('nudge', () => {
       navigator.vibrate?.([200, 100, 200]);
       for (let i = 0; i < 14; i++) {
@@ -362,6 +502,7 @@ export default function Room() {
       socket.off('connect', joinHandler);
       socket.off('voice:active');
       socket.off('ott:sync');
+      socket.off('ambient:update');
     };
   }, [name, socket]);
 
@@ -480,7 +621,24 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className="min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col bg-[#070814] text-slate-100 font-sans selection:bg-purple-600 selection:text-white antialiased overflow-x-hidden overflow-y-auto">
+    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} text-slate-100 font-sans selection:bg-purple-600 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
+      {/* Dynamic Ambient Cinema Background (Matches Home Screen) */}
+      {showWallpaper && (
+        <div 
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-25"
+          style={{ 
+            backgroundImage: `url('/home-bg.jpg')`,
+            backgroundPosition: 'center 40%',
+          }}
+        />
+      )}
+
+      {/* Theme Vignette Gradient Overlay */}
+      <div className={`fixed inset-0 z-0 pointer-events-none transition-colors duration-700 ${theme.overlayGradient}`} />
+
+      {/* Soft Ambient Glow Lighting Orb */}
+      <div className={`fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-colors duration-700 ${theme.ambientGlow}`} />
+
       {/* 👻 Stealth Admin Ghost Monitor Banner */}
       {isGhost && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
@@ -491,7 +649,7 @@ export default function Room() {
 
       {/* Responsive Top Header */}
       {/* Modern Unified Cinema Navbar */}
-      <header className="hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b border-slate-800/80 bg-[#090a1e]/90 backdrop-blur-xl z-20">
+      <header className={`hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
         {/* Left: Brand + Status + Capacity Pill */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
           <Link href="/" className="ghost !p-1 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
@@ -569,6 +727,17 @@ export default function Room() {
           >
             <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
             <span>Plugins</span>
+          </button>
+
+          {/* Room Themes & Ambiance Launcher */}
+          <button
+            type="button"
+            onClick={() => setShowThemeModal(true)}
+            className={`h-7 sm:h-8 px-2 sm:px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition shadow-lg cursor-pointer active:scale-95 shrink-0 ${theme.themeBtnClass}`}
+            title="Change Room Color Theme & Ambiance"
+          >
+            <Palette className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Themes</span>
           </button>
 
           {/* Active Snack Timer Indicator */}
@@ -725,6 +894,24 @@ export default function Room() {
                 <div>
                   <div className="font-bold text-white">Room Password</div>
                   <div className="text-[10px] text-slate-400 mt-0.5">View or edit passcode</div>
+                </div>
+              </button>
+
+              {/* Ambiance Themes & Colors */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowThemeModal(true);
+                  setShowMenu(false);
+                }}
+                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group"
+              >
+                <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-105 transition">
+                  <Palette className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Ambiance &amp; Themes</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">Switch room colors &amp; vibe</div>
                 </div>
               </button>
 
@@ -922,7 +1109,7 @@ export default function Room() {
             )}
 
             {/* Video Player Container */}
-            <div className="w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-800/80">
+            <div className={`w-full rounded-2xl overflow-hidden shadow-2xl bg-black border ${theme.borderColor} transition-colors duration-500`}>
               <VideoPlayer
                 socket={socket}
                 me={me}
@@ -943,7 +1130,7 @@ export default function Room() {
             </div>
 
             {/* Quick Synchronized Floating Reaction Bar */}
-            <div className="my-1 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 p-2 sm:px-3 sm:py-2 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
+            <div className={`my-1 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 p-2 sm:px-3 sm:py-2 rounded-2xl ${theme.navBg} border ${theme.borderColor} backdrop-blur-xl shadow-lg transition-colors duration-500`}>
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
                   Reactions:
@@ -992,6 +1179,17 @@ export default function Room() {
                     </button>
                   ))}
                 </div>
+
+                {/* Quick Themes Launcher Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowThemeModal(true)}
+                  className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-sm ${theme.themeBtnClass}`}
+                  title="Change Room Color Theme & Ambiance"
+                >
+                  <Palette className="h-3.5 w-3.5" />
+                  <span className="text-[11px] font-bold">{theme.name}</span>
+                </button>
 
                 {/* Quick Plugins Button inside Reaction Ribbon */}
                 <button
@@ -1046,9 +1244,9 @@ export default function Room() {
             )}
 
             {/* Mobile / Tablet Interactive Tabs Deck (Reachable via smooth scroll) */}
-            <div className="lg:hidden flex flex-col rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 shadow-2xl overflow-hidden mt-3">
+            <div className={`lg:hidden flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl overflow-hidden mt-3 backdrop-blur-xl transition-colors duration-500`}>
               {/* Tab Selector Nav Header */}
-              <div className="shrink-0 flex items-center border-b border-slate-800 bg-[#070814]/90 p-1.5 gap-1">
+              <div className={`shrink-0 flex items-center border-b ${theme.borderColor} ${theme.tabBg} p-1.5 gap-1`}>
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
                   { id: 'call', label: 'Duo Cam', icon: Video, activeDot: callCam },
@@ -1139,9 +1337,9 @@ export default function Room() {
 
           {/* Desktop Right Column: Interactive Deck */}
           {viewMode !== 'focus' && (
-            <aside className="hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden">
+            <aside className={`hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden backdrop-blur-xl transition-colors duration-500`}>
               {/* Tab Selector Header */}
-              <div className="shrink-0 flex items-center border-b border-slate-800 p-1.5 gap-1 bg-[#070814]/80">
+              <div className={`shrink-0 flex items-center border-b ${theme.borderColor} p-1.5 gap-1 ${theme.tabBg}`}>
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare },
                   { id: 'duo', label: 'Duo Cam', icon: Heart },
@@ -1539,6 +1737,138 @@ export default function Room() {
       )}
 
 
+
+      {/* Room Ambiance & Color Themes Modal */}
+      {showThemeModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="w-full max-w-xl p-5 sm:p-6 space-y-5 rounded-3xl bg-black/85 border border-white/20 backdrop-blur-2xl shadow-2xl rise text-slate-100 my-auto text-left">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                  <Palette className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                    Room Color Themes &amp; Ambiance
+                  </h3>
+                  <p className="text-[11px] text-pink-300">Transform the auditorium lighting &amp; vibe</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowThemeModal(false)}
+                className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Themes Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[55vh] overflow-y-auto pr-1">
+              {Object.values(ROOM_THEMES).map((th) => {
+                const isActive = currentThemeId === th.id;
+                return (
+                  <button
+                    key={th.id}
+                    type="button"
+                    onClick={() => selectTheme(th.id)}
+                    className={`p-3.5 rounded-2xl border text-left transition relative cursor-pointer flex flex-col justify-between gap-3 ${
+                      isActive
+                        ? `bg-white/10 ${th.cardBorder} ring-2 ring-pink-500/50 shadow-xl shadow-pink-950/40`
+                        : 'bg-black/50 border-white/10 hover:border-white/25 hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{th.icon}</span>
+                        <div>
+                          <h4 className="font-bold text-sm text-white flex items-center gap-1.5">
+                            <span>{th.name}</span>
+                            {th.id === 'midnight' && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30 font-semibold">
+                                Home Look
+                              </span>
+                            )}
+                          </h4>
+                          <p className="text-[10px] text-slate-400">{th.tag}</p>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <div className="h-5 w-5 rounded-full bg-pink-500 text-white flex items-center justify-center text-xs shadow-md shrink-0">
+                          <Check className="h-3 w-3 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Color Swatch Strip */}
+                    <div className="flex items-center gap-1.5 w-full pt-1">
+                      {th.swatches.map((color, idx) => (
+                        <span
+                          key={idx}
+                          className="h-3 flex-1 rounded-full shadow-inner border border-white/10"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Options Strip */}
+            <div className="pt-2 border-t border-white/10 space-y-3">
+              {/* Wallpaper Toggle */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-semibold text-white flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-pink-400" />
+                    <span>Romantic Ambient Wallpaper</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">Display subtle couple watching background behind the theater</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !showWallpaper;
+                    setShowWallpaper(next);
+                    try { localStorage.setItem('sc_show_wallpaper', next ? '1' : '0'); } catch {}
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    showWallpaper ? 'bg-pink-600' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      showWallpaper ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Host Sync Theme Button */}
+              {me === hostId && (
+                <button
+                  type="button"
+                  onClick={() => selectTheme(currentThemeId, true)}
+                  className="w-full py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-pink-300 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Crown className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Sync &ldquo;{ROOM_THEMES[currentThemeId]?.name}&rdquo; To All Room Members</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowThemeModal(false)}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white font-bold text-xs shadow-lg hover:brightness-110 transition cursor-pointer"
+              >
+                Apply &amp; Enjoy Movie Night ✨
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modular Cinema Plugins Suite Modal */}
       <CinemaPlugins
