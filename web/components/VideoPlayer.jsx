@@ -13,7 +13,6 @@ import {
   getOttPlatform, isOttPlatform, extractOttTitle, OTT_PLATFORMS, getCloudMirrorSources
 } from '@/lib/media';
 import { Tile } from './CouplesOverlay';
-import OttVault from './OttVault';
 
 const TYPES = ['auto', 'hybrid', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -71,7 +70,6 @@ export default function VideoPlayer({
   const [subStyle, setSubStyle] = useState({ size: 'md', color: '#ffffff', bg: 'rgba(0,0,0,0.75)' });
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [resolvingStatus, setResolvingStatus] = useState('');
-  const [showOttModal, setShowOttModal] = useState(false);
   const [screenAudioLocked, setScreenAudioLocked] = useState(false);
 
   // Fullscreen & Floating Video Call PiP State
@@ -1828,15 +1826,6 @@ export default function VideoPlayer({
               </select>
             </div>
           )}
-          <button
-            type="button"
-            onClick={() => setShowOttModal(true)}
-            className="ghost text-rose-300 hover:text-white border border-rose-500/40 bg-rose-500/15 shadow-sm font-semibold"
-            title="OTT Vault: Disney+ Hotstar, Netflix, Prime Video, JioCinema with zero screen share"
-          >
-            <Tv className="h-4 w-4 text-rose-400" />
-            <span>OTT Vault 🍿</span>
-          </button>
           {screenBy === me
             ? <button type="button" onClick={stopShare} className="ghost"><MonitorOff className="h-4 w-4" />Stop sharing</button>
             : <button type="button" onClick={startShare} disabled={!!screenBy} className="ghost" title="Show your screen to your partner"><MonitorUp className="h-4 w-4" />Share screen</button>}
@@ -1856,24 +1845,6 @@ export default function VideoPlayer({
           </select>
         </div>
       </form>
-
-      {/* OTT Vault & Dual-Stream Modal */}
-      {showOttModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
-          <OttVault
-            socket={socket}
-            me={me}
-            ottAccounts={ottAccounts}
-            currentMedia={media}
-            onPlayMovie={(title, platformName) => {
-              setShowOttModal(false);
-              playCloudMovie(title, platformName);
-            }}
-            onClose={() => setShowOttModal(false)}
-            isModal={true}
-          />
-        </div>
-      )}
     </div>
   );
 }

@@ -21,7 +21,6 @@ import RecentBar from '@/components/RecentBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
-import OttVault from '@/components/OttVault';
 
 
 
@@ -74,9 +73,9 @@ export default function Room() {
   const [online, setOnline] = useState(true), [copied, setCopied] = useState(false);
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
-  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'ott' | 'gestures' | 'extras' | 'tools'
+  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'gestures' | 'extras' | 'tools'
   const [toolsSubTab, setToolsSubTab] = useState('extras'); // 'extras' | 'intimacy'
-  const [desktopTab, setDesktopTab] = useState('ott'); // 'ott' | 'gestures' | 'extras' | 'recent' | 'intimacy'
+  const [desktopTab, setDesktopTab] = useState('extras'); // 'extras' | 'gestures' | 'recent' | 'intimacy'
   const [showMenu, setShowMenu] = useState(false);
   const [showCall, setShowCall] = useState(true);
   const [showHandoff, setShowHandoff] = useState(false);
@@ -427,7 +426,7 @@ export default function Room() {
 
       {/* Responsive Top Header */}
       {/* Modern Unified Cinema Navbar */}
-      <header className="hdr mb-3 flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 rounded-2xl bg-black/70 border border-white/10 backdrop-blur-xl shadow-xl">
+      <header className="hdr mb-3 flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-2xl">
         {/* Left: Brand + Status + Dynamic Capacity Pill */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link href="/" className="ghost !p-1.5 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
@@ -817,10 +816,10 @@ export default function Room() {
             </div>
 
             {/* Always-Visible Cinema Quick Control Deck */}
-            <div className="w-full mx-auto my-2 p-2 sm:p-2.5 rounded-2xl bg-zinc-950/90 border border-zinc-800/80 backdrop-blur-xl shadow-lg">
+            <div className="w-full mx-auto my-2 p-2.5 sm:p-3 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-xl">
               <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                <span className="text-[11px] font-bold tracking-wider uppercase text-zinc-400 flex items-center gap-1.5">
-                  <Sliders className="h-3.5 w-3.5 text-rose-500" />
+                <span className="text-[11px] font-bold tracking-wider uppercase text-slate-400 flex items-center gap-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-purple-400" />
                   Cinema Quick Controls
                 </span>
                 <span className="text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
@@ -834,7 +833,7 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={toggleCinema}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-800/80 text-zinc-200 hover:text-amber-300 transition cursor-pointer"
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#0d0e24] border border-slate-800 hover:border-amber-400/50 hover:bg-slate-800/60 text-slate-200 hover:text-amber-300 transition cursor-pointer"
                   title="Toggle Theatre Cinema Lights"
                 >
                   <Film className="h-3.5 w-3.5 text-amber-400" />
@@ -849,7 +848,7 @@ export default function Room() {
                     setNewPassDraft(current);
                     setShowPassModal(true);
                   }}
-                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-800/80 text-zinc-200 hover:text-amber-300 transition cursor-pointer"
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#0d0e24] border border-slate-800 hover:border-amber-400/50 hover:bg-slate-800/60 text-slate-200 hover:text-amber-300 transition cursor-pointer"
                   title="View or Change Room Password"
                 >
                   <Lock className="h-3.5 w-3.5 text-amber-400" />
@@ -1008,17 +1007,6 @@ export default function Room() {
                   {/* CouplesOverlay renders the dedicated Mobile Call Hub directly below */}
                 </div>
               )}
-              {mobileTab === 'ott' && (
-                <div className="rise">
-                  <OttVault
-                    socket={socket}
-                    me={me}
-                    ottAccounts={ottAccounts}
-                    currentMedia={currentMedia}
-                    say={say}
-                  />
-                </div>
-              )}
               {mobileTab === 'gestures' && (
                 <div className="rise">
                   <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
@@ -1120,31 +1108,31 @@ export default function Room() {
             {/* DESKTOP ONLY: Lower Tab Switcher and Content */}
             <div className="hidden lg:block space-y-3 mt-3">
               {/* Segmented Desktop Switcher */}
-              <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1.5">
+              <div className="flex rounded-2xl bg-[#090a1e]/90 p-1.5 border border-slate-800/80 gap-1.5 shadow-lg">
                 <button
                   type="button"
-                  onClick={() => setDesktopTab('ott')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'ott'
-                      ? 'bg-rose-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
+                  onClick={() => setDesktopTab('extras')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    desktopTab === 'extras'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Tv className="h-4 w-4 text-rose-400" />
-                  <span>OTT Vault 🍿</span>
-                  {Object.keys(ottAccounts || {}).length > 0 && (
-                    <span className="text-[10px] bg-emerald-500 text-black font-extrabold px-1.5 py-0.5 rounded-full">
-                      {Object.keys(ottAccounts || {}).length}
+                  <Popcorn className="h-4 w-4 text-amber-300" />
+                  <span>Movie-Night Extras 🍿</span>
+                  {(queue.length > 0 || timer?.running || readyCheck?.active) && (
+                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">
+                      {timer?.running ? '⏱️' : readyCheck?.active ? 'Ready?' : queue.length}
                     </span>
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDesktopTab('gestures')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'gestures'
-                      ? 'bg-rose-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <Heart className="h-4 w-4 text-rose-400" />
@@ -1152,58 +1140,29 @@ export default function Room() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDesktopTab('extras')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'extras'
-                      ? 'bg-rose-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <Popcorn className="h-4 w-4 text-amber-300" />
-                  <span>Movie-Night Extras 🍿</span>
-                  {(queue.length > 0 || timer?.running || readyCheck?.active) && (
-                    <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
-                      {timer?.running ? '⏱️' : readyCheck?.active ? 'Ready?' : queue.length}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
                   onClick={() => setDesktopTab('recent')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'recent'
-                      ? 'bg-rose-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <History className="h-4 w-4 text-cyan-400" />
-                  <span>Recent Bar 🕒</span>
+                  <span>Recent Plays 🕒</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setDesktopTab('intimacy')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'intimacy'
-                      ? 'bg-rose-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <Lock className="h-4 w-4 text-rose-400" />
-                  <span>Couples Privacy &amp; Intimacy 🔒</span>
+                  <span>Couples Privacy 🔒</span>
                 </button>
               </div>
-
-              {desktopTab === 'ott' && (
-                <div className="rise">
-                  <OttVault
-                    socket={socket}
-                    me={me}
-                    ottAccounts={ottAccounts}
-                    currentMedia={currentMedia}
-                    say={say}
-                  />
-                </div>
-              )}
 
               {desktopTab === 'gestures' && (
                 <div className="rise">
@@ -1479,7 +1438,7 @@ export default function Room() {
       {/* PROFESSIONAL MOBILE & TABLET NATIVE BOTTOM NAVIGATION DOCK */}
       {boot && (
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-black/95 backdrop-blur-md border-t border-white/15 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.9)]">
-          <div className="w-full max-w-md sm:max-w-xl mx-auto grid grid-cols-5 h-14 items-center px-2">
+          <div className="w-full max-w-md sm:max-w-xl mx-auto grid grid-cols-4 h-14 items-center px-2">
             {/* 1. Chat Tab */}
             <button
               type="button"
@@ -1522,27 +1481,7 @@ export default function Room() {
               {mobileTab === 'call' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-emerald-400" />}
             </button>
 
-            {/* 3. OTT Vault Tab */}
-            <button
-              type="button"
-              onClick={() => setMobileTab('ott')}
-              className={`relative flex flex-col items-center justify-center h-full transition ${
-                mobileTab === 'ott' ? 'text-white' : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              <div className="relative">
-                <Tv className={`h-5 w-5 ${mobileTab === 'ott' ? 'text-rose-400' : ''}`} />
-                {Object.keys(ottAccounts || {}).length > 0 && (
-                  <span className="absolute -top-1 -right-2.5 bg-emerald-500 text-black text-[9px] font-extrabold px-1 rounded-full">
-                    {Object.keys(ottAccounts || {}).length}
-                  </span>
-                )}
-              </div>
-              <span className={`text-[10px] mt-0.5 ${mobileTab === 'ott' ? 'font-bold text-white' : 'font-medium'}`}>OTT</span>
-              {mobileTab === 'ott' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
-            </button>
-
-            {/* 4. Love / Gestures Tab */}
+            {/* 3. Love / Gestures Tab */}
             <button
               type="button"
               onClick={() => setMobileTab('gestures')}
@@ -1555,7 +1494,7 @@ export default function Room() {
               {mobileTab === 'gestures' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
             </button>
 
-            {/* 5. Tools / Room Settings Tab */}
+            {/* 4. Tools / Room Settings Tab */}
             <button
               type="button"
               onClick={() => setMobileTab('tools')}
