@@ -1,3 +1,5 @@
+import { serverUrl } from './socket';
+
 export const ytId = (u) => u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/)?.[1];
 export const vimeoId = (u) => u.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
 
@@ -30,6 +32,33 @@ export const OTT_PLATFORMS = [
   { id: 'apple', name: 'Apple TV+', webUrl: 'https://tv.apple.com', pattern: /tv\.apple\.com/i, icon: '🍎', color: '#18181b' },
 ];
 
+export const POPULAR_NETFLIX_TITLES = {
+  '80057281': 'Stranger Things',
+  '81040344': 'Squid Game',
+  '80192098': 'Money Heist',
+  '81231974': 'Wednesday',
+  '81616659': 'Animal',
+  '81673895': 'Leo',
+  '81726434': 'The Railway Men',
+  '80189221': 'The Haunting of Hill House',
+  '80077368': 'Dark',
+  '80117470': '13 Reasons Why',
+  '80200942': 'Elite',
+  '80100172': 'Dark',
+  '70143836': 'Breaking Bad',
+  '70153404': 'Friends',
+  '80025678': 'The Crown',
+  '80057918': 'Lucifer',
+  '80186863': 'The Witcher',
+  '80234304': 'Bridgerton',
+  '81435684': 'All of Us Are Dead',
+  '80197526': 'Sex Education',
+  '80241239': 'Locke and Key',
+  '81026700': 'D.P.',
+  '81215567': 'Vincenzo',
+  '81436209': 'Doctor Cha',
+};
+
 export const getOttPlatform = (u) => {
   if (!u) return null;
   const s = String(u);
@@ -42,30 +71,84 @@ export const extractOttTitle = (u) => {
   if (!u) return '';
   const s = String(u).trim();
   try {
+    // 0. IMDb Direct ID: imdb.com/title/tt0903747/
+    const imdbMatch = s.match(/imdb\.com\/title\/(tt\d+)/i);
+    if (imdbMatch && imdbMatch[1]) {
+      return imdbMatch[1];
+    }
+
+    // 0.1 TMDB Direct: themoviedb.org/movie/693134-dune-part-two or /tv/76479-the-boys
+    const tmdbMatch = s.match(/themoviedb\.org\/(?:movie|tv)\/\d+-?([^/?#]*)/i);
+    if (tmdbMatch && tmdbMatch[1]) {
+      return decodeURIComponent(tmdbMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+
     // 1. Disney+ Hotstar: /movies/chhaava/12345 or /shows/title/12345
     const hotstarMatch = s.match(/hotstar\.com\/[^/]+\/(?:movies|shows|clips)\/([^/]+)/i);
     if (hotstarMatch && hotstarMatch[1]) {
       return decodeURIComponent(hotstarMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
-    // 2. Amazon Prime Video: /detail/The-Boys/... or /gp/video/detail/B0...
-    const primeMatch = s.match(/primevideo\.com\/detail\/([^/?#]+)/i) || s.match(/amazon\.[a-z.]+\/gp\/video\/detail\/([^/?#]+)/i);
+
+    // 2. Amazon Prime Video: /detail/The-Boys/... or /gp/video/detail/The-Boys/...
+    const primeMatch = s.match(/primevideo\.com\/(?:[a-z]{2,5}\/)?detail\/([^/?#]+)/i) || s.match(/amazon\.[a-z.]+\/gp\/video\/detail\/([^/?#]+)/i);
     if (primeMatch && primeMatch[1]) {
       return decodeURIComponent(primeMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
+
     // 3. JioCinema: /movies/title/123 or /tv-shows/title/123
     const jioMatch = s.match(/jiocinema\.com\/(?:movies|tv-shows)\/([^/?#]+)/i);
     if (jioMatch && jioMatch[1]) {
       return decodeURIComponent(jioMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
-    // 4. Zee5: /movies/details/title/123
+
+    // 4. Zee5: /movies/details/title/123 or /tv-shows/details/title/123
     const zeeMatch = s.match(/zee5\.com\/(?:movies|tv-shows)\/details\/([^/?#]+)/i);
     if (zeeMatch && zeeMatch[1]) {
       return decodeURIComponent(zeeMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
-    // 5. Netflix: /title/123456 or /watch/123456
-    const netflixMatch = s.match(/netflix\.com\/(?:title|watch)\/(\d+)/i);
-    if (netflixMatch) {
-      return `Netflix Movie (${netflixMatch[1]})`;
+
+    // 5. SonyLIV: /shows/scam-1992-... or /movies/title-...
+    const sonyMatch = s.match(/sonyliv\.com\/(?:shows|movies)\/([^/?#]+)/i);
+    if (sonyMatch && sonyMatch[1]) {
+      return decodeURIComponent(sonyMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+
+    // 6. Apple TV+: tv.apple.com/us/movie/napoleon/... or /show/ted-lasso/...
+    const appleMatch = s.match(/tv\.apple\.com\/[^/]+\/(?:movie|show)\/([^/?#]+)/i);
+    if (appleMatch && appleMatch[1]) {
+      return decodeURIComponent(appleMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+
+    // 7. Hulu: hulu.com/movie/poor-things-... or /series/shogun-...
+    const huluMatch = s.match(/hulu\.com\/(?:movie|series)\/([^/?#]+)/i);
+    if (huluMatch && huluMatch[1]) {
+      return decodeURIComponent(huluMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+
+    // 8. Max / HBO: max.com/movies/dune-part-two/... or /shows/house-of-the-dragon/...
+    const maxMatch = s.match(/(?:max\.com|hbomax\.com)\/(?:movies|shows)\/([^/?#]+)/i);
+    if (maxMatch && maxMatch[1]) {
+      return decodeURIComponent(maxMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+
+    // 9. Crunchyroll: crunchyroll.com/series/.../jujutsu-kaisen
+    const crunchyMatch = s.match(/crunchyroll\.com\/series\/[^/]+\/([^/?#]+)/i);
+    if (crunchyMatch && crunchyMatch[1]) {
+      return decodeURIComponent(crunchyMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+    }
+
+    // 10. Netflix: /title/123456 or /watch/123456
+    const netflixMatch = s.match(/netflix\.com\/(?:[a-z]{2,5}\/)?(?:title|watch)\/(\d+)/i) || s.match(/jbv=(\d+)/i);
+    if (netflixMatch && netflixMatch[1]) {
+      const nid = netflixMatch[1];
+      if (POPULAR_NETFLIX_TITLES[nid]) {
+        return POPULAR_NETFLIX_TITLES[nid];
+      }
+      return `Netflix Movie (${nid})`;
+    }
+    const netflixSlugMatch = s.match(/netflix\.com\/(?:[a-z]{2,5}\/)?title\/([a-zA-Z0-9-_]+)/i);
+    if (netflixSlugMatch && netflixSlugMatch[1] && isNaN(Number(netflixSlugMatch[1]))) {
+      return decodeURIComponent(netflixSlugMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
   } catch {}
   return '';
@@ -91,8 +174,14 @@ export const loadScript = (src) => (cache[src] ||= new Promise((res, rej) => {
 export const ytReady = () => window.YT?.Player ? Promise.resolve()
   : new Promise((r) => { window.onYouTubeIframeAPIReady = r; loadScript('https://www.youtube.com/iframe_api'); });
 
-export const toProxyUrl = (src) => `/api/proxy?url=${encodeURIComponent(src)}`;
-export const toStreamProxyUrl = (src) => `/api/stream?url=${encodeURIComponent(src)}`;
+export const toProxyUrl = (src) => {
+  const base = typeof window !== 'undefined' ? serverUrl() : '';
+  return `${base}/api/proxy?url=${encodeURIComponent(src)}`;
+};
+export const toStreamProxyUrl = (src) => {
+  const base = typeof window !== 'undefined' ? serverUrl() : '';
+  return `${base}/api/stream?url=${encodeURIComponent(src)}`;
+};
 
 // Turn share links into unblocked proxy-embedded players (bypasses ISP blocks & X-Frame-Options)
 export const toEmbed = (src) => {
@@ -182,7 +271,8 @@ export const toEmbed = (src) => {
 
 export const resolveMedia = async (src) => {
   try {
-    const res = await fetch(`/api/resolve?url=${encodeURIComponent(src)}`);
+    const base = typeof window !== 'undefined' ? serverUrl() : '';
+    const res = await fetch(`${base}/api/resolve?url=${encodeURIComponent(src)}`);
     if (res.ok) return await res.json();
   } catch {}
   return null;
@@ -190,15 +280,63 @@ export const resolveMedia = async (src) => {
 
 export const getCloudMirrorSources = (query) => {
   if (!query) return [];
-  const clean = encodeURIComponent(query.trim());
+  const clean = query.trim();
+  const encoded = encodeURIComponent(clean);
+  const isImdb = /^tt\d+$/i.test(clean);
+
   return [
-    { name: 'Server 1 (VidSrc 1080p HD)', quality: '1080p Ultra', tag: 'Fast', url: toProxyUrl(`https://vidsrc.cc/v2/embed/movie/${clean}`) },
-    { name: 'Server 2 (EmbedSU Multi-Audio HD)', quality: '1080p HD', tag: 'Dual Audio', url: toProxyUrl(`https://embed.su/embed/movie/${clean}`) },
-    { name: 'Server 3 (AutoEmbed VIP 1080p)', quality: '1080p HD', tag: 'VIP', url: toProxyUrl(`https://autoembed.cc/embed/player.php?id=${clean}`) },
-    { name: 'Server 4 (VidSrc Cloud HD)', quality: '1080p HD', tag: 'Stable', url: toProxyUrl(`https://vidsrc.to/embed/movie/${clean}`) },
-    { name: 'Server 5 (2Embed Crystal 1080p)', quality: '1080p HD', tag: 'HQ', url: toProxyUrl(`https://www.2embed.cc/embed/${clean}`) },
-    { name: 'Server 6 (MoviesAPI Full HD)', quality: '1080p', tag: 'Mirror', url: toProxyUrl(`https://moviesapi.club/movie/${clean}`) },
-    { name: 'Server 7 (SmashyStream HD)', quality: 'HD', tag: 'Backup', url: toProxyUrl(`https://player.smashy.stream/movie/${clean}`) },
+    {
+      name: 'Server 1 (VidSrc 1080p Ultra HD)',
+      quality: '1080p Ultra',
+      tag: 'Fast',
+      url: isImdb
+        ? `https://vidsrc.to/embed/movie/${clean}`
+        : `https://vidsrc.to/embed/movie/${encoded}`,
+    },
+    {
+      name: 'Server 2 (AutoEmbed Multi-Source 1080p)',
+      quality: '1080p HD',
+      tag: 'Multi-Lang',
+      url: `https://autoembed.cc/embed/player.php?id=${encoded}`,
+    },
+    {
+      name: 'Server 3 (EmbedSU Multi-Audio HD)',
+      quality: '1080p HD',
+      tag: 'Dual Audio',
+      url: `https://embed.su/embed/movie/${encoded}`,
+    },
+    {
+      name: 'Server 4 (VidSrc.me Crystal HD)',
+      quality: '1080p HD',
+      tag: 'Crystal',
+      url: isImdb
+        ? `https://vidsrc.me/embed/movie?imdb=${clean}`
+        : `https://vidsrc.me/embed/movie?title=${encoded}`,
+    },
+    {
+      name: 'Server 5 (2Embed Cinema 1080p)',
+      quality: '1080p HD',
+      tag: 'HQ',
+      url: `https://www.2embed.cc/embed/${encoded}`,
+    },
+    {
+      name: 'Server 6 (SmashyStream HD)',
+      quality: 'HD',
+      tag: 'Stable',
+      url: `https://player.smashy.stream/movie/${encoded}`,
+    },
+    {
+      name: 'Server 7 (MoviesAPI Full HD)',
+      quality: '1080p',
+      tag: 'Backup',
+      url: `https://moviesapi.club/movie/${encoded}`,
+    },
+    {
+      name: 'Server 8 (SuperEmbed Global VIP)',
+      quality: '1080p VIP',
+      tag: 'Worldwide',
+      url: `https://multiembed.mov/?video_id=${encoded}`,
+    },
   ];
 };
 

@@ -260,6 +260,20 @@ export default function VideoPlayer({
     };
   }, []);
 
+  // Global paste handler: Ctrl+V anywhere in room auto-detects video & starts playback
+  useEffect(() => {
+    const onGlobalPaste = (e) => {
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+      const text = e.clipboardData?.getData?.('text')?.trim?.();
+      if (text && (/^(https?:\/\/|www\.)/i.test(text) || ytId(text) || isOttPlatform(text))) {
+        autoPlayUrl(text);
+      }
+    };
+    window.addEventListener('paste', onGlobalPaste);
+    return () => window.removeEventListener('paste', onGlobalPaste);
+  }, []);
+
   const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 800); };
   const send = (action) => {
     if (quiet.current) return;
@@ -887,8 +901,8 @@ export default function VideoPlayer({
     const mirrors = getCloudMirrorSources(clean);
     socket.emit('media:set', {
       media: {
-        type: 'proxy',
-        src: mirrors[0]?.url || toProxyUrl(`https://vidsrc.to/embed/movie/${encodeURIComponent(clean)}`),
+        type: 'embed',
+        src: mirrors[0]?.url,
         origSrc: clean,
         title: platformName ? `${platformName}: ${clean}` : clean,
         platform: platformName || 'OTT Cinema',
@@ -906,15 +920,15 @@ export default function VideoPlayer({
 
     const isAdult = isAdultMedia(src);
 
-    // 0. OTT platforms (Disney+ Hotstar, Netflix, Prime Video, JioCinema, Zee5, SonyLIV, etc.)
-    // Streams directly for both devices with zero screen share and multi-server backup
+    // 0. OTT platforms (Disney+ Hotstar, Netflix, Prime Video, JioCinema, Zee5, SonyLIV, Apple TV+, Hulu, Max, etc.)
+    // Streams directly for all devices with high-definition multi-server cloud mirrors
     const ott = getOttPlatform(src);
-    if (ott || force === 'hybrid') {
-      const extracted = extractOttTitle(src);
+    const extracted = extractOttTitle(src);
+    if (ott || force === 'hybrid' || extracted) {
       const titleToPlay = extracted || (ott ? `${ott.name} Cinema` : 'Cinema');
       const mirrors = getCloudMirrorSources(titleToPlay);
       return {
-        type: 'proxy',
+        type: 'embed',
         src: mirrors[0]?.url,
         origSrc: src,
         platform: ott?.name || 'OTT Cinema',
@@ -972,7 +986,7 @@ export default function VideoPlayer({
       };
     }
 
-    // 4. Server-side auto-resolver (checks direct HLS extraction, tube converters, movie extractors, etc.)
+    // 4. Server-side auto-resolver
     try {
       const resolved = await resolveMedia(src);
       if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed' || resolved.type === 'proxy')) {
@@ -985,11 +999,11 @@ export default function VideoPlayer({
       }
     } catch {}
 
-    // 5. Tube or adult platform proxying fallback (bypasses ISP bans and X-Frame-Options)
+    // 5. Tube or adult platform proxying fallback
     if (isTubeOrEmbedHost(src)) {
       return {
-        type: 'proxy',
-        src: toProxyUrl(src),
+        type: 'embed',
+        src: toEmbed(src),
         orig: isAdult ? '🔒 Private Stream' : src,
         title: isAdult ? '🔒 Private Stream' : '',
       };
@@ -1004,41 +1018,76 @@ export default function VideoPlayer({
     };
   };
 
-  const handlePasteAndPlay = async (e) => {
-    const pasted = e.clipboardData?.getData?.('text')?.trim?.();
-    if (!pasted) return;
-    if (
-      /^(https?:\/\/|\/api\/|www\.)/i.test(pasted) ||
-      ytId(pasted) ||
-      vimeoId(pasted) ||
-      isOttPlatform(pasted) ||
-      isTubeOrEmbedHost(pasted) ||
-      /\.(mp4|webm|m3u8|mpd|mkv|mov|mp3|wav|m4a|flac)(\?|$)/i.test(pasted)
-    ) {
-      setUrl(pasted);
-      setError('');
-      setResolvingStatus('⚡ Auto-detecting link & playing for everyone...');
-      try {
-        const m = await buildMedia(pasted);
-        if (m) {
-          socket.emit('media:set', { media: m });
-          const targetUrl = m.origSrc || m.orig || m.src;
-          const h = [targetUrl, ...hist.filter((x) => x !== targetUrl)].slice(0, 20);
-          setHist(h);
-          try {
-            localStorage.hist = JSON.stringify(h);
-            window.dispatchEvent(new Event('storage'));
-          } catch {}
-          setResolvingStatus('🎬 Playing now in sync!');
-          setTimeout(() => setResolvingStatus(''), 2500);
-          setUrl('');
-        } else {
-          setResolvingStatus('');
-        }
-      } catch (err) {
+  const autoPlayUrl = async (rawUrl) => {
+    const target = (rawUrl || '').trim();
+    if (!target) return;
+    setError('');
+    setResolvingStatus('⚡ Auto-detecting link & streaming for everyone...');
+    try {
+      const m = await buildMedia(target);
+      if (m) {
+        socket.emit('media:set', { media: m });
+        const targetUrl = m.origSrc || m.orig || m.src;
+        const h = [targetUrl, ...hist.filter((x) => x !== targetUrl)].slice(0, 20);
+        setHist(h);
+        try {
+          localStorage.hist = JSON.stringify(h);
+          window.dispatchEvent(new Event('storage'));
+        } catch {}
+        setResolvingStatus(`🎬 Playing ${m.platform ? `${m.platform}: ` : ''}${m.title || 'in sync'}!`);
+        setTimeout(() => setResolvingStatus(''), 2500);
+        setUrl('');
+      } else {
         setResolvingStatus('');
-        setError('Auto-play error: ' + (err?.message || 'Failed to detect video'));
       }
+    } catch (err) {
+      setResolvingStatus('');
+      setError('Auto-play error: ' + (err?.message || 'Failed to detect video'));
+    }
+  };
+
+  const handlePasteAndPlay = (e) => {
+    const pasted = e.clipboardData?.getData?.('text')?.trim?.();
+    if (pasted) {
+      autoPlayUrl(pasted);
+    }
+  };
+
+  const handleClipboardPasteAndPlay = async () => {
+    try {
+      if (navigator.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text?.trim()) {
+          autoPlayUrl(text.trim());
+          return;
+        }
+      }
+    } catch {}
+    if (url.trim()) {
+      autoPlayUrl(url.trim());
+    }
+  };
+
+  const handleUrlChange = (e) => {
+    const val = e.target.value;
+    setUrl(val);
+    const clean = val.trim();
+    if (
+      /^(https?:\/\/|www\.)/i.test(clean) &&
+      (clean.includes('netflix.com') ||
+       clean.includes('hotstar.com') ||
+       clean.includes('primevideo.com') ||
+       clean.includes('jiocinema.com') ||
+       clean.includes('zee5.com') ||
+       clean.includes('sonyliv.com') ||
+       clean.includes('youtube.com') ||
+       clean.includes('youtu.be') ||
+       clean.includes('vimeo.com') ||
+       clean.includes('imdb.com') ||
+       clean.includes('themoviedb.org') ||
+       /\.(mp4|m3u8|mpd|webm|mkv|mov)(\?|$)/i.test(clean))
+    ) {
+      autoPlayUrl(clean);
     }
   };
 
@@ -1115,19 +1164,10 @@ export default function VideoPlayer({
   };
 
   const load = async (e) => {
-    e.preventDefault();
-    setError('');
-    const m = await buildMedia(url);
-    if (!m) return;
-    socket.emit('media:set', { media: m });
-    const targetUrl = m.origSrc || m.orig || m.src;
-    const h = [targetUrl, ...hist.filter((x) => x !== targetUrl)].slice(0, 20);
-    setHist(h);
-    try {
-      localStorage.hist = JSON.stringify(h);
-      window.dispatchEvent(new Event('storage'));
-    } catch {}
-    setUrl('');
+    e?.preventDefault?.();
+    if (url.trim()) {
+      autoPlayUrl(url.trim());
+    }
   };
 
 
@@ -1342,12 +1382,12 @@ export default function VideoPlayer({
         <div ref={vmBox} className={`absolute inset-0 [&_iframe]:h-full [&_iframe]:w-full ${show(T === 'vimeo')}`} />
         {(T === 'embed' || T === 'proxy' || T === 'hybrid' || T === 'ott') && !stream && (
           <iframe
-            src={media.src?.startsWith('/api/proxy') ? media.src : toProxyUrl(media.src || 'about:blank')}
-            referrerPolicy="no-referrer-when-downgrade"
+            src={media.src || 'about:blank'}
+            referrerPolicy="origin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             loading="eager"
-            className="absolute inset-0 h-full w-full bg-black/90"
+            className="absolute inset-0 h-full w-full bg-black"
           />
         )}
         {T === 'local' && !localUrl && !stream && (
@@ -1739,18 +1779,35 @@ export default function VideoPlayer({
             <span>{resolvingStatus}</span>
           </div>
         )}
-        <div className="flex flex-wrap gap-2">
-          <div className="relative min-w-0 flex-1 basis-60">
-            <Link2 className="absolute left-3 top-2.5 h-4 w-4 opacity-50" />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Link2 className="absolute left-3 top-3 h-4 w-4 opacity-50" />
             <input
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
-              placeholder="Paste any video link: YouTube, Vimeo, mp4, m3u8, movie sites (auto-detects & plays)…"
-              className="field !pl-9"
+              placeholder="Paste any OTT or video link (Netflix, Hotstar, Prime, JioCinema, Zee5, YouTube, MP4) - Auto Plays!"
+              className="field !pl-9 !py-2.5 text-xs sm:text-sm w-full"
             />
           </div>
-          <button className="btn"><Play className="h-4 w-4" />Play for everyone</button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleClipboardPasteAndPlay}
+              className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-zinc-700 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md"
+              title="Paste link from clipboard and play immediately"
+            >
+              <span>📋</span>
+              <span>Paste &amp; Play</span>
+            </button>
+            <button
+              type="submit"
+              className="btn !py-2.5 !px-4 text-xs font-bold shrink-0 flex items-center justify-center gap-1.5"
+            >
+              <Play className="h-3.5 w-3.5 fill-white" />
+              <span>Play for everyone</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
