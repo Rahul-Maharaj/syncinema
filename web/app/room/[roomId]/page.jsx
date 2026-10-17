@@ -7,12 +7,14 @@ import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
-  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv
+  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv,
+  MonitorPlay, Camera, Music, RefreshCw
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
 import VideoPlayer from '@/components/VideoPlayer';
-import CouplesOverlay from '@/components/CouplesOverlay';
+import CouplesOverlay, { Tile } from '@/components/CouplesOverlay';
+import CinemaPlugins from '@/components/CinemaPlugins';
 import CoupleGestures from '@/components/CoupleGestures';
 import MovieNightExtras from '@/components/MovieNightExtras';
 import IntimacyMode from '@/components/IntimacyMode';
@@ -103,11 +105,49 @@ export default function Room() {
   const [voiceActive, setVoiceActive] = useState(false);
   const [ottAccounts, setOttAccounts] = useState({});
 
+  // View Modes & Cinema Plugins State
+  const [viewMode, setViewMode] = useState('theater'); // 'theater' | 'duo' | 'party' | 'focus'
+  const [showPlugins, setShowPlugins] = useState(false);
+  const [pluginsTab, setPluginsTab] = useState('soundscapes');
+  const [duoRightTab, setDuoRightTab] = useState('cam'); // 'cam' | 'chat'
+
   const peerRef = useRef(null), playerRef = useRef(null), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
   const me = typeof window !== 'undefined' ? getCid() : null;
 
   const say = (m) => { setToast({ m, n: Date.now() }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2400); };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('sc_view_mode');
+      if (saved && ['theater', 'duo', 'party', 'focus'].includes(saved)) {
+        setViewMode(saved);
+      }
+    } catch {}
+  }, []);
+
+  const changeViewMode = (mode) => {
+    setViewMode(mode);
+    try { localStorage.setItem('sc_view_mode', mode); } catch {}
+    const labels = {
+      theater: '🎭 Theater Auditorium Mode',
+      duo: '💑 Duo Date Night Mode (Side-by-Side)',
+      party: '👥 Watch Party Grid Mode',
+      focus: '⚡ Minimalist Focus Mode',
+    };
+    say(labels[mode] || mode);
+  };
+
+  const triggerReaction = (emoji) => {
+    if (!socket) return;
+    const vt = playerRef.current?.getCurrentTime?.() || 0;
+    socket.emit('reaction:timed', { emoji, vt });
+    const el = Object.assign(document.createElement('div'), { textContent: emoji });
+    el.className = 'absolute bottom-4 text-4xl pointer-events-none select-none z-30';
+    el.style.left = 10 + Math.random() * 80 + '%';
+    document.getElementById('reaction-layer')?.append(el);
+    gsap.to(el, { y: -260, x: gsap.utils.random(-30, 30), opacity: 0, duration: 2.2, ease: 'power1.out', onComplete: () => el.remove() });
+  };
 
   const doJoin = (overridePass, overrideKey) => {
     if (!socket || !name) return;
@@ -475,13 +515,49 @@ export default function Room() {
 
         {/* Right: Consolidated Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* View Modes Switcher (Theater, Duo Date, Party Grid, Focus) */}
+          <div className="hidden xl:flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 p-0.5 rounded-xl">
+            {[
+              { id: 'theater', label: 'Theater', icon: <MonitorPlay className="h-3 w-3" /> },
+              { id: 'duo', label: 'Duo Date', icon: <Heart className="h-3 w-3" /> },
+              { id: 'party', label: 'Party Grid', icon: <Users className="h-3 w-3" /> },
+              { id: 'focus', label: 'Focus', icon: <Eye className="h-3 w-3" /> },
+            ].map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => changeViewMode(m.id)}
+                className={`h-7 px-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer ${
+                  viewMode === m.id
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+                title={`Switch to ${m.label} Mode`}
+              >
+                {m.icon}
+                <span>{m.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Cinema Plugins Suite Launcher Button */}
+          <button
+            type="button"
+            onClick={() => setShowPlugins(true)}
+            className="h-7 sm:h-8 px-2 sm:px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
+            title="Open Cinema Plugins (Atmosphere, Keepsakes, Trivia & Intermission)"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
+            <span className="hidden xs:inline sm:inline">Plugins</span>
+          </button>
+
           {/* Active Snack Timer Indicator */}
           {timer?.running && (
             <button
               type="button"
-              onClick={() => { setMobileTab('tools'); setToolsSubTab('extras'); setDesktopTab('extras'); }}
+              onClick={() => { setShowPlugins(true); setPluginsTab('intermission'); }}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono hover:bg-emerald-500/30 shrink-0"
-              title="Synchronized snack break in progress"
+              title="Synchronized snack break in progress (Click to view)"
             >
               <Timer className="h-3 w-3" />
               <span>🍿 {Math.floor(Math.max(0, (timer.endsAt - Date.now()) / 1000) / 60)}:{(Math.floor(Math.max(0, (timer.endsAt - Date.now()) / 1000) % 60) + '').padStart(2, '0')}</span>
@@ -769,7 +845,13 @@ export default function Room() {
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
       {boot && (
-        <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-none mx-auto grid gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]">
+        <div className={`w-full mx-auto transition-all ${
+          viewMode === 'focus'
+            ? 'max-w-5xl flex flex-col gap-3'
+            : viewMode === 'duo'
+            ? 'max-w-2xl sm:max-w-3xl lg:max-w-none grid gap-3 sm:gap-4 lg:grid-cols-[1fr_360px]'
+            : 'max-w-2xl sm:max-w-3xl lg:max-w-none grid gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]'
+        }`}>
           {/* Main Content Area */}
           <section className="panel flex flex-col w-full mx-auto">
             {users.length < maxSeats && (
@@ -815,6 +897,106 @@ export default function Room() {
               />
             </div>
 
+            {/* Quick Synchronized Floating Reaction Bar */}
+            <div className="w-full mx-auto my-2 flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
+                  Reactions:
+                </span>
+                {[
+                  { emoji: '❤️', label: 'Love' },
+                  { emoji: '🍿', label: 'Popcorn' },
+                  { emoji: '😂', label: 'Laugh' },
+                  { emoji: '🔥', label: 'Hype' },
+                  { emoji: '👏', label: 'Applause' },
+                  { emoji: '🥂', label: 'Cheers' },
+                  { emoji: '😭', label: 'Tears' },
+                  { emoji: '🚀', label: 'Mindblown' },
+                ].map((rx) => (
+                  <button
+                    key={rx.emoji}
+                    type="button"
+                    onClick={() => triggerReaction(rx.emoji)}
+                    className="px-2 py-1 rounded-xl bg-slate-900/60 hover:bg-purple-600/25 border border-slate-800 hover:border-purple-500/40 text-sm sm:text-xs text-white transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1"
+                    title={`Send ${rx.label} reaction to room`}
+                  >
+                    <span>{rx.emoji}</span>
+                    <span className="text-[10px] hidden sm:inline text-slate-300 font-medium">{rx.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Quick Plugins Button inside Reaction Ribbon */}
+              <button
+                type="button"
+                onClick={() => setShowPlugins(true)}
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 text-purple-200 text-xs font-semibold hover:from-purple-600/50 hover:to-pink-600/50 transition cursor-pointer"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-pink-400" />
+                <span className="text-[11px]">Plugins</span>
+              </button>
+            </div>
+
+            {/* Party Grid Mode: Multi-Seat Participant Gallery (up to 30 members) */}
+            {viewMode === 'party' && (
+              <div className="w-full mx-auto my-2 p-3 sm:p-4 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl space-y-3 rise">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-purple-400" />
+                    <span className="font-bold text-xs sm:text-sm text-white">Watch Party Member Gallery</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      {users.length} of {maxSeats} Members Joined
+                    </span>
+                  </div>
+                  {me === hostId && (
+                    <button
+                      type="button"
+                      onClick={() => { setCapacityDraft(maxSeats); setShowCapacityModal(true); }}
+                      className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 font-semibold cursor-pointer"
+                    >
+                      <span>Expand Seats</span>
+                      <Users className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Webcam / Tile Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {/* Local User Tile */}
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
+                    <Tile
+                      stream={callMedia.mine}
+                      name="You"
+                      isPartner={false}
+                      voiceOnly={callMedia.voiceOnly}
+                      isSpeaking={callMedia.localTalking}
+                      isCamOff={!callCam}
+                    />
+                    <span className="absolute bottom-1.5 left-2 text-[10px] font-semibold text-white/90 bg-black/70 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                      You {me === hostId ? '👑' : ''}
+                    </span>
+                  </div>
+
+                  {/* Remote Users */}
+                  {users.filter(u => u.id !== me).map((u) => (
+                    <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
+                      <Tile
+                        stream={callMedia.remote[u.id]}
+                        name={u.name}
+                        isPartner={true}
+                        voiceOnly={callMedia.voiceOnly}
+                        isSpeaking={!!callMedia.remoteTalking[u.id]}
+                        isCamOff={false}
+                      />
+                      <span className="absolute bottom-1.5 left-2 text-[10px] font-semibold text-white/90 bg-black/70 px-1.5 py-0.5 rounded backdrop-blur-sm truncate max-w-[85%]">
+                        {u.name} {u.id === hostId ? '👑' : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Always-Visible Cinema Quick Control Deck */}
             <div className="w-full mx-auto my-2 p-2.5 sm:p-3 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-xl">
               <div className="flex items-center justify-between gap-2 mb-2 px-1">
@@ -829,6 +1011,39 @@ export default function Room() {
 
               {/* Action Buttons Ribbon (Horizontal Scrollable Deck) */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                {/* View UI Mode Selector Pill */}
+                <div className="shrink-0 flex items-center gap-1 bg-[#0d0e24] border border-slate-800 p-0.5 rounded-xl">
+                  <span className="text-[10px] text-slate-400 px-1 font-semibold">UI:</span>
+                  {[
+                    { id: 'theater', label: 'Theater' },
+                    { id: 'duo', label: 'Duo' },
+                    { id: 'party', label: 'Party' },
+                    { id: 'focus', label: 'Focus' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => changeViewMode(m.id)}
+                      className={`px-2 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                        viewMode === m.id ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Cinema Plugins Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowPlugins(true)}
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/40 hover:border-purple-400 text-purple-200 transition cursor-pointer"
+                  title="Open Cinema Plugins"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-pink-400" />
+                  <span>Plugins</span>
+                </button>
+
                 {/* Cinema Mode */}
                 <button
                   type="button"
@@ -1093,7 +1308,7 @@ export default function Room() {
               users={users}
               peerRef={peerRef}
               onScreen={setScreen}
-              showCall={showCall}
+              showCall={showCall && viewMode !== 'duo' && viewMode !== 'party'}
               setShowCall={setShowCall}
               socket={socket}
               onVoiceActivity={setVoiceActive}
@@ -1215,20 +1430,135 @@ export default function Room() {
             </div>
           </section>
 
-          {/* DESKTOP ONLY: Right Side Chat Panel */}
-          <aside className="panel hidden lg:flex h-[calc(100vh-5.5rem)]">
-            <ChatPanel
-              socket={socket}
-              me={me}
-              name={name}
-              users={users}
-              hostId={hostId}
-              chat={chat}
-              playerRef={playerRef}
-              say={say}
-              isMobile={false}
-            />
-          </aside>
+          {/* DESKTOP ONLY: Right Column (Switches cleanly between standard Chat and Duo Date Cam) */}
+          {viewMode !== 'focus' && (
+            <aside className="panel hidden lg:flex flex-col h-[calc(100vh-5.5rem)] gap-2.5">
+              {viewMode === 'duo' && (
+                <div className="card p-3 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl space-y-2.5 shrink-0 rise">
+                  {/* Duo Header */}
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-500/30" />
+                      <span>Date Night Duo Cam</span>
+                    </span>
+                    <span className="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30">
+                      💑 Intimate Stream
+                    </span>
+                  </div>
+
+                  {/* Partner Video Tile */}
+                  {users.filter(u => u.id !== me).length > 0 ? (
+                    users.filter(u => u.id !== me).slice(0, 1).map(partner => (
+                      <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner">
+                        <Tile
+                          stream={callMedia.remote[partner.id]}
+                          name={partner.name}
+                          isPartner={true}
+                          voiceOnly={callMedia.voiceOnly}
+                          isSpeaking={!!callMedia.remoteTalking[partner.id]}
+                          isCamOff={false}
+                        />
+                        {callMedia.remoteTalking[partner.id] && (
+                          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/80 text-white text-[10px] font-bold shadow-lg animate-pulse">
+                            <span>Speaking</span>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="aspect-video rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-3 text-center space-y-1.5 bg-black/40">
+                      <Heart className="h-6 w-6 text-rose-500/40 animate-pulse" />
+                      <p className="text-[11px] font-semibold text-slate-300">Waiting for your partner to join…</p>
+                      <button onClick={copy} className="btn !py-1 !px-2.5 text-[11px] bg-rose-600">
+                        Copy Invite 💌
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Local User Preview Pip */}
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
+                        <Tile
+                          stream={callMedia.mine}
+                          name="You"
+                          isPartner={false}
+                          voiceOnly={callMedia.voiceOnly}
+                          isSpeaking={callMedia.localTalking}
+                          isCamOff={!callCam}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-bold text-white truncate">You</div>
+                        <div className="text-[9px] text-slate-400">{callCam ? 'Camera Live' : 'Camera Off'}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => callControlsRef.current?.toggleCam?.()}
+                        className={`p-1.5 rounded-lg border ${callCam ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}
+                        title="Toggle Cam"
+                      >
+                        {callCam ? <Video className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => callControlsRef.current?.toggleMic?.()}
+                        className={`p-1.5 rounded-lg border ${callMic ? 'bg-slate-800 text-white border-slate-700' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
+                        title="Toggle Mic"
+                      >
+                        {callMic ? <Mic className="h-3 w-3 text-emerald-400" /> : <MicOff className="h-3 w-3 text-amber-400" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Love Actions */}
+                  <div className="grid grid-cols-3 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => socket?.emit('nudge')}
+                      className="p-1.5 rounded-lg bg-rose-600/15 border border-rose-500/30 hover:bg-rose-600/25 text-rose-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
+                    >
+                      <Heart className="h-3 w-3 text-rose-400 fill-rose-500/30" />
+                      <span>Miss You</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerReaction('❤️')}
+                      className="p-1.5 rounded-lg bg-purple-600/15 border border-purple-500/30 hover:bg-purple-600/25 text-purple-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
+                    >
+                      <span>Kiss 💋</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowPlugins(true); setPluginsTab('keepsake'); }}
+                      className="p-1.5 rounded-lg bg-pink-600/15 border border-pink-500/30 hover:bg-pink-600/25 text-pink-300 text-[10px] font-semibold flex items-center justify-center gap-1 cursor-pointer transition active:scale-95"
+                    >
+                      <Camera className="h-3 w-3 text-pink-400" />
+                      <span>Polaroid</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Chat Panel */}
+              <div className="flex-1 min-h-0">
+                <ChatPanel
+                  socket={socket}
+                  me={me}
+                  name={name}
+                  users={users}
+                  hostId={hostId}
+                  chat={chat}
+                  playerRef={playerRef}
+                  say={say}
+                  isMobile={false}
+                />
+              </div>
+            </aside>
+          )}
         </div>
       )}
 
@@ -1516,6 +1846,21 @@ export default function Room() {
           </div>
         </nav>
       )}
+
+      {/* Modular Cinema Plugins Suite Modal */}
+      <CinemaPlugins
+        isOpen={showPlugins}
+        onClose={() => setShowPlugins(false)}
+        socket={socket}
+        me={me}
+        hostId={hostId}
+        users={users}
+        currentMedia={currentMedia}
+        timer={timer}
+        say={say}
+        defaultTab={pluginsTab}
+        onTriggerReaction={triggerReaction}
+      />
 
       {/* Toast notifications */}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-16 sm:bottom-6 z-50 flex justify-center px-4">
