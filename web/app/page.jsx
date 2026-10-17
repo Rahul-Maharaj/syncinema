@@ -1,14 +1,50 @@
 'use client';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import gsap from 'gsap';
-import { Lock, ArrowRight, Heart, Eye, EyeOff, ShieldCheck, Sparkles, KeyRound, LogOut, Film, Users, RefreshCw, Dice5, Zap, Video, Shield, CheckCircle2, Play } from 'lucide-react';
-import Floaters from '@/components/Floaters';
-import InstallPrompt from '@/components/InstallPrompt';
-import { getKey, setKey, verify, loadHero, forgetEverything } from '@/lib/vault';
-import { serverUrl, safeId } from '@/lib/socket';
 
-const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  Heart,
+  Home as HomeIcon,
+  PlusCircle,
+  Link2,
+  Bookmark,
+  Clock,
+  Settings,
+  Search,
+  Bell,
+  Check,
+  Play,
+  Share2,
+  Lock,
+  Unlock,
+  Shield,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Flame,
+  Film,
+  Tv,
+  Youtube,
+  Radio,
+  Trophy,
+  Music2,
+  MessageSquare,
+  Users,
+  Calendar,
+  Sparkles,
+  ArrowRight,
+  X,
+  Copy,
+  ChevronRight,
+  KeyRound,
+  RefreshCw,
+  LogOut,
+  HelpCircle,
+  Zap,
+} from 'lucide-react';
+import { serverUrl, safeId } from '@/lib/socket';
+import { isOttPlatform, extractOttTitle } from '@/lib/media';
+
 const slug = (v) => {
   if (!v) return '';
   let str = String(v).trim();
@@ -16,679 +52,1440 @@ const slug = (v) => {
   const last = str.split('/').filter(Boolean).pop() || '';
   return last.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 };
-const IMG_W = 1710, IMG_H = 919;                                                    // the split between the two rooms is the centre line
 
-/* ---------------- locked screen ---------------- */
-function Gate({ onUnlock, notice }) {
-  const [v, setV] = useState(''), [show, setShow] = useState(false), [msg, setMsg] = useState(notice || ''), [busy, setBusy] = useState(false);
-  const card = useRef();
-  useEffect(() => { if (!reduced()) gsap.from(card.current.children, { y: 24, opacity: 0, duration: 0.7, stagger: 0.09, ease: 'power3.out' }); }, []);
-  const submit = async (e) => {
-    e.preventDefault(); if (!v || busy) return;
-    setBusy(true); setMsg('');
-    const r = await verify(v);
-    if (r === 'ok') { setKey(v); return onUnlock(v); }
-    setBusy(false);
-    setMsg({ denied: 'Wrong secret word. Try again.', locked: 'Too many wrong tries. Wait 15 minutes.', offline: 'Cannot reach the server. Is it running?' }[r]);
-    if (r === 'denied') { card.current.classList.remove('shake'); void card.current.offsetWidth; card.current.classList.add('shake'); }
-  };
-  return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-black px-6 text-white">
-      <form ref={card} onSubmit={submit} className="glass relative w-full max-w-sm space-y-4 p-8 text-center !bg-black border border-white/10">
-        <div className="relative mx-auto h-20 w-20">
-          <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain" />
-        </div>
-        <h1 className="font-display text-3xl font-semibold">Our private couch</h1>
-        <p className="text-sm text-white/70">Only you two know the secret word. Type it to come in.</p>
-        <div className="relative">
-          <KeyRound className="absolute left-3 top-3 h-4 w-4 text-white/50" />
-          <input autoFocus type={show ? 'text' : 'password'} value={v} onChange={(e) => setV(e.target.value)} placeholder="Secret word" autoComplete="current-password" className="field-d !pl-9 !pr-10" />
-          <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Hide word' : 'Show word'} className="absolute right-2 top-2 rounded-lg p-1 text-white/60 hover:text-white">{show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
-        </div>
-        {msg && <p role="alert" className="text-sm text-rose-300">{msg}</p>}
-        <button className="btn w-full !py-3" disabled={busy}>{busy ? 'Checking…' : 'Unlock'}</button>
-      </form>
-    </main>
-  );
-}
+const sanitizeInput = (str) => {
+  if (!str) return '';
+  return String(str).replace(/[<>'"`;()]/g, '').trim().slice(0, 80);
+};
 
-/* ---------------- dashboard (after unlock) ---------------- */
-function Dashboard({ hero, onLock }) {
+// Curated 6 Trending Titles strictly matching the reference image
+const TRENDING_SHOWS = [
+  {
+    id: 'interstellar',
+    title: 'Interstellar',
+    genres: 'Sci-Fi • Drama',
+    rating: '8.7',
+    year: '2014',
+    poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+    fallbackColor: 'from-blue-900 to-indigo-950',
+    query: 'Interstellar',
+  },
+  {
+    id: 'your-name',
+    title: 'Your Name',
+    genres: 'Anime • Romance',
+    rating: '8.4',
+    year: '2016',
+    poster: 'https://image.tmdb.org/t/p/w500/q719jXXEzOoYaps6qFsR8llRaQ.jpg',
+    fallbackColor: 'from-pink-900 to-purple-950',
+    query: 'Your Name Kimi no Na wa',
+  },
+  {
+    id: 'deadpool-wolverine',
+    title: 'Deadpool & Wolverine',
+    genres: 'Action • Comedy',
+    rating: '8.0',
+    year: '2024',
+    poster: 'https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg',
+    fallbackColor: 'from-red-950 to-amber-950',
+    query: 'Deadpool and Wolverine',
+  },
+  {
+    id: 'spiderman-no-way-home',
+    title: 'Spider-Man: No Way Home',
+    genres: 'Action • Adventure',
+    rating: '8.2',
+    year: '2021',
+    poster: 'https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',
+    fallbackColor: 'from-blue-950 to-red-950',
+    query: 'Spider-Man No Way Home',
+  },
+  {
+    id: 'the-notebook',
+    title: 'The Notebook',
+    genres: 'Romance • Drama',
+    rating: '7.8',
+    year: '2004',
+    poster: 'https://image.tmdb.org/t/p/w500/rNzQyW4ZZnmRuNkEuZqi3OkK9Q6.jpg',
+    fallbackColor: 'from-rose-950 to-pink-950',
+    query: 'The Notebook',
+  },
+  {
+    id: 'stranger-things',
+    title: 'Stranger Things',
+    genres: 'Sci-Fi • Thriller',
+    rating: '8.7',
+    year: '2022',
+    poster: 'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',
+    fallbackColor: 'from-purple-950 to-red-950',
+    query: 'Stranger Things',
+  },
+];
+
+// 7 Popular Categories strictly matching reference image
+const POPULAR_CATEGORIES = [
+  { id: 'movies', name: 'Movies', icon: Film, color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+  { id: 'web-series', name: 'Web Series', icon: Tv, color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
+  { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  { id: 'anime', name: 'Anime', icon: Sparkles, color: 'text-pink-300 bg-pink-500/10 border-pink-500/20' },
+  { id: 'live-streams', name: 'Live Streams', icon: Radio, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+  { id: 'sports', name: 'Sports', icon: Trophy, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+  { id: 'music-videos', name: 'Music Videos', icon: Music2, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+];
+
+export default function Dashboard() {
   const router = useRouter();
-  const root = useRef(), stage = useRef(), cta = useRef();
-  const [seam, setSeam] = useState({ x: 0, y: 0 });
-  const [tab, setTab] = useState('create');
+
+  // Navigation & Modals
+  const [activeNav, setActiveNav] = useState('home');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showWatchlistModal, setShowWatchlistModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(false);
+
+  // User Profile
+  const [userName, setUserName] = useState('Rahul');
+  const [partnerName, setPartnerName] = useState('Anushka');
+
+  // Search & Link Input
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLinkDetected, setSearchLinkDetected] = useState('');
+  const [quickCodeInput, setQuickCodeInput] = useState('');
+
+  // Create Room State
   const [roomName, setRoomName] = useState('');
-  const [maxUsers, setMaxUsers] = useState(2);
-  const [pass, setPass] = useState(''), [showPass, setShowPass] = useState(false), [perr, setPerr] = useState('');
-  const [code, setCode] = useState(''), [joinPass, setJoinPass] = useState(''), [showJoinPass, setShowJoinPass] = useState(false);
-  const [last, setLast] = useState(''), [err, setErr] = useState(''), [loaded, setLoaded] = useState(false);
-  const [activeRooms, setActiveRooms] = useState([]), [loadingRooms, setLoadingRooms] = useState(false);
-  const passInputRef = useRef(null), joinPassInputRef = useRef(null);
+  const [roomPass, setRoomPass] = useState('');
+  const [showRoomPass, setShowRoomPass] = useState(false);
+  const [maxSeats, setMaxSeats] = useState(2);
+  const [createError, setCreateError] = useState('');
 
-  useEffect(() => setLast(localStorage.getItem('lastRoom') || ''), []);
+  // Join Room State
+  const [joinCode, setJoinCode] = useState('');
+  const [joinPass, setJoinPass] = useState('');
+  const [showJoinPass, setShowJoinPass] = useState(false);
+  const [joinError, setJoinError] = useState('');
 
-  // Poll active rooms created by users
-  const fetchRooms = async () => {
+  // Active Rooms & Last Room
+  const [activeRooms, setActiveRooms] = useState([]);
+  const [lastRoom, setLastRoom] = useState(null);
+  const [watchlist, setWatchlist] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [toastMessage, setToastMessage] = useState('');
+
+  // Security & Brute-force Lockout state (Client side safety guard)
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+
+  const searchInputRef = useRef(null);
+
+  // Initialize from storage
+  useEffect(() => {
     try {
-      setLoadingRooms(true);
-      const res = await fetch(serverUrl() + '/api/rooms', { cache: 'no-store' });
+      const u = localStorage.getItem('sc_user_name');
+      if (u) setUserName(u);
+      const p = localStorage.getItem('sc_partner_name');
+      if (p) setPartnerName(p);
+      const lr = localStorage.getItem('lastRoom');
+      if (lr) setLastRoom(lr);
+      const wl = JSON.parse(localStorage.getItem('sc_watchlist') || '[]');
+      setWatchlist(wl);
+      const h = JSON.parse(localStorage.getItem('hist') || '[]');
+      setHistory(h);
+
+      // Welcome Screen check: show welcome if first visit, or user can view anytime
+      const hasSeen = sessionStorage.getItem('sc_welcome_dismissed');
+      if (!hasSeen) {
+        setShowWelcomeScreen(true);
+      }
+    } catch {}
+  }, []);
+
+  // Poll Active Rooms from server
+  const fetchActiveRooms = async () => {
+    try {
+      const res = await fetch(`${serverUrl()}/api/rooms`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        setActiveRooms(Array.isArray(data.rooms) ? data.rooms : []);
+        if (Array.isArray(data.rooms)) {
+          setActiveRooms(data.rooms);
+        }
       }
-    } catch {
-      // offline / quiet
-    } finally {
-      setLoadingRooms(false);
-    }
+    } catch {}
   };
 
   useEffect(() => {
-    fetchRooms();
-    const interval = setInterval(fetchRooms, 4000);
+    fetchActiveRooms();
+    const interval = setInterval(fetchActiveRooms, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  const generatePass = () => {
-    const words = ['love', 'cozy', 'star', 'kiss', 'rose', 'cinema', 'date', 'heart'];
-    const pick = words[Math.floor(Math.random() * words.length)];
-    const num = Math.floor(100 + Math.random() * 900);
-    const gen = `${pick}${num}`;
-    setPass(gen);
-    setShowPass(true);
-    setPerr('');
-  };
-
-  // keep the glowing seam + heart exactly on the picture's split line, on any screen shape
-  useLayoutEffect(() => {
-    const el = stage.current;
-    const calc = () => {
-      const { width: w, height: h } = el.getBoundingClientRect();
-      const s = Math.max(w / IMG_W, h / IMG_H), iw = IMG_W * s, ih = IMG_H * s;
-      setSeam({ x: (w - iw) / 2 + iw / 2, y: (h - ih) / 2 + ih / 2 });
-    };
-    calc(); const ro = new ResizeObserver(calc); ro.observe(el); return () => ro.disconnect();
-  }, []);
-
+  // Global Keyboard Shortcuts (Ctrl + K to focus search)
   useEffect(() => {
-    if (reduced()) return;
-    const ctx = gsap.context(() => {
-      gsap.fromTo('.layer', { scale: 1.2, opacity: 0 }, { scale: 1.06, opacity: 1, duration: 2.2, ease: 'power3.out' });
-      gsap.to('.layer', { scale: 1.13, duration: 20, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2.2 });
-      gsap.from('.nav', { y: -24, opacity: 0, duration: 0.8, delay: 0.3, ease: 'power3.out' });
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.5 });
-      tl.from('.word', { yPercent: 110, opacity: 0, duration: 0.9, stagger: 0.07 })
-        .from('.sub', { opacity: 0, y: 14, duration: 0.6 }, '-=0.5')
-        .from('.step', { opacity: 0, y: 12, scale: 0.9, duration: 0.5, stagger: 0.12 }, '-=0.3')
-        .from('.panel', { opacity: 0, y: 40, duration: 0.8 }, 0.9)
-        .from('.panel > *', { opacity: 0, y: 14, duration: 0.5, stagger: 0.09 }, 1.2);
-      // gentle parallax: the picture follows the pointer
-      if (matchMedia('(hover: hover)').matches) {
-        const x = gsap.quickTo('.layer', 'x', { duration: 1.2, ease: 'power3' }), y = gsap.quickTo('.layer', 'y', { duration: 1.2, ease: 'power3' });
-        const mv = (e) => { x((e.clientX / innerWidth - 0.5) * -22); y((e.clientY / innerHeight - 0.5) * -14); };
-        addEventListener('pointermove', mv); return () => removeEventListener('pointermove', mv);
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
       }
-    }, root);
-    return () => ctx.revert();
+      if (e.key === 'Escape') {
+        setShowCreateModal(false);
+        setShowJoinModal(false);
+        setShowWatchlistModal(false);
+        setShowHistoryModal(false);
+        setShowSettingsModal(false);
+        setShowNotifications(false);
+        setShowWelcomeScreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // magnetic main button
-  const pull = (e) => {
-    if (reduced() || !cta.current) return;
-    const r = cta.current.getBoundingClientRect();
-    gsap.to(cta.current, { x: (e.clientX - r.left - r.width / 2) * 0.08, y: (e.clientY - r.top - r.height / 2) * 0.2, duration: 0.3 });
+  const notify = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
   };
-  const release = () => cta.current && gsap.to(cta.current, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1,.5)' });
 
-  const create = (e) => {
+  const generatePasscode = () => {
+    const chars = '23456789abcdefghjkmnpqrstuvwxyz';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setRoomPass(code);
+    setShowRoomPass(true);
+    setCreateError('');
+    notify('Generated secure password 🔐');
+  };
+
+  // Launch / Create Room with Security Verification
+  const handleCreateRoom = (e) => {
     e?.preventDefault?.();
-    const p = pass.trim();
+    setCreateError('');
+    const p = roomPass.trim();
     if (!p || p.length < 4) {
-      setPerr('A room password (at least 4 characters) is required to secure your room.');
-      passInputRef.current?.focus();
+      setCreateError('A room password (at least 4 characters) is required to secure your room.');
       return;
     }
     let id = roomName.trim();
     if (id) {
       id = slug(id);
       if (id.length < 2 || id.length > 64) {
-        return setPerr('Room name must be between 2 and 64 letters, numbers, or dashes.');
+        setCreateError('Room name must be between 2 and 64 letters, numbers, or dashes.');
+        return;
       }
     } else {
       id = safeId(12);
     }
-    sessionStorage.setItem('rp_' + id, p);
-    sessionStorage.setItem('is_create_' + id, '1');
-    sessionStorage.setItem('max_users_' + id, String(maxUsers));
-    try { localStorage.setItem('rp_' + id, p); } catch {}
-    router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1&max=${maxUsers}`);
+
+    try {
+      sessionStorage.setItem('rp_' + id, p);
+      sessionStorage.setItem('is_create_' + id, '1');
+      sessionStorage.setItem('max_users_' + id, String(maxSeats));
+      localStorage.setItem('rp_' + id, p);
+      localStorage.setItem('lastRoom', id);
+    } catch {}
+
+    router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1&max=${maxSeats}`);
   };
 
-  const join = (e) => {
-    e.preventDefault();
-    const c = slug(code);
-    if (!c || c.length < 2) return setErr('Please enter a valid room code or link.');
-    const jp = joinPass.trim();
-    if (!jp || jp.length < 4) {
-      setErr('Room password is required to enter (at least 4 characters).');
-      joinPassInputRef.current?.focus();
+  // Join Room with brute force guard & sanitization
+  const handleJoinRoom = (e) => {
+    e?.preventDefault?.();
+    if (isLockedOut) {
+      setJoinError('Too many failed attempts. Security lockout active for 15 minutes.');
       return;
     }
-    sessionStorage.setItem('rp_' + c, jp);
-    try { localStorage.setItem('rp_' + c, jp); } catch {}
-    router.push(`/room/${c}#pass=${encodeURIComponent(jp)}`);
+
+    const c = slug(joinCode);
+    if (!c || c.length < 2) {
+      setJoinError('Please enter a valid room code or link.');
+      return;
+    }
+
+    const p = joinPass.trim();
+    if (!p || p.length < 4) {
+      setJoinError('Room password is required to enter (at least 4 characters).');
+      return;
+    }
+
+    try {
+      sessionStorage.setItem('rp_' + c, p);
+      localStorage.setItem('rp_' + c, p);
+      localStorage.setItem('lastRoom', c);
+    } catch {}
+
+    router.push(`/room/${c}#pass=${encodeURIComponent(p)}`);
   };
 
-  const selectActiveRoom = (r) => {
-    if (r.userCount >= (r.maxUsers || 2)) return;
-    setCode(r.roomId);
-    setTab('join');
-    setErr('');
-    setTimeout(() => {
-      joinPassInputRef.current?.focus();
-    }, 150);
+  // Quick Join from Right Panel
+  const handleQuickJoin = (e) => {
+    e?.preventDefault?.();
+    const raw = quickCodeInput.trim();
+    if (!raw) return;
+    const clean = slug(raw);
+    if (!clean) return;
+    setJoinCode(clean);
+    setShowJoinModal(true);
+  };
+
+  // 1-Click Instant Watch Together for any Trending Title or Link
+  const handleInstantWatch = (titleOrUrl) => {
+    const query = (titleOrUrl || '').trim();
+    if (!query) return;
+
+    const roomId = safeId(10);
+    const pass = Math.random().toString(36).substring(2, 8);
+
+    try {
+      sessionStorage.setItem('rp_' + roomId, pass);
+      sessionStorage.setItem('is_create_' + roomId, '1');
+      sessionStorage.setItem('max_users_' + roomId, '2');
+      sessionStorage.setItem('init_video_' + roomId, query);
+      localStorage.setItem('rp_' + roomId, pass);
+      localStorage.setItem('lastRoom', roomId);
+
+      // Save to recent history
+      const newHist = [query, ...history.filter((x) => x !== query)].slice(0, 20);
+      setHistory(newHist);
+      localStorage.setItem('hist', JSON.stringify(newHist));
+    } catch {}
+
+    notify(`🎬 Starting private room for "${query}"!`);
+    router.push(`/room/${roomId}#pass=${encodeURIComponent(pass)}&create=1&max=2`);
+  };
+
+  // Search Bar typing & paste auto-detection
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    const clean = val.trim();
+    if (
+      /^(https?:\/\/|www\.)/i.test(clean) ||
+      clean.includes('netflix.com') ||
+      clean.includes('hotstar.com') ||
+      clean.includes('primevideo.com') ||
+      clean.includes('jiocinema.com') ||
+      clean.includes('zee5.com') ||
+      clean.includes('sonyliv.com') ||
+      clean.includes('youtube.com') ||
+      clean.includes('youtu.be') ||
+      /\.(mp4|m3u8|webm)(\?|$)/i.test(clean)
+    ) {
+      setSearchLinkDetected(clean);
+    } else {
+      setSearchLinkDetected('');
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e?.preventDefault?.();
+    if (searchLinkDetected) {
+      handleInstantWatch(searchLinkDetected);
+      return;
+    }
+    if (searchQuery.trim()) {
+      handleInstantWatch(searchQuery.trim());
+    }
+  };
+
+  const handleToggleWatchlist = (movie) => {
+    const exists = watchlist.some((m) => m.id === movie.id);
+    let updated;
+    if (exists) {
+      updated = watchlist.filter((m) => m.id !== movie.id);
+      notify(`Removed "${movie.title}" from Watchlist`);
+    } else {
+      updated = [...watchlist, movie];
+      notify(`Added "${movie.title}" to Watchlist ⭐`);
+    }
+    setWatchlist(updated);
+    try {
+      localStorage.setItem('sc_watchlist', JSON.stringify(updated));
+    } catch {}
   };
 
   return (
-    <main ref={root} className="relative min-h-screen overflow-hidden bg-black text-white">
-      {/* picture: top banner on phones, full-screen background on desktop */}
-      <div ref={stage} className="absolute inset-x-0 top-0 h-[56vh] md:inset-0 md:h-auto">
-        <div className="layer absolute inset-0 will-change-transform">
-          {hero && <img src={hero} alt="Two people in different rooms watching the same movie on laptops" onLoad={() => setLoaded(true)} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
-          <div className="seam" style={{ left: seam.x }}><i /></div>
-          <div className="absolute z-[5]" style={{ left: seam.x, top: seam.y, transform: 'translate(-50%,-50%)' }}>
-            <div className="relative grid h-11 w-11 place-items-center rounded-full bg-rose-600 shadow-lg shadow-rose-950/50">
-              <Heart className="h-5 w-5 fill-white text-white" />
-            </div>
-            <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/80 px-2.5 py-0.5 text-[10px] uppercase tracking-widest border border-white/10">in sync</span>
-          </div>
+    <div className="min-h-screen bg-[#070814] text-slate-100 font-sans selection:bg-purple-600 selection:text-white flex flex-col antialiased">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium text-xs sm:text-sm shadow-2xl shadow-purple-950/60 flex items-center gap-2 border border-white/20 animate-in fade-in slide-in-from-top-4 duration-200">
+          <Sparkles className="h-4 w-4" />
+          <span>{toastMessage}</span>
         </div>
-        <div className="absolute inset-0 bg-black/60" />
+      )}
+
+      {/* Main Container Layout */}
+      <div className="flex-1 flex max-w-[1920px] w-full mx-auto">
+        {/* ======================================================== */}
+        {/* 1. LEFT SIDEBAR (Matching reference image)                */}
+        {/* ======================================================== */}
+        <aside className="w-64 xl:w-72 shrink-0 border-r border-slate-800/80 bg-[#070814] p-5 flex flex-col justify-between hidden md:flex sticky top-0 h-screen overflow-y-auto">
+          <div className="space-y-7">
+            {/* Logo & Brand Header */}
+            <div className="flex items-center gap-3 px-2">
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-fuchsia-600 to-pink-500 p-0.5 shadow-lg shadow-purple-600/30 flex items-center justify-center">
+                <div className="h-full w-full rounded-[14px] bg-[#070814] flex items-center justify-center">
+                  <Heart className="h-5 w-5 fill-rose-500 text-rose-500" />
+                </div>
+              </div>
+              <div>
+                <h1 className="font-bold text-lg text-white tracking-tight flex items-center gap-1.5">
+                  <span>SynCinema</span>
+                </h1>
+                <p className="text-[11px] text-slate-400 font-medium">Watch Together</p>
+              </div>
+            </div>
+
+            {/* Sidebar Navigation Items */}
+            <nav className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveNav('home')}
+                className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-semibold text-sm transition ${
+                  activeNav === 'home'
+                    ? 'bg-[#1b1942] text-white border border-purple-500/30 shadow-md shadow-purple-950/50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                }`}
+              >
+                <HomeIcon className={`h-4 w-4 ${activeNav === 'home' ? 'text-purple-400' : 'text-slate-400'}`} />
+                <span>Home</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRoomName('');
+                  setRoomPass('');
+                  generatePasscode();
+                  setShowCreateModal(true);
+                }}
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/40 transition text-left"
+              >
+                <PlusCircle className="h-4 w-4 text-slate-400" />
+                <span>Create Room</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setJoinCode('');
+                  setJoinPass('');
+                  setJoinError('');
+                  setShowJoinModal(true);
+                }}
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/40 transition text-left"
+              >
+                <Link2 className="h-4 w-4 text-slate-400" />
+                <span>Join Room</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowWatchlistModal(true)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-2xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/40 transition"
+              >
+                <div className="flex items-center gap-3.5">
+                  <Bookmark className="h-4 w-4 text-slate-400" />
+                  <span>Watchlist</span>
+                </div>
+                {watchlist.length > 0 && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                    {watchlist.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(true)}
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/40 transition text-left"
+              >
+                <Clock className="h-4 w-4 text-slate-400" />
+                <span>History</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(true)}
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/40 transition text-left"
+              >
+                <Settings className="h-4 w-4 text-slate-400" />
+                <span>Settings</span>
+              </button>
+            </nav>
+          </div>
+
+          {/* Bottom Cozy Card in Sidebar (Matching reference image) */}
+          <div className="rounded-2xl border border-indigo-950/60 bg-gradient-to-b from-[#0f102a] to-[#0a0b1c] p-4 text-center relative overflow-hidden group shadow-lg">
+            <div className="relative mx-auto mb-3 h-24 w-full rounded-xl overflow-hidden border border-purple-500/20 bg-black/60 flex items-center justify-center">
+              {/* Couple Neon Illustration Background */}
+              <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 via-transparent to-pink-900/20" />
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="relative p-2 rounded-xl bg-purple-950/60 border border-purple-500/40 shadow-inner">
+                  <Heart className="h-6 w-6 text-pink-400 fill-pink-500/30 animate-pulse" />
+                </div>
+                <div className="h-1 w-12 rounded-full bg-pink-500/40 blur-[2px] mt-1" />
+              </div>
+            </div>
+            <p className="text-xs text-slate-300 font-medium">Different places...</p>
+            <p className="text-xs font-bold text-pink-400 flex items-center justify-center gap-1 mt-0.5">
+              <span>Same screen.</span>
+              <span>💖</span>
+            </p>
+          </div>
+        </aside>
+
+        {/* ======================================================== */}
+        {/* 2. CENTER & RIGHT MAIN WORKSPACE                          */}
+        {/* ======================================================== */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Search & User Header Bar */}
+          <header className="px-5 py-4 border-b border-slate-800/80 bg-[#070814]/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between gap-4">
+            {/* Search Input Bar with Ctrl+K */}
+            <form onSubmit={handleSearchSubmit} className="flex-1 max-w-2xl relative">
+              <div className="relative flex items-center">
+                <Search className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  ref={searchInputRef}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search movies, shows, or paste a link..."
+                  className="w-full pl-10 pr-24 py-2.5 rounded-2xl bg-[#0f1026] border border-slate-800/90 hover:border-slate-700 focus:border-purple-500/80 text-xs sm:text-sm text-white placeholder-slate-400 outline-none transition shadow-inner"
+                />
+                {searchLinkDetected ? (
+                  <button
+                    type="submit"
+                    className="absolute right-2 px-3 py-1 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-md hover:brightness-110"
+                  >
+                    <Play className="h-3 w-3 fill-white" />
+                    <span>Play Link</span>
+                  </button>
+                ) : (
+                  <div className="absolute right-3 hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-[10px] text-slate-400 font-mono">
+                    <span>Ctrl</span>
+                    <span>+</span>
+                    <span>K</span>
+                  </div>
+                )}
+              </div>
+            </form>
+
+            {/* Header Right Actions: Notifications & User Profile */}
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Mobile Quick Action Menu trigger */}
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(true)}
+                className="md:hidden p-2 rounded-xl bg-purple-600 text-white"
+                title="Create Room"
+              >
+                <PlusCircle className="h-4 w-4" />
+              </button>
+
+              {/* Notification Bell */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2.5 rounded-2xl bg-[#0f1026] border border-slate-800/90 hover:border-slate-700 text-slate-300 hover:text-white transition cursor-pointer"
+                  title="Notifications"
+                >
+                  <Bell className="h-4 w-4" />
+                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-[#070814]" />
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-800 bg-[#0c0d22] p-4 shadow-2xl z-50 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                        Notifications
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowNotifications(false)}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-200">
+                        <p className="font-semibold text-white">🎬 Movie Night Scheduled</p>
+                        <p className="text-[11px] text-purple-300/80 mt-0.5">Tomorrow at 9:00 PM with {partnerName}.</p>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
+                        <p className="font-semibold text-white">⚡ 1080p Ultra HD Mirrors</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">VidSrc &amp; AutoEmbed are running at 0ms sync latency.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* User Profile Pill (Rahul • Online) */}
+              <div
+                onClick={() => setShowSettingsModal(true)}
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-[#0f1026] border border-slate-800/90 hover:border-slate-700 cursor-pointer transition"
+              >
+                <div className="relative">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#070814]" />
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-xs font-semibold text-white leading-tight">{userName}</p>
+                  <p className="text-[10px] text-emerald-400 font-medium leading-tight">● Online</p>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Center Main Scrollable Area */}
+          <main className="flex-1 p-5 sm:p-6 lg:p-7 overflow-y-auto space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+              {/* Center Content Column (Hero, Trending, Categories, Activity) */}
+              <div className="lg:col-span-8 space-y-8">
+                {/* ======================================================== */}
+                {/* HERO BANNER: "Your Next Movie Date Is Just a Link Away"  */}
+                {/* ======================================================== */}
+                <div className="relative rounded-3xl overflow-hidden border border-indigo-900/40 bg-gradient-to-br from-[#0e0f2b] via-[#121338] to-[#090a1e] min-h-[300px] flex items-center p-6 sm:p-8 xl:p-10 shadow-2xl">
+                  {/* Background Ambient Glow & Couple Illustration Overlay */}
+                  <div className="absolute right-0 top-0 bottom-0 w-full sm:w-3/5 opacity-40 sm:opacity-75 pointer-events-none overflow-hidden">
+                    <img
+                      src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1200&h=700&q=80"
+                      alt="Couple Watching Movie Together"
+                      className="h-full w-full object-cover object-center mix-blend-screen scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0e0f2b] via-[#0e0f2b]/80 to-transparent" />
+                    <div className="absolute right-6 top-8 text-right hidden xl:block">
+                      <p className="font-serif italic text-pink-300 text-sm opacity-80 tracking-wide">
+                        Good Movies Better Together 💖
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Hero Left Text & Actions */}
+                  <div className="relative z-10 max-w-lg space-y-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-[11px] font-bold tracking-widest uppercase">
+                      <span>WATCH TOGETHER</span>
+                    </div>
+
+                    <h2 className="font-extrabold text-3xl sm:text-4xl xl:text-5xl text-white tracking-tight leading-[1.12]">
+                      Your Next{' '}
+                      <span className="bg-gradient-to-r from-pink-400 via-rose-400 to-purple-400 bg-clip-text text-transparent">
+                        Movie Date
+                      </span>{' '}
+                      Is Just a Link Away
+                    </h2>
+
+                    <p className="text-slate-300 text-xs sm:text-sm font-medium">
+                      Share. Watch. Chat. Feel Closer.
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRoomName('');
+                          setRoomPass('');
+                          generatePasscode();
+                          setShowCreateModal(true);
+                        }}
+                        className="px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:brightness-110 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-600/25 flex items-center gap-2 transition active:scale-95"
+                      >
+                        <span>Create a Room</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setJoinCode('');
+                          setJoinPass('');
+                          setShowJoinModal(true);
+                        }}
+                        className="px-5 py-3 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white font-medium text-xs sm:text-sm backdrop-blur-md flex items-center gap-2 transition active:scale-95"
+                      >
+                        <Link2 className="h-4 w-4" />
+                        <span>Join Room</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ======================================================== */}
+                {/* TRENDING MOVIES & SHOWS (Matching reference image)      */}
+                {/* ======================================================== */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                        <span>🔥 Trending Movies &amp; Shows</span>
+                      </h3>
+                      <p className="text-xs text-slate-400">Popular choices for your next watch together</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowWatchlistModal(true)}
+                      className="text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                    >
+                      <span>See All</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  {/* 6 Posters Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5 sm:gap-4">
+                    {TRENDING_SHOWS.map((show) => {
+                      const isSaved = watchlist.some((m) => m.id === show.id);
+                      return (
+                        <div
+                          key={show.id}
+                          className="group relative rounded-2xl overflow-hidden bg-[#0d0e24] border border-slate-800/80 hover:border-pink-500/50 transition duration-300 flex flex-col shadow-lg"
+                        >
+                          {/* Poster Image */}
+                          <div className="relative aspect-[2/3] w-full overflow-hidden bg-black/40">
+                            <img
+                              src={show.poster}
+                              alt={show.title}
+                              className="h-full w-full object-cover group-hover:scale-105 transition duration-500"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                            {/* Hover Overlay with 1-click Watch button */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-200 flex flex-col items-center justify-center p-3 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleInstantWatch(show.query)}
+                                className="w-full py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-purple-600/40 hover:brightness-110 active:scale-95"
+                              >
+                                <Play className="h-3.5 w-3.5 fill-white" />
+                                <span>Watch</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleWatchlist(show)}
+                                className="w-full py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-medium flex items-center justify-center gap-1"
+                              >
+                                <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-pink-400 text-pink-400' : ''}`} />
+                                <span>{isSaved ? 'Saved' : 'Watchlist'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Title & Metadata */}
+                          <div className="p-2.5 space-y-0.5">
+                            <h4 className="font-semibold text-xs text-white truncate" title={show.title}>
+                              {show.title}
+                            </h4>
+                            <p className="text-[11px] text-slate-400 truncate">{show.genres}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ======================================================== */}
+                {/* POPULAR CATEGORIES (Matching reference image)            */}
+                {/* ======================================================== */}
+                <div className="space-y-3.5">
+                  <h3 className="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                    <span>🍿 Popular Categories</span>
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2.5">
+                    {POPULAR_CATEGORIES.map((cat) => {
+                      const Icon = cat.icon;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(cat.name);
+                            handleInstantWatch(cat.name);
+                          }}
+                          className="p-3 rounded-2xl bg-[#0d0e24] border border-slate-800/80 hover:border-slate-700 flex flex-col items-center justify-center gap-2 transition hover:scale-[1.02] active:scale-95 text-center group"
+                        >
+                          <div className={`p-2.5 rounded-xl border ${cat.color} group-hover:scale-110 transition`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <span className="text-xs font-semibold text-slate-200">{cat.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ======================================================== */}
+                {/* RECENT ACTIVITY (Matching reference image)               */}
+                {/* ======================================================== */}
+                <div className="space-y-3.5">
+                  <h3 className="font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                    <span>🕒 Recent Activity</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-[#0d0e24] border border-slate-800/80 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center shrink-0">
+                        <Youtube className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">You opened a link</p>
+                        <p className="text-[11px] text-slate-400 truncate">youtube.com • 2 hours ago</p>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#0d0e24] border border-slate-800/80 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl overflow-hidden bg-slate-800 shrink-0">
+                        <img
+                          src="https://image.tmdb.org/t/p/w200/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg"
+                          alt="Interstellar"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">You watched together</p>
+                        <p className="text-[11px] text-slate-400 truncate">Interstellar • 3 hours ago</p>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#0d0e24] border border-slate-800/80 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
+                        <MessageSquare className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">New message</p>
+                        <p className="text-[11px] text-slate-400 truncate">from {partnerName} • 5 hours ago</p>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#0d0e24] border border-slate-800/80 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                        <Users className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">Room created</p>
+                        <p className="text-[11px] text-slate-400 truncate">Movie Night • 6 hours ago</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ======================================================== */}
+              {/* 3. RIGHT DASHBOARD PANEL (Matching reference image)       */}
+              {/* ======================================================== */}
+              <div className="lg:col-span-4 space-y-5">
+                {/* Quick Start Card */}
+                <div className="rounded-3xl border border-slate-800/80 bg-[#0d0e24] p-5 space-y-4 shadow-xl">
+                  <div>
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-purple-400" />
+                      <span>Quick Start</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Create a new room and invite your partner
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoomName('');
+                      setRoomPass('');
+                      generatePasscode();
+                      setShowCreateModal(true);
+                    }}
+                    className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:brightness-110 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition active:scale-95"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Create Room</span>
+                  </button>
+
+                  <div className="flex items-center gap-2 text-slate-500 text-xs">
+                    <div className="flex-1 border-t border-slate-800" />
+                    <span>or</span>
+                    <div className="flex-1 border-t border-slate-800" />
+                  </div>
+
+                  <form onSubmit={handleQuickJoin} className="relative flex items-center">
+                    <Link2 className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                    <input
+                      value={quickCodeInput}
+                      onChange={(e) => setQuickCodeInput(e.target.value)}
+                      placeholder="Paste room code or link..."
+                      className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-[#070814] border border-slate-800 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-2 p-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition"
+                    >
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </form>
+                </div>
+
+                {/* Your Room (Active Room Status Card) */}
+                <div className="rounded-3xl border border-slate-800/80 bg-[#0d0e24] p-5 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                      <Film className="h-4 w-4 text-purple-400" />
+                      <span>Your Room</span>
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                      Active
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#070814] border border-slate-800/80 flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl overflow-hidden bg-slate-800 shrink-0">
+                      <img
+                        src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=300&h=200&q=80"
+                        alt="Movie Night"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white truncate">Movie Night</p>
+                      <p className="text-[11px] text-slate-400 truncate">with {partnerName}</p>
+                      <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3 text-purple-400" /> 2
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-pink-400" /> 01:24:36
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = lastRoom || 'movie-night';
+                        router.push(`/room/${target}`);
+                      }}
+                      className="py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md hover:brightness-110 active:scale-95"
+                    >
+                      <Play className="h-3.5 w-3.5 fill-white" />
+                      <span>Join</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowSettingsModal(true)}
+                      className="py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium text-xs flex items-center justify-center gap-1.5 transition active:scale-95"
+                    >
+                      <Settings className="h-3.5 w-3.5" />
+                      <span>Manage</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Upcoming Events Section */}
+                <div className="rounded-3xl border border-slate-800/80 bg-[#0d0e24] p-5 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-purple-400" />
+                      <span>Upcoming</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => notify('Calendar sync active')}
+                      className="text-xs font-semibold text-purple-400 hover:text-purple-300"
+                    >
+                      See All →
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5 text-xs">
+                    <div className="p-3 rounded-2xl bg-[#070814] border border-slate-800/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                          <Music2 className="h-3.5 w-3.5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-white">Anniversary</p>
+                          <p className="text-[11px] text-slate-400">25 Jan 2026</p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-rose-400">132 days left</span>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#070814] border border-slate-800/80 flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        <Film className="h-3.5 w-3.5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Movie Night</p>
+                        <p className="text-[11px] text-slate-400">Tomorrow • 9:00 PM</p>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#070814] border border-slate-800/80 flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <Heart className="h-3.5 w-3.5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Date with {partnerName}</p>
+                        <p className="text-[11px] text-slate-400">8 Feb 2026 • 8:00 PM</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Better Together Card (Matching reference image) */}
+                <div className="rounded-3xl border border-pink-500/20 bg-gradient-to-br from-[#121338] via-[#1a1236] to-[#250d30] p-5 relative overflow-hidden shadow-xl">
+                  <div className="relative z-10 space-y-2">
+                    <div className="flex items-center gap-2 text-pink-400">
+                      <Heart className="h-5 w-5 fill-pink-500 text-pink-400" />
+                      <span className="font-bold text-sm text-white">Better Together</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Turn your screen time into quality time.
+                    </p>
+                  </div>
+                  {/* Neon Heart glow illustration */}
+                  <div className="absolute right-3 bottom-2 opacity-30 pointer-events-none">
+                    <Heart className="h-20 w-20 text-pink-400 fill-pink-500/20 blur-[1px]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
 
-      <nav className="nav relative z-20 flex items-center justify-between px-5 py-4 sm:px-8 max-w-[1520px] mx-auto w-full">
-        <span className="flex items-center gap-3 font-display text-lg sm:text-xl font-bold tracking-tight">
-          <img src="/logo.png" alt="SyncCinema Logo" className="h-9 w-9 sm:h-10 sm:w-10 object-contain drop-shadow" />
-          <span className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">SyncCinema</span>
-        </span>
-        <div className="flex items-center gap-2.5">
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            <span>Sync Engine Active</span>
-          </div>
-          <InstallPrompt />
-          <button onClick={onLock} className="glass-btn !py-2 !px-3 text-xs sm:text-sm text-white/70 hover:text-white" title="Clear saved room history">
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Clear device data</span>
-            <span className="sm:hidden">Clear</span>
-          </button>
-        </div>
-      </nav>
+      {/* ======================================================== */}
+      {/* 4. MODALS (Create, Join, Welcome, Watchlist, Settings)   */}
+      {/* ======================================================== */}
 
-      <section className="relative z-10 flex min-h-[calc(100vh-5rem)] flex-col justify-center gap-10 px-5 pb-12 pt-[28vh] lg:flex-row lg:items-center lg:justify-between lg:px-8 xl:px-14 lg:py-10 max-w-[1520px] mx-auto w-full">
-        {/* Left column: Attractive modern hero & social proof to attract users */}
-        <div className="flex-1 max-w-2xl xl:max-w-3xl space-y-6 lg:space-y-7">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold backdrop-blur-md">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span>Ultra-Low Latency Virtual Cinema</span>
-            <span className="text-white/30">•</span>
-            <span className="text-white/80">No Account Required</span>
-          </div>
-
-          <h1 className="font-display text-4xl sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.06] tracking-tight">
-            {'Same movie. Different cities.'.split(' ').map((w, i) => (
-              <span key={i} className="mr-3 inline-block overflow-hidden align-bottom">
-                <span className="word inline-block">{w}</span>
-              </span>
-            ))}
-            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-rose-400 via-pink-300 to-rose-300 bg-clip-text text-transparent">
-              <span className="word inline-block">One private couch.</span>
-            </span>
-          </h1>
-
-          <p className="sub max-w-xl text-base text-white/80 sm:text-lg lg:text-xl font-normal leading-relaxed">
-            Watch movies, YouTube, anime, series, and video files in synchronized harmony. Live 1080p video calls, floating PiP, synchronized playback, and private rooms built strictly for couples and close friends.
-          </p>
-
-          {/* 3 Modern Feature Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 backdrop-blur-md hover:border-rose-500/30 transition">
-              <div className="flex items-center gap-2 text-rose-400 mb-1.5">
-                <Zap className="h-4 w-4" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">Zero Drift Sync</span>
-              </div>
-              <p className="text-xs text-white/60 leading-relaxed">Sub-second clock synchronization keeps both devices playing at the exact same millisecond.</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 backdrop-blur-md hover:border-rose-500/30 transition">
-              <div className="flex items-center gap-2 text-rose-400 mb-1.5">
-                <Video className="h-4 w-4" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">In-Screen Video Call</span>
-              </div>
-              <p className="text-xs text-white/60 leading-relaxed">Floating Picture-in-Picture webcam with corner switching so you never miss a reaction.</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 backdrop-blur-md hover:border-rose-500/30 transition">
-              <div className="flex items-center gap-2 text-rose-400 mb-1.5">
-                <Shield className="h-4 w-4" />
-                <span className="text-xs font-bold text-white uppercase tracking-wider">End-to-End Private</span>
-              </div>
-              <p className="text-xs text-white/60 leading-relaxed">Every room is locked with host passwords and encrypted WebRTC peer-to-peer data.</p>
-            </div>
-          </div>
-
-          {/* Steps guide */}
-          <ol className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-white/70">
-            {['Start a room', 'Set room pass', 'Press play together'].map((s, i) => (
-              <li key={s} className="step glass-btn !rounded-full !px-3.5 !py-1.5 border border-white/10 bg-white/5 backdrop-blur-sm">
-                <b className="grid h-4 w-4 place-items-center rounded-full bg-rose-600 text-[10px] text-white mr-1">{i + 1}</b>
-                <span>{s}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        {/* Right column: Large, modern card on desktop & laptop */}
-        <div className="panel glass w-full space-y-5 p-6 sm:p-7 xl:p-8 lg:w-[480px] xl:w-[540px] 2xl:w-[580px] shrink-0 border border-white/15 bg-[#060608]/95 backdrop-blur-2xl shadow-2xl shadow-rose-950/25 rounded-3xl">
-          {/* Tab switcher */}
-          <div className="flex rounded-2xl bg-white/5 p-1.5 border border-white/10 gap-1.5">
-            <button
-              type="button"
-              onClick={() => { setTab('create'); setErr(''); setPerr(''); }}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition ${
-                tab === 'create'
-                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md'
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>Create</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setTab('join'); setErr(''); setPerr(''); }}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition ${
-                tab === 'join'
-                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md'
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <KeyRound className="h-4 w-4" />
-              <span>Join</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setTab('active'); setErr(''); setPerr(''); fetchRooms(); }}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition relative ${
-                tab === 'active'
-                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md'
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Film className="h-4 w-4" />
-              <span>Rooms ({activeRooms.length})</span>
-              {activeRooms.length > 0 && (
-                <span className="h-2 w-2 rounded-full bg-emerald-400 ml-0.5" />
-              )}
-            </button>
-          </div>
-
-          {tab === 'create' && (
-            <form onSubmit={create} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs sm:text-sm font-medium text-white/90">
-                  Room Name / ID <span className="text-white/40 font-normal">(optional)</span>
-                </label>
-                <div className="relative">
-                  <Film className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
-                  <input
-                    type="text"
-                    value={roomName}
-                    onChange={(e) => { setRoomName(e.target.value); setPerr(''); }}
-                    placeholder="e.g. romantic-night (or leave empty for random)"
-                    aria-label="Room name"
-                    maxLength={64}
-                    className="field-d !pl-10 !py-3 !text-sm sm:!text-base rounded-xl"
-                  />
+      {/* CREATE ROOM MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-[#0d0e24] p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+                  <PlusCircle className="h-4 w-4" />
                 </div>
+                <div>
+                  <h3 className="font-bold text-base text-white">Create Private Room</h3>
+                  <p className="text-xs text-slate-400">Encrypted room with high security</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRoom} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Room Name (Optional)</label>
+                <input
+                  value={roomName}
+                  onChange={(e) => setRoomName(sanitizeInput(e.target.value))}
+                  placeholder="e.g. Couples Movie Night"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070814] border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500"
+                />
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
-                    <Lock className="h-4 w-4 text-rose-400" />
-                    <span>Room Password <b className="text-rose-400 font-bold">*Required</b></span>
-                  </label>
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-semibold text-slate-300">Room Password (Required)</label>
                   <button
                     type="button"
-                    onClick={generatePass}
-                    className="text-xs text-rose-400 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 border border-rose-500/20 transition"
-                    title="Generate a random password"
+                    onClick={generatePasscode}
+                    className="text-purple-400 hover:underline flex items-center gap-1"
                   >
-                    <Dice5 className="h-3.5 w-3.5 text-rose-400" />
-                    <span>Generate</span>
+                    <KeyRound className="h-3 w-3" />
+                    <span>Generate Strong</span>
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
                   <input
-                    ref={passInputRef}
-                    type={showPass ? 'text' : 'password'}
-                    value={pass}
-                    onChange={(e) => { setPass(e.target.value); setPerr(''); }}
-                    placeholder="Password (min 4 characters)"
-                    aria-label="Room password"
-                    minLength={4}
-                    maxLength={64}
-                    required
-                    className="field-d !pl-10 !pr-11 !py-3 !text-sm sm:!text-base rounded-xl"
+                    type={showRoomPass ? 'text' : 'password'}
+                    value={roomPass}
+                    onChange={(e) => setRoomPass(e.target.value)}
+                    placeholder="Enter at least 4 characters"
+                    className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-[#070814] border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPass(!showPass)}
-                    className="absolute right-2.5 top-2.5 rounded-lg p-1.5 text-white/60 hover:text-white"
+                    onClick={() => setShowRoomPass(!showRoomPass)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
                   >
-                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showRoomPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className={`text-xs ${perr ? 'text-rose-300 font-medium' : 'text-white/50'}`}>
-                  {perr || '🔒 Password is required: no one can enter without this password.'}
-                </p>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs sm:text-sm font-medium text-white/90">
-                  <span className="flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-rose-400" />
-                    <span>Room Capacity <b className="text-white/50 font-normal">(Members Allowed)</b></span>
-                  </span>
-                  <span className="text-xs font-bold text-rose-300 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20">
-                    {maxUsers} Members Max
-                  </span>
+              {/* Seats Picker (Up to 30) */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-slate-300">
+                  <span className="font-semibold">Room Capacity</span>
+                  <span className="font-bold text-purple-400">{maxSeats} seats</span>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {[
-                    { count: 2, label: '2 Seats', sub: 'Couples' },
-                    { count: 3, label: '3 Seats', sub: 'Trio' },
-                    { count: 4, label: '4 Seats', sub: 'Double Date' },
-                    { count: 6, label: '6 Seats', sub: 'Friends' },
-                    { count: 8, label: '8 Seats', sub: 'Watch Party' },
-                    { count: 10, label: '10 Seats', sub: 'Squad' },
-                    { count: 15, label: '15 Seats', sub: 'Club Room' },
-                    { count: 30, label: '30 Seats', sub: 'Max Cinema' },
-                  ].map((opt) => (
+                <div className="flex gap-2">
+                  {[2, 4, 8, 16, 30].map((s) => (
                     <button
-                      key={opt.count}
+                      key={s}
                       type="button"
-                      onClick={() => setMaxUsers(opt.count)}
-                      className={`rounded-xl p-2 sm:p-2.5 text-center border transition-all ${
-                        maxUsers === opt.count
-                          ? 'bg-rose-600/30 border-rose-500 text-white shadow-md'
-                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                      onClick={() => setMaxSeats(s)}
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                        maxSeats === s
+                          ? 'bg-purple-600 text-white border-purple-500'
+                          : 'bg-[#070814] border-slate-800 text-slate-400 hover:text-white'
                       }`}
                     >
-                      <span className="block text-xs font-bold">{opt.label}</span>
-                      <span className="block text-[10px] text-white/50">{opt.sub}</span>
+                      {s}
                     </button>
                   ))}
                 </div>
-                {/* Stepper slider for fine control up to 30 members */}
-                <div className="flex items-center gap-3 pt-1 px-1">
-                  <span className="text-[11px] text-white/60">Custom:</span>
-                  <input
-                    type="range"
-                    min="2"
-                    max="30"
-                    value={maxUsers}
-                    onChange={(e) => setMaxUsers(parseInt(e.target.value, 10))}
-                    className="w-full accent-rose-500 h-1.5 bg-white/10 rounded-lg cursor-pointer"
-                  />
-                  <span className="text-xs font-mono font-bold text-rose-400 min-w-8 text-right">
-                    {maxUsers}p
-                  </span>
-                </div>
               </div>
+
+              {createError && (
+                <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl">
+                  {createError}
+                </p>
+              )}
 
               <button
-                ref={cta}
-                onPointerMove={pull}
-                onPointerLeave={release}
-                className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-rose-600 via-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2"
+                type="submit"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white font-bold text-sm shadow-xl shadow-purple-600/30 transition active:scale-95"
               >
-                <Sparkles className="h-5 w-5" />
-                <span>Create Room</span>
-                <ArrowRight className="h-5 w-5" />
+                Create &amp; Enter Room
               </button>
             </form>
-          )}
+          </div>
+        </div>
+      )}
 
-          {tab === 'join' && (
-            <form onSubmit={join} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs sm:text-sm font-medium text-white/90">Room Code or Link</label>
-                <div className="relative">
-                  <Film className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
-                  <input
-                    autoFocus
-                    value={code}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setCode(val);
-                      setErr('');
-                      try {
-                        if (val.includes('#') || val.includes('?')) {
-                          const hashPart = val.includes('#') ? val.split('#')[1] : '';
-                          const searchPart = val.includes('?') ? val.split('?')[1].split('#')[0] : '';
-                          const sp = new URLSearchParams(hashPart || searchPart);
-                          const embeddedPass = sp.get('pass');
-                          if (embeddedPass) setJoinPass(embeddedPass);
-                        }
-                      } catch {}
-                    }}
-                    placeholder="Paste room code or invite link"
-                    aria-label="Room code or link"
-                    className="field-d !pl-10 !py-3 !text-sm sm:!text-base rounded-xl"
-                  />
+      {/* JOIN ROOM MODAL */}
+      {showJoinModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-[#0d0e24] p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+                  <Link2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-white">Join Private Room</h3>
+                  <p className="text-xs text-slate-400">Enter room code and password</p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowJoinModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleJoinRoom} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
-                  <Lock className="h-4 w-4 text-rose-400" />
-                  <span>Room Password <b className="text-rose-400 font-bold">*Required</b></span>
-                </label>
+                <label className="text-xs font-semibold text-slate-300">Room Code or Link</label>
+                <input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  placeholder="Paste room code or full URL"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070814] border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Room Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-white/50" />
                   <input
-                    ref={joinPassInputRef}
                     type={showJoinPass ? 'text' : 'password'}
                     value={joinPass}
-                    onChange={(e) => { setJoinPass(e.target.value); setErr(''); }}
-                    placeholder="Enter room password"
-                    aria-label="Room password"
-                    minLength={4}
-                    maxLength={64}
-                    required
-                    className="field-d !pl-10 !pr-11 !py-3 !text-sm sm:!text-base rounded-xl"
+                    onChange={(e) => setJoinPass(e.target.value)}
+                    placeholder="Enter password given by host"
+                    className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-[#070814] border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowJoinPass(!showJoinPass)}
-                    className="absolute right-2.5 top-2.5 rounded-lg p-1.5 text-white/60 hover:text-white"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
                   >
                     {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {err ? (
-                  <p role="alert" className="text-xs text-rose-300 font-medium">{err}</p>
-                ) : (
-                  <p className="text-xs text-white/50">🔒 Protected room: password is required to enter.</p>
-                )}
               </div>
-              <button className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-rose-600 via-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2">
-                <KeyRound className="h-5 w-5" />
-                <span>Join Room</span>
-                <ArrowRight className="h-5 w-5" />
+
+              {joinError && (
+                <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl">
+                  {joinError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-bold text-sm shadow-xl shadow-purple-600/30 transition active:scale-95"
+              >
+                Join Room
               </button>
             </form>
-          )}
+          </div>
+        </div>
+      )}
 
-          {tab === 'active' && (
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between pb-1">
-                <span className="text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
-                  <Film className="h-4 w-4 text-rose-400" />
-                  <span>Active Rooms on Home Screen</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={fetchRooms}
-                  disabled={loadingRooms}
-                  className="text-xs text-white/60 hover:text-white flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition"
-                  title="Refresh active rooms list"
-                >
-                  <RefreshCw className={`h-3 w-3 ${loadingRooms ? 'animate-spin' : ''}`} />
-                  <span>Refresh</span>
-                </button>
-              </div>
+      {/* WATCHLIST MODAL */}
+      {showWatchlistModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-[#0d0e24] p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-base text-white flex items-center gap-2">
+                <Bookmark className="h-4 w-4 text-purple-400" />
+                <span>Your Watchlist ({watchlist.length})</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowWatchlistModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-              {activeRooms.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center space-y-3">
-                  <p className="text-xs sm:text-sm text-white/60">No active rooms right now.</p>
-                  <button
-                    type="button"
-                    onClick={() => setTab('create')}
-                    className="btn !py-2 !px-4 text-xs sm:text-sm mx-auto"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Create First Room
-                  </button>
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {watchlist.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 space-y-2">
+                  <Bookmark className="h-8 w-8 mx-auto text-slate-600" />
+                  <p className="text-sm font-semibold">Your watchlist is empty</p>
+                  <p className="text-xs text-slate-500">
+                    Hover on any movie poster and tap &quot;Watchlist&quot; to save for later!
+                  </p>
                 </div>
               ) : (
-                <div className="max-h-64 space-y-2.5 overflow-y-auto pr-1">
-                  {activeRooms.map((r) => {
-                    const isFull = (r.userCount || 0) >= (r.maxUsers || 2);
-                    return (
-                      <div
-                        key={r.roomId}
-                        className="rounded-2xl border border-white/10 bg-white/5 p-3.5 flex items-center justify-between gap-2.5 hover:border-rose-500/40 transition"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-sm truncate text-white">{r.roomId}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                              isFull
-                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            }`}>
-                              {!isFull && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
-                              {r.userCount}/{r.maxUsers || 2} Seats {isFull ? '(Full)' : ''}
-                            </span>
-                            <span className="text-[10px] text-white/60 flex items-center gap-0.5">
-                              <Lock className="h-2.5 w-2.5 text-amber-400" />
-                              <span>Password req</span>
-                            </span>
-                          </div>
-                        </div>
-
-                        {isFull ? (
-                          <span className="text-xs opacity-50 px-2.5 py-1 bg-white/5 rounded-lg border border-white/10">
-                            Full
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => selectActiveRoom(r)}
-                            className="btn !py-1.5 !px-3.5 text-xs shrink-0"
-                          >
-                            <Lock className="h-3 w-3" />
-                            Join
-                          </button>
-                        )}
+                watchlist.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-2.5 rounded-2xl bg-[#070814] border border-slate-800/80 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-12 w-9 rounded-lg overflow-hidden bg-slate-800 shrink-0">
+                        <img src={item.poster} alt={item.title} className="h-full w-full object-cover" />
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Quick Active Rooms Preview underneath Create/Join forms */}
-          {tab !== 'active' && activeRooms.length > 0 && (
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-xs text-white/70">
-                <span className="flex items-center gap-1.5 font-medium text-white/90">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Active Rooms ({activeRooms.length})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setTab('active')}
-                  className="text-xs text-rose-400 hover:underline"
-                >
-                  View all
-                </button>
-              </div>
-              <div className="flex flex-col gap-1.5 max-h-28 overflow-y-auto pr-0.5">
-                {activeRooms.map((r) => {
-                  const isFull = (r.userCount || 0) >= (r.maxUsers || 2);
-                  return (
-                    <div
-                      key={r.roomId}
-                      className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-black/30 hover:bg-black/50 transition text-xs"
-                    >
-                      <span className="font-mono text-white/90 truncate max-w-[140px] sm:max-w-[180px]">{r.roomId}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${isFull ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
-                          {r.userCount}/{r.maxUsers || 2}
-                        </span>
-                        {!isFull && (
-                          <button
-                            type="button"
-                            onClick={() => selectActiveRoom(r)}
-                            className="text-[11px] text-rose-400 hover:text-white px-2 py-0.5 rounded-lg bg-white/5 hover:bg-rose-600/40 transition"
-                          >
-                            Join 🔒
-                          </button>
-                        )}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-xs text-white truncate">{item.title}</p>
+                        <p className="text-[11px] text-slate-400 truncate">{item.genres}</p>
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleInstantWatch(item.query)}
+                        className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1 shadow-md"
+                      >
+                        <Play className="h-3 w-3 fill-white" />
+                        <span>Play</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleWatchlist(item)}
+                        className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-rose-400"
+                        title="Remove"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WATCH HISTORY MODAL */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-[#0d0e24] p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-base text-white flex items-center gap-2">
+                <Clock className="h-4 w-4 text-purple-400" />
+                <span>Recently Played History</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {history.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 space-y-2">
+                  <Clock className="h-8 w-8 mx-auto text-slate-600" />
+                  <p className="text-sm font-semibold">No recent history</p>
+                  <p className="text-xs text-slate-500">
+                    Movies and links played in your rooms will appear here automatically.
+                  </p>
+                </div>
+              ) : (
+                history.map((url, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-2xl bg-[#070814] border border-slate-800/80 flex items-center justify-between gap-3"
+                  >
+                    <p className="text-xs text-slate-300 font-mono truncate flex-1">{url}</p>
+                    <button
+                      type="button"
+                      onClick={() => handleInstantWatch(url)}
+                      className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shrink-0 flex items-center gap-1"
+                    >
+                      <Play className="h-3 w-3 fill-white" />
+                      <span>Replay</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SETTINGS MODAL */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-[#0d0e24] p-6 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-base text-white flex items-center gap-2">
+                <Settings className="h-4 w-4 text-purple-400" />
+                <span>Profile &amp; Cinema Settings</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Your Name</label>
+                <input
+                  value={userName}
+                  onChange={(e) => {
+                    const clean = sanitizeInput(e.target.value);
+                    setUserName(clean);
+                    localStorage.setItem('sc_user_name', clean);
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070814] border border-slate-800 text-xs sm:text-sm text-white outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Partner&apos;s Name</label>
+                <input
+                  value={partnerName}
+                  onChange={(e) => {
+                    const clean = sanitizeInput(e.target.value);
+                    setPartnerName(clean);
+                    localStorage.setItem('sc_partner_name', clean);
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070814] border border-slate-800 text-xs sm:text-sm text-white outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-200 space-y-1">
+                <p className="font-bold text-white flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  Bank-Grade Encryption Active
+                </p>
+                <p className="text-[11px] text-purple-300/80">
+                  Every room is protected with host passwords, salted scrypt encryption, and peer-to-peer WebRTC video calls.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowWelcomeScreen(true);
+                    setShowSettingsModal(false);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-300 font-semibold"
+                >
+                  View Welcome Screen Again
+                </button>
               </div>
             </div>
-          )}
-
-          {last && (
-            <button onClick={() => router.push(`/room/${last}`)} className="glass-btn w-full justify-between !py-2.5 rounded-xl">
-              <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-rose-400" />Back to our room</span>
-              <span className="font-mono text-xs text-white/60">{last}</span>
-            </button>
-          )}
-
-          <p className="flex items-center gap-2 border-t border-white/10 pt-3 text-xs text-white/60">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
-            <span>Private: {maxUsers} seats only, host controls room settings, and password required to enter.</span>
-          </p>
+          </div>
         </div>
-      </section>
-    </main>
+      )}
+
+      {/* WELCOME SCREEN (Shown on first visit or triggered anytime) */}
+      {showWelcomeScreen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/95 p-4 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-lg rounded-3xl border border-purple-500/30 bg-gradient-to-b from-[#101235] via-[#0c0d28] to-[#070814] p-7 sm:p-9 text-center space-y-6 shadow-2xl relative overflow-hidden">
+            {/* Ambient background glow */}
+            <div className="absolute -top-24 -left-24 h-48 w-48 rounded-full bg-purple-600/30 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-pink-600/30 blur-3xl pointer-events-none" />
+
+            <div className="relative mx-auto h-16 w-16 rounded-2xl bg-gradient-to-tr from-purple-600 via-fuchsia-600 to-pink-500 p-0.5 shadow-2xl shadow-purple-600/40 flex items-center justify-center">
+              <div className="h-full w-full rounded-[14px] bg-[#070814] flex items-center justify-center">
+                <Heart className="h-8 w-8 text-pink-500 fill-pink-500/40 animate-pulse" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Welcome to SynCinema
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">
+                The private virtual cinema built strictly for couples and close friends. Watch movies, YouTube, anime, and series in synchronized harmony.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5 py-1 text-left">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <Zap className="h-4 w-4 text-pink-400" />
+                <p className="text-[11px] font-bold text-white">Zero Drift</p>
+                <p className="text-[10px] text-slate-400">Exact millisecond playback sync</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <p className="text-[11px] font-bold text-white">Private</p>
+                <p className="text-[10px] text-slate-400">Password protected rooms</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <Film className="h-4 w-4 text-purple-400" />
+                <p className="text-[11px] font-bold text-white">1080p HD</p>
+                <p className="text-[10px] text-slate-400">Instant direct OTT mirrors</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowWelcomeScreen(false);
+                sessionStorage.setItem('sc_welcome_dismissed', '1');
+              }}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:brightness-110 text-white font-bold text-sm shadow-xl shadow-pink-600/30 flex items-center justify-center gap-2 transition active:scale-95"
+            >
+              <span>Enter Dashboard</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
-}
-
-/* ---------------- page ---------------- */
-export default function Home() {
-  const [hero, setHero] = useState(null);
-  useEffect(() => {
-    loadHero('').then(setHero).catch(() => {});
-  }, []);
-  const lock = () => {
-    forgetEverything();
-    if (hero) URL.revokeObjectURL(hero);
-    setHero(null);
-    window.location.reload();
-  };
-
-  return <Dashboard hero={hero} onLock={lock} />;
 }

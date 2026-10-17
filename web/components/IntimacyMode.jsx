@@ -6,32 +6,15 @@ import {
   Share2, Heart, AlertTriangle, Fingerprint, RefreshCw, X, Crown
 } from 'lucide-react';
 
-const AMBIENT_PRESETS = [
-  { id: 'love', name: 'Love Crimson', color: '#e11d48', glow: 'rgba(225, 29, 72, 0.45)', bg: 'radial-gradient(circle at 50% 20%, rgba(225, 29, 72, 0.35), transparent 70%), #0c0612' },
-  { id: 'candlelight', name: 'Candlelight', color: '#ff9e42', glow: 'rgba(255, 158, 66, 0.45)', bg: 'radial-gradient(circle at 50% 30%, rgba(255, 158, 66, 0.35), transparent 70%), #0d0806' },
-  { id: 'midnight', name: 'Midnight Violet', color: '#8a2be2', glow: 'rgba(138, 43, 226, 0.45)', bg: 'radial-gradient(circle at 50% 20%, rgba(138, 43, 226, 0.35), transparent 70%), #08040f' },
-  { id: 'ruby', name: 'Velvet Cinema Red', color: '#e50914', glow: 'rgba(229, 9, 20, 0.4)', bg: 'radial-gradient(circle at 50% 25%, rgba(229, 9, 20, 0.3), transparent 70%), #0d0507' },
-  { id: 'sunset', name: 'Sunset Rose', color: '#ff6e7f', glow: 'rgba(255, 110, 127, 0.45)', bg: 'radial-gradient(circle at 50% 20%, rgba(255, 110, 127, 0.35), transparent 70%), #0f070a' },
-  { id: 'noir', name: 'Deep Cinema Noir', color: '#334155', glow: 'rgba(30, 41, 59, 0.3)', bg: 'radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.25), transparent 70%), #050307' },
-];
-
-
 export default function IntimacyMode({
   socket,
   me,
   isHost,
   adultMode = false,
-  ambient = { preset: 'love', intensity: 80, flicker: false },
   hasPin = false,
   say,
-  onApplyAmbient,
 }) {
-  const [activeTab, setActiveTab] = useState('lighting'); // 'lighting', 'adult', 'stealth', 'security', 'invite'
-
-  // Ambient lighting local state
-  const [preset, setPreset] = useState(ambient?.preset || 'love');
-  const [intensity, setIntensity] = useState(ambient?.intensity ?? 80);
-  const [flicker, setFlicker] = useState(!!ambient?.flicker);
+  const [activeTab, setActiveTab] = useState('stealth'); // 'stealth', 'security', 'invite'
 
   // Stealth / Disguise mode
   const [stealthActive, setStealthActive] = useState(false);
@@ -54,31 +37,6 @@ export default function IntimacyMode({
       setBiometricSupported(true);
     }
   }, []);
-
-  // Keyboard shortcut: Escape to activate Stealth Disguise
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !stealthActive) {
-        enableStealth();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [stealthActive]);
-
-  // Handle ambient lighting broadcast and local apply (Host Only)
-  const handleUpdateAmbient = (newP, newI, newF) => {
-    if (!isHost) {
-      say?.('👑 Only the room host can adjust ambient lighting settings');
-      return;
-    }
-    setPreset(newP);
-    setIntensity(newI);
-    setFlicker(newF);
-    const amb = { preset: newP, intensity: newI, flicker: newF };
-    onApplyAmbient?.(amb);
-    socket?.emit('ambient:set', amb);
-  };
 
   // Stealth Disguise Mode
   const enableStealth = () => {
@@ -184,27 +142,14 @@ export default function IntimacyMode({
       <div className="flex items-center gap-1.5 border-b border-white/10 pb-2 mb-3 overflow-x-auto no-scrollbar">
         <button
           type="button"
-          onClick={() => setActiveTab('lighting')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-            activeTab === 'lighting' ? 'bg-rose-600 text-white shadow' : 'text-white/60 hover:text-white'
-          }`}
-        >
-          <Flame className="h-3.5 w-3.5 text-amber-400" />
-          <span>Ambient Lighting</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => setActiveTab('stealth')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
             activeTab === 'stealth' ? 'bg-rose-600 text-white shadow' : 'text-white/60 hover:text-white'
           }`}
         >
-
           <EyeOff className="h-3.5 w-3.5 text-indigo-400" />
           <span>Stealth Disguise</span>
         </button>
-
         <button
           type="button"
           onClick={() => setActiveTab('security')}
@@ -213,7 +158,7 @@ export default function IntimacyMode({
           }`}
         >
           <Lock className="h-3.5 w-3.5 text-emerald-400" />
-          <span>PIN & Biometrics {hasPin && '🔒'}</span>
+          <span>PIN &amp; Biometrics {hasPin && '🔒'}</span>
         </button>
 
         <button
@@ -227,82 +172,6 @@ export default function IntimacyMode({
           <span>Discreet Invites</span>
         </button>
       </div>
-
-      {/* TAB 1: AMBIENT LIGHTING */}
-      {activeTab === 'lighting' && (
-        <div className="space-y-4">
-          {!isHost && (
-            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-2">
-              <Crown className="h-4 w-4 text-amber-400 shrink-0" />
-              <span>Room lighting is controlled by the host.</span>
-            </div>
-          )}
-          <div>
-            <p className="text-xs font-bold text-white/80">Romantic Ambient Presets</p>
-            <p className="text-[11px] text-white/50">Changes the room glow and background lighting synchronously for both devices</p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {AMBIENT_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handleUpdateAmbient(p.id, intensity, flicker)}
-                className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition cursor-pointer ${
-                  preset === p.id
-                    ? 'border-rose-500 bg-white/10 shadow-lg'
-                    : 'border-white/10 hover:border-white/25 bg-black/20'
-                }`}
-              >
-                <span
-                  className="h-5 w-5 rounded-full shrink-0 shadow-md"
-                  style={{ background: p.color, boxShadow: `0 0 10px ${p.glow}` }}
-                />
-                <span className="text-xs font-medium truncate">{p.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Glow Intensity Slider */}
-          <div className="space-y-1.5 pt-2 border-t border-white/10">
-            <div className="flex justify-between text-xs text-white/70">
-              <span className="flex items-center gap-1"><Sliders className="h-3.5 w-3.5" /> Glow Intensity</span>
-              <span className="font-bold">{intensity}%</span>
-            </div>
-            <input
-              type="range"
-              min="10"
-              max="100"
-              disabled={!isHost}
-              value={intensity}
-              onChange={(e) => handleUpdateAmbient(preset, +e.target.value, flicker)}
-              className="w-full accent-rose-500 cursor-pointer disabled:opacity-50"
-            />
-          </div>
-
-          {/* Candlelight Flicker Toggle */}
-          <div className="flex items-center justify-between pt-1">
-            <div>
-              <p className="text-xs font-semibold text-white/80">Candlelight Flicker Effect</p>
-              <p className="text-[10px] text-white/50">Simulates real candlelight breathing on both screens</p>
-            </div>
-            <button
-              type="button"
-              disabled={!isHost}
-              onClick={() => handleUpdateAmbient(preset, intensity, !flicker)}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition disabled:opacity-50 ${
-                flicker ? 'bg-[#ff9e42] text-black' : 'bg-white/10 text-white/60'
-              }`}
-            >
-              {flicker ? 'Active 🕯️' : 'Off'}
-            </button>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* TAB 3: STEALTH DISGUISE (PANIC BUTTON) */}
       {activeTab === 'stealth' && (
         <div className="space-y-4">
           <div className="p-3 rounded-xl border border-indigo-400/30 bg-indigo-950/20">

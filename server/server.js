@@ -1780,7 +1780,9 @@ io.on('connection', (socket) => {
   socket.on('lock', (v) => { if (joined() && user.cid === room.hostId) { room.lock = !!v; presence(rid, room); } });
   socket.on('chat', ({ text, vt } = {}) => {
     if (!joined() || typeof text !== 'string' || !text.trim()) return;
-    const m = { id: crypto.randomUUID(), user: user.name, color: user.color, text: text.slice(0, 500), vt: num(vt), ts: Date.now() };
+    const sanitized = text.replace(/[<>]/g, '').trim().slice(0, 500);
+    if (!sanitized) return;
+    const m = { id: crypto.randomUUID(), user: user.name, color: user.color, text: sanitized, vt: num(vt), ts: Date.now() };
     room.chat = [...room.chat.slice(-99), m];
     io.to(rid).emit('chat', m); save();
   });

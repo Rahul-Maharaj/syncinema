@@ -8,7 +8,10 @@ module.exports = {
   output: process.env.STANDALONE ? 'standalone' : undefined, reactStrictMode: true, poweredByHeader: false,
   async headers() {
     const h = [
-      { key: 'X-Content-Type-Options', value: 'nosniff' }, { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }, { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'X-XSS-Protection', value: '1; mode=block' },
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), display-capture=(self), autoplay=*, encrypted-media=*' },
     ];

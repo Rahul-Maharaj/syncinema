@@ -16,7 +16,6 @@ import CouplesOverlay from '@/components/CouplesOverlay';
 import CoupleGestures from '@/components/CoupleGestures';
 import MovieNightExtras from '@/components/MovieNightExtras';
 import IntimacyMode from '@/components/IntimacyMode';
-import AiWatchAssistant from '@/components/AiWatchAssistant';
 import WatchHistoryModal from '@/components/WatchHistoryModal';
 import RecentBar from '@/components/RecentBar';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -76,8 +75,8 @@ export default function Room() {
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
   const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'ott' | 'gestures' | 'extras' | 'tools'
-  const [toolsSubTab, setToolsSubTab] = useState('extras'); // 'extras' | 'intimacy' | 'ai'
-  const [desktopTab, setDesktopTab] = useState('ott'); // 'ott' | 'gestures' | 'extras' | 'recent' | 'intimacy' | 'ai'
+  const [toolsSubTab, setToolsSubTab] = useState('extras'); // 'extras' | 'intimacy'
+  const [desktopTab, setDesktopTab] = useState('ott'); // 'ott' | 'gestures' | 'extras' | 'recent' | 'intimacy'
   const [showMenu, setShowMenu] = useState(false);
   const [showCall, setShowCall] = useState(true);
   const [showHandoff, setShowHandoff] = useState(false);
@@ -99,7 +98,6 @@ export default function Room() {
   const [timer, setTimer] = useState(null);
   const [readyCheck, setReadyCheck] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [ambient, setAmbient] = useState({ preset: 'love', intensity: 80, flicker: false });
   const [adultMode, setAdultMode] = useState(false);
   const [hasPin, setHasPin] = useState(false);
   const [currentMedia, setCurrentMedia] = useState(null);
@@ -111,16 +109,6 @@ export default function Room() {
   const me = typeof window !== 'undefined' ? getCid() : null;
 
   const say = (m) => { setToast({ m, n: Date.now() }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 2400); };
-
-  const applyAmbientLighting = (amb) => {
-    if (typeof document === 'undefined') return;
-    const ambientEl = document.querySelector('.ambient');
-    if (ambientEl) {
-      ambientEl.style.background = '#000000';
-      ambientEl.style.opacity = '0';
-      ambientEl.classList.remove('candle-flicker');
-    }
-  };
 
   const doJoin = (overridePass, overrideKey) => {
     if (!socket || !name) return;
@@ -188,12 +176,10 @@ export default function Room() {
       setTimer(r.timer || null);
       setReadyCheck(r.readyCheck || null);
       setReviews(r.reviews || []);
-      setAmbient(r.ambient || { preset: 'love', intensity: 80, flicker: false });
       setAdultMode(!!r.adult);
       setHasPin(!!r.hasPin);
       if (r.ottAccounts) setOttAccounts(r.ottAccounts);
       if (r.media) setCurrentMedia(r.media);
-      applyAmbientLighting(r.ambient);
       setLock(r.lock);
       setUsers(r.users || []);
       setHostId(r.hostId);
@@ -287,10 +273,6 @@ export default function Room() {
     socket.on('ready:update', setReadyCheck);
     socket.on('ready:all', setReadyCheck);
     socket.on('reviews:update', setReviews);
-    socket.on('ambient:update', (amb) => {
-      setAmbient(amb);
-      applyAmbientLighting(amb);
-    });
     socket.on('room:adult_updated', setAdultMode);
     socket.on('room:pass_updated', () => say('Room password was updated 🔒'));
     socket.on('room:closed', (info) => {
@@ -1081,18 +1063,8 @@ export default function Room() {
                         toolsSubTab === 'intimacy' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                       }`}
                     >
-                      <Flame className="h-3 w-3 text-rose-400" />
-                      <span>Atmosphere</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setToolsSubTab('ai')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
-                        toolsSubTab === 'ai' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      <Sparkles className="h-3 w-3 text-amber-300" />
-                      <span>Copilot</span>
+                      <Lock className="h-3 w-3 text-rose-400" />
+                      <span>Privacy &amp; Intimacy</span>
                     </button>
                   </div>
 
@@ -1119,19 +1091,7 @@ export default function Room() {
                       me={me}
                       isHost={me === hostId}
                       adultMode={adultMode}
-                      ambient={ambient}
                       hasPin={hasPin}
-                      say={say}
-                      onApplyAmbient={applyAmbientLighting}
-                    />
-                  )}
-
-                  {toolsSubTab === 'ai' && (
-                    <AiWatchAssistant
-                      socket={socket}
-                      currentMedia={currentMedia}
-                      onAddToQueue={(item) => socket.emit('queue:add', { media: { type: 'auto', src: item.title, title: item.title, desc: item.why } })}
-                      onAddToWatchlist={(item) => socket.emit('watchlist:add', { item: { type: 'embed', src: '', title: item.title, desc: item.why } })}
                       say={say}
                     />
                   )}
@@ -1228,21 +1188,8 @@ export default function Room() {
                       : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  <Flame className="h-4 w-4 text-rose-400" />
-                  <span>Intimacy &amp; Lighting 🕯️</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDesktopTab('ai')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    desktopTab === 'ai'
-                      ? 'bg-rose-600 text-white shadow-md'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <Sparkles className="h-4 w-4 text-purple-300" />
-                  <span>AI Copilot ✨</span>
+                  <Lock className="h-4 w-4 text-rose-400" />
+                  <span>Couples Privacy &amp; Intimacy 🔒</span>
                 </button>
               </div>
 
@@ -1301,21 +1248,7 @@ export default function Room() {
                     me={me}
                     isHost={me === hostId}
                     adultMode={adultMode}
-                    ambient={ambient}
                     hasPin={hasPin}
-                    say={say}
-                    onApplyAmbient={applyAmbientLighting}
-                  />
-                </div>
-              )}
-
-              {desktopTab === 'ai' && (
-                <div className="rise">
-                  <AiWatchAssistant
-                    socket={socket}
-                    currentMedia={currentMedia}
-                    onAddToQueue={(item) => socket.emit('queue:add', { media: { type: 'auto', src: item.title, title: item.title, desc: item.why } })}
-                    onAddToWatchlist={(item) => socket.emit('watchlist:add', { item: { type: 'embed', src: '', title: item.title, desc: item.why } })}
                     say={say}
                   />
                 </div>
