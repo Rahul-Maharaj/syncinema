@@ -28,22 +28,22 @@ import ChatPanel from '@/components/ChatPanel';
 export const ROOM_THEMES = {
   midnight: {
     id: 'midnight',
-    name: 'Midnight Romance',
-    tag: 'Home Screen Aesthetic • Romantic Ambiance',
+    name: 'Soft Pink Romance',
+    tag: 'Home Screen Soft Pink Gradient Ambiance',
     icon: '💕',
-    bgClass: 'bg-[#050611]',
-    navBg: 'bg-[#070817]/90 border-pink-500/20',
-    asideBg: 'bg-[#070817]/90',
-    tabBg: 'bg-[#050611]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#050611] via-black/40 to-black/60',
-    ambientGlow: 'bg-pink-500/10',
-    borderColor: 'border-pink-500/25',
-    cardBorder: 'border-pink-500/30',
+    bgClass: 'bg-[#090514]',
+    navBg: 'bg-[#0f071f]/85 border-pink-500/30 shadow-lg shadow-pink-950/20',
+    asideBg: 'bg-[#0f071f]/85 border-pink-500/25',
+    tabBg: 'bg-[#090514]/95',
+    overlayGradient: 'bg-gradient-to-b from-[#160729]/80 via-[#0a0515]/60 to-[#06030c]/90',
+    ambientGlow: 'bg-gradient-to-r from-purple-600/30 via-pink-500/35 to-rose-500/30',
+    borderColor: 'border-pink-500/30',
+    cardBorder: 'border-pink-500/40 shadow-xl shadow-pink-950/40',
     accentGradient: 'from-purple-600 via-pink-600 to-rose-600',
-    accentText: 'text-pink-400',
+    accentText: 'text-pink-300',
     accentBg: 'bg-pink-500',
-    themeBtnClass: 'bg-pink-500/15 border-pink-500/30 text-pink-300 hover:bg-pink-500/25',
-    swatches: ['#050611', '#ec4899', '#8b5cf6'],
+    themeBtnClass: 'bg-gradient-to-r from-purple-600/30 via-pink-600/30 to-rose-600/30 border-pink-500/40 text-pink-200 hover:brightness-110 shadow-md shadow-pink-900/30',
+    swatches: ['#090514', '#f43f5e', '#ec4899', '#c084fc'],
     showWallpaperDefault: true,
   },
   neon: {
@@ -231,9 +231,17 @@ export default function Room() {
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('sc_room_theme');
-      if (savedTheme && ROOM_THEMES[savedTheme]) setCurrentThemeId(savedTheme);
+      if (savedTheme && savedTheme !== 'obsidian' && ROOM_THEMES[savedTheme]) {
+        setCurrentThemeId(savedTheme);
+      } else {
+        setCurrentThemeId('midnight');
+      }
       const savedWp = localStorage.getItem('sc_show_wallpaper');
-      if (savedWp !== null) setShowWallpaper(savedWp === '1');
+      if (savedWp !== null) {
+        setShowWallpaper(savedWp === '1');
+      } else {
+        setShowWallpaper(true);
+      }
     } catch {}
   }, []);
 

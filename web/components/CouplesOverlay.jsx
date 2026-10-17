@@ -898,15 +898,15 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="hidden lg:flex fixed bottom-5 left-5 z-40 items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white transition hover:border-rose-500/60 cursor-pointer"
+          className="hidden lg:flex fixed bottom-24 left-5 z-40 items-center gap-2 rounded-full border border-pink-500/40 bg-black/90 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-pink-200 transition hover:border-pink-400 hover:text-white shadow-2xl cursor-pointer"
           title="Show video call window"
         >
           <Video className="h-3.5 w-3.5 text-rose-400" />
           <span>Show Video Call</span>
-          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
+          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
         </button>
       ) : (
-        <div ref={box} className={`hidden lg:block fixed bottom-5 left-5 z-40 rounded-2xl border border-white/20 !bg-black p-2.5 transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+        <div ref={box} className={`hidden lg:block fixed bottom-20 left-5 z-40 rounded-2xl border border-pink-500/30 bg-[#070512]/95 backdrop-blur-xl p-2.5 transition-all shadow-2xl ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />

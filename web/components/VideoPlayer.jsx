@@ -1806,7 +1806,7 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-zinc-700 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/25 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover:border-pink-400 hover:text-pink-300 backdrop-blur-md"
               title="Paste link from clipboard and play immediately"
             >
               <span>📋</span>
@@ -1814,7 +1814,7 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn !py-2.5 !px-4 text-xs font-bold shrink-0 flex items-center justify-center gap-1.5"
+              className="btn !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 shadow-lg shadow-pink-600/30 text-white cursor-pointer active:scale-95"
             >
               <Play className="h-3.5 w-3.5 fill-white" />
               <span>Play for All</span>
@@ -1822,40 +1822,99 @@ export default function VideoPlayer({
           </div>
         </div>
 
+        {/* High-Contrast, Crystal-Clear Secondary Action Toolbar */}
         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-          <button type="button" onClick={enqueue} className="ghost" title="Add this link to the Up next list"><ListPlus className="h-4 w-4" />Add to queue</button>
-          <label className="ghost cursor-pointer" title="Play a movie file from your own device"><FolderOpen className="h-4 w-4" />My file<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></label>
-          <label className="ghost cursor-pointer" title="Add .srt or .vtt subtitles"><Captions className="h-4 w-4" />Subtitles<input type="file" accept=".srt,.vtt" onChange={pickSub} hidden /></label>
+          <button
+            type="button"
+            onClick={enqueue}
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            title="Add this link to the Up next list"
+          >
+            <ListPlus className="h-4 w-4 text-pink-400 shrink-0" />
+            <span>Add to queue</span>
+          </button>
+
+          <label
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            title="Play a movie file from your own device"
+          >
+            <FolderOpen className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>My file</span>
+            <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
+          </label>
+
+          <label
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            title="Add .srt or .vtt subtitles"
+          >
+            <Captions className="h-4 w-4 text-purple-400 shrink-0" />
+            <span>Subtitles</span>
+            <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
+          </label>
+
           {onOpenRecent && (
-            <button type="button" onClick={onOpenRecent} className="ghost text-cyan-300 hover:text-white" title="Open Recent Plays Bar">
-              <History className="h-4 w-4 text-cyan-400" />
+            <button
+              type="button"
+              onClick={onOpenRecent}
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-cyan-400/60 text-white hover:text-cyan-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              title="Open Recent Plays Bar"
+            >
+              <History className="h-4 w-4 text-cyan-400 shrink-0" />
               <span>Recent Bar</span>
             </button>
           )}
+
           {audioTracks.length > 1 && (
-            <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/90" title="Audio track / language">
-              <Volume2 className="h-4 w-4 text-rose-400" />
-              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer">
+            <div className="flex items-center gap-1.5 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white shadow-md backdrop-blur-md" title="Audio track / language">
+              <Volume2 className="h-4 w-4 text-rose-400 shrink-0" />
+              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-semibold">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
               </select>
             </div>
           )}
-          {screenBy === me
-            ? <button type="button" onClick={stopShare} className="ghost"><MonitorOff className="h-4 w-4" />Stop sharing</button>
-            : <button type="button" onClick={startShare} disabled={!!screenBy} className="ghost" title="Show your screen to your partner"><MonitorUp className="h-4 w-4" />Share screen</button>}
+
+          {screenBy === me ? (
+            <button
+              type="button"
+              onClick={stopShare}
+              className="px-3 py-2 rounded-xl bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/60 text-white font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            >
+              <MonitorOff className="h-4 w-4 text-rose-400 shrink-0" />
+              <span>Stop sharing</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startShare}
+              disabled={!!screenBy}
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-emerald-400/60 text-white hover:text-emerald-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer disabled:opacity-40"
+              title="Show your screen to your partner"
+            >
+              <MonitorUp className="h-4 w-4 text-emerald-400 shrink-0" />
+              <span>Share screen</span>
+            </button>
+          )}
+
           {stream && (
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="ghost text-rose-400 hover:text-white"
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-rose-400 shrink-0" /> : <Maximize2 className="h-4 w-4 text-rose-400 shrink-0" />}
               <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}
-          <select value={force} onChange={(e) => setForce(e.target.value)} aria-label="Link type" className="field !w-auto" title="Link type (Auto detects it for you)">
-            {TYPES.map((t) => <option key={t} value={t} className="text-black">{t === 'auto' ? 'Type: Auto' : t.toUpperCase()}</option>)}
+
+          <select
+            value={force}
+            onChange={(e) => setForce(e.target.value)}
+            aria-label="Link type"
+            className="px-3 py-2 rounded-xl border border-white/25 bg-black/60 text-white text-xs font-semibold shadow-md backdrop-blur-md outline-none focus:border-pink-500 transition cursor-pointer"
+            title="Link type (Auto detects it for you)"
+          >
+            {TYPES.map((t) => <option key={t} value={t} className="text-black bg-white">{t === 'auto' ? 'Type: Auto' : t.toUpperCase()}</option>)}
           </select>
         </div>
       </form>
