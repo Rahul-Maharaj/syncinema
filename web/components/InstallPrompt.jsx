@@ -61,9 +61,9 @@ export default function InstallPrompt({ className = '' }) {
         type="button"
         onClick={handleInstallClick}
         title="Install SyncCinema as an app on your phone or laptop"
-        className={`glass-btn !px-3 !py-1.5 text-xs font-medium text-white hover:border-[#ff6fa0]/50 hover:bg-[#d9467a]/25 transition flex items-center gap-1.5 ${className}`}
+        className={`glass-btn !px-3 !py-1.5 text-xs font-medium text-white hover:border-rose-500/50 hover:bg-rose-500/20 transition flex items-center gap-1.5 ${className}`}
       >
-        <Download className="h-3.5 w-3.5 text-[#ff6fa0]" />
+        <Download className="h-3.5 w-3.5 text-rose-400" />
         <span>Install App</span>
       </button>
 
@@ -71,7 +71,7 @@ export default function InstallPrompt({ className = '' }) {
         <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-white/15 bg-gradient-to-b from-[#14121a]/95 via-[#0d0b12]/98 to-[#060509]/98 p-3 text-xs text-white shadow-2xl backdrop-blur-xl z-50">
           <div className="flex items-center gap-2 mb-1.5">
             <img src="/logo.png" alt="SyncCinema" className="h-5 w-5 object-contain" />
-            <p className="font-semibold text-[#ff8fb3]">Install on iPhone / iPad:</p>
+            <p className="font-semibold text-rose-400">Install on iPhone / iPad:</p>
           </div>
           <p className="opacity-80">Tap the <b>Share</b> button (⎋) at the bottom of Safari, then select <b>&ldquo;Add to Home Screen&rdquo;</b> (➕).</p>
         </div>

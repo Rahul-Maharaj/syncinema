@@ -198,7 +198,7 @@ function Dashboard({ hero, onLock }) {
           {hero && <img src={hero} alt="Two people in different rooms watching the same movie on laptops" onLoad={() => setLoaded(true)} className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
           <div className="seam" style={{ left: seam.x }}><i /></div>
           <div className="absolute z-[5]" style={{ left: seam.x, top: seam.y, transform: 'translate(-50%,-50%)' }}>
-            <div className="relative grid h-11 w-11 place-items-center rounded-full bg-[#d9467a]">
+            <div className="relative grid h-11 w-11 place-items-center rounded-full bg-rose-600 shadow-lg shadow-rose-950/50">
               <Heart className="h-5 w-5 fill-white text-white" />
             </div>
             <span className="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/80 px-2.5 py-0.5 text-[10px] uppercase tracking-widest border border-white/10">in sync</span>
@@ -242,7 +242,7 @@ function Dashboard({ hero, onLock }) {
                 <span className="word inline-block">{w}</span>
               </span>
             ))}
-            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-rose-400 via-pink-400 to-[#ff6fa0] bg-clip-text text-transparent">
+            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-rose-400 via-pink-300 to-rose-300 bg-clip-text text-transparent">
               <span className="word inline-block">One private couch.</span>
             </span>
           </h1>
@@ -280,7 +280,7 @@ function Dashboard({ hero, onLock }) {
           <ol className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-white/70">
             {['Start a room', 'Set room pass', 'Press play together'].map((s, i) => (
               <li key={s} className="step glass-btn !rounded-full !px-3.5 !py-1.5 border border-white/10 bg-white/5 backdrop-blur-sm">
-                <b className="grid h-4 w-4 place-items-center rounded-full bg-[#d9467a] text-[10px] text-white mr-1">{i + 1}</b>
+                <b className="grid h-4 w-4 place-items-center rounded-full bg-rose-600 text-[10px] text-white mr-1">{i + 1}</b>
                 <span>{s}</span>
               </li>
             ))}
@@ -296,7 +296,7 @@ function Dashboard({ hero, onLock }) {
               onClick={() => { setTab('create'); setErr(''); setPerr(''); }}
               className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition ${
                 tab === 'create'
-                  ? 'bg-gradient-to-r from-[#e11d48] to-[#db2777] text-white shadow-md'
+                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md'
                   : 'text-white/70 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -308,7 +308,7 @@ function Dashboard({ hero, onLock }) {
               onClick={() => { setTab('join'); setErr(''); setPerr(''); }}
               className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition ${
                 tab === 'join'
-                  ? 'bg-gradient-to-r from-[#e11d48] to-[#db2777] text-white shadow-md'
+                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md'
                   : 'text-white/70 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -320,7 +320,7 @@ function Dashboard({ hero, onLock }) {
               onClick={() => { setTab('active'); setErr(''); setPerr(''); fetchRooms(); }}
               className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 xl:py-3 text-xs sm:text-sm font-semibold transition relative ${
                 tab === 'active'
-                  ? 'bg-gradient-to-r from-[#e11d48] to-[#db2777] text-white shadow-md'
+                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md'
                   : 'text-white/70 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -361,7 +361,7 @@ function Dashboard({ hero, onLock }) {
                   <button
                     type="button"
                     onClick={generatePass}
-                    className="text-xs text-[#ff8fb3] hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 border border-rose-500/20 transition"
+                    className="text-xs text-rose-400 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 border border-rose-500/20 transition"
                     title="Generate a random password"
                   >
                     <Dice5 className="h-3.5 w-3.5 text-rose-400" />
@@ -401,7 +401,7 @@ function Dashboard({ hero, onLock }) {
                     <Users className="h-4 w-4 text-rose-400" />
                     <span>Room Capacity <b className="text-white/50 font-normal">(Members Allowed)</b></span>
                   </span>
-                  <span className="text-xs font-bold text-[#ff8fb3] px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20">
+                  <span className="text-xs font-bold text-rose-300 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20">
                     {maxUsers} Members Max
                   </span>
                 </div>
@@ -422,7 +422,7 @@ function Dashboard({ hero, onLock }) {
                       onClick={() => setMaxUsers(opt.count)}
                       className={`rounded-xl p-2 sm:p-2.5 text-center border transition-all ${
                         maxUsers === opt.count
-                          ? 'bg-[#d9467a]/30 border-[#d9467a] text-white shadow-md'
+                          ? 'bg-rose-600/30 border-rose-500 text-white shadow-md'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
                       }`}
                     >
@@ -440,9 +440,9 @@ function Dashboard({ hero, onLock }) {
                     max="30"
                     value={maxUsers}
                     onChange={(e) => setMaxUsers(parseInt(e.target.value, 10))}
-                    className="w-full accent-[#d9467a] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                    className="w-full accent-rose-500 h-1.5 bg-white/10 rounded-lg cursor-pointer"
                   />
-                  <span className="text-xs font-mono font-bold text-[#ff8fb3] min-w-8 text-right">
+                  <span className="text-xs font-mono font-bold text-rose-400 min-w-8 text-right">
                     {maxUsers}p
                   </span>
                 </div>
@@ -452,7 +452,7 @@ function Dashboard({ hero, onLock }) {
                 ref={cta}
                 onPointerMove={pull}
                 onPointerLeave={release}
-                className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-[#e11d48] via-[#e62e6b] to-[#db2777] hover:from-[#f43f5e] hover:to-[#e11d48] shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2"
+                className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-rose-600 via-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2"
               >
                 <Sparkles className="h-5 w-5" />
                 <span>Create Room</span>
@@ -523,7 +523,7 @@ function Dashboard({ hero, onLock }) {
                   <p className="text-xs text-white/50">🔒 Protected room: password is required to enter.</p>
                 )}
               </div>
-              <button className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-[#e11d48] via-[#e62e6b] to-[#db2777] hover:from-[#f43f5e] hover:to-[#e11d48] shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2">
+              <button className="btn w-full !py-3.5 xl:!py-4 !text-base xl:!text-lg font-bold rounded-2xl bg-gradient-to-r from-rose-600 via-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2">
                 <KeyRound className="h-5 w-5" />
                 <span>Join Room</span>
                 <ArrowRight className="h-5 w-5" />
@@ -535,7 +535,7 @@ function Dashboard({ hero, onLock }) {
             <div className="space-y-3.5">
               <div className="flex items-center justify-between pb-1">
                 <span className="text-xs sm:text-sm font-medium text-white/90 flex items-center gap-1.5">
-                  <Film className="h-4 w-4 text-[#ff6fa0]" />
+                  <Film className="h-4 w-4 text-rose-400" />
                   <span>Active Rooms on Home Screen</span>
                 </span>
                 <button
@@ -569,7 +569,7 @@ function Dashboard({ hero, onLock }) {
                     return (
                       <div
                         key={r.roomId}
-                        className="rounded-2xl border border-white/10 bg-white/5 p-3.5 flex items-center justify-between gap-2.5 hover:border-[#ff6fa0]/40 transition"
+                        className="rounded-2xl border border-white/10 bg-white/5 p-3.5 flex items-center justify-between gap-2.5 hover:border-rose-500/40 transition"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
@@ -625,7 +625,7 @@ function Dashboard({ hero, onLock }) {
                 <button
                   type="button"
                   onClick={() => setTab('active')}
-                  className="text-xs text-[#ff8fb3] hover:underline"
+                  className="text-xs text-rose-400 hover:underline"
                 >
                   View all
                 </button>
@@ -647,7 +647,7 @@ function Dashboard({ hero, onLock }) {
                           <button
                             type="button"
                             onClick={() => selectActiveRoom(r)}
-                            className="text-[11px] text-[#ff6fa0] hover:text-white px-2 py-0.5 rounded-lg bg-white/5 hover:bg-[#d9467a]/40 transition"
+                            className="text-[11px] text-rose-400 hover:text-white px-2 py-0.5 rounded-lg bg-white/5 hover:bg-rose-600/40 transition"
                           >
                             Join 🔒
                           </button>
@@ -662,7 +662,7 @@ function Dashboard({ hero, onLock }) {
 
           {last && (
             <button onClick={() => router.push(`/room/${last}`)} className="glass-btn w-full justify-between !py-2.5 rounded-xl">
-              <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-[#ff6fa0]" />Back to our room</span>
+              <span className="flex items-center gap-2"><Heart className="h-4 w-4 text-rose-400" />Back to our room</span>
               <span className="font-mono text-xs text-white/60">{last}</span>
             </button>
           )}

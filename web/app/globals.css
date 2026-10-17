@@ -47,8 +47,8 @@ html, body {
     box-shadow: none !important;
   }
   .btn {
-    @apply relative inline-flex items-center justify-center gap-2 rounded-xl bg-[#d9467a] px-4 py-2 text-sm font-medium text-white transition duration-150 hover:bg-[#c0265f] active:scale-[.98] disabled:opacity-50;
-    box-shadow: none !important;
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2 text-sm font-semibold text-white transition duration-150 hover:from-rose-500 hover:to-rose-600 active:scale-[.98] disabled:opacity-50;
+    box-shadow: 0 4px 14px 0 rgba(225, 29, 72, 0.25) !important;
   }
   .ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition duration-150 hover:bg-white/10 active:scale-[.98];

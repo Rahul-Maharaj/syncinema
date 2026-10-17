@@ -43,7 +43,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-[#d9467a] text-white">
+            <div className="grid h-8 w-8 place-items-center rounded-xl bg-rose-600 text-white">
               {tab === 'handoff' ? <QrCode className="h-4 w-4" /> : <History className="h-4 w-4" />}
             </div>
             <div>
@@ -66,7 +66,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
             type="button"
             onClick={() => setTab('handoff')}
             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-              tab === 'handoff' ? 'bg-[#d9467a] text-white shadow' : 'text-white/70 hover:text-white'
+              tab === 'handoff' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
             }`}
           >
             <Smartphone className="h-3.5 w-3.5" />
@@ -76,7 +76,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
             type="button"
             onClick={() => setTab('history')}
             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-              tab === 'history' ? 'bg-[#d9467a] text-white shadow' : 'text-white/70 hover:text-white'
+              tab === 'history' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
             }`}
           >
             <History className="h-3.5 w-3.5" />
@@ -98,7 +98,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
             <div className="space-y-1 text-white/80">
               <p className="font-semibold text-white text-sm">Scan with your Phone Camera</p>
               <p className="text-[11px] text-white/60">
-                Instantly connects to Room <b className="text-[#ff8fb3] font-mono">{roomId}</b> with secret passkey attached.
+                Instantly connects to Room <b className="text-rose-400 font-mono">{roomId}</b> with secret passkey attached.
               </p>
             </div>
             <button
@@ -139,7 +139,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
                         onPlayUrl?.(url);
                         onClose();
                       }}
-                      className="p-1.5 rounded-lg bg-[#d9467a]/20 hover:bg-[#d9467a]/40 text-[#ff8fb3] transition shrink-0"
+                      className="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 transition shrink-0"
                       title="Play this again"
                     >
                       <Play className="h-3.5 w-3.5 fill-current" />

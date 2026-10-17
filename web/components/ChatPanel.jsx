@@ -112,7 +112,7 @@ export default function ChatPanel({
             key={u.id}
             className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/90"
           >
-            <i className="h-2 w-2 rounded-full" style={{ background: u.color || '#ff6fa0' }} />
+            <i className="h-2 w-2 rounded-full" style={{ background: u.color || '#f43f5e' }} />
             <span className="truncate max-w-[80px] sm:max-w-[110px]">{u.name}</span>
             {u.id === hostId && <Crown className="h-3 w-3 text-amber-400" title="Room Host" />}
             {me === hostId && u.id !== me && (
@@ -161,7 +161,7 @@ export default function ChatPanel({
               className={`flex flex-col text-sm leading-snug ${mine ? 'items-end' : 'items-start'}`}
             >
               <div className="flex items-center gap-1.5 text-xs mb-0.5">
-                <b style={{ color: m.color || (mine ? '#ff6fa0' : '#c084fc') }}>{mine ? 'You' : m.user}</b>
+                <b style={{ color: m.color || (mine ? '#f43f5e' : '#c084fc') }}>{mine ? 'You' : m.user}</b>
                 {m.vt !== undefined && (
                   <button
                     type="button"
@@ -170,7 +170,7 @@ export default function ChatPanel({
                       say?.(`Jumped to ${fmt(m.vt)} ⏱️`);
                     }}
                     title="Jump to this video moment"
-                    className="rounded bg-[#d9467a]/15 px-1 text-[10px] text-[#ff6fa0] hover:bg-[#d9467a]/30 transition font-mono"
+                    className="rounded bg-rose-500/15 px-1 text-[10px] text-rose-400 hover:bg-rose-500/30 transition font-mono"
                   >
                     {fmt(m.vt)}
                   </button>
@@ -179,7 +179,7 @@ export default function ChatPanel({
               <p
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-1.5 text-sm ${
                   mine
-                    ? 'rounded-tr-sm bg-[#d9467a] text-white'
+                    ? 'rounded-tr-sm bg-rose-600 text-white'
                     : 'rounded-tl-sm bg-white/10 text-white/90 border border-white/5'
                 }`}
               >
@@ -213,7 +213,7 @@ export default function ChatPanel({
             type="button"
             onClick={attachTimestamp}
             title="Attach current video timestamp"
-            className="rounded-lg text-[11px] text-[#ff6fa0] bg-white/5 hover:bg-white/10 border border-[#ff6fa0]/30 px-2 py-1 font-mono transition flex items-center gap-1"
+            className="rounded-lg text-[11px] text-rose-400 bg-white/5 hover:bg-white/10 border border-rose-500/30 px-2 py-1 font-mono transition flex items-center gap-1"
           >
             <span>⏱️</span>
             <span>{fmt(playerRef?.current?.time?.() || 0)}</span>
@@ -244,7 +244,7 @@ export default function ChatPanel({
             }
           }}
           placeholder="Say something sweet…"
-          className="field flex-1 !bg-black/60 border border-white/15 focus:border-[#d9467a] focus:ring-2 focus:ring-[#d9467a]/20 text-sm text-white px-3 py-2 rounded-xl outline-none transition"
+          className="field flex-1 !bg-black/60 border border-white/15 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 text-sm text-white px-3 py-2 rounded-xl outline-none transition"
           autoComplete="off"
           maxLength={1000}
         />

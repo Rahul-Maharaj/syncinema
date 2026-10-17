@@ -110,13 +110,13 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
       {/* Header with Title and Mode Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-[#d9467a] text-white">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-rose-600 text-white">
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
             <h3 className="font-display text-sm sm:text-base font-semibold flex items-center gap-1.5 text-white">
               AI Watch Assistant
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#ff6fa0]/20 text-[#ff8fb3]">Date Copilot</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300">Date Copilot</span>
             </h3>
             <p className="text-xs text-white/60">Spoiler-free summaries, scene explainers &amp; couple cards</p>
           </div>
@@ -127,8 +127,8 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
           <button
             type="button"
             onClick={() => setActiveTab('summary')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-              activeTab === 'summary' ? 'bg-[#d9467a] text-white shadow' : 'text-white/70 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+              activeTab === 'summary' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
             }`}
           >
             Synopsis
@@ -136,8 +136,8 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
           <button
             type="button"
             onClick={() => setActiveTab('explain')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-              activeTab === 'explain' ? 'bg-[#d9467a] text-white shadow' : 'text-white/70 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+              activeTab === 'explain' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
             }`}
           >
             Scene Explainer
@@ -145,8 +145,8 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
           <button
             type="button"
             onClick={() => setActiveTab('prompts')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-              activeTab === 'prompts' ? 'bg-[#d9467a] text-white shadow' : 'text-white/70 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+              activeTab === 'prompts' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
             }`}
           >
             Date Prompts
@@ -154,8 +154,8 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
           <button
             type="button"
             onClick={() => setActiveTab('recommend')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-              activeTab === 'recommend' ? 'bg-[#d9467a] text-white shadow' : 'text-white/70 hover:text-white'
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+              activeTab === 'recommend' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
             }`}
           >
             Next Movie
@@ -168,7 +168,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
         <div className="space-y-3.5 rise text-xs">
           {loading ? (
             <div className="py-8 text-center text-white/60 flex flex-col items-center gap-2">
-              <RefreshCw className="h-6 w-6 text-[#ff6fa0] animate-spin" />
+              <RefreshCw className="h-6 w-6 text-rose-400 animate-spin" />
               <span>Analyzing tonight&apos;s title and preparing spoiler-free summary…</span>
             </div>
           ) : summaryData ? (
@@ -178,8 +178,8 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
                   <h4 className="font-semibold text-sm sm:text-base text-white">{summaryData.title}</h4>
                   <p className="text-white/60 text-[11px]">{summaryData.genre} • {summaryData.runtime || 'Feature'} • {summaryData.mood}</p>
                 </div>
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#d9467a]/20 border border-[#d9467a]/40 text-[#ff8fb3] font-bold">
-                  <Heart className="h-3.5 w-3.5 fill-[#d9467a] text-[#d9467a]" />
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 font-bold">
+                  <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" />
                   <span>{summaryData.coupleScore || '96%'} Couple Score</span>
                 </div>
               </div>
@@ -253,9 +253,9 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
           </div>
 
           {explainResult && (
-            <div className="p-3.5 rounded-xl bg-black/40 border border-[#ff6fa0]/30 space-y-2 text-white/90">
+            <div className="p-3.5 rounded-xl bg-black/40 border border-rose-500/30 space-y-2 text-white/90">
               <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-                <span className="font-semibold text-[#ff8fb3] capitalize">{explainResult.topic}</span>
+                <span className="font-semibold text-rose-400 capitalize">{explainResult.topic}</span>
                 <span className="text-[10px] text-emerald-400 font-medium">Safe • No Spoilers</span>
               </div>
               <p className="leading-relaxed">{explainResult.explanation}</p>
@@ -268,7 +268,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
       {activeTab === 'prompts' && (
         <div className="space-y-3.5 rise text-xs">
           <div className="p-4 rounded-xl !bg-black border border-white/15 text-center space-y-3">
-            <div className="inline-flex items-center justify-center p-2 rounded-full bg-[#d9467a]/20 text-[#ff8fb3] mb-1">
+            <div className="inline-flex items-center justify-center p-2 rounded-full bg-rose-500/20 text-rose-300 mb-1">
               <MessageSquareHeart className="h-5 w-5" />
             </div>
             <h4 className="font-semibold text-white/90 text-sm">Intermission Date Prompt</h4>
@@ -312,9 +312,9 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
                   setSelectedMood(m.id);
                   fetchRecommendations(m.id);
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
                   selectedMood === m.id
-                    ? 'bg-[#d9467a] text-white shadow-md'
+                    ? 'bg-rose-600 text-white shadow-md'
                     : 'bg-white/10 text-white/70 hover:bg-white/20'
                 }`}
               >
@@ -327,10 +327,10 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
             {recommendations.map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-black/40 border border-white/10 hover:border-[#ff6fa0]/40 transition group"
+                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-black/40 border border-white/10 hover:border-rose-500/40 transition group"
               >
                 <div className="min-w-0 flex-1">
-                  <h5 className="font-semibold text-white text-xs sm:text-sm group-hover:text-[#ff8fb3] transition truncate">
+                  <h5 className="font-semibold text-white text-xs sm:text-sm group-hover:text-rose-400 transition truncate">
                     {item.title}
                   </h5>
                   <p className="text-white/65 text-[11px] line-clamp-1">{item.why}</p>
@@ -351,7 +351,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
                       type="button"
                       onClick={() => onAddToQueue(item)}
                       title="Add to Up Next Queue"
-                      className="p-1.5 rounded-lg bg-white/10 hover:bg-[#d9467a]/40 text-white/80 hover:text-white transition"
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-rose-500/40 text-white/80 hover:text-white transition"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>

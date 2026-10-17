@@ -18,16 +18,16 @@ export const isTubeOrEmbedHost = (u) => {
 };
 
 export const OTT_PLATFORMS = [
-  { id: 'hotstar', name: 'Disney+ Hotstar', pattern: /(?:hotstar\.com|disneyplus\.com)/i, icon: '🌟', color: '#123962' },
-  { id: 'netflix', name: 'Netflix', pattern: /netflix\.com/i, icon: '🔴', color: '#E50914' },
-  { id: 'prime', name: 'Amazon Prime Video', pattern: /(?:primevideo\.com|amazon\.[a-z.]+\/(?:gp\/video|Amazon-Video))/i, icon: '🔵', color: '#00A8E1' },
-  { id: 'jiocinema', name: 'JioCinema', pattern: /jiocinema\.com/i, icon: '🟣', color: '#D40078' },
-  { id: 'zee5', name: 'Zee5', pattern: /zee5\.com/i, icon: '🟠', color: '#7E3AF2' },
-  { id: 'sonyliv', name: 'SonyLIV', pattern: /sonyliv\.com/i, icon: '🔷', color: '#0066FF' },
-  { id: 'hulu', name: 'Hulu', pattern: /hulu\.com/i, icon: '🟢', color: '#1CE783' },
-  { id: 'max', name: 'Max (HBO)', pattern: /(?:max\.com|hbomax\.com)/i, icon: '💜', color: '#001D4A' },
-  { id: 'crunchyroll', name: 'Crunchyroll', pattern: /crunchyroll\.com/i, icon: '🟧', color: '#F47521' },
-  { id: 'apple', name: 'Apple TV+', pattern: /tv\.apple\.com/i, icon: '🍎', color: '#333333' },
+  { id: 'hotstar', name: 'Disney+ Hotstar', webUrl: 'https://www.hotstar.com', pattern: /(?:hotstar\.com|disneyplus\.com)/i, icon: '🌟', color: '#0f172a' },
+  { id: 'netflix', name: 'Netflix', webUrl: 'https://www.netflix.com', pattern: /netflix\.com/i, icon: '🔴', color: '#18181b' },
+  { id: 'prime', name: 'Amazon Prime Video', webUrl: 'https://www.primevideo.com', pattern: /(?:primevideo\.com|amazon\.[a-z.]+\/(?:gp\/video|Amazon-Video))/i, icon: '🔵', color: '#0c4a6e' },
+  { id: 'jiocinema', name: 'JioCinema', webUrl: 'https://www.jiocinema.com', pattern: /jiocinema\.com/i, icon: '🟣', color: '#4a044e' },
+  { id: 'zee5', name: 'Zee5', webUrl: 'https://www.zee5.com', pattern: /zee5\.com/i, icon: '🟠', color: '#3b0764' },
+  { id: 'sonyliv', name: 'SonyLIV', webUrl: 'https://www.sonyliv.com', pattern: /sonyliv\.com/i, icon: '🔷', color: '#1e3a8a' },
+  { id: 'hulu', name: 'Hulu', webUrl: 'https://www.hulu.com', pattern: /hulu\.com/i, icon: '🟢', color: '#064e3b' },
+  { id: 'max', name: 'Max (HBO)', webUrl: 'https://www.max.com', pattern: /(?:max\.com|hbomax\.com)/i, icon: '💜', color: '#172554' },
+  { id: 'crunchyroll', name: 'Crunchyroll', webUrl: 'https://www.crunchyroll.com', pattern: /crunchyroll\.com/i, icon: '🟧', color: '#7c2d12' },
+  { id: 'apple', name: 'Apple TV+', webUrl: 'https://tv.apple.com', pattern: /tv\.apple\.com/i, icon: '🍎', color: '#18181b' },
 ];
 
 export const getOttPlatform = (u) => {

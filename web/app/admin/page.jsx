@@ -1344,7 +1344,7 @@ export default function AdminPage() {
                   value={overrideModal.src}
                   onChange={(e) => setOverrideModal({ ...overrideModal, src: e.target.value })}
                   placeholder="https://... (mp4, m3u8, youtube, etc.)"
-                  className="w-full rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-white focus:border-[#d9467a] focus:outline-none"
+                  className="w-full rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-white focus:border-rose-500 focus:outline-none"
                 />
               </div>
 
@@ -1355,7 +1355,7 @@ export default function AdminPage() {
                   value={overrideModal.title}
                   onChange={(e) => setOverrideModal({ ...overrideModal, title: e.target.value })}
                   placeholder="e.g. Administrator Broadcast / Replacement Video"
-                  className="w-full rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-white focus:border-[#d9467a] focus:outline-none"
+                  className="w-full rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-white focus:border-rose-500 focus:outline-none"
                 />
               </div>
 
@@ -1369,7 +1369,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#d9467a] hover:bg-[#b3305d] py-2 font-semibold text-white transition"
+                  className="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 py-2 font-semibold text-white transition shadow-lg shadow-rose-950/40"
                 >
                   Apply Override
                 </button>
@@ -1509,7 +1509,7 @@ export default function AdminPage() {
                       return (
                         <div key={u.id} className="flex items-center justify-between bg-white/5 p-1.5 rounded-lg border border-white/5">
                           <div className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: u.color || '#d9467a' }} />
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: u.color || '#e11d48' }} />
                             <span className="font-semibold text-white">{u.name}</span>
                             {u.id === ghostSyncState.hostId && (
                               <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded font-bold">Host</span>

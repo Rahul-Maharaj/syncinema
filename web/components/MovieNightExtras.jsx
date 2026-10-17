@@ -203,7 +203,7 @@ export default function MovieNightExtras({
           onClick={() => setActiveTab('queue')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
             activeTab === 'queue'
-              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
               : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
@@ -221,7 +221,7 @@ export default function MovieNightExtras({
           onClick={() => setActiveTab('watchlist')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
             activeTab === 'watchlist'
-              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
               : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
@@ -239,7 +239,7 @@ export default function MovieNightExtras({
           onClick={() => setActiveTab('timer')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
             activeTab === 'timer'
-              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
               : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
@@ -257,14 +257,14 @@ export default function MovieNightExtras({
           onClick={() => setActiveTab('ready')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
             activeTab === 'ready'
-              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
               : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
-          <CheckCircle2 className="h-3.5 w-3.5 text-pink-400" />
+          <CheckCircle2 className="h-3.5 w-3.5 text-rose-300" />
           <span>Ready Check</span>
           {readyCheck?.active && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-pink-500/30 text-pink-200 font-mono">
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-500/30 text-rose-200 font-mono">
               {readyCount}/{totalUsers}
             </span>
           )}
@@ -275,7 +275,7 @@ export default function MovieNightExtras({
           onClick={() => setActiveTab('reviews')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
             activeTab === 'reviews'
-              ? 'bg-[#d9467a] text-white border-white/20 shadow-md'
+              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
               : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
           }`}
         >
@@ -294,16 +294,16 @@ export default function MovieNightExtras({
         <div className="space-y-3">
           {/* Currently Playing Card */}
           {currentMedia && currentMedia.type !== 'none' && (
-            <div className="rounded-xl border border-[#d9467a]/40 !bg-black p-3 flex gap-3 items-center">
+            <div className="rounded-xl border border-rose-500/40 !bg-black p-3 flex gap-3 items-center">
               {currentMedia.poster ? (
                 <img src={currentMedia.poster} alt="" className="h-14 w-10 rounded-md object-cover border border-white/20 shrink-0" />
               ) : (
-                <div className="h-14 w-10 rounded-md bg-[#d9467a]/30 border border-white/20 grid place-items-center shrink-0">
-                  <Film className="h-5 w-5 text-[#ff8fb3]" />
+                <div className="h-14 w-10 rounded-md bg-rose-600/30 border border-white/20 grid place-items-center shrink-0">
+                  <Film className="h-5 w-5 text-rose-400" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-[#ff8fb3]">Now Playing</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-rose-400">Now Playing</span>
                 <p className="font-semibold text-sm truncate flex items-center gap-1.5">
                   {isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) && <Lock className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
                   <span>{isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) ? '🔒 Private Stream' : (currentMedia.title || currentMedia.name || 'Untitled Video')}</span>
@@ -358,7 +358,7 @@ export default function MovieNightExtras({
                   </button>
                 </>
               )}
-              <label className="text-[#ff8fb3] hover:underline cursor-pointer flex items-center gap-1" title="Import JSON playlist">
+              <label className="text-rose-400 hover:underline cursor-pointer flex items-center gap-1" title="Import JSON playlist">
                 <Upload className="h-3 w-3" />
                 <span>Import</span>
                 <input
@@ -388,7 +388,7 @@ export default function MovieNightExtras({
 
           {queue.length === 0 ? (
             <div className="rounded-xl border border-dashed border-white/15 p-6 text-center text-xs text-white/50">
-              <Popcorn className="h-8 w-8 mx-auto mb-2 opacity-40 text-[#ff8fb3]" />
+              <Popcorn className="h-8 w-8 mx-auto mb-2 opacity-40 text-rose-400" />
               <p>Queue is empty. Select a movie from your <b>Watchlist</b> or paste a link to queue it up!</p>
             </div>
           ) : (
@@ -412,7 +412,7 @@ export default function MovieNightExtras({
                       <span>{isAdultMedia(item.src || item.title) ? '🔒 Private Stream' : (item.title || item.src.replace(/^https?:\/\//, ''))}</span>
                     </p>
                     {item.desc && !isAdultMedia(item.src) && <p className="text-[10px] text-white/50 truncate">{item.desc}</p>}
-                    <div className="flex items-center gap-2 text-[9px] text-[#ff8fb3]/80">
+                    <div className="flex items-center gap-2 text-[9px] text-rose-400/80">
                       {item.addedBy && <span>Queued by {item.addedBy}</span>}
                     </div>
                   </div>
@@ -422,7 +422,7 @@ export default function MovieNightExtras({
                     <button
                       type="button"
                       onClick={() => socket.emit('queue:vote', { id: item.id, dir: 'up' })}
-                      className={`p-1 hover:text-[#ff6fa0] transition ${item.votes?.[me] === 1 ? 'text-[#ff6fa0]' : 'text-white/40'}`}
+                      className={`p-1 hover:text-rose-400 transition ${item.votes?.[me] === 1 ? 'text-rose-400' : 'text-white/40'}`}
                       title="Vote up"
                     >
                       <ThumbsUp className="h-3 w-3" />
@@ -462,10 +462,10 @@ export default function MovieNightExtras({
                     )}
                     <button
                       onClick={() => socket.emit('queue:next', item.id)}
-                      className="glass-btn !p-1.5 text-xs hover:border-[#d9467a]"
+                      className="glass-btn !p-1.5 text-xs hover:border-rose-500"
                       title="Play Now"
                     >
-                      <Play className="h-3.5 w-3.5 text-[#ff6fa0]" />
+                      <Play className="h-3.5 w-3.5 text-rose-400" />
                     </button>
                     <button
                       onClick={() => socket.emit('queue:remove', item.id)}
@@ -509,7 +509,7 @@ export default function MovieNightExtras({
               {watchlist.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-white/10 bg-white/5 p-2.5 flex gap-2.5 items-start hover:border-[#d9467a]/40 transition group"
+                  className="rounded-xl border border-white/10 bg-white/5 p-2.5 flex gap-2.5 items-start hover:border-rose-500/40 transition group"
                 >
                   {item.poster ? (
                     <img src={item.poster} alt="" className="h-16 w-12 rounded object-cover border border-white/10 shrink-0" />
@@ -519,7 +519,7 @@ export default function MovieNightExtras({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-xs truncate group-hover:text-[#ff8fb3] transition">{item.title}</p>
+                    <p className="font-semibold text-xs truncate group-hover:text-rose-400 transition">{item.title}</p>
                     {item.desc && <p className="text-[10px] text-white/60 line-clamp-2 mt-0.5">{item.desc}</p>}
                     <span className="text-[9px] text-white/40 mt-1 block">Added by {item.addedBy}</span>
                     
@@ -609,7 +609,7 @@ export default function MovieNightExtras({
                 type="checkbox"
                 checked={autoPauseMovie}
                 onChange={(e) => setAutoPauseMovie(e.target.checked)}
-                className="accent-[#d9467a]"
+                className="accent-rose-500"
               />
               <span>Auto-pause video when timer starts</span>
             </label>
@@ -729,7 +729,7 @@ export default function MovieNightExtras({
               {reviews.map((entry) => (
                 <div key={entry.id} className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-xs text-[#ff8fb3] truncate">{entry.movieTitle}</h4>
+                    <h4 className="font-semibold text-xs text-rose-400 truncate">{entry.movieTitle}</h4>
                     <span className="text-[10px] text-white/40">
                       {new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
@@ -847,7 +847,7 @@ export default function MovieNightExtras({
 
             <div>
               <p className="text-xs text-white/60">Rating for:</p>
-              <p className="font-bold text-sm text-[#ff8fb3] truncate">
+              <p className="font-bold text-sm text-rose-400 truncate">
                 {currentMedia?.title || currentMedia?.name || 'Tonight’s Movie'}
               </p>
             </div>
@@ -878,7 +878,7 @@ export default function MovieNightExtras({
                     onClick={() => setReviewVibe(v.label)}
                     className={`p-1.5 rounded-lg text-xs border text-center transition ${
                       reviewVibe === v.label
-                        ? 'border-[#d9467a] bg-[#d9467a]/20 text-white'
+                        ? 'border-rose-500 bg-rose-500/20 text-white'
                         : 'border-white/10 text-white/60 hover:text-white'
                     }`}
                   >

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 const AMBIENT_PRESETS = [
-  { id: 'love', name: 'Love Neon', color: '#d9467a', glow: 'rgba(217, 70, 122, 0.45)', bg: 'radial-gradient(circle at 50% 20%, rgba(217, 70, 122, 0.35), transparent 70%), #0c0612' },
+  { id: 'love', name: 'Love Crimson', color: '#e11d48', glow: 'rgba(225, 29, 72, 0.45)', bg: 'radial-gradient(circle at 50% 20%, rgba(225, 29, 72, 0.35), transparent 70%), #0c0612' },
   { id: 'candlelight', name: 'Candlelight', color: '#ff9e42', glow: 'rgba(255, 158, 66, 0.45)', bg: 'radial-gradient(circle at 50% 30%, rgba(255, 158, 66, 0.35), transparent 70%), #0d0806' },
   { id: 'midnight', name: 'Midnight Violet', color: '#8a2be2', glow: 'rgba(138, 43, 226, 0.45)', bg: 'radial-gradient(circle at 50% 20%, rgba(138, 43, 226, 0.35), transparent 70%), #08040f' },
   { id: 'ruby', name: 'Velvet Cinema Red', color: '#e50914', glow: 'rgba(229, 9, 20, 0.4)', bg: 'radial-gradient(circle at 50% 25%, rgba(229, 9, 20, 0.3), transparent 70%), #0d0507' },
@@ -185,8 +185,8 @@ export default function IntimacyMode({
         <button
           type="button"
           onClick={() => setActiveTab('lighting')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'lighting' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+            activeTab === 'lighting' ? 'bg-rose-600 text-white shadow' : 'text-white/60 hover:text-white'
           }`}
         >
           <Flame className="h-3.5 w-3.5 text-amber-400" />
@@ -196,8 +196,8 @@ export default function IntimacyMode({
         <button
           type="button"
           onClick={() => setActiveTab('stealth')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'stealth' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+            activeTab === 'stealth' ? 'bg-rose-600 text-white shadow' : 'text-white/60 hover:text-white'
           }`}
         >
 
@@ -208,8 +208,8 @@ export default function IntimacyMode({
         <button
           type="button"
           onClick={() => setActiveTab('security')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'security' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+            activeTab === 'security' ? 'bg-rose-600 text-white shadow' : 'text-white/60 hover:text-white'
           }`}
         >
           <Lock className="h-3.5 w-3.5 text-emerald-400" />
@@ -219,11 +219,11 @@ export default function IntimacyMode({
         <button
           type="button"
           onClick={() => setActiveTab('invite')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-            activeTab === 'invite' ? 'bg-[#d9467a] text-white shadow' : 'text-white/60 hover:text-white'
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+            activeTab === 'invite' ? 'bg-rose-600 text-white shadow' : 'text-white/60 hover:text-white'
           }`}
         >
-          <Share2 className="h-3.5 w-3.5 text-pink-400" />
+          <Share2 className="h-3.5 w-3.5 text-rose-300" />
           <span>Discreet Invites</span>
         </button>
       </div>
@@ -248,9 +248,9 @@ export default function IntimacyMode({
                 key={p.id}
                 type="button"
                 onClick={() => handleUpdateAmbient(p.id, intensity, flicker)}
-                className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition ${
+                className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition cursor-pointer ${
                   preset === p.id
-                    ? 'border-[#ff6fa0] bg-white/10 shadow-lg'
+                    ? 'border-rose-500 bg-white/10 shadow-lg'
                     : 'border-white/10 hover:border-white/25 bg-black/20'
                 }`}
               >
@@ -276,7 +276,7 @@ export default function IntimacyMode({
               disabled={!isHost}
               value={intensity}
               onChange={(e) => handleUpdateAmbient(preset, +e.target.value, flicker)}
-              className="w-full accent-[#d9467a] cursor-pointer disabled:opacity-50"
+              className="w-full accent-rose-500 cursor-pointer disabled:opacity-50"
             />
           </div>
 
@@ -404,7 +404,7 @@ export default function IntimacyMode({
                 onClick={() => setInviteStyle(s.id)}
                 className={`py-1.5 rounded-lg text-xs font-medium border text-center transition ${
                   inviteStyle === s.id
-                    ? 'border-[#d9467a] bg-[#d9467a]/20 text-white'
+                    ? 'border-rose-500 bg-rose-500/20 text-white'
                     : 'border-white/10 text-white/60 hover:text-white'
                 }`}
               >
@@ -482,8 +482,8 @@ export default function IntimacyMode({
       {isLocked && (
         <div className="fixed inset-0 z-[999] grid place-items-center bg-black backdrop-blur-2xl p-6 text-white text-center">
           <div className="card w-full max-w-sm p-8 space-y-5 border border-white/15 !bg-black">
-            <div className="h-16 w-16 mx-auto rounded-full bg-[#d9467a]/20 border border-[#d9467a]/40 grid place-items-center">
-              <Lock className="h-7 w-7 text-[#ff8fb3]" />
+            <div className="h-16 w-16 mx-auto rounded-full bg-rose-600/20 border border-rose-500/40 grid place-items-center">
+              <Lock className="h-7 w-7 text-rose-400" />
             </div>
 
             <div>

@@ -474,12 +474,12 @@ export default function Room() {
               }}
               className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold border transition ${
                 me === hostId
-                  ? 'bg-white/10 hover:bg-[#d9467a]/25 border-white/15 hover:border-[#ff6fa0]/40 text-white cursor-pointer active:scale-95'
+                  ? 'bg-white/10 hover:bg-rose-500/20 border-white/15 hover:border-rose-500/40 text-white cursor-pointer active:scale-95'
                   : 'bg-white/5 border-white/10 text-white/80 cursor-default'
               }`}
               title={me === hostId ? `Capacity: ${users.length}/${maxSeats} members. Click to change (2 to 30 seats)` : `Capacity: ${users.length}/${maxSeats} members`}
             >
-              <Users className="h-3 w-3 text-[#ff8fb3]" />
+              <Users className="h-3 w-3 text-rose-400" />
               <span>{users.length}/{maxSeats}</span>
               {me === hostId && <span className="text-[10px] text-white/60">⚙️</span>}
             </button>
@@ -561,7 +561,7 @@ export default function Room() {
           {/* Primary Quick Invite Button */}
           <button
             onClick={copy}
-            className="btn h-8 !py-0 !px-3 text-xs font-semibold rounded-xl flex items-center gap-1.5 bg-gradient-to-r from-[#e11d48] to-[#db2777] shadow-md hover:opacity-95 shrink-0"
+            className="btn h-8 !py-0 !px-3 text-xs font-semibold rounded-xl flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-700 shadow-md hover:opacity-95 shrink-0"
             title="Copy room invite link"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -575,21 +575,21 @@ export default function Room() {
               onClick={() => setShowMenu(!showMenu)}
               className={`h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition cursor-pointer ${
                 showMenu
-                  ? 'bg-[#d9467a] text-white border-[#ff6fa0] shadow-md'
+                  ? 'bg-rose-600 text-white border-rose-500 shadow-md'
                   : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white'
               }`}
               title="Room Controls &amp; Settings"
             >
-              <Sliders className="h-3.5 w-3.5 text-[#ff8fb3]" />
+              <Sliders className="h-3.5 w-3.5 text-rose-400" />
               <span className="hidden sm:inline">Controls</span>
             </button>
 
             {/* Dropdown Menu (Uniform across Desktop and Mobile) */}
             {showMenu && (
-              <div className="absolute right-0 top-10 z-50 w-72 sm:w-80 rounded-2xl bg-black/95 border border-white/20 p-3.5 space-y-3 shadow-2xl backdrop-blur-2xl rise">
+              <div className="absolute right-0 top-10 z-50 w-72 sm:w-80 rounded-2xl bg-zinc-950/95 border border-zinc-800 p-3.5 space-y-3 shadow-2xl backdrop-blur-2xl rise">
                 <div className="flex items-center justify-between border-b border-white/10 pb-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-white tracking-wide uppercase">
-                    <Sliders className="h-3.5 w-3.5 text-[#ff6fa0]" />
+                    <Sliders className="h-3.5 w-3.5 text-rose-400" />
                     <span>Room Controls</span>
                   </div>
                   <button onClick={() => setShowMenu(false)} className="text-white/60 hover:text-white p-1">
@@ -607,9 +607,9 @@ export default function Room() {
                         setShowCapacityModal(true);
                         setShowMenu(false);
                       }}
-                      className="ghost !justify-start !py-2.5 !px-3 text-white/90 hover:text-white border border-white/10 hover:border-[#ff6fa0]/40"
+                      className="ghost !justify-start !py-2.5 !px-3 text-white/90 hover:text-white border border-white/10 hover:border-rose-500/40"
                     >
-                      <Users className="h-4 w-4 text-[#ff8fb3]" />
+                      <Users className="h-4 w-4 text-rose-400" />
                       <span>Capacity ({maxSeats}p)</span>
                     </button>
                   )}
@@ -670,7 +670,7 @@ export default function Room() {
                       setShowHandoff(true);
                       setShowMenu(false);
                     }}
-                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 hover:border-[#ff6fa0]/40 text-[#ff6fa0]"
+                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 hover:border-rose-500/40 text-rose-300"
                   >
                     <Smartphone className="h-4 w-4" />
                     <span>QR Handoff</span>
@@ -726,7 +726,7 @@ export default function Room() {
                     }}
                     className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
                   >
-                    {hidden ? <EyeOff className="h-4 w-4 text-[#d9467a]" /> : <Eye className="h-4 w-4" />}
+                    {hidden ? <EyeOff className="h-4 w-4 text-rose-400" /> : <Eye className="h-4 w-4" />}
                     <span>{hidden ? 'Show Screen' : 'Hide Screen'}</span>
                   </button>
 
@@ -739,7 +739,7 @@ export default function Room() {
                     }}
                     className="ghost !justify-start !py-2.5 !px-3 border border-white/10 text-rose-300"
                   >
-                    <Heart className="h-4 w-4 text-[#d9467a]" />
+                    <Heart className="h-4 w-4 text-rose-500 fill-rose-500/20" />
                     <span>Miss You 💕</span>
                   </button>
                 </div>
@@ -826,6 +826,195 @@ export default function Room() {
               />
             </div>
 
+            {/* Always-Visible Cinema Quick Control Deck */}
+            <div className="w-full mx-auto my-2 p-2 sm:p-2.5 rounded-2xl bg-zinc-950/90 border border-zinc-800/80 backdrop-blur-xl shadow-lg">
+              <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-zinc-400 flex items-center gap-1.5">
+                  <Sliders className="h-3.5 w-3.5 text-rose-500" />
+                  Cinema Controls
+                </span>
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <span className="text-zinc-400">Capacity:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (me === hostId) {
+                        setCapacityDraft(maxSeats);
+                        setShowCapacityModal(true);
+                      }
+                    }}
+                    className={`font-semibold px-2 py-0.5 rounded-full border text-[11px] transition ${
+                      me === hostId 
+                        ? 'border-rose-500/40 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer' 
+                        : 'border-white/10 text-zinc-300 bg-white/5 cursor-default'
+                    }`}
+                    title={me === hostId ? 'Change Room Capacity (2 to 30 Seats)' : 'Current Room Capacity'}
+                  >
+                    👥 {users.length}/{maxSeats} {me === hostId ? '✏️' : ''}
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons Ribbon (Horizontal Scrollable Deck) */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                {/* Cinema Mode */}
+                <button
+                  type="button"
+                  onClick={toggleCinema}
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-800/80 text-zinc-200 hover:text-amber-300 transition cursor-pointer"
+                  title="Toggle Theatre Cinema Lights"
+                >
+                  <Film className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Cinema</span>
+                </button>
+
+                {/* Room Password */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
+                    setNewPassDraft(current);
+                    setShowPassModal(true);
+                  }}
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-800/80 text-zinc-200 hover:text-amber-300 transition cursor-pointer"
+                  title="View or Change Room Password"
+                >
+                  <Lock className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Password</span>
+                </button>
+
+                {/* Host: Lock Entry */}
+                {me === hostId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
+                        if (res?.ok) setEntryLocked(res.entryLocked);
+                      });
+                    }}
+                    className={`shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl border transition cursor-pointer ${
+                      entryLocked
+                        ? 'bg-amber-500/15 border-amber-500/50 text-amber-300'
+                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
+                    }`}
+                    title={entryLocked ? 'Unlock Room Entry for New Members' : 'Lock Room Entry from New Members'}
+                  >
+                    {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5 text-zinc-400" />}
+                    <span>{entryLocked ? 'Room Locked' : 'Room Open'}</span>
+                  </button>
+                )}
+
+                {/* Host: Control Mode */}
+                {me === hostId && (
+                  <button
+                    type="button"
+                    onClick={() => socket.emit('lock', !lock)}
+                    className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer"
+                    title={lock ? 'Only Host Can Seek/Pause' : 'Everyone Can Seek/Pause'}
+                  >
+                    {lock ? <Lock className="h-3.5 w-3.5 text-rose-400" /> : <Unlock className="h-3.5 w-3.5 text-emerald-400" />}
+                    <span>{lock ? 'Host Sync' : 'Free Sync'}</span>
+                  </button>
+                )}
+
+                {/* Sleep Timer */}
+                <button
+                  type="button"
+                  onClick={cycleSleep}
+                  className={`shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl border transition cursor-pointer ${
+                    sleep 
+                      ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
+                      : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
+                  }`}
+                  title="Cycle Sleep Timer"
+                >
+                  <Moon className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>{sleep ? `Sleep ${sleep}m` : 'Sleep'}</span>
+                </button>
+
+                {/* Recent Plays */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesktopTab('recent');
+                    setMobileTab('tools');
+                    setToolsSubTab('controls');
+                    say('Opened Recent Plays Bar 🕒');
+                  }}
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-cyan-500/40 hover:bg-zinc-800/80 text-zinc-200 hover:text-cyan-300 transition cursor-pointer"
+                  title="Show Recently Played Media"
+                >
+                  <History className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Recent</span>
+                </button>
+
+                {/* QR Mobile Handoff */}
+                <button
+                  type="button"
+                  onClick={() => setShowHandoff(true)}
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-rose-500/40 hover:bg-zinc-800/80 text-zinc-200 hover:text-rose-300 transition cursor-pointer"
+                  title="Scan QR to Move to Phone"
+                >
+                  <Smartphone className="h-3.5 w-3.5 text-rose-400" />
+                  <span>QR Handoff</span>
+                </button>
+
+                {/* Hide Screen */}
+                <button
+                  type="button"
+                  onClick={toggleHide}
+                  className={`shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl border transition cursor-pointer ${
+                    hidden
+                      ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
+                      : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white'
+                  }`}
+                  title="Boss Key / Hide Video Display"
+                >
+                  {hidden ? <EyeOff className="h-3.5 w-3.5 text-rose-400" /> : <Eye className="h-3.5 w-3.5 text-zinc-400" />}
+                  <span>{hidden ? 'Show' : 'Hide'}</span>
+                </button>
+
+                {/* Miss You */}
+                <button
+                  type="button"
+                  onClick={() => socket.emit('nudge')}
+                  className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-rose-600/15 border border-rose-500/30 hover:bg-rose-600/25 text-rose-300 hover:text-white transition cursor-pointer"
+                  title="Send Heart Particles to Partner"
+                >
+                  <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-500/30" />
+                  <span>Miss You 💕</span>
+                </button>
+
+                {/* Host: Close Room */}
+                {me === hostId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
+                        socket.emit('room:close', {}, (res) => {
+                          if (res?.ok) {
+                            say('Room closed 🚪');
+                            try {
+                              sessionStorage.removeItem('rp_' + roomId);
+                              localStorage.removeItem('rp_' + roomId);
+                            } catch {}
+                            router.push('/');
+                          } else {
+                            say(res?.message || 'Failed to close room');
+                          }
+                        });
+                      }
+                    }}
+                    className="shrink-0 flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-rose-950/40 border border-rose-800/40 text-rose-400 hover:bg-rose-900/50 hover:text-rose-200 transition cursor-pointer"
+                    title="Permanently Close Room"
+                  >
+                    <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
+                    <span>Close Room</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* MOBILE & TABLET TAB CONTENT (Centered with max-w-2xl for phone and tab) */}
             <div className="lg:hidden w-full max-w-xl sm:max-w-2xl mx-auto pb-24 mt-2">
               {mobileTab === 'chat' && (
@@ -883,12 +1072,12 @@ export default function Room() {
               {mobileTab === 'tools' && (
                 <div className="rise space-y-3.5">
                   {/* Segmented Sub-navigation inside Tools */}
-                  <div className="grid grid-cols-4 rounded-2xl bg-black border border-white/15 p-1 gap-1 shadow-md">
+                  <div className="grid grid-cols-4 rounded-2xl bg-zinc-950 border border-zinc-800 p-1 gap-1 shadow-md">
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('controls')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
-                        toolsSubTab === 'controls' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
+                        toolsSubTab === 'controls' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Sliders className="h-3 w-3" />
@@ -897,8 +1086,8 @@ export default function Room() {
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('extras')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
-                        toolsSubTab === 'extras' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
+                        toolsSubTab === 'extras' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Popcorn className="h-3 w-3 text-amber-300" />
@@ -907,8 +1096,8 @@ export default function Room() {
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('intimacy')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
-                        toolsSubTab === 'intimacy' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
+                        toolsSubTab === 'intimacy' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Flame className="h-3 w-3 text-rose-400" />
@@ -917,8 +1106,8 @@ export default function Room() {
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('ai')}
-                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
-                        toolsSubTab === 'ai' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
+                        toolsSubTab === 'ai' ? 'bg-rose-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
                       }`}
                     >
                       <Sparkles className="h-3 w-3 text-amber-300" />
@@ -931,7 +1120,7 @@ export default function Room() {
                       {/* Quick Stream / Video URL Loader */}
                       <div className="card p-3.5 space-y-2 border border-white/10 !bg-black rounded-2xl shadow-md">
                         <label className="text-xs font-semibold text-white/90 flex items-center gap-1.5">
-                          <Play className="h-3.5 w-3.5 text-[#ff6fa0]" /> Stream Video Link
+                          <Play className="h-3.5 w-3.5 text-rose-400" /> Stream Video Link
                         </label>
                         <form
                           onSubmit={(e) => {
@@ -959,7 +1148,7 @@ export default function Room() {
                       <div className="card p-3.5 space-y-2.5 border border-white/10 !bg-black rounded-2xl shadow-md">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Video className="h-4 w-4 text-[#ff6fa0]" />
+                            <Video className="h-4 w-4 text-rose-400" />
                             <span className="text-xs font-semibold text-white">Call Hardware State</span>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${callCam ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-rose-500/30 text-rose-300 bg-rose-500/10'}`}>
@@ -1059,7 +1248,7 @@ export default function Room() {
                           <button
                             type="button"
                             onClick={() => setShowHandoff(true)}
-                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[#ff6fa0] text-left transition cursor-pointer active:scale-95"
+                            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-rose-300 text-left transition cursor-pointer active:scale-95"
                           >
                             <QrCode className="h-4 w-4 shrink-0" />
                             <span className="font-medium text-xs">QR Handoff</span>
@@ -1181,13 +1370,13 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => setDesktopTab('ott')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'ott'
-                      ? 'bg-[#d9467a] text-white shadow-md'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  <Tv className="h-4 w-4 text-[#ff6fa0]" />
+                  <Tv className="h-4 w-4 text-rose-400" />
                   <span>OTT Vault 🍿</span>
                   {Object.keys(ottAccounts || {}).length > 0 && (
                     <span className="text-[10px] bg-emerald-500 text-black font-extrabold px-1.5 py-0.5 rounded-full">
@@ -1198,22 +1387,22 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => setDesktopTab('gestures')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'gestures'
-                      ? 'bg-[#d9467a] text-white shadow-md'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
-                  <Heart className="h-4 w-4 text-[#ff6fa0]" />
+                  <Heart className="h-4 w-4 text-rose-400" />
                   <span>Romantic Gestures 💕</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setDesktopTab('extras')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'extras'
-                      ? 'bg-[#d9467a] text-white shadow-md'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   <Popcorn className="h-4 w-4 text-amber-300" />
@@ -1227,10 +1416,10 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => setDesktopTab('recent')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'recent'
-                      ? 'bg-[#d9467a] text-white shadow-md'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   <History className="h-4 w-4 text-cyan-400" />
@@ -1239,10 +1428,10 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => setDesktopTab('intimacy')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'intimacy'
-                      ? 'bg-[#d9467a] text-white shadow-md'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   <Flame className="h-4 w-4 text-rose-400" />
@@ -1252,10 +1441,10 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => setDesktopTab('ai')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                     desktopTab === 'ai'
-                      ? 'bg-[#d9467a] text-white shadow-md'
-                      : 'text-white/70 hover:text-white'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   <Sparkles className="h-4 w-4 text-purple-300" />
@@ -1374,7 +1563,7 @@ export default function Room() {
           <div className="card w-full max-w-md p-6 space-y-4 border border-white/15 !bg-black rounded-2xl shadow-2xl rise">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="font-display font-bold text-base text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#ff8fb3]" />
+                <Users className="h-5 w-5 text-rose-400" />
                 <span>Room Capacity Settings</span>
               </h3>
               <button
@@ -1409,7 +1598,7 @@ export default function Room() {
                   onClick={() => setCapacityDraft(opt.count)}
                   className={`rounded-xl p-2 text-center border transition-all ${
                     capacityDraft === opt.count
-                      ? 'bg-[#d9467a] border-[#ff6fa0] text-white shadow-lg font-bold'
+                      ? 'bg-rose-600 border-rose-500 text-white shadow-lg font-bold'
                       : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                 >
@@ -1423,7 +1612,7 @@ export default function Room() {
             <div className="space-y-1.5 pt-2">
               <div className="flex justify-between text-xs text-white/70">
                 <span>Custom Member Limit:</span>
-                <span className="font-bold font-mono text-[#ff8fb3]">{capacityDraft} Members</span>
+                <span className="font-bold font-mono text-rose-400">{capacityDraft} Members</span>
               </div>
               <input
                 type="range"
@@ -1431,7 +1620,7 @@ export default function Room() {
                 max="30"
                 value={capacityDraft}
                 onChange={(e) => setCapacityDraft(parseInt(e.target.value, 10))}
-                className="w-full accent-[#d9467a] h-2 bg-white/10 rounded-lg cursor-pointer"
+                className="w-full accent-rose-500 h-2 bg-white/10 rounded-lg cursor-pointer"
               />
             </div>
 
@@ -1449,7 +1638,7 @@ export default function Room() {
                     }
                   });
                 }}
-                className="btn flex-1 !py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-[#e11d48] to-[#db2777]"
+                className="btn flex-1 !py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-rose-600 to-rose-700"
               >
                 Apply Capacity ({capacityDraft} Members)
               </button>
@@ -1573,15 +1762,15 @@ export default function Room() {
               }`}
             >
               <div className="relative">
-                <MessageSquare className={`h-5 w-5 ${mobileTab === 'chat' ? 'text-[#ff6fa0]' : ''}`} />
+                <MessageSquare className={`h-5 w-5 ${mobileTab === 'chat' ? 'text-rose-400' : ''}`} />
                 {chat.length > 0 && (
-                  <span className="absolute -top-1 -right-2.5 bg-[#d9467a] text-white text-[9px] font-bold px-1 min-w-[15px] h-[15px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-2.5 bg-rose-600 text-white text-[9px] font-bold px-1 min-w-[15px] h-[15px] rounded-full flex items-center justify-center">
                     {chat.length > 99 ? '99+' : chat.length}
                   </span>
                 )}
               </div>
               <span className={`text-[10px] mt-0.5 ${mobileTab === 'chat' ? 'font-bold text-white' : 'font-medium'}`}>Chat</span>
-              {mobileTab === 'chat' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
+              {mobileTab === 'chat' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
             </button>
 
             {/* 2. Call Tab */}
@@ -1615,7 +1804,7 @@ export default function Room() {
               }`}
             >
               <div className="relative">
-                <Tv className={`h-5 w-5 ${mobileTab === 'ott' ? 'text-[#ff6fa0]' : ''}`} />
+                <Tv className={`h-5 w-5 ${mobileTab === 'ott' ? 'text-rose-400' : ''}`} />
                 {Object.keys(ottAccounts || {}).length > 0 && (
                   <span className="absolute -top-1 -right-2.5 bg-emerald-500 text-black text-[9px] font-extrabold px-1 rounded-full">
                     {Object.keys(ottAccounts || {}).length}
@@ -1623,7 +1812,7 @@ export default function Room() {
                 )}
               </div>
               <span className={`text-[10px] mt-0.5 ${mobileTab === 'ott' ? 'font-bold text-white' : 'font-medium'}`}>OTT</span>
-              {mobileTab === 'ott' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
+              {mobileTab === 'ott' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
             </button>
 
             {/* 4. Love / Gestures Tab */}
@@ -1634,9 +1823,9 @@ export default function Room() {
                 mobileTab === 'gestures' ? 'text-white' : 'text-white/50 hover:text-white/80'
               }`}
             >
-              <Heart className={`h-5 w-5 ${mobileTab === 'gestures' ? 'text-[#ff6fa0] fill-[#ff6fa0]' : 'text-white/50'}`} />
+              <Heart className={`h-5 w-5 ${mobileTab === 'gestures' ? 'text-rose-400 fill-rose-500/20' : 'text-white/50'}`} />
               <span className={`text-[10px] mt-0.5 ${mobileTab === 'gestures' ? 'font-bold text-white' : 'font-medium'}`}>Love</span>
-              {mobileTab === 'gestures' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
+              {mobileTab === 'gestures' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-rose-500" />}
             </button>
 
             {/* 5. Tools / Room Settings Tab */}

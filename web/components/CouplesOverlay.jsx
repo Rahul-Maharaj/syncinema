@@ -127,7 +127,7 @@ function RemoteAudio({ stream, name, onTalk }) {
         <button
           type="button"
           onClick={() => audioRef.current?.play().then(() => setBlocked(false))}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-[#d9467a] px-4 py-2 text-xs font-semibold text-white cursor-pointer border border-white/20"
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-xs font-semibold text-white cursor-pointer border border-white/20"
         >
           <Volume2 className="h-4 w-4" />
           <span>Tap to hear {name || 'Partner'} 🔊</span>
@@ -198,7 +198,7 @@ export function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff,
         className || 'aspect-video w-36 sm:w-44'
       } ${
         isSpeaking
-          ? 'ring-2 ring-[#ff6fa0]'
+          ? 'ring-2 ring-rose-500'
           : 'ring-1 border border-white/10 ring-transparent'
       }`}
       title={disableFullscreen ? name : isPartner ? 'Double click or tap expand for full screen' : name}
@@ -206,7 +206,7 @@ export function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff,
       {/* Voice Only Mode */}
       {voiceOnly ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-2 text-center">
-          <div className={`relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3] ${isSpeaking ? 'scale-105 border-white/60' : ''}`}>
+          <div className={`relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-rose-600/20 border border-rose-500/40 text-rose-300 ${isSpeaking ? 'scale-105 border-white/60' : ''}`}>
             <Mic className="h-4 w-4" />
           </div>
           <span className="text-[10px] text-white/70">Voice Mode</span>
@@ -224,7 +224,7 @@ export function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff,
           {/* Waiting/Connecting placeholder when stream is absent */}
           {(!stream || !hasVideoTrack) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-2 text-center z-10 pointer-events-none">
-              <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-[#d9467a]/20 border border-[#ff6fa0]/40 text-[#ff8fb3]">
+              <div className="relative mb-1 grid h-8 w-8 place-items-center rounded-full bg-rose-600/20 border border-rose-500/40 text-rose-300">
                 <Video className="h-4 w-4" />
               </div>
               <span className="text-[10px] text-white/60">{isPartner ? 'Connecting video…' : 'Starting camera…'}</span>
@@ -245,12 +245,12 @@ export function Tile({ stream, name, isPartner, voiceOnly, isSpeaking, isCamOff,
       {/* User Name Tag */}
       <span className="absolute bottom-1 left-1.5 rounded bg-black/80 border border-white/10 px-1.5 py-0.5 text-[10px] text-white backdrop-blur-sm flex items-center gap-1 z-20">
         {name}
-        {isSpeaking && <i className="h-1.5 w-1.5 rounded-full bg-[#ff6fa0]" />}
+        {isSpeaking && <i className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
       </span>
 
       {/* Speaking Indicator */}
       {isSpeaking && (
-        <span className="absolute top-1 left-1.5 flex items-center gap-0.5 rounded bg-[#d9467a]/90 px-1.5 py-0.5 text-[9px] font-semibold text-white z-20">
+        <span className="absolute top-1 left-1.5 flex items-center gap-0.5 rounded bg-rose-600/90 px-1.5 py-0.5 text-[9px] font-semibold text-white z-20">
           <Mic className="h-2.5 w-2.5" /> Speaking
         </span>
       )}
@@ -869,10 +869,10 @@ export default function CouplesOverlay({
               type="button"
               onClick={toggleVoiceOnly}
               className={`flex flex-col items-center justify-center p-3 rounded-xl border transition ${
-                voiceOnly ? 'bg-[#d9467a]/30 border-[#d9467a] text-white' : 'bg-white/10 border-white/15 text-white/70'
+                voiceOnly ? 'bg-rose-600/30 border-rose-500 text-white' : 'bg-white/10 border-white/15 text-white/70'
               }`}
             >
-              <Volume2 className="h-5 w-5 mb-1 text-[#ff6fa0]" />
+              <Volume2 className="h-5 w-5 mb-1 text-rose-400" />
               <span className="text-[11px] font-semibold">{voiceOnly ? 'Voice Only' : 'Video Mode'}</span>
             </button>
           </div>
@@ -884,7 +884,7 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => onSwitchToCallTab?.()}
-          className="lg:hidden fixed bottom-20 right-3 z-30 flex items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white shadow-xl cursor-pointer hover:border-[#ff6fa0]/60 active:scale-95 transition"
+          className="lg:hidden fixed bottom-20 right-3 z-30 flex items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white shadow-xl cursor-pointer hover:border-rose-500/60 active:scale-95 transition"
           title="Open Video Call Tab"
         >
           {cam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
@@ -898,12 +898,12 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="hidden lg:flex fixed bottom-5 left-5 z-40 items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white transition hover:border-[#ff6fa0]/60 cursor-pointer"
+          className="hidden lg:flex fixed bottom-5 left-5 z-40 items-center gap-2 rounded-full border border-white/20 !bg-black px-3.5 py-2 text-xs font-medium text-white transition hover:border-rose-500/60 cursor-pointer"
           title="Show video call window"
         >
-          <Video className="h-3.5 w-3.5 text-[#ff6fa0]" />
+          <Video className="h-3.5 w-3.5 text-rose-400" />
           <span>Show Video Call</span>
-          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-[#ff6fa0]" />}
+          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
         </button>
       ) : (
         <div ref={box} className={`hidden lg:block fixed bottom-5 left-5 z-40 rounded-2xl border border-white/20 !bg-black p-2.5 transition-all ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
@@ -976,7 +976,7 @@ export default function CouplesOverlay({
               title={voiceOnly ? 'Switch back to video mode' : 'Voice-only mode (saves bandwidth on low-end connection)'}
               className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
                 voiceOnly
-                  ? 'bg-[#d9467a] text-white shadow-md'
+                  ? 'bg-rose-600 text-white shadow-md'
                   : 'bg-white/10 text-white/70 hover:bg-white/20'
               }`}
             >
