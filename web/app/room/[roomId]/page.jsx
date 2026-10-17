@@ -40,16 +40,26 @@ const hello = (n) => {
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
-  <main className="grid min-h-screen place-items-center px-6 bg-black">
-    <form onSubmit={onSubmit} className="glass rise w-full max-w-sm space-y-4 p-7 text-center">
-      <div className="relative mx-auto h-16 w-16">
+  <main className="grid min-h-screen place-items-center px-6 bg-[#050611] relative overflow-hidden">
+    {/* Ambient Cinema Background */}
+    <div 
+      className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-40 transition-opacity"
+      style={{ backgroundImage: `url('/home-bg.jpg')`, backgroundPosition: 'center 40%' }}
+    />
+    <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#050611] via-black/50 to-black/75 pointer-events-none" />
+
+    <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 p-7 text-center rounded-3xl border border-white/20 bg-black/60 backdrop-blur-2xl shadow-[0_20px_70px_rgba(0,0,0,0.8)] rise">
+      <div className="relative mx-auto h-16 w-16 drop-shadow-lg">
         <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain" />
       </div>
-      <h1 className="font-display text-2xl font-semibold">{title}</h1>
-      <p className="text-sm opacity-70">{hint}</p>
+      <h1 className="font-display text-2xl font-bold text-white flex items-center justify-center gap-2">
+        {icon}
+        <span>{title}</span>
+      </h1>
+      <p className="text-sm text-slate-300">{hint}</p>
       {children}
-      <button className="btn w-full !py-2.5">{cta}</button>
-      <Link href="/" className="block text-xs underline opacity-60 hover:opacity-100">Back to home</Link>
+      <button className="btn w-full !py-3 font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 shadow-lg">{cta}</button>
+      <Link href="/" className="block text-xs text-pink-400 hover:underline">Back to home</Link>
     </form>
   </main>
 );
@@ -405,14 +415,14 @@ export default function Room() {
 
 
   if (needPass) return (
-    <Gate icon={<Lock className="h-6 w-6" />} cta="Enter room"
-      title="Room password"
+    <Gate icon={<Lock className="h-6 w-6 text-pink-400" />} cta="Unlock & Enter Room 🍿"
+      title="Room Password Required"
       hint={
         needPass === 'badpass'
-          ? 'Wrong room password. Please try again.'
+          ? 'Wrong room password. Please verify with the host and try again.'
           : needPass === 'room_taken'
           ? 'A room with this name is already active. Enter its password to join.'
-          : 'This room is protected with a password. Type it to enter.'
+          : 'This cinema room is strictly protected with a password. No one can enter without it.'
       }
       onSubmit={(e) => {
         e.preventDefault();
@@ -425,7 +435,22 @@ export default function Room() {
         doJoin(v);
       }}
     >
-      <input autoFocus type="password" minLength={4} maxLength={64} value={passDraft} onChange={(e) => setPassDraft(e.target.value)} placeholder="Room password (min 4 characters)" className="field text-center" />
+      <div className="space-y-2">
+        <input 
+          autoFocus 
+          type="password" 
+          minLength={4} 
+          maxLength={64} 
+          value={passDraft} 
+          onChange={(e) => setPassDraft(e.target.value)} 
+          placeholder="Enter room password (min 4 characters)" 
+          className="field text-center font-mono !py-3 w-full" 
+          required 
+        />
+        <p className="text-[11px] text-pink-300">
+          Enter the password shared by the room host.
+        </p>
+      </div>
     </Gate>
   );
 
