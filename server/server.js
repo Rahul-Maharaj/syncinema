@@ -47,8 +47,11 @@ const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: stri
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
 const origin = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(',') : true;
 const PEER_KEY = ACCESS_KEY ? crypto.createHmac('sha256', ACCESS_KEY).update('peer').digest('hex').slice(0, 32) : 'peerjs';
-const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy'];
+const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy', 'hybrid'];
 const ROOM_RE = /^[\w-]{2,64}$/;
+
+
+
 
 // Secret word access removed: open access to website, room security handled by room passwords
 const keyOk = (k) => true;

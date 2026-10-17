@@ -17,10 +17,32 @@ export const isTubeOrEmbedHost = (u) => {
   return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\.|dood\.|d000d\.|do0od\.|streamtape\.|streamwish\.|wishembed\.|filemoon\.|vidmoly\.|voe\.|mixdrop\.|hdstream4u\.|filefly\./i.test(u);
 };
 
-// any link works: known platforms get full sync, media files/streams get full sync, tube/blocked hosts get proxy bypass
+export const OTT_PLATFORMS = [
+  { id: 'hotstar', name: 'Disney+ Hotstar', pattern: /(?:hotstar\.com|disneyplus\.com)/i, icon: '🌟', color: '#123962' },
+  { id: 'netflix', name: 'Netflix', pattern: /netflix\.com/i, icon: '🔴', color: '#E50914' },
+  { id: 'prime', name: 'Amazon Prime Video', pattern: /(?:primevideo\.com|amazon\.[a-z.]+\/(?:gp\/video|Amazon-Video))/i, icon: '🔵', color: '#00A8E1' },
+  { id: 'jiocinema', name: 'JioCinema', pattern: /jiocinema\.com/i, icon: '🟣', color: '#D40078' },
+  { id: 'zee5', name: 'Zee5', pattern: /zee5\.com/i, icon: '🟠', color: '#7E3AF2' },
+  { id: 'sonyliv', name: 'SonyLIV', pattern: /sonyliv\.com/i, icon: '🔷', color: '#0066FF' },
+  { id: 'hulu', name: 'Hulu', pattern: /hulu\.com/i, icon: '🟢', color: '#1CE783' },
+  { id: 'max', name: 'Max (HBO)', pattern: /(?:max\.com|hbomax\.com)/i, icon: '💜', color: '#001D4A' },
+  { id: 'crunchyroll', name: 'Crunchyroll', pattern: /crunchyroll\.com/i, icon: '🟧', color: '#F47521' },
+  { id: 'apple', name: 'Apple TV+', pattern: /tv\.apple\.com/i, icon: '🍎', color: '#333333' },
+];
+
+export const getOttPlatform = (u) => {
+  if (!u) return null;
+  const s = String(u);
+  return OTT_PLATFORMS.find((p) => p.pattern.test(s)) || null;
+};
+
+export const isOttPlatform = (u) => Boolean(getOttPlatform(u));
+
+// any link works: known platforms get full sync, media files/streams get full sync, tube/blocked hosts get proxy bypass, OTT gets hybrid
 export const detect = (u) => {
   if (ytId(u)) return 'youtube';
   if (vimeoId(u)) return 'vimeo';
+  if (isOttPlatform(u)) return 'hybrid';
   const p = u.split('?')[0].split('#')[0].toLowerCase();
   if (p.endsWith('.m3u8')) return 'hls';
   if (p.endsWith('.mpd')) return 'dash';
@@ -131,4 +153,14 @@ export const resolveMedia = async (src) => {
     if (res.ok) return await res.json();
   } catch {}
   return null;
+};
+
+export const getCloudMirrorSources = (query) => {
+  if (!query) return [];
+  const clean = encodeURIComponent(query.trim());
+  return [
+    { name: 'VidSrc Cloud', url: `https://vidsrc.to/embed/movie/${clean}` },
+    { name: 'SuperEmbed Mirror', url: `https://multiembed.mov/?video_id=${clean}` },
+    { name: '2Embed Cloud', url: `https://www.2embed.cc/embed/${clean}` },
+  ];
 };
