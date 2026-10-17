@@ -455,7 +455,7 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className="h-screen h-[100dvh] w-screen w-full max-w-[1920px] mx-auto overflow-hidden flex flex-col bg-[#070814] text-slate-100 font-sans selection:bg-purple-600 selection:text-white antialiased">
+    <div ref={root} className="min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col bg-[#070814] text-slate-100 font-sans selection:bg-purple-600 selection:text-white antialiased overflow-x-hidden overflow-y-auto">
       {/* 👻 Stealth Admin Ghost Monitor Banner */}
       {isGhost && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
@@ -682,7 +682,7 @@ export default function Room() {
             </div>
 
             {/* Main Action Grid */}
-            <div className="grid grid-cols-2 gap-2.5 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               {/* Room Password */}
               <button
                 type="button"
@@ -878,25 +878,26 @@ export default function Room() {
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
       {boot && (
-        <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col lg:flex-row p-2 sm:p-3 gap-2.5 sm:gap-3">
+        <div className="flex-1 w-full flex flex-col lg:flex-row p-2 sm:p-4 gap-3 sm:gap-4 min-h-0">
           {/* Main Cinema Auditorium (Left / Center) */}
-          <section className="flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden min-w-0">
+          <section className="flex-1 flex flex-col min-w-0 space-y-3">
             {users.length < maxSeats && (
-              <div className="shrink-0 mb-1.5 flex items-center justify-between gap-2 px-3 py-1 border border-white/10 bg-black/70 rounded-xl w-full text-xs shadow-sm backdrop-blur-md">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Users className="h-3.5 w-3.5 text-rose-400 shrink-0" />
-                  <span className="text-white text-xs truncate">
+              <div className="flex items-center justify-between gap-2 px-3 py-1.5 border border-white/10 bg-black/70 rounded-2xl w-full text-xs shadow-sm backdrop-blur-md">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Users className="h-4 w-4 text-rose-400 shrink-0" />
+                  <span className="text-white text-xs font-medium truncate">
                     {users.length === 1 ? 'Waiting for partner to join…' : `Watch Party Active (${users.length}/${maxSeats})`}
                   </span>
                 </div>
-                <button onClick={copy} className="btn !py-0.5 !px-2.5 text-[11px] shrink-0 font-semibold">
-                  {copied ? 'Copied ✓' : 'Invite'}
+                <button onClick={copy} className="btn !py-1 !px-3 text-xs shrink-0 font-semibold flex items-center gap-1.5">
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copied ? 'Copied Link' : 'Invite Friends'}</span>
                 </button>
               </div>
             )}
 
-            {/* Video Player Container (Fixed 16:9 on mobile, flex-1 on desktop) */}
-            <div className="w-full shrink-0 aspect-video lg:flex-1 lg:min-h-0 lg:aspect-auto lg:flex lg:flex-col lg:justify-center min-w-0">
+            {/* Video Player Container */}
+            <div className="w-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-800/80">
               <VideoPlayer
                 socket={socket}
                 me={me}
@@ -917,8 +918,8 @@ export default function Room() {
             </div>
 
             {/* Quick Synchronized Floating Reaction Bar */}
-            <div className="shrink-0 my-1.5 flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+            <div className="my-1 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 p-2 sm:px-3 sm:py-2 rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 backdrop-blur-xl shadow-lg">
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
                   Reactions:
                 </span>
@@ -936,7 +937,7 @@ export default function Room() {
                     key={rx.emoji}
                     type="button"
                     onClick={() => triggerReaction(rx.emoji)}
-                    className="px-2 py-1 rounded-xl bg-slate-900/60 hover:bg-purple-600/25 border border-slate-800 hover:border-purple-500/40 text-sm sm:text-xs text-white transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-xl bg-slate-900/80 hover:bg-purple-600/25 border border-slate-800 hover:border-purple-500/40 text-sm sm:text-xs text-white transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1 shadow-sm"
                     title={`Send ${rx.label} reaction to room`}
                   >
                     <span>{rx.emoji}</span>
@@ -945,7 +946,7 @@ export default function Room() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                 {/* View UI Mode Selector Pill */}
                 <div className="hidden sm:flex items-center gap-0.5 bg-[#0d0e24] border border-slate-800 p-0.5 rounded-xl">
                   {[
@@ -958,7 +959,7 @@ export default function Room() {
                       key={m.id}
                       type="button"
                       onClick={() => changeViewMode(m.id)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
                         viewMode === m.id ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                       }`}
                     >
@@ -989,29 +990,29 @@ export default function Room() {
               </div>
             </div>
 
-            {/* Party Grid Mode (Only in party mode, compact) */}
+            {/* Party Grid Mode (Multi-member seat gallery) */}
             {viewMode === 'party' && (
-              <div className="shrink-0 mt-2 p-2 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-1 mb-1.5 text-xs">
+              <div className="p-3 rounded-2xl bg-[#090a1e]/90 border border-purple-500/30 backdrop-blur-xl shadow-xl space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 text-xs">
                   <span className="font-bold text-white flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-purple-400" /> Member Gallery ({users.length}/{maxSeats})
+                    <Users className="h-4 w-4 text-purple-400" /> Member Gallery ({users.length}/{maxSeats})
                   </span>
                   {me === hostId && (
                     <button
                       type="button"
                       onClick={() => { setCapacityDraft(maxSeats); setShowCapacityModal(true); }}
-                      className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
+                      className="text-xs text-purple-400 hover:text-purple-300 font-semibold cursor-pointer"
                     >
-                      Expand Seats
+                      Expand Capacity
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 max-h-24 overflow-y-auto">
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black border border-slate-800">
+                <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-60 overflow-y-auto">
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
                     <Tile stream={callMedia.mine} name="You" isPartner={false} voiceOnly={callMedia.voiceOnly} isSpeaking={callMedia.localTalking} isCamOff={!callCam} />
                   </div>
                   {users.filter(u => u.id !== me).map((u) => (
-                    <div key={u.id} className="relative aspect-video rounded-lg overflow-hidden bg-black border border-slate-800">
+                    <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
                       <Tile stream={callMedia.remote[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia.voiceOnly} isSpeaking={!!callMedia.remoteTalking[u.id]} isCamOff={false} />
                     </div>
                   ))}
@@ -1019,37 +1020,78 @@ export default function Room() {
               </div>
             )}
 
-            {/* Mobile Tab Content (Fills remaining screen height on phone) */}
-            <div className="lg:hidden flex-1 min-h-0 flex flex-col overflow-hidden mt-1">
-              <div className="flex-1 min-h-0 overflow-y-auto">
+            {/* Mobile / Tablet Interactive Tabs Deck (Reachable via smooth scroll) */}
+            <div className="lg:hidden flex flex-col rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 shadow-2xl overflow-hidden mt-3">
+              {/* Tab Selector Nav Header */}
+              <div className="shrink-0 flex items-center border-b border-slate-800 bg-[#070814]/90 p-1.5 gap-1">
+                {[
+                  { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
+                  { id: 'call', label: 'Duo Cam', icon: Video, activeDot: callCam },
+                  { id: 'gestures', label: 'Love', icon: Heart },
+                  { id: 'extras', label: 'Extras', icon: Popcorn },
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const active = mobileTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setMobileTab(tab.id)}
+                      className={`flex-1 py-2 px-1 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer relative ${
+                        active
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="relative">
+                        <Icon className="h-4 w-4" />
+                        {tab.badge > 0 && (
+                          <span className="absolute -top-1.5 -right-2 bg-rose-600 text-white text-[9px] font-bold px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center">
+                            {tab.badge > 99 ? '99+' : tab.badge}
+                          </span>
+                        )}
+                        {tab.activeDot !== undefined && (
+                          <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${tab.activeDot ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Mobile Tab Content Body */}
+              <div className="p-2 sm:p-3 min-h-[420px] max-h-[600px] overflow-y-auto">
                 {mobileTab === 'chat' && (
-                  <ChatPanel
-                    socket={socket}
-                    me={me}
-                    name={name}
-                    users={users}
-                    hostId={hostId}
-                    chat={chat}
-                    playerRef={playerRef}
-                    say={say}
-                    isMobile={true}
-                  />
+                  <div className="h-[460px]">
+                    <ChatPanel
+                      socket={socket}
+                      me={me}
+                      name={name}
+                      users={users}
+                      hostId={hostId}
+                      chat={chat}
+                      playerRef={playerRef}
+                      say={say}
+                      isMobile={true}
+                    />
+                  </div>
                 )}
                 {mobileTab === 'call' && (
-                  <div className="h-full p-3 flex flex-col items-center justify-center text-center text-xs text-slate-300 space-y-2">
-                    <p className="font-semibold text-white">WebRTC Video Call Hub</p>
-                    <div className="aspect-video w-full max-w-xs rounded-xl overflow-hidden bg-black border border-slate-800">
+                  <div className="p-4 text-center text-xs text-slate-300 space-y-3">
+                    <p className="font-semibold text-white text-sm">WebRTC Video Call Hub</p>
+                    <div className="aspect-video w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-black border border-slate-800 shadow-xl">
                       <Tile stream={callMedia.mine} name="You" isPartner={false} isCamOff={!callCam} />
                     </div>
                   </div>
                 )}
                 {mobileTab === 'gestures' && (
-                  <div className="p-2 h-full overflow-y-auto">
+                  <div className="p-1">
                     <CoupleGestures socket={socket} me={me} name={name} users={users} say={say} />
                   </div>
                 )}
                 {mobileTab === 'extras' && (
-                  <div className="p-2 h-full overflow-y-auto">
+                  <div className="p-1">
                     <MovieNightExtras
                       socket={socket}
                       me={me}
@@ -1067,49 +1109,12 @@ export default function Room() {
                   </div>
                 )}
               </div>
-
-              {/* Mobile Single Native Bottom Navigation Dock */}
-              <div className="shrink-0 h-13 sm:h-14 flex items-center justify-around border-t border-slate-800 bg-[#090a1e] rounded-2xl mt-1 px-1">
-                {[
-                  { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
-                  { id: 'call', label: 'Call', icon: Video, activeDot: callCam },
-                  { id: 'gestures', label: 'Love', icon: Heart },
-                  { id: 'extras', label: 'Extras', icon: Popcorn },
-                ].map((tab) => {
-                  const Icon = tab.icon;
-                  const active = mobileTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setMobileTab(tab.id)}
-                      className={`relative flex-1 flex flex-col items-center justify-center py-1 transition cursor-pointer ${
-                        active ? 'text-pink-400 font-bold' : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <div className="relative">
-                        <Icon className="h-5 w-5" />
-                        {tab.badge > 0 && (
-                          <span className="absolute -top-1 -right-2 bg-rose-600 text-white text-[9px] font-bold px-1 min-w-[14px] h-[14px] rounded-full flex items-center justify-center">
-                            {tab.badge > 99 ? '99+' : tab.badge}
-                          </span>
-                        )}
-                        {tab.activeDot !== undefined && (
-                          <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${tab.activeDot ? 'bg-emerald-400' : 'bg-rose-500'}`} />
-                        )}
-                      </div>
-                      <span className="text-[10px] mt-0.5 font-medium">{tab.label}</span>
-                      {active && <span className="absolute bottom-0 w-6 h-0.5 rounded-full bg-pink-500" />}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           </section>
 
           {/* Desktop Right Column: Interactive Deck */}
           {viewMode !== 'focus' && (
-            <aside className="hidden lg:flex w-80 xl:w-96 shrink-0 h-full flex flex-col overflow-hidden rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 shadow-2xl">
+            <aside className="hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl bg-[#090a1e]/90 border border-slate-800/80 shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden">
               {/* Tab Selector Header */}
               <div className="shrink-0 flex items-center border-b border-slate-800 p-1.5 gap-1 bg-[#070814]/80">
                 {[

@@ -1212,43 +1212,40 @@ export default function VideoPlayer({
             : 'aspect-video rounded-2xl border border-white/10'
         }`}
       >
-        {/* Sync Status Badge (Hidden on mobile phones to keep display clean) */}
+        {/* Top-Left Status Cluster: Sync Status + Live Stream (Zero Overlap) */}
         <div
-          className={`absolute top-3 left-3 z-30 hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 border border-white/10 text-[11px] text-white/90 transition-opacity duration-300 ${
+          className={`absolute top-3 left-3 z-30 flex items-center gap-2 transition-opacity duration-300 pointer-events-auto ${
             isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         >
-          <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-rose-400'}`} />
-          <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
-          {syncOffset !== 0 && (
-            <span className="text-[10px] text-rose-400 font-mono ml-0.5">
-              ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
-            </span>
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/10 text-[11px] text-white/90 shadow-lg">
+            <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-rose-400'}`} />
+            <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
+            {syncOffset !== 0 && (
+              <span className="text-[10px] text-rose-400 font-mono ml-0.5">
+                ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
+              </span>
+            )}
+          </div>
+
+          {isLiveStream && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600 text-[11px] font-bold text-white border border-white/20 shadow-lg backdrop-blur-md">
+              <Radio className="h-3 w-3" />
+              <span>LIVE</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (hlsRef.current?.liveSyncPosition) vref.current.currentTime = hlsRef.current.liveSyncPosition;
+                  else if (vref.current && Number.isFinite(vref.current.duration)) vref.current.currentTime = vref.current.duration;
+                }}
+                className="ml-1 underline hover:text-white/80 text-[10px] cursor-pointer"
+                title="Jump to live edge"
+              >
+                Catch up
+              </button>
+            </div>
           )}
         </div>
-
-        {/* Live Stream Badge */}
-        {isLiveStream && (
-          <div
-            className={`absolute top-3 left-36 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600 text-[11px] font-bold text-white border border-white/20 transition-opacity duration-300 ${
-              isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}
-          >
-            <Radio className="h-3 w-3" />
-            <span>LIVE</span>
-            <button
-              type="button"
-              onClick={() => {
-                if (hlsRef.current?.liveSyncPosition) vref.current.currentTime = hlsRef.current.liveSyncPosition;
-                else if (vref.current && Number.isFinite(vref.current.duration)) vref.current.currentTime = vref.current.duration;
-              }}
-              className="ml-1 underline hover:text-white/80 text-[10px]"
-              title="Jump to live edge"
-            >
-              Catch up
-            </button>
-          </div>
-        )}
 
         {/* Screensharing Active Header & Full Screen Toggle */}
         {stream && (
@@ -1801,7 +1798,7 @@ export default function VideoPlayer({
               value={url}
               onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
-              placeholder="Paste any OTT or video link (Netflix, Hotstar, Prime, JioCinema, Zee5, YouTube, MP4) - Auto Plays!"
+              placeholder="Paste any video or movie link (YouTube, HLS, MP4, Prime, Netflix) - Auto plays in sync..."
               className="field !pl-9 !py-2.5 text-xs sm:text-sm w-full"
             />
           </div>
@@ -1820,12 +1817,12 @@ export default function VideoPlayer({
               className="btn !py-2.5 !px-4 text-xs font-bold shrink-0 flex items-center justify-center gap-1.5"
             >
               <Play className="h-3.5 w-3.5 fill-white" />
-              <span>Play for everyone</span>
+              <span>Play for All</span>
             </button>
           </div>
         </div>
 
-        <div className="hidden sm:flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
           <button type="button" onClick={enqueue} className="ghost" title="Add this link to the Up next list"><ListPlus className="h-4 w-4" />Add to queue</button>
           <label className="ghost cursor-pointer" title="Play a movie file from your own device"><FolderOpen className="h-4 w-4" />My file<input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden /></label>
           <label className="ghost cursor-pointer" title="Add .srt or .vtt subtitles"><Captions className="h-4 w-4" />Subtitles<input type="file" accept=".srt,.vtt" onChange={pickSub} hidden /></label>
