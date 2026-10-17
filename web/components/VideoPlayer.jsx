@@ -13,6 +13,7 @@ import {
   getOttPlatform, isOttPlatform, extractOttTitle, OTT_PLATFORMS, getCloudMirrorSources
 } from '@/lib/media';
 import { Tile } from './CouplesOverlay';
+import OttVault from './OttVault';
 
 const TYPES = ['auto', 'hybrid', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -32,6 +33,7 @@ export default function VideoPlayer({
   callMedia,
   callControlsRef,
   onOpenRecent,
+  ottAccounts = {},
 }) {
   const [media, setMedia] = useState(initial.media);
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
@@ -70,7 +72,6 @@ export default function VideoPlayer({
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [resolvingStatus, setResolvingStatus] = useState('');
   const [showOttModal, setShowOttModal] = useState(false);
-  const [ottSearchQuery, setOttSearchQuery] = useState('');
   const [screenAudioLocked, setScreenAudioLocked] = useState(false);
 
   // Fullscreen & Floating Video Call PiP State
@@ -880,16 +881,20 @@ export default function VideoPlayer({
     }
   };
 
-  const playCloudMovie = (query) => {
+  const playCloudMovie = (query, platformName) => {
     if (!query) return;
     const clean = query.trim();
-    const cloudUrl = toProxyUrl(`https://vidsrc.to/embed/movie/${encodeURIComponent(clean)}`);
+    const mirrors = getCloudMirrorSources(clean);
     socket.emit('media:set', {
       media: {
         type: 'proxy',
-        src: cloudUrl,
-        orig: clean,
-        title: clean,
+        src: mirrors[0]?.url || toProxyUrl(`https://vidsrc.to/embed/movie/${encodeURIComponent(clean)}`),
+        origSrc: clean,
+        title: platformName ? `${platformName}: ${clean}` : clean,
+        platform: platformName || 'OTT Cinema',
+        movieTitle: clean,
+        mirrorSources: mirrors,
+        currentServerIndex: 0,
       },
     });
   };
@@ -902,18 +907,23 @@ export default function VideoPlayer({
     const isAdult = isAdultMedia(src);
 
     // 0. OTT platforms (Disney+ Hotstar, Netflix, Prime Video, JioCinema, Zee5, SonyLIV, etc.)
+    // Streams directly for both devices with zero screen share and multi-server backup
     const ott = getOttPlatform(src);
     if (ott || force === 'hybrid') {
       const extracted = extractOttTitle(src);
+      const titleToPlay = extracted || (ott ? `${ott.name} Cinema` : 'Cinema');
+      const mirrors = getCloudMirrorSources(titleToPlay);
       return {
-        type: 'hybrid',
-        src,
+        type: 'proxy',
+        src: mirrors[0]?.url,
         origSrc: src,
-        platform: ott?.name || 'Hybrid OTT',
+        platform: ott?.name || 'OTT Cinema',
         icon: ott?.icon || '🍿',
         color: ott?.color || '#d9467a',
-        title: extracted ? `${ott?.name || 'OTT'}: ${extracted}` : (ott ? `${ott.name} Cinema` : 'Hybrid Cinema'),
-        movieTitle: extracted || '',
+        title: extracted ? `${ott?.name || 'OTT'}: ${extracted}` : titleToPlay,
+        movieTitle: titleToPlay,
+        mirrorSources: mirrors,
+        currentServerIndex: 0,
       };
     }
 
@@ -1330,66 +1340,15 @@ export default function VideoPlayer({
         </video>
         <div ref={ytBox} className={`absolute inset-0 ${show(T === 'youtube')}`} />
         <div ref={vmBox} className={`absolute inset-0 [&_iframe]:h-full [&_iframe]:w-full ${show(T === 'vimeo')}`} />
-        {(T === 'embed' || T === 'proxy') && !stream && (
+        {(T === 'embed' || T === 'proxy' || T === 'hybrid' || T === 'ott') && !stream && (
           <iframe
-            src={media.src}
+            src={media.src?.startsWith('/api/proxy') ? media.src : toProxyUrl(media.src || 'about:blank')}
             referrerPolicy="no-referrer-when-downgrade"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             loading="eager"
             className="absolute inset-0 h-full w-full bg-black/90"
           />
-        )}
-        {T === 'hybrid' && !stream && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black p-4 text-center text-white">
-            <div className="max-w-xs w-full space-y-3">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-2xl">{media.icon || '🍿'}</span>
-                <span className="font-bold text-sm text-white">{media.platform || 'OTT Cinema'}</span>
-              </div>
-
-              {media.movieTitle && (
-                <p className="text-xs text-rose-300 font-semibold truncate">
-                  🎬 {media.movieTitle}
-                </p>
-              )}
-
-              {/* Action Buttons: Tab Stream or Cloud Movie */}
-              <div className="flex flex-col gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => startHybridTabShare(media.src)}
-                  className="btn !py-2.5 !px-4 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <MonitorUp className="h-4 w-4" />
-                  <span>Stream Tab with Audio</span>
-                </button>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const title = media.movieTitle || extractOttTitle(media.origSrc || media.src) || media.title || 'Movie';
-                      playCloudMovie(title);
-                    }}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition border border-white/15 flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Film className="h-3.5 w-3.5 text-[#ff6fa0]" />
-                    <span>Watch Movie Stream</span>
-                  </button>
-
-                  <a
-                    href={media.origSrc || media.src}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-xs font-medium transition border border-white/10 flex items-center justify-center gap-1"
-                  >
-                    <span>Open ↗</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
         )}
         {T === 'local' && !localUrl && !stream && (
           <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/90 bg-black/85 backdrop-blur-sm z-20">
@@ -1568,6 +1527,40 @@ export default function VideoPlayer({
           </button>
         )}
       </div>
+
+      {/* Dynamic Stream Server Switcher (Multi-mirror fast fallback) */}
+      {media?.mirrorSources && media.mirrorSources.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto py-1.5 px-3 bg-black/90 border border-white/10 rounded-xl my-2 text-xs">
+          <span className="text-[10px] text-white/50 shrink-0 font-semibold flex items-center gap-1">
+            🔄 Server:
+          </span>
+          {media.mirrorSources.map((srv, idx) => {
+            const isActive = media.src === srv.url || media.currentServerIndex === idx;
+            return (
+              <button
+                key={srv.name}
+                type="button"
+                onClick={() => {
+                  socket?.emit('media:set', {
+                    media: {
+                      ...media,
+                      src: srv.url,
+                      currentServerIndex: idx,
+                    },
+                  });
+                }}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-[#d9467a] text-white shadow-md font-bold'
+                    : 'bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
+                }`}
+              >
+                {srv.name.replace('Server ', 'S')}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Precision Sync & Audio Drawer */}
       {showSettings && (
@@ -1771,11 +1764,11 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => setShowOttModal(true)}
-            className="ghost text-[#ff6fa0] hover:text-white border border-[#d9467a]/40 bg-[#d9467a]/15 shadow-sm"
-            title="Hybrid OTT: Stream Disney+ Hotstar, Netflix, Prime Video, JioCinema with Tab Audio or Cloud Mirror"
+            className="ghost text-[#ff6fa0] hover:text-white border border-[#d9467a]/40 bg-[#d9467a]/15 shadow-sm font-semibold"
+            title="OTT Vault: Disney+ Hotstar, Netflix, Prime Video, JioCinema with zero screen share"
           >
             <Tv className="h-4 w-4 text-[#ff6fa0]" />
-            <span>Hybrid OTT 🍿</span>
+            <span>OTT Vault 🍿</span>
           </button>
           {screenBy === me
             ? <button type="button" onClick={stopShare} className="ghost"><MonitorOff className="h-4 w-4" />Stop sharing</button>
@@ -1797,144 +1790,21 @@ export default function VideoPlayer({
         </div>
       </form>
 
-      {/* Hybrid OTT & Cloud Movie Modal */}
+      {/* OTT Vault & Dual-Stream Modal */}
       {showOttModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-black border border-white/20 p-5 shadow-2xl space-y-4 text-white">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="p-2 rounded-xl bg-[#d9467a]/20 border border-[#d9467a]/30 text-[#ff6fa0]">
-                  <Tv className="h-5 w-5" />
-                </span>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-1.5">
-                    Hybrid OTT Cinema <span className="text-xs px-2 py-0.5 rounded-full bg-[#d9467a] text-white">PRO</span>
-                  </h3>
-                  <p className="text-xs text-white/60">Stream Disney+ Hotstar, Netflix, Prime Video, JioCinema with Tab Audio or Cloud Mirror</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowOttModal(false)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Section 1: Tab Audio Mirror for DRM Platforms */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
-                <MonitorUp className="h-3.5 w-3.5 text-[#ff6fa0]" /> Stream Tab with Audio (Netflix, Prime, Hotstar)
-              </span>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
-                {[
-                  { name: 'Disney+ Hotstar', url: 'https://www.hotstar.com', icon: '🌟', color: '#123962' },
-                  { name: 'Netflix', url: 'https://www.netflix.com', icon: '🔴', color: '#E50914' },
-                  { name: 'Prime Video', url: 'https://www.primevideo.com', icon: '🔵', color: '#00A8E1' },
-                  { name: 'JioCinema', url: 'https://www.jiocinema.com', icon: '🟣', color: '#D40078' },
-                  { name: 'Zee5', url: 'https://www.zee5.com', icon: '🟠', color: '#7E3AF2' },
-                  { name: 'SonyLIV', url: 'https://www.sonyliv.com', icon: '🔷', color: '#0066FF' },
-                ].map((p) => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    onClick={() => {
-                      setShowOttModal(false);
-                      socket.emit('media:set', {
-                        media: {
-                          type: 'hybrid',
-                          src: p.url,
-                          origSrc: p.url,
-                          platform: p.name,
-                          icon: p.icon,
-                          color: p.color,
-                          title: `${p.name} Cinema`,
-                        },
-                      });
-                      startHybridTabShare(p.url);
-                    }}
-                    className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#ff6fa0]/40 text-left transition group cursor-pointer"
-                  >
-                    <span className="text-lg">{p.icon}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-white group-hover:text-[#ff6fa0] truncate">{p.name}</p>
-                      <p className="text-[10px] text-white/50">Stream tab</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Section 2: Free Cloud Movie Mirror (Zero Accounts Needed) */}
-            <div className="pt-3 border-t border-white/10 space-y-2">
-              <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
-                <Film className="h-3.5 w-3.5 text-[#ff6fa0]" /> Watch via Cloud Stream (No Account Needed)
-              </span>
-
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 opacity-50" />
-                  <input
-                    value={ottSearchQuery}
-                    onChange={(e) => setOttSearchQuery(e.target.value)}
-                    placeholder="Search movie or show title (e.g. Inception, Stranger Things)…"
-                    className="field !pl-9 !py-2 text-xs"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (!ottSearchQuery.trim()) return;
-                        setShowOttModal(false);
-                        playCloudMovie(ottSearchQuery);
-                      }
-                    }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!ottSearchQuery.trim()) return;
-                    setShowOttModal(false);
-                    playCloudMovie(ottSearchQuery);
-                  }}
-                  className="btn !py-2 !px-4 text-xs font-semibold shrink-0"
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  <span>Play Movie</span>
-                </button>
-              </div>
-
-              {/* Quick Popular Picks */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] text-white/50">Quick picks:</span>
-                {['Interstellar', 'Inception', 'Stranger Things', 'Money Heist', 'Avengers Endgame'].map((title) => (
-                  <button
-                    key={title}
-                    type="button"
-                    onClick={() => {
-                      setShowOttModal(false);
-                      playCloudMovie(title);
-                    }}
-                    className="px-2 py-0.5 rounded-md bg-white/10 hover:bg-[#d9467a]/20 text-white/80 hover:text-white border border-white/10 text-[10px] transition"
-                  >
-                    {title}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-white/50">
-              <span>💡 Chrome tip: Turn off "Hardware Acceleration" if screen is black.</span>
-              <button
-                type="button"
-                onClick={() => setShowOttModal(false)}
-                className="btn !py-1 !px-3 text-xs"
-              >
-                Close
-              </button>
-            </div>
-          </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+          <OttVault
+            socket={socket}
+            me={me}
+            ottAccounts={ottAccounts}
+            currentMedia={media}
+            onPlayMovie={(title, platformName) => {
+              setShowOttModal(false);
+              playCloudMovie(title, platformName);
+            }}
+            onClose={() => setShowOttModal(false)}
+            isModal={true}
+          />
         </div>
       )}
     </div>

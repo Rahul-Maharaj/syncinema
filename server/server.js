@@ -47,7 +47,7 @@ const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: stri
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
 const origin = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(',') : true;
 const PEER_KEY = ACCESS_KEY ? crypto.createHmac('sha256', ACCESS_KEY).update('peer').digest('hex').slice(0, 32) : 'peerjs';
-const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy', 'hybrid'];
+const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy', 'hybrid', 'ott', 'ott_hub'];
 const ROOM_RE = /^[\w-]{2,64}$/;
 
 
@@ -765,6 +765,7 @@ const fresh = () => ({
   ambient: { preset: 'love', intensity: 80, flicker: false },
   adult: true,
   maxUsers: 2,
+  ottAccounts: {},
 });
 
 try { for (const [id, v] of Object.entries(JSON.parse(fs.readFileSync(DATA_FILE)))) rooms.set(id, { ...fresh(), ...v }); } catch {}
@@ -785,6 +786,7 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
     reviews: r.reviews || [],
     ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
     adult: !!r.adult,
+    ottAccounts: r.ottAccounts || {},
   }]))));
 } catch (e) { console.error('save failed', e.message); } }, 1000); };
 // room passkey: stored only as a salted scrypt hash, so even the server file never holds it
@@ -1224,6 +1226,7 @@ io.on('connection', (socket) => {
       ambient: room.ambient || { preset: 'love', intensity: 80, flicker: false },
       adult: !!room.adult,
       hasPin: !!room.pin,
+      ottAccounts: room.ottAccounts || {},
     });
     socket.emit('state', snapshot(room));            // re-sync player after reconnect
     presence(rid, room);
@@ -1247,6 +1250,10 @@ io.on('connection', (socket) => {
       title: isAdult ? '🔒 Private Stream' : String(media.title || media.name || '').slice(0, 200),
       poster: isAdult ? '' : cleanUrl(media.poster) || '',
       desc: isAdult ? 'Private adults-only date stream' : String(media.desc || '').slice(0, 1000),
+      platform: media.platform ? String(media.platform).slice(0, 50) : undefined,
+      movieTitle: media.movieTitle ? String(media.movieTitle).slice(0, 100) : undefined,
+      mirrorSources: Array.isArray(media.mirrorSources) ? media.mirrorSources.slice(0, 10) : undefined,
+      currentServerIndex: Number.isInteger(media.currentServerIndex) ? media.currentServerIndex : 0,
       ...(local && { name: String(media.name || '').slice(0, 200) })
     });
   });
@@ -1424,6 +1431,35 @@ io.on('connection', (socket) => {
     if (!joined() || user.cid !== room.hostId) return;
     room.timer = null;
     io.to(rid).emit('timer:sync', null);
+  });
+
+  // OTT Account Vault Handlers (One person logs in -> Both devices stream together with zero screen share)
+  socket.on('ott:login', ({ platform, username, email, phone } = {}) => {
+    if (!joined() || !platform) return;
+    const plat = String(platform).toLowerCase().trim().slice(0, 30);
+    if (!room.ottAccounts) room.ottAccounts = {};
+    const userIdentifier = String(username || email || phone || 'Subscriber').slice(0, 60);
+    room.ottAccounts[plat] = {
+      platform: plat,
+      connected: true,
+      username: userIdentifier,
+      connectedBy: user.name,
+      connectedAt: Date.now(),
+    };
+    io.to(rid).emit('ott:sync', room.ottAccounts);
+    io.to(rid).emit('toast', `🍿 ${user.name} linked ${plat.toUpperCase()}! Both devices can now stream together.`);
+    save();
+  });
+
+  socket.on('ott:logout', ({ platform } = {}) => {
+    if (!joined() || !platform || !room.ottAccounts) return;
+    const plat = String(platform).toLowerCase().trim().slice(0, 30);
+    if (room.ottAccounts[plat]) {
+      delete room.ottAccounts[plat];
+      io.to(rid).emit('ott:sync', room.ottAccounts);
+      io.to(rid).emit('toast', `🔓 ${plat.toUpperCase()} account disconnected.`);
+      save();
+    }
   });
 
   // "Ready to Watch?" Confirmation (Host Only)

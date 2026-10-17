@@ -71,11 +71,11 @@ export const extractOttTitle = (u) => {
   return '';
 };
 
-// any link works: known platforms get full sync, media files/streams get full sync, tube/blocked hosts get proxy bypass, OTT gets hybrid
+// any link works: known platforms get full sync, media files/streams get full sync, tube/blocked hosts get proxy bypass, OTT gets cloud mirror direct stream
 export const detect = (u) => {
   if (ytId(u)) return 'youtube';
   if (vimeoId(u)) return 'vimeo';
-  if (isOttPlatform(u)) return 'hybrid';
+  if (isOttPlatform(u)) return 'proxy';
   const p = u.split('?')[0].split('#')[0].toLowerCase();
   if (p.endsWith('.m3u8')) return 'hls';
   if (p.endsWith('.mpd')) return 'dash';
@@ -192,8 +192,49 @@ export const getCloudMirrorSources = (query) => {
   if (!query) return [];
   const clean = encodeURIComponent(query.trim());
   return [
-    { name: 'Server 1 (VidSrc)', url: toProxyUrl(`https://vidsrc.to/embed/movie/${clean}`) },
-    { name: 'Server 2 (EmbedSU)', url: toProxyUrl(`https://embed.su/embed/movie/${clean}`) },
-    { name: 'Server 3 (2Embed)', url: toProxyUrl(`https://www.2embed.cc/embed/${clean}`) },
+    { name: 'Server 1 (VidSrc Fast)', url: toProxyUrl(`https://vidsrc.to/embed/movie/${clean}`) },
+    { name: 'Server 2 (EmbedSU HD)', url: toProxyUrl(`https://embed.su/embed/movie/${clean}`) },
+    { name: 'Server 3 (2Embed Cloud)', url: toProxyUrl(`https://www.2embed.cc/embed/${clean}`) },
+    { name: 'Server 4 (AutoEmbed VIP)', url: toProxyUrl(`https://autoembed.cc/embed/player.php?id=${clean}`) },
+    { name: 'Server 5 (SmashyStream)', url: toProxyUrl(`https://player.smashy.stream/movie/${clean}`) },
   ];
+};
+
+export const OTT_CATALOGS = {
+  hotstar: [
+    { title: 'Chhaava', year: '2025', genre: 'Action / History', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Blockbuster' },
+    { title: 'Brahmāstra: Part One – Shiva', year: '2022', genre: 'Fantasy / Action', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Superhit' },
+    { title: '12th Fail', year: '2023', genre: 'Drama / Inspirational', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Top Rated' },
+    { title: 'Shōgun', year: '2024', genre: 'Drama / History', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Emmy Winner' },
+    { title: 'Lokah Chapter 1', year: '2025', genre: 'Sci-Fi / Thriller', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Trending' },
+    { title: 'Aarya', year: '2023', genre: 'Crime / Drama', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Popular' },
+  ],
+  netflix: [
+    { title: 'Stranger Things', year: '2024', genre: 'Sci-Fi / Horror', ott: 'Netflix', icon: '🔴', badge: 'Global #1' },
+    { title: 'Squid Game', year: '2024', genre: 'Thriller / Survival', ott: 'Netflix', icon: '🔴', badge: 'Trending' },
+    { title: 'Animal', year: '2023', genre: 'Action / Crime', ott: 'Netflix', icon: '🔴', badge: 'Blockbuster' },
+    { title: 'Money Heist', year: '2021', genre: 'Heist / Thriller', ott: 'Netflix', icon: '🔴', badge: 'Fan Favorite' },
+    { title: 'Wednesday', year: '2023', genre: 'Fantasy / Mystery', ott: 'Netflix', icon: '🔴', badge: 'Viral Hit' },
+    { title: 'Leo', year: '2023', genre: 'Action / Thriller', ott: 'Netflix', icon: '🔴', badge: 'Action Hit' },
+  ],
+  prime: [
+    { title: 'The Boys', year: '2024', genre: 'Action / Superhero', ott: 'Prime Video', icon: '🔵', badge: 'Top Hit' },
+    { title: 'Mirzapur', year: '2024', genre: 'Crime / Drama', ott: 'Prime Video', icon: '🔵', badge: 'Mass Hit' },
+    { title: 'Panchayat', year: '2024', genre: 'Comedy / Drama', ott: 'Prime Video', icon: '🔵', badge: 'All-Time Fav' },
+    { title: 'Fallout', year: '2024', genre: 'Sci-Fi / Adventure', ott: 'Prime Video', icon: '🔵', badge: 'Critically Acclaimed' },
+    { title: 'Farzi', year: '2023', genre: 'Thriller / Con', ott: 'Prime Video', icon: '🔵', badge: 'Popular' },
+    { title: 'Citadel', year: '2023', genre: 'Action / Spy', ott: 'Prime Video', icon: '🔵', badge: 'High Octane' },
+  ],
+  jiocinema: [
+    { title: 'Stree 2', year: '2024', genre: 'Comedy / Horror', ott: 'JioCinema', icon: '🟣', badge: '₹800 Cr Mega Hit' },
+    { title: 'Asur', year: '2023', genre: 'Crime / Mythology', ott: 'JioCinema', icon: '🟣', badge: 'Masterpiece' },
+    { title: 'Bloody Daddy', year: '2023', genre: 'Action / Thriller', ott: 'JioCinema', icon: '🟣', badge: 'Non-stop Action' },
+    { title: 'Bhediya', year: '2022', genre: 'Comedy / Creature', ott: 'JioCinema', icon: '🟣', badge: 'Superhit' },
+  ],
+  zee5: [
+    { title: 'Gadar 2', year: '2023', genre: 'Action / Drama', ott: 'Zee5', icon: '🟠', badge: '₹600 Cr Hit' },
+    { title: 'Sirf Ek Bandaa Kaafi Hai', year: '2023', genre: 'Courtroom / Drama', ott: 'Zee5', icon: '🟠', badge: 'Award Winner' },
+    { title: 'Sam Bahadur', year: '2023', genre: 'Biopic / War', ott: 'Zee5', icon: '🟠', badge: 'Must Watch' },
+    { title: 'Silence 2', year: '2024', genre: 'Crime / Mystery', ott: 'Zee5', icon: '🟠', badge: 'Edge of Seat' },
+  ],
 };

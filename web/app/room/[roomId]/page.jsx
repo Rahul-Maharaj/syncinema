@@ -7,7 +7,7 @@ import {
   Send, Copy, Check, Crown, Users, Lock, Unlock, Heart, Film, X, Play,
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
-  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut
+  Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -22,6 +22,7 @@ import RecentBar from '@/components/RecentBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
+import OttVault from '@/components/OttVault';
 
 
 
@@ -74,9 +75,9 @@ export default function Room() {
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
   // Mobile enhancements & Video Call control
-  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'gestures' | 'extras' | 'tools'
+  const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'ott' | 'gestures' | 'extras' | 'tools'
   const [toolsSubTab, setToolsSubTab] = useState('controls'); // 'controls' | 'intimacy' | 'ai'
-  const [desktopTab, setDesktopTab] = useState('gestures'); // 'gestures' | 'extras' | 'intimacy' | 'ai'
+  const [desktopTab, setDesktopTab] = useState('ott'); // 'ott' | 'gestures' | 'extras' | 'recent' | 'intimacy' | 'ai'
   const [showMenu, setShowMenu] = useState(false);
   const [showCall, setShowCall] = useState(true);
   const [showHandoff, setShowHandoff] = useState(false);
@@ -103,6 +104,7 @@ export default function Room() {
   const [hasPin, setHasPin] = useState(false);
   const [currentMedia, setCurrentMedia] = useState(null);
   const [voiceActive, setVoiceActive] = useState(false);
+  const [ottAccounts, setOttAccounts] = useState({});
 
   const peerRef = useRef(null), playerRef = useRef(null), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
@@ -189,6 +191,7 @@ export default function Room() {
       setAmbient(r.ambient || { preset: 'love', intensity: 80, flicker: false });
       setAdultMode(!!r.adult);
       setHasPin(!!r.hasPin);
+      if (r.ottAccounts) setOttAccounts(r.ottAccounts);
       if (r.media) setCurrentMedia(r.media);
       applyAmbientLighting(r.ambient);
       setLock(r.lock);
@@ -304,6 +307,7 @@ export default function Room() {
     socket.on('state', (st) => {
       if (st?.media) setCurrentMedia(st.media);
     });
+    socket.on('ott:sync', (accounts) => setOttAccounts(accounts || {}));
     socket.on('voice:active', ({ active } = {}) => {
       setVoiceActive(!!active);
     });
@@ -326,6 +330,7 @@ export default function Room() {
     return () => {
       socket.off('connect', joinHandler);
       socket.off('voice:active');
+      socket.off('ott:sync');
     };
   }, [name, socket]);
 
@@ -468,7 +473,7 @@ export default function Room() {
           {timer?.running && (
             <button
               type="button"
-              onClick={() => { setMobileTab('extras'); setDesktopTab('extras'); }}
+              onClick={() => { setMobileTab('tools'); setToolsSubTab('extras'); setDesktopTab('extras'); }}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono hover:bg-emerald-500/30"
               title="Synchronized snack break in progress"
             >
@@ -481,7 +486,7 @@ export default function Room() {
           {readyCheck?.active && (
             <button
               type="button"
-              onClick={() => { setMobileTab('extras'); setDesktopTab('extras'); }}
+              onClick={() => { setMobileTab('tools'); setToolsSubTab('extras'); setDesktopTab('extras'); }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#d9467a]/25 border border-[#d9467a]/50 text-[#ff8fb3] text-xs font-semibold hover:bg-[#d9467a]/40"
               title="Ready to watch check-in active"
             >
@@ -818,6 +823,7 @@ export default function Room() {
                 callMedia={callMedia}
                 callControlsRef={callControlsRef}
                 onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
+                ottAccounts={ottAccounts}
               />
             </div>
 
@@ -839,6 +845,17 @@ export default function Room() {
               {mobileTab === 'call' && (
                 <div className="rise">
                   {/* CouplesOverlay renders the dedicated Mobile Call Hub directly below */}
+                </div>
+              )}
+              {mobileTab === 'ott' && (
+                <div className="rise">
+                  <OttVault
+                    socket={socket}
+                    me={me}
+                    ottAccounts={ottAccounts}
+                    currentMedia={currentMedia}
+                    say={say}
+                  />
                 </div>
               )}
               {mobileTab === 'gestures' && (
@@ -867,36 +884,45 @@ export default function Room() {
               {mobileTab === 'tools' && (
                 <div className="rise space-y-3.5">
                   {/* Segmented Sub-navigation inside Tools */}
-                  <div className="grid grid-cols-3 rounded-2xl bg-black border border-white/15 p-1 gap-1 shadow-md">
+                  <div className="grid grid-cols-4 rounded-2xl bg-black border border-white/15 p-1 gap-1 shadow-md">
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('controls')}
-                      className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
                         toolsSubTab === 'controls' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
                       }`}
                     >
-                      <Sliders className="h-3.5 w-3.5" />
-                      <span>Tools</span>
+                      <Sliders className="h-3 w-3" />
+                      <span>Controls</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setToolsSubTab('extras')}
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
+                        toolsSubTab === 'extras' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      <Popcorn className="h-3 w-3 text-amber-300" />
+                      <span>Extras</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('intimacy')}
-                      className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
                         toolsSubTab === 'intimacy' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
                       }`}
                     >
-                      <Flame className="h-3.5 w-3.5 text-rose-400" />
+                      <Flame className="h-3 w-3 text-rose-400" />
                       <span>Intimacy</span>
                     </button>
-
                     <button
                       type="button"
                       onClick={() => setToolsSubTab('ai')}
-                      className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                      className={`py-2 px-1 rounded-xl text-[11px] font-semibold flex items-center justify-center gap-1 transition ${
                         toolsSubTab === 'ai' ? 'bg-[#d9467a] text-white shadow-md' : 'text-white/60 hover:text-white'
                       }`}
                     >
-                      <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                      <Sparkles className="h-3 w-3 text-amber-300" />
                       <span>Copilot</span>
                     </button>
                   </div>
@@ -1088,6 +1114,23 @@ export default function Room() {
                     </div>
                   )}
 
+                  {toolsSubTab === 'extras' && (
+                    <MovieNightExtras
+                      socket={socket}
+                      me={me}
+                      name={name}
+                      users={users}
+                      queue={queue}
+                      watchlist={watchlist}
+                      currentMedia={currentMedia}
+                      timer={timer}
+                      readyCheck={readyCheck}
+                      reviews={reviews}
+                      isHost={me === hostId}
+                      say={say}
+                    />
+                  )}
+
                   {toolsSubTab === 'intimacy' && (
                     <IntimacyMode
                       socket={socket}
@@ -1136,6 +1179,23 @@ export default function Room() {
             <div className="hidden lg:block space-y-3 mt-3">
               {/* Segmented Desktop Switcher */}
               <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDesktopTab('ott')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                    desktopTab === 'ott'
+                      ? 'bg-[#d9467a] text-white shadow-md'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Tv className="h-4 w-4 text-[#ff6fa0]" />
+                  <span>OTT Vault 🍿</span>
+                  {Object.keys(ottAccounts || {}).length > 0 && (
+                    <span className="text-[10px] bg-emerald-500 text-black font-extrabold px-1.5 py-0.5 rounded-full">
+                      {Object.keys(ottAccounts || {}).length}
+                    </span>
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={() => setDesktopTab('gestures')}
@@ -1203,6 +1263,18 @@ export default function Room() {
                   <span>AI Copilot ✨</span>
                 </button>
               </div>
+
+              {desktopTab === 'ott' && (
+                <div className="rise">
+                  <OttVault
+                    socket={socket}
+                    me={me}
+                    ottAccounts={ottAccounts}
+                    currentMedia={currentMedia}
+                    say={say}
+                  />
+                </div>
+              )}
 
               {desktopTab === 'gestures' && (
                 <div className="rise">
@@ -1438,7 +1510,27 @@ export default function Room() {
               {mobileTab === 'call' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-emerald-400" />}
             </button>
 
-            {/* 3. Love / Gestures Tab */}
+            {/* 3. OTT Vault Tab */}
+            <button
+              type="button"
+              onClick={() => setMobileTab('ott')}
+              className={`relative flex flex-col items-center justify-center h-full transition ${
+                mobileTab === 'ott' ? 'text-white' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <div className="relative">
+                <Tv className={`h-5 w-5 ${mobileTab === 'ott' ? 'text-[#ff6fa0]' : ''}`} />
+                {Object.keys(ottAccounts || {}).length > 0 && (
+                  <span className="absolute -top-1 -right-2.5 bg-emerald-500 text-black text-[9px] font-extrabold px-1 rounded-full">
+                    {Object.keys(ottAccounts || {}).length}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] mt-0.5 ${mobileTab === 'ott' ? 'font-bold text-white' : 'font-medium'}`}>OTT</span>
+              {mobileTab === 'ott' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
+            </button>
+
+            {/* 4. Love / Gestures Tab */}
             <button
               type="button"
               onClick={() => setMobileTab('gestures')}
@@ -1451,26 +1543,6 @@ export default function Room() {
               {mobileTab === 'gestures' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-[#ff6fa0]" />}
             </button>
 
-            {/* 4. Watch / Extras Tab */}
-            <button
-              type="button"
-              onClick={() => setMobileTab('extras')}
-              className={`relative flex flex-col items-center justify-center h-full transition ${
-                mobileTab === 'extras' ? 'text-white' : 'text-white/50 hover:text-white/80'
-              }`}
-            >
-              <div className="relative">
-                <Popcorn className={`h-5 w-5 ${mobileTab === 'extras' ? 'text-amber-300' : ''}`} />
-                {(queue.length > 0 || timer?.running || readyCheck?.active) && (
-                  <span className="absolute -top-1 -right-2 bg-amber-500 text-black text-[9px] font-extrabold px-1 rounded-full">
-                    {timer?.running ? '⏱' : readyCheck?.active ? '!' : queue.length}
-                  </span>
-                )}
-              </div>
-              <span className={`text-[10px] mt-0.5 ${mobileTab === 'extras' ? 'font-bold text-white' : 'font-medium'}`}>Watch</span>
-              {mobileTab === 'extras' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-amber-400" />}
-            </button>
-
             {/* 5. Tools / Room Settings Tab */}
             <button
               type="button"
@@ -1479,7 +1551,14 @@ export default function Room() {
                 mobileTab === 'tools' ? 'text-white' : 'text-white/50 hover:text-white/80'
               }`}
             >
-              <Sliders className={`h-5 w-5 ${mobileTab === 'tools' ? 'text-cyan-400' : ''}`} />
+              <div className="relative">
+                <Sliders className={`h-5 w-5 ${mobileTab === 'tools' ? 'text-cyan-400' : ''}`} />
+                {(queue.length > 0 || timer?.running || readyCheck?.active) && (
+                  <span className="absolute -top-1 -right-2 bg-amber-500 text-black text-[9px] font-extrabold px-1 rounded-full">
+                    {timer?.running ? '⏱' : readyCheck?.active ? '!' : queue.length}
+                  </span>
+                )}
+              </div>
               <span className={`text-[10px] mt-0.5 ${mobileTab === 'tools' ? 'font-bold text-white' : 'font-medium'}`}>Tools</span>
               {mobileTab === 'tools' && <span className="absolute bottom-1 w-5 h-0.5 rounded-full bg-cyan-400" />}
             </button>
