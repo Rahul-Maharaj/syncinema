@@ -405,26 +405,46 @@ function Dashboard({ hero, onLock }) {
                     {maxUsers} Members Max
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {[
-                    { count: 2, label: '2 Seats', sub: 'Couples / Date' },
-                    { count: 3, label: '3 Seats', sub: 'Trio / Friends' },
+                    { count: 2, label: '2 Seats', sub: 'Couples' },
+                    { count: 3, label: '3 Seats', sub: 'Trio' },
                     { count: 4, label: '4 Seats', sub: 'Double Date' },
+                    { count: 6, label: '6 Seats', sub: 'Friends' },
+                    { count: 8, label: '8 Seats', sub: 'Watch Party' },
+                    { count: 10, label: '10 Seats', sub: 'Squad' },
+                    { count: 15, label: '15 Seats', sub: 'Club Room' },
+                    { count: 30, label: '30 Seats', sub: 'Max Cinema' },
                   ].map((opt) => (
                     <button
                       key={opt.count}
                       type="button"
                       onClick={() => setMaxUsers(opt.count)}
-                      className={`rounded-2xl p-3 text-center border transition-all ${
+                      className={`rounded-xl p-2 sm:p-2.5 text-center border transition-all ${
                         maxUsers === opt.count
-                          ? 'bg-[#d9467a]/25 border-[#d9467a] text-white shadow-md'
+                          ? 'bg-[#d9467a]/30 border-[#d9467a] text-white shadow-md'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <span className="block text-xs sm:text-sm font-bold">{opt.label}</span>
-                      <span className="block text-[10px] sm:text-xs text-white/50 mt-0.5">{opt.sub}</span>
+                      <span className="block text-xs font-bold">{opt.label}</span>
+                      <span className="block text-[10px] text-white/50">{opt.sub}</span>
                     </button>
                   ))}
+                </div>
+                {/* Stepper slider for fine control up to 30 members */}
+                <div className="flex items-center gap-3 pt-1 px-1">
+                  <span className="text-[11px] text-white/60">Custom:</span>
+                  <input
+                    type="range"
+                    min="2"
+                    max="30"
+                    value={maxUsers}
+                    onChange={(e) => setMaxUsers(parseInt(e.target.value, 10))}
+                    className="w-full accent-[#d9467a] h-1.5 bg-white/10 rounded-lg cursor-pointer"
+                  />
+                  <span className="text-xs font-mono font-bold text-[#ff8fb3] min-w-8 text-right">
+                    {maxUsers}p
+                  </span>
                 </div>
               </div>
 

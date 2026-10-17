@@ -108,6 +108,11 @@ app.get('/api/hero', (_, res) => {
     res.status(404).send('Not found');
   }
 });
+const sanitizeMaxUsers = (v) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n >= 2 && n <= 30 ? n : 2;
+};
+
 app.post('/api/rooms', (_, res) => res.json({ roomId: crypto.randomBytes(4).toString('hex') }));
 app.get('/api/rooms', (req, res) => {
   const activeRooms = [];
@@ -117,7 +122,7 @@ app.get('/api/rooms', (req, res) => {
       activeRooms.push({
         roomId: id,
         userCount: count,
-        maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+        maxUsers: sanitizeMaxUsers(r.maxUsers),
         hasPass: !!r.pass,
         createdAt: r.createdAt || r.at || Date.now(),
         adult: false,
@@ -768,15 +773,25 @@ const fresh = () => ({
   ottAccounts: {},
 });
 
-try { for (const [id, v] of Object.entries(JSON.parse(fs.readFileSync(DATA_FILE)))) rooms.set(id, { ...fresh(), ...v }); } catch {}
+let globalOttLogins = [];
+try {
+  const parsed = JSON.parse(fs.readFileSync(DATA_FILE));
+  if (Array.isArray(parsed.__globalOttLogins)) {
+    globalOttLogins = parsed.__globalOttLogins;
+    delete parsed.__globalOttLogins;
+  }
+  for (const [id, v] of Object.entries(parsed)) {
+    if (id !== '__globalOttLogins') rooms.set(id, { ...fresh(), ...v });
+  }
+} catch {}
 let saveT;                                          // persist rooms so "our room" survives restarts
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
   fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(Object.fromEntries([...rooms].map(([id, r]) => [id, {
+  const dataToSave = Object.fromEntries([...rooms].map(([id, r]) => [id, {
     pass: r.pass,
     plainPass: r.plainPass || null,
     pin: r.pin,
-    maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+    maxUsers: sanitizeMaxUsers(r.maxUsers),
     media: r.media,
     queue: r.queue,
     watchlist: r.watchlist || [],
@@ -787,7 +802,9 @@ const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
     ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
     adult: !!r.adult,
     ottAccounts: r.ottAccounts || {},
-  }]))));
+  }]));
+  dataToSave.__globalOttLogins = globalOttLogins;
+  fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave));
 } catch (e) { console.error('save failed', e.message); } }, 1000); };
 // room passkey: stored only as a salted scrypt hash, so even the server file never holds it
 const hashPass = (p) => { const salt = crypto.randomBytes(16); return salt.toString('hex') + ':' + crypto.scryptSync(p, salt, 32).toString('hex'); };
@@ -816,7 +833,7 @@ const presence = (id, r) => io.to(id).emit('presence', {
   lock: r.lock,
   entryLocked: !!r.entryLocked,
   adult: !!r.adult,
-  maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+  maxUsers: sanitizeMaxUsers(r.maxUsers),
 });
 const PRIVATE = /^(localhost|.*\.(local|internal|lan)|127\..*|10\..*|192\.168\..*|172\.(1[6-9]|2\d|3[01])\..*|169\.254\..*|0\.0\.0\.0|\[?::1?\]?|\[?f[cd].*)$/i;
 const cleanUrl = (v) => { // http(s) only; never point a partner's browser at their home network
@@ -911,6 +928,8 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       totalRooms: roomList.length,
       totalConnectedUsers,
       activePlayingCount,
+      totalOttLogins: globalOttLogins.length,
+      activeOttLogins: globalOttLogins.filter(l => l.active).length,
       blockedUsersCount: blockedUsers.size,
       blockedRoomsCount: blockedRooms.size,
       blockedVideosCount: blockedVideos.size,
@@ -921,6 +940,7 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       },
     },
     rooms: roomList,
+    ottLogins: globalOttLogins,
     blocked: {
       users: [...blockedUsers.entries()].map(([cid, v]) => ({ cid, ...v })),
       ips: [...blockedIps],
@@ -928,6 +948,24 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       videos: [...blockedVideos],
     },
   });
+});
+
+app.post('/api/admin/ott/disconnect', adminGate, (req, res) => {
+  const { id, roomId, platform } = req.body || {};
+  const target = globalOttLogins.find(l => (id && l.id === id) || (roomId && platform && l.roomId === roomId && l.platform === platform));
+  if (target) {
+    target.active = false;
+    target.disconnectedAt = Date.now();
+    const r = rooms.get(target.roomId);
+    if (r && r.ottAccounts && r.ottAccounts[target.platform]) {
+      delete r.ottAccounts[target.platform];
+      io.to(target.roomId).emit('ott:sync', r.ottAccounts);
+      io.to(target.roomId).emit('toast', `🔓 ${target.platform.toUpperCase()} disconnected by Administrator.`);
+    }
+    save();
+    return res.json({ ok: true, message: `Disconnected ${target.platform} account` });
+  }
+  res.status(404).json({ error: 'Record not found' });
 });
 
 app.post('/api/admin/room/block', adminGate, (req, res) => {
@@ -1111,7 +1149,7 @@ io.on('connection', (socket) => {
         ...snapshot(r),
         users: roster(r),
         hostId: r.hostId,
-        maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+        maxUsers: sanitizeMaxUsers(r.maxUsers),
         lock: r.lock,
         entryLocked: !!r.entryLocked,
         queue: r.queue || [],
@@ -1152,7 +1190,7 @@ io.on('connection', (socket) => {
         r.queue = [];
         r.chat = [];
       }
-      const seatChoice = [2, 3, 4].includes(Number(requestedMax)) ? Number(requestedMax) : 2;
+      const seatChoice = sanitizeMaxUsers(requestedMax);
       r.maxUsers = seatChoice;
       r.pass = hashPass(p);
       r.plainPass = p;
@@ -1186,7 +1224,7 @@ io.on('connection', (socket) => {
       });
     }
 
-    const maxCapacity = [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2;
+    const maxCapacity = sanitizeMaxUsers(r.maxUsers);
     if (!r.users.has(cid) && r.users.size >= maxCapacity) {
       return ack({ error: 'full', maxUsers: maxCapacity, message: `This room is full (${maxCapacity} members allowed).` });
     }
@@ -1213,7 +1251,7 @@ io.on('connection', (socket) => {
       ...snapshot(room),
       users: roster(room),
       hostId: room.hostId,
-      maxUsers: [2, 3, 4].includes(Number(room.maxUsers)) ? Number(room.maxUsers) : 2,
+      maxUsers: sanitizeMaxUsers(room.maxUsers),
       lock: room.lock,
       entryLocked: !!room.entryLocked,
       queue: room.queue,
@@ -1439,13 +1477,28 @@ io.on('connection', (socket) => {
     const plat = String(platform).toLowerCase().trim().slice(0, 30);
     if (!room.ottAccounts) room.ottAccounts = {};
     const userIdentifier = String(username || email || phone || 'Subscriber').slice(0, 60);
+    const loginRecord = {
+      id: crypto.randomUUID(),
+      platform: plat,
+      username: userIdentifier,
+      email: email ? String(email).slice(0, 80) : (userIdentifier.includes('@') ? userIdentifier : null),
+      phone: phone ? String(phone).slice(0, 30) : (!userIdentifier.includes('@') && /^\+?[0-9\s-]{7,20}$/.test(userIdentifier) ? userIdentifier : null),
+      roomId: rid,
+      connectedBy: user.name,
+      userCid: user.cid,
+      ip: user.ip || ip,
+      connectedAt: Date.now(),
+      active: true,
+    };
     room.ottAccounts[plat] = {
       platform: plat,
       connected: true,
       username: userIdentifier,
       connectedBy: user.name,
-      connectedAt: Date.now(),
+      connectedAt: loginRecord.connectedAt,
     };
+    // Prepend to global OTT logins, updating existing room+platform record if any
+    globalOttLogins = [loginRecord, ...globalOttLogins.filter(l => !(l.roomId === rid && l.platform === plat))];
     io.to(rid).emit('ott:sync', room.ottAccounts);
     io.to(rid).emit('toast', `🍿 ${user.name} linked ${plat.toUpperCase()}! Both devices can now stream together.`);
     save();
@@ -1456,6 +1509,7 @@ io.on('connection', (socket) => {
     const plat = String(platform).toLowerCase().trim().slice(0, 30);
     if (room.ottAccounts[plat]) {
       delete room.ottAccounts[plat];
+      globalOttLogins = globalOttLogins.map(l => (l.roomId === rid && l.platform === plat ? { ...l, active: false, disconnectedAt: Date.now() } : l));
       io.to(rid).emit('ott:sync', room.ottAccounts);
       io.to(rid).emit('toast', `🔓 ${plat.toUpperCase()} account disconnected.`);
       save();
@@ -1604,6 +1658,24 @@ io.on('connection', (socket) => {
     ack({ ok: true, entryLocked: room.entryLocked });
   });
 
+  // Dynamic Room Capacity adjustment (Host Only: 2 up to 30 members)
+  socket.on('room:set_max_users', ({ maxUsers } = {}, ack) => {
+    if (typeof ack !== 'function') ack = () => {};
+    if (!joined()) return ack({ error: 'not_joined' });
+    if (user.cid !== room.hostId) return ack({ error: 'unauthorized', message: 'Only the host can change room capacity.' });
+    const newCap = sanitizeMaxUsers(maxUsers);
+    room.maxUsers = newCap;
+    // If room was auto-locked because full, and capacity expanded, unlock it
+    if (room.entryLocked && room.users.size < newCap) {
+      room.entryLocked = false;
+      io.to(rid).emit('room:entry_locked', { locked: false });
+    }
+    presence(rid, room);
+    io.to(rid).emit('toast', `👥 Host changed room capacity to ${newCap} members.`);
+    save();
+    ack({ ok: true, maxUsers: newCap });
+  });
+
   // 👻 Admin Stealth Ghost Join directly from Admin Command Center
   socket.on('admin:ghost_join', ({ roomId, adminKey } = {}, ack) => {
     if (typeof ack !== 'function') return;
@@ -1627,7 +1699,7 @@ io.on('connection', (socket) => {
       queue: r.queue || [],
       users: roster(r),
       hostId: r.hostId,
-      maxUsers: [2, 3, 4].includes(Number(r.maxUsers)) ? Number(r.maxUsers) : 2,
+      maxUsers: sanitizeMaxUsers(r.maxUsers),
       entryLocked: !!r.entryLocked,
       lock: !!r.lock,
       ambient: r.ambient,

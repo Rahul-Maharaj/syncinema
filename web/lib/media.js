@@ -192,11 +192,13 @@ export const getCloudMirrorSources = (query) => {
   if (!query) return [];
   const clean = encodeURIComponent(query.trim());
   return [
-    { name: 'Server 1 (VidSrc Fast)', url: toProxyUrl(`https://vidsrc.to/embed/movie/${clean}`) },
-    { name: 'Server 2 (EmbedSU HD)', url: toProxyUrl(`https://embed.su/embed/movie/${clean}`) },
-    { name: 'Server 3 (2Embed Cloud)', url: toProxyUrl(`https://www.2embed.cc/embed/${clean}`) },
-    { name: 'Server 4 (AutoEmbed VIP)', url: toProxyUrl(`https://autoembed.cc/embed/player.php?id=${clean}`) },
-    { name: 'Server 5 (SmashyStream)', url: toProxyUrl(`https://player.smashy.stream/movie/${clean}`) },
+    { name: 'Server 1 (VidSrc 1080p HD)', quality: '1080p Ultra', tag: 'Fast', url: toProxyUrl(`https://vidsrc.cc/v2/embed/movie/${clean}`) },
+    { name: 'Server 2 (EmbedSU Multi-Audio HD)', quality: '1080p HD', tag: 'Dual Audio', url: toProxyUrl(`https://embed.su/embed/movie/${clean}`) },
+    { name: 'Server 3 (AutoEmbed VIP 1080p)', quality: '1080p HD', tag: 'VIP', url: toProxyUrl(`https://autoembed.cc/embed/player.php?id=${clean}`) },
+    { name: 'Server 4 (VidSrc Cloud HD)', quality: '1080p HD', tag: 'Stable', url: toProxyUrl(`https://vidsrc.to/embed/movie/${clean}`) },
+    { name: 'Server 5 (2Embed Crystal 1080p)', quality: '1080p HD', tag: 'HQ', url: toProxyUrl(`https://www.2embed.cc/embed/${clean}`) },
+    { name: 'Server 6 (MoviesAPI Full HD)', quality: '1080p', tag: 'Mirror', url: toProxyUrl(`https://moviesapi.club/movie/${clean}`) },
+    { name: 'Server 7 (SmashyStream HD)', quality: 'HD', tag: 'Backup', url: toProxyUrl(`https://player.smashy.stream/movie/${clean}`) },
   ];
 };
 

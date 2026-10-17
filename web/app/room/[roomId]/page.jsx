@@ -71,6 +71,7 @@ export default function Room() {
   const [err, setErr] = useState(''), [lock, setLock] = useState(false), [needPass, setNeedPass] = useState(null), [passDraft, setPassDraft] = useState('');
   const [entryLocked, setEntryLocked] = useState(false), [isGhost, setIsGhost] = useState(false);
   const [showPassModal, setShowPassModal] = useState(false), [newPassDraft, setNewPassDraft] = useState(''), [passVisible, setPassVisible] = useState(false);
+  const [showCapacityModal, setShowCapacityModal] = useState(false), [capacityDraft, setCapacityDraft] = useState(2);
   const [online, setOnline] = useState(true), [copied, setCopied] = useState(false);
   const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
@@ -444,37 +445,62 @@ export default function Room() {
       )}
 
       {/* Responsive Top Header */}
-      <header className="hdr mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="ghost !p-1.5 sm:!p-2 flex items-center" aria-label="Back to home" title="Back to home">
+      {/* Modern Unified Cinema Navbar */}
+      <header className="hdr mb-3 flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 rounded-2xl bg-black/70 border border-white/10 backdrop-blur-xl shadow-xl">
+        {/* Left: Brand + Status + Dynamic Capacity Pill */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href="/" className="ghost !p-1.5 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
             <img src="/logo.png" alt="SyncCinema Logo" className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
           </Link>
-          <div className="flex items-center gap-2">
-            <h1 className="font-display text-base sm:text-xl font-semibold">SyncCinema</h1>
-            <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs ${online ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' : 'bg-rose-500/15 text-rose-500'}`}>
-              <i className={`h-1.5 w-1.5 rounded-full ${online ? 'bg-emerald-400' : 'bg-rose-500'}`} />{online ? 'Live' : 'Reconnecting'}
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <h1 className="font-display text-sm sm:text-base font-bold text-white tracking-wide truncate hidden xs:inline sm:inline">SyncCinema</h1>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold border ${
+              online ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+            }`}>
+              <i className={`h-1.5 w-1.5 rounded-full ${online ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+              <span className="hidden sm:inline">{online ? 'Live' : 'Reconnecting'}</span>
             </span>
-            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] sm:text-xs bg-white/5 border border-white/10 text-white/80" title={`Room capacity: ${users.length} of ${maxSeats} members`}>
+
+            {/* Interactive Room Capacity Pill (Clickable for Host) */}
+            <button
+              type="button"
+              onClick={() => {
+                if (me === hostId) {
+                  setCapacityDraft(maxSeats);
+                  setShowCapacityModal(true);
+                } else {
+                  say(`Room Capacity: ${users.length} of ${maxSeats} members (Host can increase up to 30)`);
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold border transition ${
+                me === hostId
+                  ? 'bg-white/10 hover:bg-[#d9467a]/25 border-white/15 hover:border-[#ff6fa0]/40 text-white cursor-pointer active:scale-95'
+                  : 'bg-white/5 border-white/10 text-white/80 cursor-default'
+              }`}
+              title={me === hostId ? `Capacity: ${users.length}/${maxSeats} members. Click to change (2 to 30 seats)` : `Capacity: ${users.length}/${maxSeats} members`}
+            >
               <Users className="h-3 w-3 text-[#ff8fb3]" />
               <span>{users.length}/{maxSeats}</span>
-            </span>
+              {me === hostId && <span className="text-[10px] text-white/60">⚙️</span>}
+            </button>
+
             {entryLocked && (
-              <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold" title="Host locked this room from new entries">
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/20 border border-amber-500/40 text-amber-300 font-semibold" title="Host locked this room from new entries">
                 <Lock className="h-3 w-3" />
-                <span className="hidden sm:inline">Locked</span>
+                <span className="hidden md:inline">Locked</span>
               </span>
             )}
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right: Consolidated Action Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Active Snack Timer Indicator */}
           {timer?.running && (
             <button
               type="button"
               onClick={() => { setMobileTab('tools'); setToolsSubTab('extras'); setDesktopTab('extras'); }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono hover:bg-emerald-500/30"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono hover:bg-emerald-500/30 shrink-0"
               title="Synchronized snack break in progress"
             >
               <Timer className="h-3 w-3" />
@@ -482,310 +508,274 @@ export default function Room() {
             </button>
           )}
 
-          {/* Active Ready Check Indicator */}
-          {readyCheck?.active && (
-            <button
-              type="button"
-              onClick={() => { setMobileTab('tools'); setToolsSubTab('extras'); setDesktopTab('extras'); }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#d9467a]/25 border border-[#d9467a]/50 text-[#ff8fb3] text-xs font-semibold hover:bg-[#d9467a]/40"
-              title="Ready to watch check-in active"
-            >
-              <Popcorn className="h-3 w-3" />
-              <span className="hidden sm:inline">Ready Check</span>
-            </button>
-          )}
-
-          {/* Quick 1-Tap Camera Off/On Toggle (Physical hardware sensor release) */}
-
+          {/* Quick AV Cluster: Uniform h-8 Cam & Mic Toggles */}
           {!isGhost && (
-            <button
-              type="button"
-              onClick={() => callControlsRef.current?.toggleCam?.()}
-              className={`ghost !px-2.5 !py-1.5 flex items-center gap-1.5 text-xs font-medium transition border ${
-                callCam
-                  ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20'
-                  : 'border-rose-500/40 text-rose-300 bg-rose-500/10 hover:bg-rose-500/20'
-              }`}
-              title={callCam ? 'Turn Camera OFF (Hardware sensor stops completely)' : 'Turn Camera ON'}
-            >
-              {callCam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-              <span>{callCam ? 'Cam On' : 'Cam Off'}</span>
-            </button>
+            <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-0.5 rounded-xl">
+              <button
+                type="button"
+                onClick={() => callControlsRef.current?.toggleCam?.()}
+                className={`h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
+                  callCam
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                }`}
+                title={callCam ? 'Camera is ON (Click to turn OFF)' : 'Camera is OFF (Click to turn ON)'}
+              >
+                {callCam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
+                <span className="hidden sm:inline">{callCam ? 'Cam On' : 'Cam Off'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => callControlsRef.current?.toggleMic?.()}
+                className={`h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition ${
+                  callMic
+                    ? 'text-white/80 hover:text-white hover:bg-white/10'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                }`}
+                title={callMic ? 'Mic Live (Click to Mute)' : 'Mic Muted (Click to Unmute)'}
+              >
+                {callMic ? <Mic className="h-3.5 w-3.5 text-emerald-400" /> : <MicOff className="h-3.5 w-3.5 text-amber-400" />}
+                <span className="hidden sm:inline">{callMic ? 'Mic' : 'Muted'}</span>
+              </button>
+            </div>
           )}
 
-          {/* Quick Mic Mute Toggle */}
-          {!isGhost && (
-            <button
-              type="button"
-              onClick={() => callControlsRef.current?.toggleMic?.()}
-              className={`ghost !px-2 !py-1.5 flex items-center gap-1 text-xs font-medium transition border ${
-                callMic
-                  ? 'border-white/15 text-white/80 hover:text-white'
-                  : 'border-amber-500/40 text-amber-300 bg-amber-500/10'
-              }`}
-              title={callMic ? 'Mute Microphone' : 'Unmute Microphone'}
-            >
-              {callMic ? <Mic className="h-3.5 w-3.5 text-white/70" /> : <MicOff className="h-3.5 w-3.5 text-amber-400" />}
-            </button>
-          )}
-
-          {/* Prominent Video Call Hide/Show Button (Desktop Only) */}
+          {/* Video Call Window Visibility (Desktop Only) */}
           {!isGhost && (
             <button
               type="button"
               onClick={() => setShowCall(!showCall)}
-              className={`hidden lg:flex ghost !px-2.5 !py-1.5 items-center gap-1.5 text-xs font-medium transition ${
+              className={`hidden lg:flex h-8 px-2.5 rounded-xl text-xs font-medium items-center gap-1.5 border transition ${
                 showCall
-                  ? 'text-emerald-500 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-                  : 'text-white/60 hover:text-white border-white/10'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
+                  : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
               }`}
-              title={showCall ? 'Hide video call window' : 'Show video call'}
+              title={showCall ? 'Hide video call window' : 'Show video call window'}
             >
               {showCall ? <Eye className="h-3.5 w-3.5 text-emerald-400" /> : <EyeOff className="h-3.5 w-3.5 text-rose-400" />}
               <span>{showCall ? 'Call Active' : 'Call Hidden'}</span>
             </button>
           )}
 
-          {/* Quick Handoff Button (Desktop Only) */}
+          {/* Primary Quick Invite Button */}
           <button
-            type="button"
-            onClick={() => setShowHandoff(true)}
-            className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-white/10 hover:border-[#ff6fa0]/40 transition"
-            title="Scan QR Code to open on mobile phone or view history"
+            onClick={copy}
+            className="btn h-8 !py-0 !px-3 text-xs font-semibold rounded-xl flex items-center gap-1.5 bg-gradient-to-r from-[#e11d48] to-[#db2777] shadow-md hover:opacity-95 shrink-0"
+            title="Copy room invite link"
           >
-            <QrCode className="h-3.5 w-3.5 text-[#ff6fa0]" />
-            <span>Handoff</span>
-          </button>
-
-          {/* Quick Recent Bar Button (Desktop Only) */}
-          <button
-            type="button"
-            onClick={() => {
-              setDesktopTab('recent');
-              setMobileTab('recent');
-              say('Opened Recent Plays Bar 🕒');
-            }}
-            className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-white/10 hover:border-cyan-400/40 text-cyan-300 transition"
-            title="Open Recent Plays Bar"
-          >
-            <History className="h-3.5 w-3.5 text-cyan-400" />
-            <span>Recent</span>
-          </button>
-
-          {/* Room Password Button (Desktop Only) */}
-          <button
-            type="button"
-            onClick={() => {
-              const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
-              setNewPassDraft(current);
-              setShowPassModal(true);
-            }}
-            className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-white/10 hover:border-amber-400/40 text-amber-300 transition"
-            title="View or change room password"
-          >
-            <Lock className="h-3.5 w-3.5 text-amber-400" />
-            <span>Password</span>
-          </button>
-
-          {/* Host Lock / Unlock Room Control (Desktop Only) */}
-          {me === hostId && (
-            <button
-              type="button"
-              onClick={() => {
-                socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
-                  if (res?.ok) setEntryLocked(res.entryLocked);
-                });
-              }}
-              className={`hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border transition ${
-                entryLocked
-                  ? 'border-amber-500/50 text-amber-300 bg-amber-500/15 hover:bg-amber-500/25'
-                  : 'border-white/10 hover:border-amber-400/40 text-white/70 hover:text-white'
-              }`}
-              title={entryLocked ? 'Room is locked! No new members can enter. Click to unlock.' : 'Lock room so no one else can enter.'}
-            >
-              {entryLocked ? <Lock className="h-3.5 w-3.5 text-amber-400" /> : <Unlock className="h-3.5 w-3.5" />}
-              <span>{entryLocked ? 'Locked' : 'Lock Room'}</span>
-            </button>
-          )}
-
-          {/* Quick Invite Button */}
-          <button onClick={copy} className="btn !py-1.5 !px-2.5 sm:!px-3 text-xs" title="Copy the invite link">
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             <span className="hidden sm:inline">{copied ? 'Copied' : 'Invite'}</span>
           </button>
 
-          {/* Host Close Room Button (Desktop Only) */}
-          {me === hostId && (
+          {/* Unified Room Controls Popover Menu */}
+          <div className="relative">
             <button
               type="button"
-              onClick={() => {
-                if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
-                  socket.emit('room:close', {}, (res) => {
-                    if (res?.ok) {
-                      say('Room closed 🚪');
-                      try {
-                        sessionStorage.removeItem('rp_' + roomId);
-                        localStorage.removeItem('rp_' + roomId);
-                      } catch {}
-                      router.push('/');
-                    } else {
-                      say(res?.message || 'Failed to close room');
-                    }
-                  });
-                }
-              }}
-              className="hidden lg:flex ghost !py-1.5 !px-2.5 text-xs items-center gap-1.5 border-rose-500/30 hover:border-rose-500/60 text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 transition"
-              title="Close room and disconnect all members"
+              onClick={() => setShowMenu(!showMenu)}
+              className={`h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition cursor-pointer ${
+                showMenu
+                  ? 'bg-[#d9467a] text-white border-[#ff6fa0] shadow-md'
+                  : 'bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white'
+              }`}
+              title="Room Controls &amp; Settings"
             >
-              <DoorClosed className="h-3.5 w-3.5 text-rose-400" />
-              <span>Close Room</span>
+              <Sliders className="h-3.5 w-3.5 text-[#ff8fb3]" />
+              <span className="hidden sm:inline">Controls</span>
             </button>
-          )}
 
-          {/* Desktop Toolbar Icons (Hidden on Mobile) */}
-          <div className="hidden lg:flex items-center gap-2">
-            {me === hostId && <Tool onClick={() => socket.emit('lock', !lock)} title={lock ? 'Only you control playback' : 'Everyone controls playback'} icon={lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />} label={lock ? 'Host controls' : 'Everyone controls'} />}
-            <Tool onClick={() => socket.emit('nudge')} title="Send hearts to your partner" icon={<Heart className="h-4 w-4 text-[#d9467a]" />} label="Miss you" />
-            <Tool onClick={toggleCinema} title="Cinema mode: dim lights" icon={<Film className="h-4 w-4" />} label="Cinema" />
-            <Tool onClick={cycleSleep} title="Sleep timer" icon={<Moon className="h-4 w-4" />} label={sleep ? `${sleep}m` : 'Sleep'} />
-            <Tool onClick={toggleHide} title={hidden ? 'Show screen' : 'Hide screen (blur)'} icon={hidden ? <EyeOff className="h-4 w-4 text-[#d9467a]" /> : <Eye className="h-4 w-4" />} label={hidden ? 'Hidden' : 'Hide'} />
-            <InstallPrompt />
-            <ThemeToggle />
+            {/* Dropdown Menu (Uniform across Desktop and Mobile) */}
+            {showMenu && (
+              <div className="absolute right-0 top-10 z-50 w-72 sm:w-80 rounded-2xl bg-black/95 border border-white/20 p-3.5 space-y-3 shadow-2xl backdrop-blur-2xl rise">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white tracking-wide uppercase">
+                    <Sliders className="h-3.5 w-3.5 text-[#ff6fa0]" />
+                    <span>Room Controls</span>
+                  </div>
+                  <button onClick={() => setShowMenu(false)} className="text-white/60 hover:text-white p-1">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {/* Host: Capacity Manager */}
+                  {me === hostId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCapacityDraft(maxSeats);
+                        setShowCapacityModal(true);
+                        setShowMenu(false);
+                      }}
+                      className="ghost !justify-start !py-2.5 !px-3 text-white/90 hover:text-white border border-white/10 hover:border-[#ff6fa0]/40"
+                    >
+                      <Users className="h-4 w-4 text-[#ff8fb3]" />
+                      <span>Capacity ({maxSeats}p)</span>
+                    </button>
+                  )}
+
+                  {/* Room Password */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
+                      setNewPassDraft(current);
+                      setShowPassModal(true);
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 text-amber-300 border border-white/10 hover:border-amber-400/40"
+                  >
+                    <Lock className="h-4 w-4 text-amber-400" />
+                    <span>Password</span>
+                  </button>
+
+                  {/* Host: Lock Room Entry */}
+                  {me === hostId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
+                          if (res?.ok) setEntryLocked(res.entryLocked);
+                        });
+                        setShowMenu(false);
+                      }}
+                      className={`ghost !justify-start !py-2.5 !px-3 border ${
+                        entryLocked ? 'text-amber-300 border-amber-500/50 bg-amber-500/15' : 'text-white/80 border-white/10 hover:border-amber-400/40'
+                      }`}
+                    >
+                      {entryLocked ? <Lock className="h-4 w-4 text-amber-400" /> : <Unlock className="h-4 w-4" />}
+                      <span>{entryLocked ? 'Unlock Entry' : 'Lock Entry'}</span>
+                    </button>
+                  )}
+
+                  {/* Host: Control Mode */}
+                  {me === hostId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        socket.emit('lock', !lock);
+                        setShowMenu(false);
+                      }}
+                      className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
+                    >
+                      {lock ? <Lock className="h-4 w-4 text-emerald-400" /> : <Unlock className="h-4 w-4" />}
+                      <span>{lock ? 'Host Control' : 'Everyone'}</span>
+                    </button>
+                  )}
+
+                  {/* Mobile Handoff */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowHandoff(true);
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 hover:border-[#ff6fa0]/40 text-[#ff6fa0]"
+                  >
+                    <Smartphone className="h-4 w-4" />
+                    <span>QR Handoff</span>
+                  </button>
+
+                  {/* Recent Bar */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDesktopTab('recent');
+                      setMobileTab('recent');
+                      say('Opened Recent Plays Bar 🕒');
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 text-cyan-300 border border-white/10 hover:border-cyan-400/40"
+                  >
+                    <History className="h-4 w-4 text-cyan-400" />
+                    <span>Recent Plays</span>
+                  </button>
+
+                  {/* Cinema Mode */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleCinema();
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 hover:border-amber-400/40"
+                  >
+                    <Film className="h-4 w-4 text-amber-400" />
+                    <span>Cinema Mode</span>
+                  </button>
+
+                  {/* Sleep Timer */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cycleSleep();
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
+                  >
+                    <Moon className="h-4 w-4 text-indigo-400" />
+                    <span>{sleep ? `Sleep: ${sleep}m` : 'Sleep Timer'}</span>
+                  </button>
+
+                  {/* Hide Screen */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleHide();
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10"
+                  >
+                    {hidden ? <EyeOff className="h-4 w-4 text-[#d9467a]" /> : <Eye className="h-4 w-4" />}
+                    <span>{hidden ? 'Show Screen' : 'Hide Screen'}</span>
+                  </button>
+
+                  {/* Miss you Hearts */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      socket.emit('nudge');
+                      setShowMenu(false);
+                    }}
+                    className="ghost !justify-start !py-2.5 !px-3 border border-white/10 text-rose-300"
+                  >
+                    <Heart className="h-4 w-4 text-[#d9467a]" />
+                    <span>Miss You 💕</span>
+                  </button>
+                </div>
+
+                {/* Host: Close Room */}
+                {me === hostId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
+                        socket.emit('room:close', {}, (res) => {
+                          if (res?.ok) {
+                            say('Room closed 🚪');
+                            try {
+                              sessionStorage.removeItem('rp_' + roomId);
+                              localStorage.removeItem('rp_' + roomId);
+                            } catch {}
+                            router.push('/');
+                          } else {
+                            say(res?.message || 'Failed to close room');
+                          }
+                        });
+                      }
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 transition cursor-pointer"
+                  >
+                    <DoorClosed className="h-4 w-4 text-rose-400" />
+                    <span>Close Room (Permanent)</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Mobile Options Button (Triggers Mobile Sheet) */}
-          <button
-            type="button"
-            onClick={() => setShowMenu(!showMenu)}
-            aria-label="More options"
-            className="lg:hidden ghost !p-2"
-            title="More options"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
         </div>
       </header>
-
-      {/* Mobile Options Slide-down / Dropdown */}
-      {showMenu && (
-        <div className="lg:hidden card mb-3 p-3.5 space-y-3 !bg-black border border-white/20">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Room Options</span>
-            <button onClick={() => setShowMenu(false)} className="opacity-60 hover:opacity-100 p-1"><X className="h-4 w-4" /></button>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              onClick={() => { setShowHandoff(true); setShowMenu(false); }}
-              className="ghost !justify-start !py-2.5 !px-3"
-            >
-              <Smartphone className="h-4 w-4 text-[#ff6fa0]" />
-              <span>Mobile Handoff</span>
-            </button>
-            <button
-              onClick={() => { setMobileTab('recent'); setShowMenu(false); }}
-              className="ghost !justify-start !py-2.5 !px-3 text-cyan-300"
-            >
-              <History className="h-4 w-4 text-cyan-400" />
-              <span>Recent Bar</span>
-            </button>
-            <button
-              onClick={() => {
-                const current = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
-                setNewPassDraft(current);
-                setShowPassModal(true);
-                setShowMenu(false);
-              }}
-              className="ghost !justify-start !py-2.5 !px-3 text-amber-300"
-            >
-              <Lock className="h-4 w-4 text-amber-400" />
-              <span>Room Password</span>
-            </button>
-            {me === hostId && (
-              <button
-                onClick={() => {
-                  socket.emit('room:toggle_entry_lock', { locked: !entryLocked }, (res) => {
-                    if (res?.ok) setEntryLocked(res.entryLocked);
-                  });
-                  setShowMenu(false);
-                }}
-                className={`ghost !justify-start !py-2.5 !px-3 ${entryLocked ? 'text-amber-300 bg-amber-500/15 border border-amber-500/40' : 'text-white/80'}`}
-              >
-                {entryLocked ? <Lock className="h-4 w-4 text-amber-400" /> : <Unlock className="h-4 w-4" />}
-                <span>{entryLocked ? 'Unlock Room' : 'Lock Room'}</span>
-              </button>
-            )}
-            {me === hostId && (
-              <button
-                onClick={() => {
-                  setShowMenu(false);
-                  if (confirm('Are you sure you want to CLOSE this room? All members will be disconnected and this room will be permanently closed.')) {
-                    socket.emit('room:close', {}, (res) => {
-                      if (res?.ok) {
-                        say('Room closed 🚪');
-                        try {
-                          sessionStorage.removeItem('rp_' + roomId);
-                          localStorage.removeItem('rp_' + roomId);
-                        } catch {}
-                        router.push('/');
-                      } else {
-                        say(res?.message || 'Failed to close room');
-                      }
-                    });
-                  }
-                }}
-                className="ghost !justify-start !py-2.5 !px-3 text-rose-400 bg-rose-500/10 border border-rose-500/30"
-              >
-                <DoorClosed className="h-4 w-4 text-rose-400" />
-                <span>Close Room</span>
-              </button>
-            )}
-            <button
-              onClick={() => { socket.emit('nudge'); setShowMenu(false); }}
-              className="ghost !justify-start !py-2.5 !px-3"
-            >
-              <Heart className="h-4 w-4 text-[#ff6fa0]" />
-              <span>Miss You (Nudge)</span>
-            </button>
-            <button
-              onClick={() => { toggleCinema(); setShowMenu(false); }}
-              className="ghost !justify-start !py-2.5 !px-3"
-            >
-              <Film className="h-4 w-4 text-amber-400" />
-              <span>Cinema Mode</span>
-            </button>
-            <button
-              onClick={() => { cycleSleep(); setShowMenu(false); }}
-              className="ghost !justify-start !py-2.5 !px-3"
-            >
-              <Moon className="h-4 w-4 text-indigo-400" />
-              <span>{sleep ? `Sleep: ${sleep}m` : 'Sleep Timer'}</span>
-            </button>
-            <button
-              onClick={() => { toggleHide(); setShowMenu(false); }}
-              className="ghost !justify-start !py-2.5 !px-3"
-            >
-              {hidden ? <EyeOff className="h-4 w-4 text-[#d9467a]" /> : <Eye className="h-4 w-4" />}
-              <span>{hidden ? 'Show Screen' : 'Hide Screen'}</span>
-            </button>
-            {me === hostId && (
-              <button
-                onClick={() => { socket.emit('lock', !lock); setShowMenu(false); }}
-                className="ghost !justify-start !py-2.5 !px-3"
-              >
-                {lock ? <Lock className="h-4 w-4 text-emerald-400" /> : <Unlock className="h-4 w-4" />}
-                <span>{lock ? 'Host Locked' : 'Unlock Controls'}</span>
-              </button>
-            )}
-            <div className="ghost !justify-start !py-2 !px-3">
-              <ThemeToggle />
-              <span className="ml-1">Theme</span>
-            </div>
-          </div>
-          <div className="pt-1">
-            <InstallPrompt className="w-full justify-center !py-2" />
-          </div>
-        </div>
-      )}
 
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
@@ -793,16 +783,25 @@ export default function Room() {
         <div className="w-full max-w-2xl sm:max-w-3xl lg:max-w-none mx-auto grid gap-3 sm:gap-4 lg:grid-cols-[1fr_340px]">
           {/* Main Content Area */}
           <section className="panel flex flex-col w-full mx-auto">
-            {users.length < 2 && (
-              <div className="card mb-3 flex items-center justify-between gap-3 p-3 sm:p-4 border border-white/10 !bg-black w-full mx-auto">
+            {users.length < maxSeats && (
+              <div className="card mb-3 flex items-center justify-between gap-3 p-3.5 sm:p-4 border border-white/10 !bg-black/80 rounded-2xl w-full mx-auto shadow-md backdrop-blur-xl">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/5"><img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain" /></div>
+                  <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/5 border border-white/10">
+                    <img src="/logo.png" alt="SyncCinema" className="h-6 w-6 object-contain" />
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm sm:text-base font-medium">Waiting for your partner…</p>
-                    <p className="text-xs sm:text-sm opacity-65 truncate">Send them the invite link to join.</p>
+                    <p className="text-sm sm:text-base font-semibold text-white">
+                      {users.length === 1 ? 'Waiting for members to join…' : `Watch Party Active (${users.length} of ${maxSeats} joined)`}
+                    </p>
+                    <p className="text-xs sm:text-sm opacity-65 truncate">
+                      Share the invite link so your friends or partner can stream together.
+                    </p>
                   </div>
                 </div>
-                <button onClick={copy} className="btn shrink-0 !py-1.5 !px-3 text-xs"><Copy className="h-3.5 w-3.5" />Copy link</button>
+                <button onClick={copy} className="btn shrink-0 !py-1.5 !px-3 text-xs flex items-center gap-1.5">
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copied ? 'Copied' : 'Invite'}</span>
+                </button>
               </div>
             )}
 
@@ -1368,6 +1367,103 @@ export default function Room() {
         onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
         say={say}
       />
+
+      {/* Host Room Capacity Modal */}
+      {showCapacityModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4">
+          <div className="card w-full max-w-md p-6 space-y-4 border border-white/15 !bg-black rounded-2xl shadow-2xl rise">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="font-display font-bold text-base text-white flex items-center gap-2">
+                <Users className="h-5 w-5 text-[#ff8fb3]" />
+                <span>Room Capacity Settings</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCapacityModal(false)}
+                className="text-white/60 hover:text-white p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-white/70">
+              Select maximum members allowed in this room (Host can expand anytime up to 30 members).
+            </p>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {[
+                { count: 2, label: '2 Seats', sub: 'Couples' },
+                { count: 3, label: '3 Seats', sub: 'Trio' },
+                { count: 4, label: '4 Seats', sub: 'Double Date' },
+                { count: 6, label: '6 Seats', sub: 'Friends' },
+                { count: 8, label: '8 Seats', sub: 'Party' },
+                { count: 10, label: '10 Seats', sub: 'Squad' },
+                { count: 15, label: '15 Seats', sub: 'Club' },
+                { count: 20, label: '20 Seats', sub: 'Mega' },
+                { count: 25, label: '25 Seats', sub: 'Ultra' },
+                { count: 30, label: '30 Seats', sub: 'Max 30' },
+              ].map((opt) => (
+                <button
+                  key={opt.count}
+                  type="button"
+                  onClick={() => setCapacityDraft(opt.count)}
+                  className={`rounded-xl p-2 text-center border transition-all ${
+                    capacityDraft === opt.count
+                      ? 'bg-[#d9467a] border-[#ff6fa0] text-white shadow-lg font-bold'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <span className="block text-xs font-bold">{opt.label}</span>
+                  <span className="block text-[10px] text-white/50">{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Stepper / Slider */}
+            <div className="space-y-1.5 pt-2">
+              <div className="flex justify-between text-xs text-white/70">
+                <span>Custom Member Limit:</span>
+                <span className="font-bold font-mono text-[#ff8fb3]">{capacityDraft} Members</span>
+              </div>
+              <input
+                type="range"
+                min="2"
+                max="30"
+                value={capacityDraft}
+                onChange={(e) => setCapacityDraft(parseInt(e.target.value, 10))}
+                className="w-full accent-[#d9467a] h-2 bg-white/10 rounded-lg cursor-pointer"
+              />
+            </div>
+
+            <div className="pt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  socket.emit('room:set_max_users', { maxUsers: capacityDraft }, (res) => {
+                    if (res?.ok) {
+                      setMaxSeats(res.maxUsers);
+                      say(`👥 Room capacity updated to ${res.maxUsers} members!`);
+                      setShowCapacityModal(false);
+                    } else {
+                      say(res?.message || 'Failed to update capacity');
+                    }
+                  });
+                }}
+                className="btn flex-1 !py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-[#e11d48] to-[#db2777]"
+              >
+                Apply Capacity ({capacityDraft} Members)
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCapacityModal(false)}
+                className="ghost !py-2.5 px-4 text-xs rounded-xl border border-white/10"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Room Password Modal */}
       {showPassModal && (

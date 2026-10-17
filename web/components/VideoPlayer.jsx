@@ -1528,37 +1528,47 @@ export default function VideoPlayer({
         )}
       </div>
 
-      {/* Dynamic Stream Server Switcher (Multi-mirror fast fallback) */}
+      {/* Dynamic Stream Server Switcher (Multi-mirror fast fallback & 1080p HD Selector) */}
       {media?.mirrorSources && media.mirrorSources.length > 1 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto py-1.5 px-3 bg-black/90 border border-white/10 rounded-xl my-2 text-xs">
-          <span className="text-[10px] text-white/50 shrink-0 font-semibold flex items-center gap-1">
-            🔄 Server:
-          </span>
-          {media.mirrorSources.map((srv, idx) => {
-            const isActive = media.src === srv.url || media.currentServerIndex === idx;
-            return (
-              <button
-                key={srv.name}
-                type="button"
-                onClick={() => {
-                  socket?.emit('media:set', {
-                    media: {
-                      ...media,
-                      src: srv.url,
-                      currentServerIndex: idx,
-                    },
-                  });
-                }}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition shrink-0 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#d9467a] text-white shadow-md font-bold'
-                    : 'bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
-                }`}
-              >
-                {srv.name.replace('Server ', 'S')}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2 overflow-x-auto py-2 px-3 bg-black/90 border border-white/10 rounded-2xl my-2 text-xs backdrop-blur-xl">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-extrabold text-[10px] tracking-wider uppercase flex items-center gap-1">
+              <span>💎</span>
+              <span>1080p HD</span>
+            </span>
+            <span className="text-[10px] text-white/50 font-semibold hidden sm:inline">
+              Mirror:
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+            {media.mirrorSources.map((srv, idx) => {
+              const isActive = media.src === srv.url || media.currentServerIndex === idx;
+              return (
+                <button
+                  key={srv.name}
+                  type="button"
+                  onClick={() => {
+                    socket?.emit('media:set', {
+                      media: {
+                        ...media,
+                        src: srv.url,
+                        currentServerIndex: idx,
+                      },
+                    });
+                  }}
+                  className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 cursor-pointer flex items-center gap-1 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-[#d9467a] to-[#ff6fa0] text-white shadow-md font-bold border border-[#ff6fa0]/50'
+                      : 'bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
+                  }`}
+                  title={`${srv.name} (${srv.quality || '1080p'})`}
+                >
+                  <span>{srv.tag || `S${idx + 1}`}</span>
+                  <span className="opacity-90">{srv.quality || '1080p'}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
