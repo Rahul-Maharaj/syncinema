@@ -19,7 +19,7 @@ function createBlankVideoTrack() {
       ctx.fillStyle = '#050505';
       ctx.fillRect(0, 0, 320, 240);
     }
-    const stream = canvas.captureStream ? canvas.captureStream(5) : null;
+    const stream = canvas.captureStream ? canvas.captureStream(5) : (canvas.webkitCaptureStream ? canvas.webkitCaptureStream(5) : null);
     return stream ? stream.getVideoTracks()[0] : null;
   } catch (err) {
     console.warn('Could not create dummy blank track:', err);
@@ -30,9 +30,9 @@ function createBlankVideoTrack() {
 // Lightweight Voice Activity Detection (VAD) hook using Web Audio Analyser
 function useStreamVoiceActivity(stream, onTalkChange) {
   useEffect(() => {
-    if (!stream) return;
-    const audioTracks = stream.getAudioTracks();
-    if (!audioTracks || audioTracks.length === 0) return;
+    if (!stream || typeof stream.getAudioTracks !== 'function') return;
+    const audioTracks = (stream.getAudioTracks() || []).filter(t => t && t.readyState === 'live');
+    if (audioTracks.length === 0) return;
 
     let ctx = null, analyser = null, src = null, timer = null, dead = false;
     let currentlyTalking = false;
@@ -40,6 +40,7 @@ function useStreamVoiceActivity(stream, onTalkChange) {
 
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
       ctx = new AudioCtx();
       analyser = ctx.createAnalyser();
       analyser.fftSize = 128;
@@ -51,34 +52,38 @@ function useStreamVoiceActivity(stream, onTalkChange) {
 
       const check = () => {
         if (dead) return;
-        analyser.getByteFrequencyData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) sum += buf[i];
-        const avg = sum / buf.length;
+        try {
+          analyser.getByteFrequencyData(buf);
+          let sum = 0;
+          for (let i = 0; i < buf.length; i++) sum += buf[i];
+          const avg = sum / buf.length;
 
-        // Threshold 12 indicates human speech above ambient room noise
-        const isLoud = avg > 12;
+          // Threshold 12 indicates human speech above ambient room noise
+          const isLoud = avg > 12;
 
-        if (isLoud) {
-          clearTimeout(holdTimer);
-          if (!currentlyTalking) {
-            currentlyTalking = true;
-            onTalkChange?.(true);
-          }
-          // Hold speech state for 1200ms after speech pauses
-          holdTimer = setTimeout(() => {
-            if (currentlyTalking) {
-              currentlyTalking = false;
-              onTalkChange?.(false);
+          if (isLoud) {
+            clearTimeout(holdTimer);
+            if (!currentlyTalking) {
+              currentlyTalking = true;
+              onTalkChange?.(true);
             }
-          }, 1200);
-        }
+            // Hold speech state for 1200ms after speech pauses
+            holdTimer = setTimeout(() => {
+              if (currentlyTalking) {
+                currentlyTalking = false;
+                onTalkChange?.(false);
+              }
+            }, 1200);
+          }
+        } catch {}
 
         timer = setTimeout(check, 100);
       };
 
       check();
-    } catch {}
+    } catch (err) {
+      console.warn('Voice activity detection init failed:', err);
+    }
 
     return () => {
       dead = true;
@@ -98,11 +103,19 @@ function RemoteAudio({ stream, name, onTalk }) {
   useEffect(() => {
     const el = audioRef.current;
     if (!el || !stream) return;
-    el.srcObject = stream;
-    el.volume = 1.0;
+    try {
+      el.srcObject = stream;
+      el.volume = 1.0;
+    } catch (e) {
+      console.warn('RemoteAudio srcObject error:', e);
+    }
 
     const playAudio = () => {
-      el.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
+      try {
+        el.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
+      } catch {
+        setBlocked(true);
+      }
     };
     playAudio();
 
@@ -161,33 +174,46 @@ export function Tile({
     const el = videoRef.current;
     if (!el) return;
 
-    if (stream && !isCamOff) {
-      el.srcObject = stream;
-      el.muted = true; // Video element is muted; audio plays through RemoteAudio
+    try {
+      if (stream && !isCamOff && typeof stream.getVideoTracks === 'function') {
+        el.srcObject = stream;
+        el.muted = true; // Video element is muted; audio plays through RemoteAudio
 
-      const vTracks = stream.getVideoTracks();
-      setHasVideoTrack(vTracks.length > 0 && vTracks.some((t) => t.enabled && t.readyState === 'live'));
+        const vTracks = stream.getVideoTracks() || [];
+        setHasVideoTrack(vTracks.length > 0 && vTracks.some((t) => t.enabled && t.readyState === 'live'));
 
-      const tryPlay = () => {
-        el.play().catch(() => {
-          const resume = () => { el.play().catch(() => {}); };
-          window.addEventListener('click', resume, { once: true });
-          window.addEventListener('touchstart', resume, { once: true });
-        });
-      };
-      tryPlay();
-    } else {
-      el.srcObject = null;
+        const tryPlay = () => {
+          el.play().catch(() => {
+            const resume = () => { el.play().catch(() => {}); };
+            window.addEventListener('click', resume, { once: true });
+            window.addEventListener('touchstart', resume, { once: true });
+          });
+        };
+        tryPlay();
+      } else {
+        el.srcObject = null;
+        setHasVideoTrack(false);
+      }
+    } catch (e) {
+      console.warn('Tile video attach error:', e);
+      try { el.srcObject = null; } catch {}
       setHasVideoTrack(false);
     }
   }, [stream, isCamOff]);
 
   useEffect(() => {
     const handleFsChange = () => {
-      setIsFullscreen(document.fullscreenElement === videoRef.current);
+      try {
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+        setIsFullscreen(fsEl === videoRef.current);
+      } catch {}
     };
     document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
   }, []);
 
   const toggleFullscreen = (e) => {
@@ -195,18 +221,27 @@ export function Tile({
     if (disableFullscreen) return;
     const el = videoRef.current;
     if (!el) return;
-    if (!document.fullscreenElement) {
-      if (el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {});
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
+    try {
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!fsEl) {
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        } else if (el.webkitEnterFullscreen) { // iOS Safari on iPhone
+          el.webkitEnterFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
       }
-    } else {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-    }
+    } catch {}
   };
 
-  const initial = (name || '?').charAt(0).toUpperCase();
+  const initial = String(name || '?').charAt(0).toUpperCase();
 
   return (
     <div
@@ -417,13 +452,19 @@ export default function CouplesOverlay({
     let peer = null, dead = false, timer = null;
 
     const blank = () => {
-      const c = document.createElement('canvas');
-      c.width = 320;
-      c.height = 240;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#0f0c18';
-      ctx.fillRect(0, 0, 320, 240);
-      return c.captureStream(5);
+      try {
+        const c = document.createElement('canvas');
+        c.width = 320;
+        c.height = 240;
+        const ctx = c.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#0f0c18';
+          ctx.fillRect(0, 0, 320, 240);
+        }
+        const s = c.captureStream ? c.captureStream(5) : (c.webkitCaptureStream ? c.webkitCaptureStream(5) : null);
+        if (s) return s;
+      } catch {}
+      return new MediaStream();
     };
 
     const openPeer = async () => {
@@ -713,7 +754,9 @@ export default function CouplesOverlay({
     try {
       if (cam) {
         // --- TURN CAMERA OFF: STOP PHYSICAL CAMERA HARDWARE SENSOR ---
-        const currentVideoTracks = local.current ? local.current.getVideoTracks() : [];
+        const currentVideoTracks = (local.current && typeof local.current.getVideoTracks === 'function')
+          ? local.current.getVideoTracks()
+          : [];
         currentVideoTracks.forEach((track) => {
           try {
             track.stop(); // Powers off the physical camera light and sensor on device
@@ -725,8 +768,12 @@ export default function CouplesOverlay({
 
         // Insert blank dummy canvas track so WebRTC RTCPeerConnection stays connected
         const dummyTrack = createBlankVideoTrack();
-        if (dummyTrack && local.current) {
-          local.current.addTrack(dummyTrack);
+        if (dummyTrack && local.current && typeof local.current.addTrack === 'function') {
+          try {
+            local.current.addTrack(dummyTrack);
+          } catch (e) {
+            console.warn('Could not add dummy track:', e);
+          }
         }
 
         // Replace track on all active PeerJS RTCPeerConnection video senders
@@ -741,41 +788,61 @@ export default function CouplesOverlay({
         });
 
         if (local.current) {
-          setMine(new MediaStream(local.current.getTracks()));
+          try {
+            const liveTracks = (local.current.getTracks?.() || []).filter((t) => t.readyState === 'live');
+            setMine(new MediaStream(liveTracks));
+          } catch {
+            setMine(null);
+          }
         }
         setCam(false);
-        socket?.emit('webrtc:signal', { type: 'cam_state', cam: false, fromCid: me });
+        try {
+          socket?.emit('webrtc:signal', { type: 'cam_state', cam: false, fromCid: me });
+        } catch {}
       } else {
         // --- TURN CAMERA ON: RE-ACQUIRE FROM USER MEDIA ---
         let freshStream = null;
-        try {
-          freshStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              facingMode: 'user',
-            },
-          });
-        } catch {
+        if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
           try {
-            freshStream = await navigator.mediaDevices.getUserMedia({ video: true });
-          } catch (err) {
-            console.warn('Failed to re-acquire camera:', err);
-            alert('Could not start camera. Please ensure camera permissions are granted.');
-            setCamSwitching(false);
-            return;
+            freshStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user',
+              },
+            });
+          } catch {
+            try {
+              freshStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            } catch (err) {
+              console.warn('Failed to re-acquire camera on mobile device:', err);
+              setCamSwitching(false);
+              return;
+            }
           }
+        } else {
+          console.warn('navigator.mediaDevices.getUserMedia is unavailable in this environment');
+          setCamSwitching(false);
+          return;
         }
 
-        const freshTrack = freshStream?.getVideoTracks()?.[0];
-        if (freshTrack && local.current) {
-          // Stop and remove dummy blank tracks
-          local.current.getVideoTracks().forEach((track) => {
-            try { track.stop(); } catch {}
-            try { local.current.removeTrack(track); } catch {}
-          });
-
-          local.current.addTrack(freshTrack);
+        const freshTrack = freshStream?.getVideoTracks?.()?.[0];
+        if (freshTrack) {
+          if (!local.current) {
+            local.current = freshStream;
+          } else {
+            // Stop and remove dummy blank tracks
+            try {
+              (local.current.getVideoTracks?.() || []).forEach((track) => {
+                try { track.stop(); } catch {}
+                try { local.current.removeTrack(track); } catch {}
+              });
+              local.current.addTrack(freshTrack);
+            } catch (e) {
+              console.warn('Could not swap fresh track into local stream:', e);
+              local.current = freshStream;
+            }
+          }
 
           // Update active WebRTC calls with the fresh real camera track
           activeCalls.current.forEach((call) => {
@@ -788,11 +855,20 @@ export default function CouplesOverlay({
             } catch {}
           });
 
-          setMine(new MediaStream(local.current.getTracks()));
+          try {
+            const liveTracks = (local.current.getTracks?.() || []).filter((t) => t.readyState === 'live');
+            setMine(new MediaStream(liveTracks));
+          } catch {
+            setMine(freshStream);
+          }
           setCam(true);
-          socket?.emit('webrtc:signal', { type: 'cam_state', cam: true, fromCid: me });
+          try {
+            socket?.emit('webrtc:signal', { type: 'cam_state', cam: true, fromCid: me });
+          } catch {}
         }
       }
+    } catch (err) {
+      console.warn('Error in toggleCam:', err);
     } finally {
       setCamSwitching(false);
     }

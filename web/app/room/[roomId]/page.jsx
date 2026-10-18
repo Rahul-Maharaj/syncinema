@@ -15,6 +15,7 @@ import { getKey, setKey } from '@/lib/vault';
 import { getHybridInviteUrl, parseHybridInvite } from '@/lib/invite';
 import VideoPlayer from '@/components/VideoPlayer';
 import CouplesOverlay, { Tile } from '@/components/CouplesOverlay';
+import CallErrorBoundary from '@/components/CallErrorBoundary';
 import CinemaPlugins from '@/components/CinemaPlugins';
 import CoupleGestures from '@/components/CoupleGestures';
 import MovieNightExtras from '@/components/MovieNightExtras';
@@ -875,7 +876,9 @@ export default function Room() {
             <div className="flex items-center gap-0.5 sm:gap-1 bg-white/5 border border-white/10 p-0.5 rounded-xl shrink-0">
               <button
                 type="button"
-                onClick={() => callControlsRef.current?.toggleCam?.()}
+                onClick={async () => {
+                  try { await callControlsRef.current?.toggleCam?.(); } catch (err) { console.warn('toggleCam error:', err); }
+                }}
                 className={`h-7 sm:h-8 w-7 sm:w-auto px-1 sm:px-2.5 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition ${
                   callCam
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -1395,12 +1398,12 @@ export default function Room() {
                 <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-60 overflow-y-auto">
                   {!isGhost && (
                     <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
-                      <Tile stream={callMedia.mine} name="You" isPartner={false} voiceOnly={callMedia.voiceOnly} isSpeaking={callMedia.localTalking} isCamOff={!callCam} isMicMuted={!callMic} />
+                      <Tile stream={callMedia?.mine} name="You" isPartner={false} voiceOnly={callMedia?.voiceOnly} isSpeaking={callMedia?.localTalking} isCamOff={!callCam} isMicMuted={!callMic} />
                     </div>
                   )}
                   {users.filter(u => u.id !== me).map((u) => (
                     <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md group">
-                      <Tile stream={callMedia.remote[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia.voiceOnly} isSpeaking={!!callMedia.remoteTalking[u.id]} isCamOff={!!callMedia.remoteCamOff?.[u.id]} isMicMuted={!!callMedia.remoteMicMuted?.[u.id]} />
+                      <Tile stream={callMedia?.remote?.[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia?.voiceOnly} isSpeaking={!!callMedia?.remoteTalking?.[u.id]} isCamOff={!!callMedia?.remoteCamOff?.[u.id]} isMicMuted={!!callMedia?.remoteMicMuted?.[u.id]} />
                       {me === hostId && (
                         <button
                           type="button"
@@ -1475,7 +1478,8 @@ export default function Room() {
                   </div>
                 )}
                 {mobileTab === 'call' && (
-                  <div className="p-3 space-y-3.5">
+                  <CallErrorBoundary>
+                    <div className="p-3 space-y-3.5">
                     {/* Header */}
                     <div className="flex items-center justify-between border-b border-white/10 pb-2 px-1">
                       <div className="flex items-center gap-2">
@@ -1496,13 +1500,13 @@ export default function Room() {
                         {users.filter(u => u.id !== me).map((partner) => (
                           <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-pink-500/30 shadow-xl group">
                             <Tile
-                              stream={callMedia.remote[partner.id]}
-                              name={partner.name}
+                              stream={callMedia?.remote?.[partner?.id]}
+                              name={partner?.name}
                               isPartner={true}
-                              voiceOnly={callMedia.voiceOnly}
-                              isSpeaking={!!callMedia.remoteTalking[partner.id]}
-                              isCamOff={!!callMedia.remoteCamOff?.[partner.id]}
-                              isMicMuted={!!callMedia.remoteMicMuted?.[partner.id]}
+                              voiceOnly={callMedia?.voiceOnly}
+                              isSpeaking={!!callMedia?.remoteTalking?.[partner?.id]}
+                              isCamOff={!!callMedia?.remoteCamOff?.[partner?.id]}
+                              isMicMuted={!!callMedia?.remoteMicMuted?.[partner?.id]}
                             />
                             {me === hostId && (
                               <button
@@ -1543,11 +1547,11 @@ export default function Room() {
                         <div className="flex items-center gap-2.5 w-full sm:w-auto">
                           <div className="h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden bg-black border border-white/15 shrink-0 shadow-md">
                             <Tile
-                              stream={callMedia.mine}
+                              stream={callMedia?.mine}
                               name="You"
                               isPartner={false}
-                              voiceOnly={callMedia.voiceOnly}
-                              isSpeaking={callMedia.localTalking}
+                              voiceOnly={callMedia?.voiceOnly}
+                              isSpeaking={callMedia?.localTalking}
                               isCamOff={!callCam}
                               isMicMuted={!callMic}
                               disableFullscreen={true}
@@ -1586,7 +1590,9 @@ export default function Room() {
 
                           <button
                             type="button"
-                            onClick={() => callControlsRef.current?.toggleCam?.()}
+                            onClick={async () => {
+                              try { await callControlsRef.current?.toggleCam?.(); } catch (err) { console.warn('toggleCam error:', err); }
+                            }}
                             className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
                               callCam
                                 ? 'bg-emerald-500/20 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-300'
@@ -1614,7 +1620,8 @@ export default function Room() {
                         </div>
                       )}
                     </div>
-                  </div>
+                    </div>
+                  </CallErrorBoundary>
                 )}
                 {mobileTab === 'gestures' && (
                   <div className="p-1">
@@ -1720,13 +1727,13 @@ export default function Room() {
                         {users.filter(u => u.id !== me).map((partner) => (
                           <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner group">
                             <Tile
-                              stream={callMedia.remote[partner.id]}
-                              name={partner.name}
+                              stream={callMedia?.remote?.[partner?.id]}
+                              name={partner?.name}
                               isPartner={true}
-                              voiceOnly={callMedia.voiceOnly}
-                              isSpeaking={!!callMedia.remoteTalking[partner.id]}
-                              isCamOff={!!callMedia.remoteCamOff?.[partner.id]}
-                              isMicMuted={!!callMedia.remoteMicMuted?.[partner.id]}
+                              voiceOnly={callMedia?.voiceOnly}
+                              isSpeaking={!!callMedia?.remoteTalking?.[partner?.id]}
+                              isCamOff={!!callMedia?.remoteCamOff?.[partner?.id]}
+                              isMicMuted={!!callMedia?.remoteMicMuted?.[partner?.id]}
                             />
                             {me === hostId && (
                               <button
@@ -1757,11 +1764,11 @@ export default function Room() {
                         <div className="flex items-center gap-2">
                           <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
                             <Tile
-                              stream={callMedia.mine}
+                              stream={callMedia?.mine}
                               name="You"
                               isPartner={false}
-                              voiceOnly={callMedia.voiceOnly}
-                              isSpeaking={callMedia.localTalking}
+                              voiceOnly={callMedia?.voiceOnly}
+                              isSpeaking={callMedia?.localTalking}
                               isCamOff={!callCam}
                               isMicMuted={!callMic}
                               disableFullscreen={true}
@@ -1776,7 +1783,9 @@ export default function Room() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => callControlsRef.current?.toggleCam?.()}
+                            onClick={async () => {
+                              try { await callControlsRef.current?.toggleCam?.(); } catch (err) { console.warn('toggleCam error:', err); }
+                            }}
                             className={`p-1.5 rounded-lg border ${callCam ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}
                             title="Toggle Cam"
                           >
@@ -1859,23 +1868,25 @@ export default function Room() {
           )}
 
           {/* Video Call Overlay (CouplesOverlay) */}
-          <CouplesOverlay
-            me={me}
-            users={users}
-            peerRef={peerRef}
-            onScreen={setScreen}
-            showCall={showCall && viewMode !== 'duo' && viewMode !== 'party'}
-            setShowCall={setShowCall}
-            socket={socket}
-            onVoiceActivity={setVoiceActive}
-            callControlsRef={callControlsRef}
-            onCamChange={setCallCam}
-            onMicChange={setCallMic}
-            onStreamsChange={setCallMedia}
-            isMobileCallActive={mobileTab === 'call'}
-            onSwitchToCallTab={() => setMobileTab('call')}
-            isGhost={isGhost}
-          />
+          <CallErrorBoundary fallback={null}>
+            <CouplesOverlay
+              me={me}
+              users={users}
+              peerRef={peerRef}
+              onScreen={setScreen}
+              showCall={showCall && viewMode !== 'duo' && viewMode !== 'party'}
+              setShowCall={setShowCall}
+              socket={socket}
+              onVoiceActivity={setVoiceActive}
+              callControlsRef={callControlsRef}
+              onCamChange={setCallCam}
+              onMicChange={setCallMic}
+              onStreamsChange={setCallMedia}
+              isMobileCallActive={mobileTab === 'call'}
+              onSwitchToCallTab={() => setMobileTab('call')}
+              isGhost={isGhost}
+            />
+          </CallErrorBoundary>
         </div>
       )}
 
