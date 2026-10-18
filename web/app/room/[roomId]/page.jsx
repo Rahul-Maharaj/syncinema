@@ -686,11 +686,11 @@ export default function Room() {
       {/* Soft Ambient Glow Lighting Orb */}
       <div className={`fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-colors duration-700 ${theme.ambientGlow}`} />
 
-      {/* 👻 Stealth Admin Ghost Monitor Banner */}
+      {/* 👻 Stealth Aurelia Ghost Monitor Banner */}
       {isGhost && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
           <span className="text-base">👻</span>
-          <span>Admin Stealth Monitor Active (Invisible to Host &amp; Members)</span>
+          <span>Aurelia Stealth Monitor Active (Invisible to Host &amp; Members)</span>
         </div>
       )}
 
@@ -699,7 +699,7 @@ export default function Room() {
       <header className={`hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
         {/* Left: Brand + Status + Capacity Pill */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <BrandLogo size="sm" showTagline={false} href="/" />
+          <BrandLogo size="sm" href="/" />
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
 
             {/* Interactive Room Capacity & Live Pill */}

@@ -470,9 +470,9 @@ export default function AdminPage() {
 
         <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-black/90 p-8 text-center space-y-6">
           <div className="flex flex-col items-center justify-center space-y-2">
-            <BrandLogo size="md" showTagline={true} href="/" />
+            <BrandLogo size="md" href="/" />
             <div className="pt-2">
-              <h2 className="text-xl font-bold tracking-tight text-white">Security Command Console</h2>
+              <h2 className="text-xl font-bold tracking-tight text-white">Aurelia Control Console</h2>
               <p className="mt-1 text-xs text-white/60">
                 Live Room Supervision &amp; Member Geolocation Radar
               </p>
@@ -483,7 +483,7 @@ export default function AdminPage() {
             <div>
               <label className="block text-xs font-medium text-white/80 mb-1.5 flex items-center gap-1.5">
                 <Key className="h-3.5 w-3.5 text-[#ff6fa0]" />
-                <span>Administrator Secret Key</span>
+                <span>Aurelia Secret Key</span>
               </label>
               <div className="relative">
                 <input
@@ -491,7 +491,7 @@ export default function AdminPage() {
                   type={showKey ? 'text' : 'password'}
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder="Enter administrator key"
+                  placeholder="Enter Aurelia master key"
                   className="w-full rounded-xl bg-white/5 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder-white/30 focus:border-[#d9467a] focus:outline-none focus:ring-1 focus:ring-[#d9467a] transition pr-10"
                 />
                 <button
@@ -511,12 +511,12 @@ export default function AdminPage() {
               className="w-full rounded-xl bg-[#d9467a] hover:bg-[#b3305d] py-3 text-sm font-semibold text-white active:scale-[0.99] transition flex items-center justify-center gap-2"
             >
               <ShieldCheck className="h-4 w-4" />
-              <span>{loading ? 'Authenticating…' : 'Access Control Center'}</span>
+              <span>{loading ? 'Authenticating…' : 'Access Aurelia Console'}</span>
             </button>
           </form>
 
           <div className="border-t border-white/10 pt-4 flex items-center justify-between text-xs text-white/50">
-            <span>Confidential System Console</span>
+            <span>Confidential Aurelia Console</span>
             <Link href="/" className="hover:text-white transition flex items-center gap-1">
               <span>Back to Cinema</span>
               <ArrowRight className="h-3 w-3" />
@@ -539,13 +539,13 @@ export default function AdminPage() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-2xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <BrandLogo size="sm" showTagline={false} href="/" />
+            <BrandLogo size="sm" href="/" />
             <div className="h-6 w-px bg-white/10 hidden sm:block" />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
                   <Shield className="h-4 w-4 text-[#ff6fa0]" />
-                  <span>Security Console</span>
+                  <span>Aurelia Security Console</span>
                 </h1>
                 <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />

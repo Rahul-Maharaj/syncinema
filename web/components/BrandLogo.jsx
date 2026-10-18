@@ -3,7 +3,6 @@ import Link from 'next/link';
 
 export default function BrandLogo({
   size = 'md', // 'sm' | 'md' | 'lg'
-  showTagline = true,
   href = '/',
   className = '',
 }) {
@@ -25,16 +24,10 @@ export default function BrandLogo({
     lg: 'text-3xl sm:text-4xl',
   };
 
-  const tagSizes = {
-    sm: 'text-[7px]',
-    md: 'text-[9px] sm:text-[10px]',
-    lg: 'text-[11px] sm:text-xs',
-  };
-
   const content = (
     <div className={`inline-flex items-center gap-2.5 sm:gap-3 group select-none ${className}`}>
       {/* Brand Icon Image (New SC Heart Film Strip) */}
-      <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_4px_14px_rgba(245,160,60,0.4)]`}>
+      <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_4px_16px_rgba(255,75,147,0.55)]`}>
         <img
           src="/logo.png"
           alt="SynCinema Logo Icon"
@@ -42,17 +35,10 @@ export default function BrandLogo({
         />
       </div>
 
-      {/* Typography from Reference Image 2 */}
-      <div className="flex flex-col justify-center text-left leading-none">
-        <div className="flex items-baseline">
-          <span className={`brand-syn ${synSizes[size]} pr-0.5`}>Syn</span>
-          <span className={`brand-cinema ${cinemaSizes[size]}`}>Cinema</span>
-        </div>
-        {showTagline && (
-          <span className={`brand-tagline ${tagSizes[size]} mt-1`}>
-            WATCH TOGETHER. CONNECTED.
-          </span>
-        )}
+      {/* Highlighted SynCinema Typography */}
+      <div className="flex items-baseline leading-none">
+        <span className={`brand-syn ${synSizes[size]} pr-0.5`}>Syn</span>
+        <span className={`brand-cinema ${cinemaSizes[size]}`}>Cinema</span>
       </div>
     </div>
   );

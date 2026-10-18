@@ -229,7 +229,7 @@ export default function SynCinemaPlatform() {
       {/* Transparent Floating Header (No rectangular box) */}
       <header className="relative z-20 px-4 sm:px-8 py-4 sm:py-5 bg-transparent border-none flex items-center justify-between gap-4">
         {/* Brand */}
-        <BrandLogo size="md" showTagline={true} href="/" />
+        <BrandLogo size="md" href="/" />
 
         {/* Status Pill & Privacy Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -604,12 +604,9 @@ export default function SynCinemaPlatform() {
 
       {/* Sleek Translucent Footer */}
       <footer className="relative z-10 text-center text-xs text-slate-300/80 py-6 max-w-5xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10">
-        <BrandLogo size="sm" showTagline={false} href="/" />
+        <BrandLogo size="sm" href="/" />
         <div className="flex items-center gap-4 text-xs">
           <span className="text-pink-300 font-medium">Different places... Same screen. 💖</span>
-          <Link href="/admin" className="text-slate-400 hover:text-white transition underline font-mono text-[11px]">
-            Admin Console
-          </Link>
         </div>
       </footer>
     </div>
