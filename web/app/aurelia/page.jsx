@@ -1654,12 +1654,27 @@ export default function AdminPage() {
                             </span>
                           )}
 
-                          <div className="flex items-center gap-2 text-[11px] text-white/50">
+                          <div className="flex items-center gap-2 text-[11px] text-white/50 flex-wrap">
                             <span>Created: {new Date(room.createdAt).toLocaleTimeString()}</span>
                             <span>•</span>
                             <span className={room.userCount >= (room.maxUsers || 2) ? 'text-rose-400 font-medium' : 'text-emerald-400 font-medium'}>
                               {room.userCount}/{room.maxUsers || 2} Seats {room.userCount >= (room.maxUsers || 2) ? '(Full Couch)' : '(Waiting)'}
                             </span>
+                            <span>•</span>
+                            {room.userCount === 0 ? (
+                              <span className="text-amber-400 font-medium">
+                                ⏳ Empty (Auto-closes in {Math.max(0, Math.ceil((10 * 60 * 1000 - (Date.now() - (room.emptySince || room.createdAt))) / 60000))}m)
+                              </span>
+                            ) : room.playing ? (
+                              <span className="text-emerald-400 font-medium flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>Active Watching</span>
+                              </span>
+                            ) : (
+                              <span className="text-cyan-400 font-medium">
+                                ⏱️ Idle (Auto-closes in {Math.max(0, Math.ceil((10 * 60 * 1000 - (room.inactiveMs || 0)) / 60000))}m)
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -2157,6 +2172,21 @@ export default function AdminPage() {
                             )}
                             <span>•</span>
                             <span>Created {new Date(room.createdAt).toLocaleTimeString()}</span>
+                            <span>•</span>
+                            {roomUsers.length === 0 ? (
+                              <span className="text-amber-400 font-medium">
+                                ⏳ Empty (Auto-closes in {Math.max(0, Math.ceil((10 * 60 * 1000 - (Date.now() - (room.emptySince || room.createdAt))) / 60000))}m)
+                              </span>
+                            ) : room.playing ? (
+                              <span className="text-emerald-400 font-medium flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>Active Watching</span>
+                              </span>
+                            ) : (
+                              <span className="text-cyan-400 font-medium">
+                                ⏱️ Idle (Auto-closes in {Math.max(0, Math.ceil((10 * 60 * 1000 - (room.inactiveMs || 0)) / 60000))}m)
+                              </span>
+                            )}
                           </div>
                         </div>
 

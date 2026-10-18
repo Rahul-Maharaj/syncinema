@@ -718,10 +718,10 @@ export default function Room() {
         sessionStorage.removeItem('rp_' + roomId);
         localStorage.removeItem('rp_' + roomId);
       } catch {}
-      say(info?.message || 'The host has closed this room.');
+      say(info?.message || info?.reason || 'This room has been closed.');
       setTimeout(() => {
         router.push('/');
-      }, 1000);
+      }, 1200);
     });
     socket.on('pin:status', (s) => setHasPin(!!s?.hasPin));
     socket.on('state', (st) => {
@@ -775,6 +775,31 @@ export default function Room() {
     const t = setTimeout(() => { playerRef.current?.pause?.(); setSleep(0); say('Sleep timer done — movie paused. Sweet dreams 🌙'); }, sleep * 60000);
     return () => clearTimeout(t);
   }, [sleep]);
+
+  // Throttled user activity reporter (reports UI interaction to server to keep active room alive)
+  useEffect(() => {
+    if (!socket) return;
+    let lastSent = 0;
+    const reportActivity = () => {
+      const now = Date.now();
+      if (now - lastSent > 45000) {
+        lastSent = now;
+        if (socket.connected) {
+          socket.emit('user:active');
+        }
+      }
+    };
+    window.addEventListener('click', reportActivity, { passive: true });
+    window.addEventListener('keydown', reportActivity, { passive: true });
+    window.addEventListener('touchstart', reportActivity, { passive: true });
+    window.addEventListener('mousemove', reportActivity, { passive: true });
+    return () => {
+      window.removeEventListener('click', reportActivity);
+      window.removeEventListener('keydown', reportActivity);
+      window.removeEventListener('touchstart', reportActivity);
+      window.removeEventListener('mousemove', reportActivity);
+    };
+  }, [socket]);
 
   // Periodic and on-focus real location update (picks up GPS permission approval / network changes)
   useEffect(() => {

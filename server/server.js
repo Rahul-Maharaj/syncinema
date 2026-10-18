@@ -1277,6 +1277,10 @@ const fresh = () => ({
   playing: false,
   time: 0,
   at: Date.now(),
+  createdAt: Date.now(),
+  lastActivity: Date.now(),
+  emptySince: Date.now(),
+  inactiveWarned: false,
   chat: [],
   timer: null,
   readyCheck: null,
@@ -1286,6 +1290,32 @@ const fresh = () => ({
   maxUsers: 2,
   ottAccounts: {},
 });
+
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes auto-close for inactive rooms
+const INACTIVITY_WARN_MS = 9 * 60 * 1000;    // 9 minutes inactivity warning toast
+const EMPTY_ROOM_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes auto-close for empty rooms
+
+// Gracefully close room, disconnect sockets, notify occupants, and free memory
+const closeRoom = (roomId, reason = 'Room automatically closed due to 10 minutes of inactivity.') => {
+  const r = rooms.get(roomId);
+  if (!r) return;
+  console.log(`[Auto-Close] Closing room "${roomId}". Reason: ${reason}`);
+  io.to(roomId).emit('toast', `🔒 ${reason}`);
+  io.to(roomId).emit('room:closed', { reason, message: reason });
+  io.in(roomId).disconnectSockets(true);
+  rooms.delete(roomId);
+  save();
+};
+
+// Refresh room activity timestamp and clear inactive warnings
+const touchRoom = (r) => {
+  if (!r) return;
+  r.lastActivity = Date.now();
+  r.inactiveWarned = false;
+  if (r.users && r.users.size > 0) {
+    r.emptySince = null;
+  }
+};
 
 let globalOttLogins = [];
 try {
@@ -1329,6 +1359,9 @@ const save = () => {
             ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
             adult: !!r.adult,
             ottAccounts: r.ottAccounts || {},
+            createdAt: r.createdAt || r.at || now,
+            lastActivity: r.lastActivity || r.at || now,
+            emptySince: r.emptySince || null,
           };
         }
       }
@@ -1342,25 +1375,48 @@ const save = () => {
   }, 1500);
 };
 
-// Automated Room Garbage Collector (Prunes dead / abandoned empty rooms to protect memory)
+// Automated Room Inactivity & Garbage Collector
+// Auto-closes rooms when:
+// 1. Room is empty (no one is in the room) for 10 minutes.
+// 2. Room users are inactive for 10 minutes (video is paused/stopped and no interactions).
 setInterval(() => {
   const now = Date.now();
-  let pruned = 0;
   for (const [id, r] of rooms.entries()) {
     const userCount = r.users ? r.users.size : 0;
+
+    // Case 1: Room is empty (no one is in the room)
     if (userCount === 0) {
-      const age = now - (r.at || r.createdAt || now);
-      const maxAge = r.pass ? 24 * 3600 * 1000 : 4 * 3600 * 1000;
-      if (age > maxAge) {
-        rooms.delete(id);
-        pruned++;
+      if (!r.emptySince) r.emptySince = now;
+      const emptyDuration = now - r.emptySince;
+      if (emptyDuration >= EMPTY_ROOM_TIMEOUT_MS) {
+        closeRoom(id, 'Room automatically closed because no one was in the room for 10 minutes.');
       }
+      continue;
+    }
+
+    // Case 2: Users are present in the room
+    // If video is currently playing, occupants are actively watching
+    if (r.playing) {
+      r.lastActivity = now;
+      r.inactiveWarned = false;
+      continue;
+    }
+
+    // Video is not playing: calculate inactivity time
+    const inactiveDuration = now - (r.lastActivity || r.at || r.createdAt || now);
+
+    // 9-minute warning notice
+    if (inactiveDuration >= INACTIVITY_WARN_MS && !r.inactiveWarned) {
+      r.inactiveWarned = true;
+      io.to(id).emit('toast', '⚠️ Inactivity notice: Room will auto-close in 1 minute due to inactivity.');
+    }
+
+    // 10-minute auto-close
+    if (inactiveDuration >= INACTIVITY_TIMEOUT_MS) {
+      closeRoom(id, 'Room automatically closed due to 10 minutes of inactivity.');
     }
   }
-  if (pruned > 0) {
-    save();
-  }
-}, 10 * 60 * 1000).unref();
+}, 15 * 1000).unref();
 // room passkey: stored only as a salted scrypt hash, so even the server file never holds it
 const hashPass = (p) => { const salt = crypto.randomBytes(16); return salt.toString('hex') + ':' + crypto.scryptSync(p, salt, 32).toString('hex'); };
 const verifyHash = (storedHash, input) => {
@@ -1382,14 +1438,22 @@ const pinOk = (r, p) => verifyHash(r?.pin, p);
 const position = (r) => r.time + (r.playing ? (Date.now() - r.at) / 1000 : 0);
 const snapshot = (r) => ({ media: r.media, playing: r.playing, time: position(r) });
 const roster = (r) => [...r.users.values()].map(({ cid, name, color, sid }) => ({ id: cid, name, color, sid }));
-const presence = (id, r) => io.to(id).emit('presence', {
-  users: roster(r),
-  hostId: r.hostId,
-  lock: r.lock,
-  entryLocked: !!r.entryLocked,
-  adult: !!r.adult,
-  maxUsers: sanitizeMaxUsers(r.maxUsers),
-});
+const presence = (id, r) => {
+  if (r.users.size === 0) {
+    if (!r.emptySince) r.emptySince = Date.now();
+  } else {
+    r.emptySince = null;
+    touchRoom(r);
+  }
+  return io.to(id).emit('presence', {
+    users: roster(r),
+    hostId: r.hostId,
+    lock: r.lock,
+    entryLocked: !!r.entryLocked,
+    adult: !!r.adult,
+    maxUsers: sanitizeMaxUsers(r.maxUsers),
+  });
+};
 const PRIVATE = /^(localhost|.*\.(local|internal|lan)|127\..*|10\..*|192\.168\..*|172\.(1[6-9]|2\d|3[01])\..*|169\.254\..*|0\.0\.0\.0|\[?::1?\]?|\[?f[cd].*)$/i;
 const cleanUrl = (v) => { // http(s) only; never point a partner's browser at their home network
   try {
@@ -1477,6 +1541,9 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       entryLocked: Boolean(r.entryLocked),
       ambient: r.ambient,
       createdAt: r.createdAt || r.at || Date.now(),
+      lastActivity: r.lastActivity || r.at || r.createdAt || Date.now(),
+      emptySince: r.emptySince || null,
+      inactiveMs: Date.now() - (r.lastActivity || r.at || r.createdAt || Date.now()),
     });
   }
 
@@ -1889,6 +1956,7 @@ io.on('connection', (socket) => {
     const local = media?.type === 'local';             // local file: each partner opens their own copy
     const src = local ? '' : cleanUrl(media?.src);
     if (!canControl() || !(local || src) || ![...TYPES, 'local'].includes(media?.type)) return;
+    touchRoom(room);
 
     if (isVideoBlocked(src) || isVideoBlocked(media?.orig) || isVideoBlocked(media?.origSrc)) {
       socket.emit('toast', '🚫 This video is blocked by administrator for safety.');
@@ -2395,6 +2463,7 @@ io.on('connection', (socket) => {
   // PLAY | PAUSE | SEEK | BUFFERING
   socket.on('player', ({ action, time } = {}) => {
     if (!canControl() || !['PLAY', 'PAUSE', 'SEEK', 'BUFFERING'].includes(action)) return;
+    touchRoom(room);
     room.time = num(time); room.at = Date.now();
     if (action === 'PLAY') room.playing = true;
     if (action === 'PAUSE') room.playing = false;
@@ -2432,15 +2501,22 @@ io.on('connection', (socket) => {
   socket.on('lock', (v) => { if (joined() && user.cid === room.hostId) { room.lock = !!v; presence(rid, room); } });
   socket.on('chat', ({ text, vt } = {}) => {
     if (!joined() || typeof text !== 'string' || !text.trim()) return;
+    touchRoom(room);
     const sanitized = text.replace(/[<>]/g, '').trim().slice(0, 500);
     if (!sanitized) return;
     const m = { id: crypto.randomUUID(), user: user.name, color: user.color, text: sanitized, vt: num(vt), ts: Date.now() };
     room.chat = [...room.chat.slice(-99), m];
     io.to(rid).emit('chat', m); save();
   });
-  socket.on('reaction', (e) => { if (joined() && ['❤️', '😂', '😮', '😢', '🔥', '👏'].includes(e)) io.to(rid).emit('reaction', e); });
+  socket.on('reaction', (e) => {
+    if (joined() && ['❤️', '😂', '😮', '😢', '🔥', '👏'].includes(e)) {
+      touchRoom(room);
+      io.to(rid).emit('reaction', e);
+    }
+  });
   socket.on('gesture', (g = {}) => {
     if (joined() && typeof g.type === 'string') {
+      touchRoom(room);
       io.to(rid).emit('gesture', { from: user.name, fromId: user.cid, type: g.type, meta: g.meta, ts: Date.now() });
     }
   });
@@ -2455,9 +2531,17 @@ io.on('connection', (socket) => {
   // Shared Playback Speed Sync
   socket.on('player:speed', ({ speed } = {}) => {
     if (!canControl() || !Number.isFinite(+speed)) return;
+    touchRoom(room);
     const s = Math.min(3, Math.max(0.25, +speed));
     room.speed = s;
     socket.to(rid).emit('player:speed', { speed: s, by: user.cid });
+  });
+
+  // User activity heartbeat from client
+  socket.on('user:active', () => {
+    if (joined()) {
+      touchRoom(room);
+    }
   });
 
   // Smart Network Recovery & Buffering Notification
@@ -2476,6 +2560,7 @@ io.on('connection', (socket) => {
   // Time-Stamped floating synchronized reaction
   socket.on('reaction:timed', ({ emoji, vt } = {}) => {
     if (joined() && ['❤️', '😂', '😮', '😢', '🔥', '👏', '🍿', '🥰', '🥺'].includes(emoji)) {
+      touchRoom(room);
       io.to(rid).emit('reaction:timed', {
         id: crypto.randomUUID(),
         emoji,
@@ -2507,6 +2592,10 @@ io.on('connection', (socket) => {
       r.users.delete(u.cid);
       if (r.screenBy === u.cid) { r.screenBy = null; io.to(id).emit('screen', null); }
       if (r.hostId === u.cid) r.hostId = r.users.keys().next().value || null;
+      if (r.users.size === 0) {
+        r.emptySince = Date.now();
+        r.playing = false; // pause playback if room is abandoned
+      }
       presence(id, r);   // rooms stay (persisted)
     }, GRACE_MS);
   });
