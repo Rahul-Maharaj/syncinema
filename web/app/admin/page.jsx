@@ -5,9 +5,10 @@ import {
   Shield, ShieldAlert, ShieldCheck, Lock, Unlock, Users, Film, Pause, Play,
   Square, Ban, Trash2, RefreshCw, Eye, EyeOff, Search, AlertTriangle,
   CheckCircle, Video, Flame, Clock, Key, ArrowRight, ExternalLink, LogOut,
-  Copy, Radio, Sparkles, X, Tv, MapPin, Globe, Compass, Navigation, Activity, Wifi
+  Copy, Radio, Sparkles, X, MapPin, Globe, Compass, Navigation, Activity, Wifi
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
+import BrandLogo from '@/components/BrandLogo';
 
 const fmt = (s) => {
   s = Math.max(0, Math.floor(s || 0));
@@ -44,19 +45,15 @@ export default function AdminPage() {
       totalRooms: 0,
       totalConnectedUsers: 0,
       activePlayingCount: 0,
-      totalOttLogins: 0,
-      activeOttLogins: 0,
       blockedUsersCount: 0,
       blockedRoomsCount: 0,
       blockedVideosCount: 0,
     },
     rooms: [],
-    ottLogins: [],
     blocked: { users: [], ips: [], rooms: [], videos: [] },
   });
 
-  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'locations' | 'ott' | 'security' | 'broadcast'
-  const [ottFilter, setOttFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'locations' | 'security' | 'broadcast'
   const [search, setSearch] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [toast, setToast] = useState(null);
@@ -264,27 +261,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleDisconnectOtt = async (loginRecord) => {
-    if (!confirm(`Are you sure you want to disconnect ${loginRecord.platform.toUpperCase()} account for room "${loginRecord.roomId}"?`)) return;
-    try {
-      const res = await fetch(serverUrl() + '/api/admin/ott/disconnect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
-        body: JSON.stringify({ id: loginRecord.id, roomId: loginRecord.roomId, platform: loginRecord.platform }),
-      });
-      if (res.ok) {
-        say(`Disconnected ${loginRecord.platform.toUpperCase()} account`);
-        fetchOverview();
-      } else {
-        say('Failed to disconnect OTT account', 'error');
-      }
-    } catch {
-      say('Network error disconnecting OTT account', 'error');
-    }
-  };
 
   const handleBlockUser = async (user, roomId) => {
     const reason = prompt(`Reason for blocking "${user.name}" (CID: ${user.cid}):`, 'Violation of security policies');
@@ -484,35 +460,7 @@ export default function AdminPage() {
     );
   });
 
-  const getPlatformIcon = (platform) => {
-    const p = String(platform || '').toLowerCase();
-    if (p.includes('hotstar') || p.includes('disney')) return { icon: '🌟', name: 'Disney+ Hotstar', color: '#123962' };
-    if (p.includes('netflix')) return { icon: '🔴', name: 'Netflix', color: '#E50914' };
-    if (p.includes('prime') || p.includes('amazon')) return { icon: '🔵', name: 'Prime Video', color: '#00A8E1' };
-    if (p.includes('jio')) return { icon: '🟣', name: 'JioCinema', color: '#D40078' };
-    if (p.includes('zee')) return { icon: '🟠', name: 'Zee5', color: '#7E3AF2' };
-    if (p.includes('sony')) return { icon: '🔷', name: 'SonyLIV', color: '#0066FF' };
-    if (p.includes('hulu')) return { icon: '🟢', name: 'Hulu', color: '#1CE783' };
-    if (p.includes('max') || p.includes('hbo')) return { icon: '💜', name: 'Max (HBO)', color: '#001D4A' };
-    if (p.includes('crunchyroll')) return { icon: '🟧', name: 'Crunchyroll', color: '#F47521' };
-    if (p.includes('apple')) return { icon: '🍎', name: 'Apple TV+', color: '#333333' };
-    return { icon: '🍿', name: platform ? platform.toUpperCase() : 'OTT Platform', color: '#d9467a' };
-  };
 
-  const filteredOttLogins = (data.ottLogins || []).filter((item) => {
-    if (ottFilter !== 'all' && item.platform !== ottFilter) return false;
-    if (!search.trim()) return true;
-    const q = search.toLowerCase().trim();
-    return (
-      (item.platform && item.platform.toLowerCase().includes(q)) ||
-      (item.username && item.username.toLowerCase().includes(q)) ||
-      (item.email && item.email.toLowerCase().includes(q)) ||
-      (item.phone && item.phone.toLowerCase().includes(q)) ||
-      (item.roomId && item.roomId.toLowerCase().includes(q)) ||
-      (item.connectedBy && item.connectedBy.toLowerCase().includes(q)) ||
-      (item.ip && item.ip.toLowerCase().includes(q))
-    );
-  });
 
   // ------------------ LOGIN SCREEN (SOFT BLACK GRADIENT) ------------------
   if (!authed) {
@@ -521,15 +469,14 @@ export default function AdminPage() {
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(217,70,122,0.12),transparent_70%),radial-gradient(circle_at_20%_80%,rgba(99,102,241,0.08),transparent_50%)]" />
 
         <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-black/90 p-8 text-center space-y-6">
-          <div className="relative mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white/5 border border-white/10">
-            <Shield className="h-8 w-8 text-[#ff6fa0]" />
-          </div>
-
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Admin Command Center</h1>
-            <p className="mt-1.5 text-xs text-white/60">
-              Security Inspection &amp; Real-time Playback Supervisor
-            </p>
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <BrandLogo size="md" showTagline={true} href="/" />
+            <div className="pt-2">
+              <h2 className="text-xl font-bold tracking-tight text-white">Security Command Console</h2>
+              <p className="mt-1 text-xs text-white/60">
+                Live Room Supervision &amp; Member Geolocation Radar
+              </p>
+            </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4 text-left">
@@ -592,18 +539,20 @@ export default function AdminPage() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-2xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#d9467a]/15 border border-[#d9467a]/30">
-              <Shield className="h-5 w-5 text-[#ff6fa0]" />
-            </div>
+            <BrandLogo size="sm" showTagline={false} href="/" />
+            <div className="h-6 w-px bg-white/10 hidden sm:block" />
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold tracking-tight text-white">SyncCinema Security Console</h1>
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-[#ff6fa0]" />
+                  <span>Security Console</span>
+                </h1>
                 <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   Live Monitor
                 </span>
               </div>
-              <p className="text-[11px] text-white/50">Room supervision, content safety &amp; administrative control</p>
+              <p className="text-[11px] text-white/50 hidden sm:block">Room supervision, GPS radar &amp; safety</p>
             </div>
           </div>
 
@@ -681,16 +630,16 @@ export default function AdminPage() {
           </div>
 
           <div
-            onClick={() => setActiveTab('ott')}
+            onClick={() => setActiveTab('locations')}
             className="rounded-2xl border border-[#ff6fa0]/30 bg-[#1c0f1f]/50 p-4 backdrop-blur-xl cursor-pointer hover:border-[#ff6fa0]/60 transition"
           >
             <div className="flex items-center justify-between text-xs text-white/60">
-              <span>OTT Vault Logins</span>
-              <Tv className="h-4 w-4 text-[#ff6fa0]" />
+              <span>Geo Radar Map</span>
+              <MapPin className="h-4 w-4 text-[#ff6fa0]" />
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white">{data.stats?.activeOttLogins || 0}</span>
-              <span className="text-[11px] text-[#ff8fb3]">/ {data.ottLogins?.length || 0} total</span>
+              <span className="text-2xl font-bold text-white">{allConnectedUsers.length}</span>
+              <span className="text-[11px] text-[#ff8fb3]">viewers live</span>
             </div>
           </div>
 
@@ -746,18 +695,6 @@ export default function AdminPage() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('ott')}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
-                activeTab === 'ott'
-                  ? 'bg-[#d9467a] text-white shadow-md'
-                  : 'text-white/70 hover:text-white'
-              }`}
-            >
-              <Tv className="h-3.5 w-3.5 text-[#ff8fb3]" />
-              <span>🍿 OTT Logins Vault ({data.ottLogins?.length || 0})</span>
-            </button>
-            <button
-              type="button"
               onClick={() => setActiveTab('security')}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
                 activeTab === 'security'
@@ -782,7 +719,7 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {(activeTab === 'rooms' || activeTab === 'ott' || activeTab === 'locations') && (
+          {(activeTab === 'rooms' || activeTab === 'locations') && (
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
               <input
@@ -790,9 +727,7 @@ export default function AdminPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={
-                  activeTab === 'ott'
-                    ? 'Search platform, account, room…'
-                    : activeTab === 'locations'
+                  activeTab === 'locations'
                     ? 'Search city, country, IP, user…'
                     : 'Search room ID, media, or user…'
                 }
@@ -1312,142 +1247,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ================= TAB: OTT LOGINS VAULT ================= */}
-        {activeTab === 'ott' && (
-          <div className="space-y-4">
-            {/* Filter and stats row */}
-            <div className="rounded-2xl border border-white/10 bg-black/50 p-4 shadow-xl backdrop-blur-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Tv className="h-4 w-4 text-[#ff6fa0]" />
-                  <span>OTT Account Logins Vault</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#d9467a]/20 border border-[#d9467a]/40 text-[#ff8fb3] font-bold">
-                    {data.ottLogins?.length || 0} Records
-                  </span>
-                </h3>
-                <p className="text-xs text-white/50 mt-0.5">
-                  Secure server record of subscriber accounts connected inside rooms for dual-streaming.
-                </p>
-              </div>
 
-              {/* Platform filter pills */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {['all', 'hotstar', 'netflix', 'prime', 'jiocinema', 'zee5', 'sonyliv'].map((plat) => (
-                  <button
-                    key={plat}
-                    type="button"
-                    onClick={() => setOttFilter(plat)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
-                      ottFilter === plat
-                        ? 'bg-[#d9467a] text-white shadow-md'
-                        : 'bg-white/5 text-white/60 hover:text-white border border-white/10'
-                    }`}
-                  >
-                    {plat === 'all' ? 'All' : plat.charAt(0).toUpperCase() + plat.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* List / Cards of Logins */}
-            {filteredOttLogins.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl space-y-3">
-                <Tv className="mx-auto h-10 w-10 text-white/30" />
-                <h3 className="text-base font-semibold text-white">No OTT logins found</h3>
-                <p className="text-xs text-white/50 max-w-sm mx-auto">
-                  {search ? 'No accounts match your search filter.' : 'When members connect Disney+ Hotstar, Netflix, Prime Video, or other OTT accounts in watch party rooms, they will appear securely here.'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:gap-4">
-                {filteredOttLogins.map((item) => {
-                  const platMeta = getPlatformIcon(item.platform);
-                  return (
-                    <div
-                      key={item.id}
-                      className="rounded-2xl border border-white/10 bg-black/50 p-4 sm:p-5 shadow-xl backdrop-blur-2xl hover:border-white/20 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                    >
-                      <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
-                        <div
-                          className="h-11 w-11 rounded-2xl flex items-center justify-center text-xl shrink-0 border border-white/15 shadow-md"
-                          style={{ backgroundColor: platMeta.color || '#1c0f1f' }}
-                        >
-                          {platMeta.icon}
-                        </div>
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-sm text-white">
-                              {platMeta.name}
-                            </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                              item.active
-                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                                : 'bg-white/10 text-white/50 border border-white/10'
-                            }`}>
-                              {item.active ? '● Active Session' : '○ Disconnected'}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-xs text-white/70 flex-wrap">
-                            <span className="flex items-center gap-1 font-mono text-white/90">
-                              <span>Account:</span>
-                              <b className="text-white bg-white/10 px-2 py-0.5 rounded-md font-mono">{item.username || item.email || item.phone}</b>
-                            </span>
-                            {item.email && item.email !== item.username && (
-                              <span className="text-white/50 font-mono text-[11px]">Email: {item.email}</span>
-                            )}
-                            {item.phone && item.phone !== item.username && (
-                              <span className="text-white/50 font-mono text-[11px]">Phone: {item.phone}</span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-3 text-[11px] text-white/50 flex-wrap pt-0.5">
-                            <span className="flex items-center gap-1 text-white/70">
-                              <span>Room:</span>
-                              <Link href={`/room/${item.roomId}`} target="_blank" className="text-[#ff8fb3] hover:underline font-mono">
-                                #{item.roomId}
-                              </Link>
-                            </span>
-                            <span>Connected by: <b className="text-white/80">{item.connectedBy || 'User'}</b></span>
-                            <span>IP: <code className="text-cyan-300 font-mono text-[10px] bg-white/5 px-1 rounded">{item.ip || 'Unknown'}</code></span>
-                            <span className="flex items-center gap-1 text-white/40">
-                              <Clock className="h-3 w-3" />
-                              <span>{new Date(item.connectedAt).toLocaleString()}</span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-white/10">
-                        <button
-                          type="button"
-                          onClick={() => handleGhostJoin(item.roomId)}
-                          className="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                          title="Monitor this room invisibly"
-                        >
-                          <Eye className="h-3.5 w-3.5 text-purple-300" />
-                          <span>Ghost Monitor</span>
-                        </button>
-
-                        {item.active && (
-                          <button
-                            type="button"
-                            onClick={() => handleDisconnectOtt(item)}
-                            className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                            title="Disconnect this account"
-                          >
-                            <LogOut className="h-3.5 w-3.5 text-rose-400" />
-                            <span>Disconnect</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ================= TAB 2: SECURITY BLOCKLISTS ================= */}
         {activeTab === 'security' && (

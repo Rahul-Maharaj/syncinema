@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
+import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
 import {
   Heart,
   PlusCircle,
@@ -227,21 +229,7 @@ export default function SynCinemaPlatform() {
       {/* Modern Translucent Top Bar */}
       <header className="relative z-20 px-4 sm:px-8 py-3.5 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between gap-4">
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-500 p-0.5 shadow-lg shadow-pink-600/30 flex items-center justify-center">
-            <div className="h-full w-full rounded-[14px] bg-[#070817] flex items-center justify-center">
-              <Heart className="h-5 w-5 fill-rose-500 text-rose-500" />
-            </div>
-          </div>
-          <div>
-            <h1 className="font-black text-lg sm:text-xl text-white tracking-tight flex items-center gap-1.5">
-              <span>SynCinema</span>
-            </h1>
-            <p className="text-[10px] text-pink-300 font-bold tracking-wider uppercase">
-              Watch Together • Real-Time Sync
-            </p>
-          </div>
-        </div>
+        <BrandLogo size="md" showTagline={true} href="/" />
 
         {/* Status Pill & Privacy Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -606,161 +594,21 @@ export default function SynCinemaPlatform() {
         </div>
       </main>
 
-      {/* ================= FEATURES ADS & WEBSITE SHOWCASE SECTION ================= */}
-      <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10">
-        {/* Showcase Header Banner */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-rose-500/20 border border-pink-500/30 text-pink-300 text-xs font-extrabold uppercase tracking-widest backdrop-blur-xl shadow-lg">
-            <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
-            <span>SynCinema Platform Features &amp; Official Showcase</span>
-          </div>
-          <h3 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight drop-shadow-md">
-            Designed for Intimacy. Built for Seamless Streaming.
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Experience sub-second video synchronization, real-time duo calling, cozy soundscapes, and bulletproof password protection.
-          </p>
-        </div>
-
-        {/* Hero Website UI Showcase Ad Banner (Image of the website) */}
-        <div className="relative rounded-3xl border border-pink-500/35 bg-black/65 backdrop-blur-2xl p-3 sm:p-6 shadow-[0_25px_90px_rgba(236,72,153,0.2)] overflow-hidden group">
-          {/* Subtle Pink Ambient Halo */}
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[500px] h-48 bg-pink-500/25 rounded-full blur-[110px] pointer-events-none" />
-
-          {/* Browser / Auditorium Mockup Top Bar */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 mb-4 bg-black/50 rounded-2xl backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-rose-500/90 inline-block shadow-sm" />
-              <span className="h-3 w-3 rounded-full bg-amber-500/90 inline-block shadow-sm" />
-              <span className="h-3 w-3 rounded-full bg-emerald-500/90 inline-block shadow-sm" />
-              <span className="text-[11px] font-mono text-slate-300 pl-2 hidden sm:inline">
-                https://syncinema.app/room/midnight-lounge 🔒
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live 4K Ultra-HD Sync
-              </span>
-            </div>
-          </div>
-
-          {/* Website Image Showcase with Sleek Gradient Border */}
-          <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
-            <img
-              src="/feature-cinema-preview.png"
-              alt="SynCinema Website UI and Cinema Player Showcase"
-              className="w-full h-auto object-cover rounded-2xl transition duration-700 group-hover:scale-[1.01]"
-              loading="lazy"
-            />
-            {/* Ambient vignette */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-
-            {/* Floating Live Feature Overlay Pills */}
-            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-              <div className="flex items-center gap-2 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-xs text-white shadow-lg">
-                <Film className="h-4 w-4 text-pink-400" />
-                <span className="font-bold">Virtual Auditorium Interface</span>
-              </div>
-              <div className="flex items-center gap-2 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-xl border border-pink-500/40 text-xs text-pink-300 shadow-lg">
-                <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
-                <span className="font-bold">Real-Time Couples Sync</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 2-Column Feature Ads: Couple Experience + Universal Streaming */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Card 1: Long Distance Couples Connection */}
-          <div className="rounded-3xl border border-pink-500/30 bg-black/55 backdrop-blur-xl p-5 sm:p-7 shadow-xl flex flex-col justify-between space-y-5 hover:border-pink-500/60 transition">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-pink-400 uppercase tracking-wider">
-                <Heart className="h-4 w-4 fill-pink-500" />
-                <span>Couples &amp; Long-Distance First</span>
-              </div>
-              <h4 className="text-xl sm:text-2xl font-black text-white">
-                Long Distance? Feels Like You&apos;re On The Same Couch.
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Watch movies side-by-side with real-time video cam, synchronized reactions, intimacy lighting, and cozy ambient soundscapes (rain on window, crackling fireplace).
-              </p>
-            </div>
-
-            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-lg relative h-52 sm:h-60">
-              <img
-                src="/feature-couple.jpg"
-                alt="Couple watching synchronized movie together"
-                className="w-full h-full object-cover object-center"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-              <div className="absolute bottom-3.5 left-3.5 text-xs text-white font-semibold flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl backdrop-blur-md border border-white/15">
-                <Sparkles className="h-3.5 w-3.5 text-pink-400" />
-                <span>Zero Latency Duo Cam Included</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: High Security & 0ms Drift Engine */}
-          <div className="rounded-3xl border border-purple-500/30 bg-black/55 backdrop-blur-xl p-5 sm:p-7 shadow-xl flex flex-col justify-between space-y-5 hover:border-purple-500/60 transition">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-purple-400 uppercase tracking-wider">
-                <ShieldCheck className="h-4 w-4 text-purple-400" />
-                <span>Military-Grade Security &amp; Speed</span>
-              </div>
-              <h4 className="text-xl sm:text-2xl font-black text-white">
-                0ms Drift Clock Sync &amp; 100% Protected Rooms
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                SynCinema runs on a high-precision synchronized clock engine with zero buffer lag. Every room is locked with bcrypt passcodes so no hacker or unauthorized stranger can ever enter.
-              </p>
-            </div>
-
-            {/* Feature Bullets */}
-            <div className="space-y-2.5">
-              {[
-                { title: 'Sub-Second Precision Sync', desc: 'Auto-adjusts playback rate smoothly without jerky skips.' },
-                { title: 'Universal Video Sources', desc: 'YouTube, MP4, HLS, WebM, local device files, or share screen.' },
-                { title: 'Zero Accounts Required', desc: 'No email or password needed. Create a room and invite your partner immediately.' },
-                { title: 'Curated Ambiance Themes', desc: 'Soft Pink Romance, Cyberpunk Neon, Velvet Lounge, and Emerald Aurora.' },
-              ].map((feat, idx) => (
-                <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-white/5 border border-white/10 text-xs">
-                  <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-white">{feat.title}: </span>
-                    <span className="text-slate-300">{feat.desc}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                setActiveTab('create');
-              }}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-pink-600/30 hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Create Your Cinema Room Now</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* ================= COMPACT ANIMATED ADS SHOWCASE WITH REAL ROOM SCREENSHOTS ================= */}
+      <FeatureAdsShowcase
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
 
       {/* Sleek Translucent Footer */}
-      <footer className="relative z-10 text-center text-xs text-slate-300/80 py-6 max-w-4xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10">
-        <div className="flex items-center gap-2">
-          <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
-          <span className="font-semibold text-white">SynCinema Virtual Auditorium</span>
-        </div>
+      <footer className="relative z-10 text-center text-xs text-slate-300/80 py-6 max-w-5xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10">
+        <BrandLogo size="sm" showTagline={false} href="/" />
         <div className="flex items-center gap-4 text-xs">
           <span className="text-pink-300 font-medium">Different places... Same screen. 💖</span>
           <Link href="/admin" className="text-slate-400 hover:text-white transition underline font-mono text-[11px]">
-            Admin
+            Admin Console
           </Link>
         </div>
       </footer>

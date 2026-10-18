@@ -23,6 +23,7 @@ import RecentBar from '@/components/RecentBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
+import BrandLogo from '@/components/BrandLogo';
 
 // Curated Cinema Color Themes (Home screen matches 'midnight')
 export const ROOM_THEMES = {
@@ -690,11 +691,8 @@ export default function Room() {
       <header className={`hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
         {/* Left: Brand + Status + Capacity Pill */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <Link href="/" className="ghost !p-1 flex items-center shrink-0 hover:scale-105 transition" aria-label="Back to home" title="Back to home">
-            <img src="/logo.png" alt="SyncCinema Logo" className="h-6 w-6 sm:h-7 sm:w-7 object-contain" />
-          </Link>
+          <BrandLogo size="sm" showTagline={false} href="/" />
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <h1 className="font-display text-sm sm:text-base font-bold text-white tracking-wide truncate hidden sm:inline">SyncCinema</h1>
 
             {/* Interactive Room Capacity & Live Pill */}
             <button
