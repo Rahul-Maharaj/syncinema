@@ -1412,7 +1412,7 @@ export default function VideoPlayer({
               title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
             >
               {isFullscreen ? <Minimize2 className="h-3 w-3 text-white" /> : <Maximize2 className="h-3 w-3 text-rose-400" />}
-              <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+              <span className="hidden sm:inline">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
 
             <button
@@ -1426,7 +1426,7 @@ export default function VideoPlayer({
               title="Precision Sync, Speed & Audio Settings"
             >
               <Sliders className="h-3 w-3 text-rose-400" />
-              <span>Sync & Audio</span>
+              <span className="hidden sm:inline">Sync & Audio</span>
             </button>
           </div>
         )}
@@ -1964,7 +1964,7 @@ export default function VideoPlayer({
         </div>
 
         {/* High-Contrast, Crystal-Clear Secondary Action Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+        <div className="flex items-center gap-2 pt-1 text-xs overflow-x-auto no-scrollbar py-0.5">
           <button
             type="button"
             onClick={enqueue}

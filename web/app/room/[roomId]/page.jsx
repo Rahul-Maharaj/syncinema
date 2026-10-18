@@ -230,6 +230,7 @@ function MobileCallTabDeck({
                 isSpeaking={Boolean(callMedia?.remoteTalking?.[partner?.id])}
                 isCamOff={Boolean(callMedia?.remoteCamOff?.[partner?.id])}
                 isMicMuted={Boolean(callMedia?.remoteMicMuted?.[partner?.id])}
+                className="w-full h-full aspect-video !rounded-2xl"
               />
               {me === hostId && partner?.id && (
                 <button
@@ -278,6 +279,7 @@ function MobileCallTabDeck({
                 isCamOff={!callCam}
                 isMicMuted={!callMic}
                 disableFullscreen={true}
+                className="w-full h-full !aspect-auto !rounded-xl"
               />
             </div>
             <div className="min-w-0">
@@ -1474,7 +1476,7 @@ export default function Room() {
             </div>
 
             {/* Quick Synchronized Floating Reaction Bar */}
-            <div className={`my-1 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 p-2 sm:px-3 sm:py-2 rounded-2xl ${theme.navBg} border ${theme.borderColor} backdrop-blur-xl shadow-lg transition-colors duration-500`}>
+            <div className={`my-1 flex items-center justify-between gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-2xl ${theme.navBg} border ${theme.borderColor} backdrop-blur-xl shadow-lg transition-colors duration-500 overflow-x-auto no-scrollbar`}>
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
                   Reactions:
@@ -1532,7 +1534,7 @@ export default function Room() {
                   title="Change Room Color Theme & Ambiance"
                 >
                   <Palette className="h-3.5 w-3.5" />
-                  <span className="text-[11px] font-bold">{theme.name}</span>
+                  <span className="text-[11px] font-bold hidden sm:inline">{theme.name}</span>
                 </button>
 
                 {/* Quick Plugins Button inside Reaction Ribbon */}
@@ -1540,9 +1542,10 @@ export default function Room() {
                   type="button"
                   onClick={() => setShowPlugins(true)}
                   className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/40 text-purple-200 text-xs font-semibold hover:from-purple-600/50 hover:to-pink-600/50 transition cursor-pointer"
+                  title="Open Cinema Plugins"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-pink-400" />
-                  <span className="text-[11px]">Plugins</span>
+                  <span className="text-[11px] hidden sm:inline">Plugins</span>
                 </button>
 
                 <button
@@ -1563,7 +1566,7 @@ export default function Room() {
                   title="Full Screen Theater Mode (Movable Video Call)"
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
-                  <span className="text-[11px]">Full Screen</span>
+                  <span className="text-[11px] hidden sm:inline">Full Screen</span>
                 </button>
               </div>
             </div>
@@ -1589,12 +1592,12 @@ export default function Room() {
                   <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-60 overflow-y-auto">
                     {!isGhost && (
                       <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
-                        <Tile stream={callMedia?.mine} name="You" isPartner={false} voiceOnly={callMedia?.voiceOnly} isSpeaking={callMedia?.localTalking} isCamOff={!callCam} isMicMuted={!callMic} />
+                        <Tile stream={callMedia?.mine} name="You" isPartner={false} voiceOnly={callMedia?.voiceOnly} isSpeaking={callMedia?.localTalking} isCamOff={!callCam} isMicMuted={!callMic} className="w-full h-full aspect-video" />
                       </div>
                     )}
                     {users.filter(u => u.id !== me).map((u) => (
                       <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md group">
-                        <Tile stream={callMedia?.remote?.[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia?.voiceOnly} isSpeaking={!!callMedia?.remoteTalking?.[u.id]} isCamOff={!!callMedia?.remoteCamOff?.[u.id]} isMicMuted={!!callMedia?.remoteMicMuted?.[u.id]} />
+                        <Tile stream={callMedia?.remote?.[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia?.voiceOnly} isSpeaking={!!callMedia?.remoteTalking?.[u.id]} isCamOff={!!callMedia?.remoteCamOff?.[u.id]} isMicMuted={!!callMedia?.remoteMicMuted?.[u.id]} className="w-full h-full aspect-video" />
                         {me === hostId && (
                           <button
                             type="button"
@@ -1797,6 +1800,7 @@ export default function Room() {
                               isSpeaking={!!callMedia?.remoteTalking?.[partner?.id]}
                               isCamOff={!!callMedia?.remoteCamOff?.[partner?.id]}
                               isMicMuted={!!callMedia?.remoteMicMuted?.[partner?.id]}
+                              className="w-full h-full aspect-video"
                             />
                             {me === hostId && (
                               <button
@@ -1835,6 +1839,7 @@ export default function Room() {
                               isCamOff={!callCam}
                               isMicMuted={!callMic}
                               disableFullscreen={true}
+                              className="w-full h-full !aspect-auto"
                             />
                           </div>
                           <div className="min-w-0">

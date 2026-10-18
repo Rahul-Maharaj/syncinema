@@ -9,6 +9,7 @@ import {
   Volume2, VolumeX, Maximize2, Heart, Camera, Mic, MicOff, VideoOff, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
+import { ytId, vimeoId, toEmbed, toStreamProxyUrl, sanitizeDisplayTitle } from '@/lib/media';
 import BrandLogo from '@/components/BrandLogo';
 import CallErrorBoundary from '@/components/CallErrorBoundary';
 
@@ -431,6 +432,398 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
   );
 }
 
+// Real-time Synchronized Cinema Movie Player for Aurelia Admin Surveillance (Default Muted)
+function AdminRoomMoviePlayer({
+  roomId,
+  media,
+  playing = false,
+  currentTime = 0,
+  masterMuted = true,
+  onRemoteControl,
+  onOpenOverride,
+  onBlockUrl,
+}) {
+  const videoRef = useRef(null);
+  const hlsRef = useRef(null);
+  const containerRef = useRef(null);
+  const [individualMuted, setIndividualMuted] = useState(null); // null = inherit masterMuted, boolean = manual toggle
+  const [localTime, setLocalTime] = useState(currentTime || 0);
+  const [duration, setDuration] = useState(0);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  // Default is strictly MUTED unless explicitly unmuted
+  const effectiveMuted = individualMuted !== null ? individualMuted : Boolean(masterMuted);
+
+  const src = media?.src || '';
+  const type = media?.type || 'auto';
+  const displayTitle = sanitizeDisplayTitle(media?.title || src || 'Room Stream');
+  const isYoutube = type === 'youtube' || Boolean(ytId(src));
+  const isVimeo = type === 'vimeo' || Boolean(vimeoId(src));
+  const isEmbed = type === 'embed';
+  const isHls = type === 'hls' || (typeof src === 'string' && src.split('?')[0].toLowerCase().endsWith('.m3u8'));
+  const hasMedia = Boolean(src && type !== 'none');
+
+  // Keep local time in sync with room.currentTime prop when not scrubbing
+  useEffect(() => {
+    if (!isScrubbing) {
+      setLocalTime(currentTime || 0);
+      if (videoRef.current && Math.abs(videoRef.current.currentTime - (currentTime || 0)) > 2.5) {
+        try { videoRef.current.currentTime = currentTime || 0; } catch {}
+      }
+    }
+  }, [currentTime, isScrubbing]);
+
+  // Video element initialization for HLS & Direct video
+  useEffect(() => {
+    if (!hasMedia || isYoutube || isVimeo || isEmbed) return;
+    const v = videoRef.current;
+    if (!v) return;
+
+    let destroyed = false;
+    setIsBuffering(true);
+    setLoadError('');
+
+    if (isHls) {
+      if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = src;
+        v.muted = effectiveMuted;
+        if (playing) v.play().catch(() => {});
+      } else {
+        import('hls.js').then(({ default: Hls }) => {
+          if (destroyed || !v) return;
+          if (Hls.isSupported()) {
+            const h = new Hls({
+              enableWorker: true,
+              lowLatencyMode: false,
+              backBufferLength: 30,
+              maxBufferLength: 30,
+            });
+            hlsRef.current = h;
+            h.loadSource(src);
+            h.attachMedia(v);
+            h.on(Hls.Events.MANIFEST_PARSED, () => {
+              setIsBuffering(false);
+              v.muted = effectiveMuted;
+              if (playing) v.play().catch(() => {});
+            });
+            h.on(Hls.Events.ERROR, () => {
+              if (!v.src.includes('/api/stream') && src) {
+                v.src = toStreamProxyUrl(src);
+                v.load();
+                if (playing) v.play().catch(() => {});
+              }
+            });
+          } else {
+            v.src = toStreamProxyUrl(src);
+            v.load();
+            if (playing) v.play().catch(() => {});
+          }
+        }).catch(() => {
+          v.src = toStreamProxyUrl(src);
+          v.load();
+        });
+      }
+    } else {
+      v.src = src;
+      v.muted = effectiveMuted;
+      if (playing) v.play().catch(() => {});
+    }
+
+    const onLoadedMetadata = () => {
+      setIsBuffering(false);
+      if (v.duration && Number.isFinite(v.duration)) setDuration(v.duration);
+      if (currentTime) {
+        try { v.currentTime = currentTime; } catch {}
+      }
+    };
+    const onTimeUpdate = () => {
+      if (!isScrubbing) setLocalTime(v.currentTime);
+    };
+    const onWaiting = () => setIsBuffering(true);
+    const onPlaying = () => setIsBuffering(false);
+    const onError = () => {
+      if (!v.src.includes('/api/stream') && src) {
+        v.src = toStreamProxyUrl(src);
+        v.load();
+        if (playing) v.play().catch(() => {});
+      } else {
+        setLoadError('Direct playback restricted (CORS/DRM)');
+        setIsBuffering(false);
+      }
+    };
+
+    v.addEventListener('loadedmetadata', onLoadedMetadata);
+    v.addEventListener('timeupdate', onTimeUpdate);
+    v.addEventListener('waiting', onWaiting);
+    v.addEventListener('playing', onPlaying);
+    v.addEventListener('error', onError);
+
+    return () => {
+      destroyed = true;
+      v.removeEventListener('loadedmetadata', onLoadedMetadata);
+      v.removeEventListener('timeupdate', onTimeUpdate);
+      v.removeEventListener('waiting', onWaiting);
+      v.removeEventListener('playing', onPlaying);
+      v.removeEventListener('error', onError);
+      if (hlsRef.current) {
+        try { hlsRef.current.destroy(); } catch {}
+        hlsRef.current = null;
+      }
+    };
+  }, [src, isHls, isYoutube, isVimeo, isEmbed, hasMedia]);
+
+  // Synchronize playing / pause state
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (playing) {
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [playing]);
+
+  // Synchronize mute audio state
+  useEffect(() => {
+    const v = videoRef.current;
+    if (v) {
+      v.muted = effectiveMuted;
+    }
+  }, [effectiveMuted]);
+
+  const handleFullscreen = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    try {
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } catch {}
+  };
+
+  const handleSeekCommit = (e) => {
+    const val = Number(e.target.value);
+    setIsScrubbing(false);
+    if (videoRef.current) {
+      try { videoRef.current.currentTime = val; } catch {}
+    }
+    onRemoteControl?.(roomId, 'seek', { time: val });
+  };
+
+  const yt = ytId(src);
+  const vm = vimeoId(src);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative aspect-video rounded-xl bg-black border border-pink-500/30 overflow-hidden shadow-2xl group transition-all duration-200 hover:border-pink-500/60"
+    >
+      {/* Stream Playback Layer */}
+      {hasMedia ? (
+        <>
+          {isYoutube && yt ? (
+            <iframe
+              key={`${yt}-${effectiveMuted}-${playing}`}
+              src={`https://www.youtube-nocookie.com/embed/${yt}?autoplay=${playing ? 1 : 0}&mute=${effectiveMuted ? 1 : 0}&start=${Math.floor(currentTime || 0)}&controls=1&enablejsapi=1`}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              title={`Room ${roomId} - YouTube`}
+            />
+          ) : isVimeo && vm ? (
+            <iframe
+              key={`${vm}-${effectiveMuted}-${playing}`}
+              src={`https://player.vimeo.com/video/${vm}?autoplay=${playing ? 1 : 0}&muted=${effectiveMuted ? 1 : 0}#t=${Math.floor(currentTime || 0)}s`}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media; fullscreen"
+              title={`Room ${roomId} - Vimeo`}
+            />
+          ) : isEmbed ? (
+            <iframe
+              src={toEmbed(src) || src}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media; fullscreen"
+              title={`Room ${roomId} - Embed`}
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted={effectiveMuted}
+              className="w-full h-full object-contain bg-black"
+            />
+          )}
+
+          {/* Buffering Spinner */}
+          {isBuffering && !isYoutube && !isVimeo && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+              <div className="h-8 w-8 rounded-full border-2 border-pink-500/30 border-t-pink-500 animate-spin" />
+            </div>
+          )}
+
+          {/* Load error warning */}
+          {loadError && (
+            <div className="absolute inset-x-2 top-11 bg-rose-950/80 border border-rose-500/40 text-[10px] text-rose-300 px-2 py-1 rounded backdrop-blur-md flex items-center justify-between">
+              <span>{loadError}</span>
+              {onOpenOverride && (
+                <button
+                  type="button"
+                  onClick={() => onOpenOverride(roomId)}
+                  className="underline hover:text-white"
+                >
+                  Override Stream
+                </button>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-gradient-to-b from-purple-950/30 to-black/90 space-y-1.5">
+          <div className="h-9 w-9 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 animate-pulse">
+            <Film className="h-4 w-4" />
+          </div>
+          <span className="text-xs font-bold text-white">Cinema Standby • No Media</span>
+          <span className="text-[10px] text-purple-300/70 max-w-[200px]">Waiting for occupants to load a movie</span>
+          {onOpenOverride && (
+            <button
+              type="button"
+              onClick={() => onOpenOverride(roomId)}
+              className="mt-1 px-3 py-1 rounded-lg bg-pink-600/30 hover:bg-pink-600/50 border border-pink-500/40 text-[10px] font-semibold text-pink-200 transition cursor-pointer"
+            >
+              🎬 Force Play Stream
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Top Overlay Badge */}
+      <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none z-20">
+        <div className="flex items-center gap-1.5 bg-black/85 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 max-w-[70%]">
+          <Film className="h-3 w-3 text-pink-400 shrink-0" />
+          <span className="text-[10px] font-bold text-white truncate" title={displayTitle}>
+            {displayTitle || 'Room Movie'}
+          </span>
+          <span className="text-[8px] font-mono text-purple-300 bg-purple-500/20 px-1 py-0.2 rounded border border-purple-500/30 shrink-0 uppercase">
+            {type}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1 pointer-events-auto">
+          <span
+            className={`px-2 py-0.5 rounded-md text-[9px] font-bold flex items-center gap-1 ${
+              !hasMedia
+                ? 'bg-white/10 text-white/50 border border-white/10'
+                : playing
+                ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+            }`}
+          >
+            {playing && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />}
+            <span>{!hasMedia ? 'IDLE' : playing ? 'PLAYING' : 'PAUSED'}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Bottom Overlay Controls & Scrubber */}
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/85 to-transparent p-2 space-y-1.5 z-20">
+        {/* Timeline Scrubber */}
+        {hasMedia && (
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={duration || Math.max(localTime, 100)}
+              step={1}
+              value={localTime}
+              onMouseDown={() => setIsScrubbing(true)}
+              onTouchStart={() => setIsScrubbing(true)}
+              onChange={(e) => setLocalTime(Number(e.target.value))}
+              onMouseUp={handleSeekCommit}
+              onTouchEnd={handleSeekCommit}
+              className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-pink-500 transition hover:h-1.5"
+              title="Scrub room movie timeline"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-xs text-white">
+          {/* Left action buttons */}
+          <div className="flex items-center gap-1.5">
+            {/* Remote Play/Pause */}
+            {hasMedia && onRemoteControl && (
+              <button
+                type="button"
+                onClick={() => onRemoteControl(roomId, playing ? 'pause' : 'play')}
+                className="p-1 rounded bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+                title={playing ? 'Remote Pause room' : 'Remote Play room'}
+              >
+                {playing ? <Pause className="h-3 w-3 text-amber-300" /> : <Play className="h-3 w-3 text-emerald-400" />}
+              </button>
+            )}
+
+            {/* Mute/Unmute Audio Button (DEFAULT MUTED) */}
+            <button
+              type="button"
+              onClick={() => setIndividualMuted(!effectiveMuted)}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 transition cursor-pointer ${
+                effectiveMuted
+                  ? 'bg-black/80 hover:bg-black text-white/80 border border-white/20'
+                  : 'bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/40 animate-pulse'
+              }`}
+              title={effectiveMuted ? 'Unmute movie audio' : 'Mute movie audio'}
+            >
+              {effectiveMuted ? <VolumeX className="h-3 w-3 text-slate-300" /> : <Volume2 className="h-3 w-3 text-white" />}
+              <span>{effectiveMuted ? 'Muted 🔇' : 'Audio 🔊'}</span>
+            </button>
+
+            {/* Time Display */}
+            {hasMedia && (
+              <span className="font-mono text-[9px] text-white/80 bg-black/60 px-1 py-0.5 rounded border border-white/10">
+                ⏱️ {fmt(localTime)}{duration ? ` / ${fmt(duration)}` : ''}
+              </span>
+            )}
+          </div>
+
+          {/* Right action buttons */}
+          <div className="flex items-center gap-1">
+            {hasMedia && onRemoteControl && (
+              <button
+                type="button"
+                onClick={() => onRemoteControl(roomId, 'stop')}
+                className="p-1 rounded bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 transition cursor-pointer"
+                title="Stop movie in room"
+              >
+                <Square className="h-2.5 w-2.5" />
+              </button>
+            )}
+
+            {hasMedia && onBlockUrl && src && (
+              <button
+                type="button"
+                onClick={() => onBlockUrl(src)}
+                className="p-1 rounded bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 transition cursor-pointer"
+                title="Blacklist video URL"
+              >
+                <Ban className="h-2.5 w-2.5" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleFullscreen}
+              className="p-1 rounded bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+              title="Fullscreen video feed"
+            >
+              <Maximize2 className="h-2.5 w-2.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState('');
   const [keyInput, setKeyInput] = useState('');
@@ -454,7 +847,10 @@ export default function AdminPage() {
 
   const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'videocalls' | 'locations' | 'security' | 'broadcast'
   const [expandedCallRooms, setExpandedCallRooms] = useState({});
+  const [expandedMovieRooms, setExpandedMovieRooms] = useState({});
   const [globalListenAudio, setGlobalListenAudio] = useState(false);
+  const [globalMovieAudio, setGlobalMovieAudio] = useState(false); // DEFAULT MUTED VIDEO PLAY
+  const [surveillanceMode, setSurveillanceMode] = useState('split'); // 'split' | 'movies' | 'cams'
   const [search, setSearch] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [toast, setToast] = useState(null);
@@ -1076,11 +1472,11 @@ export default function AdminPage() {
 
         {/* Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3 gap-3 flex-wrap">
-          <div className="flex rounded-xl bg-white/5 p-1 border border-white/10 gap-1 text-xs flex-wrap">
+          <div className="flex rounded-xl bg-white/5 p-1 border border-white/10 gap-1 text-xs max-w-full overflow-x-auto no-scrollbar shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('rooms')}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer shrink-0 ${
                 activeTab === 'rooms'
                   ? 'bg-[#d9467a] text-white shadow-md'
                   : 'text-white/70 hover:text-white'
@@ -1092,14 +1488,14 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => setActiveTab('videocalls')}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer shrink-0 ${
                 activeTab === 'videocalls'
                   ? 'bg-[#d9467a] text-white shadow-md'
                   : 'text-white/70 hover:text-white'
               }`}
             >
-              <Video className="h-3.5 w-3.5 text-pink-300" />
-              <span>🎥 Live Video Calls ({allConnectedUsers.length})</span>
+              <Video className="h-3.5 w-3.5 text-pink-300 animate-pulse" />
+              <span>🎥 Total Surveillance Room ({filteredRooms.length} Rooms &bull; {allConnectedUsers.length} Cams)</span>
               {allConnectedUsers.length > 0 && (
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1271,6 +1667,25 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => {
+                              setExpandedMovieRooms((prev) => ({
+                                ...prev,
+                                [room.roomId]: !prev[room.roomId],
+                              }));
+                            }}
+                            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                              expandedMovieRooms[room.roomId]
+                                ? 'bg-rose-600/30 border-rose-500/60 text-rose-200 shadow-rose-600/20'
+                                : 'bg-white/10 hover:bg-white/15 border-white/20 text-slate-200'
+                            }`}
+                            title={expandedMovieRooms[room.roomId] ? 'Hide live movie preview' : 'Watch live movie preview inline'}
+                          >
+                            <Film className="h-3.5 w-3.5 text-rose-400" />
+                            <span>{expandedMovieRooms[room.roomId] ? 'Hide Movie' : '🎬 Live Movie'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
                               setExpandedCallRooms((prev) => ({
                                 ...prev,
                                 [room.roomId]: !prev[room.roomId],
@@ -1308,6 +1723,22 @@ export default function AdminPage() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Inline Live Movie Player Monitor */}
+                      {expandedMovieRooms[room.roomId] && (
+                        <div className="animate-in fade-in duration-200">
+                          <AdminRoomMoviePlayer
+                            roomId={room.roomId}
+                            media={room.media}
+                            playing={room.playing}
+                            currentTime={room.currentTime}
+                            masterMuted={globalMovieAudio}
+                            onRemoteControl={handleVideoControl}
+                            onOpenOverride={(rid) => setOverrideModal({ open: true, roomId: rid, src: '', title: '' })}
+                            onBlockUrl={handleBlockVideoUrl}
+                          />
+                        </div>
+                      )}
 
                       {/* Inline Live Video Call Monitor */}
                       {expandedCallRooms[room.roomId] && (
@@ -1558,7 +1989,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ================= TAB: LIVE VIDEO CALLS SURVEILLANCE RADAR ================= */}
+        {/* ================= TAB: TOTAL SURVEILLANCE ROOM (MOVIES & VIDEO CALLS) ================= */}
         {activeTab === 'videocalls' && (
           <div className="space-y-6">
             {/* Master Surveillance Overview Banner */}
@@ -1566,10 +1997,10 @@ export default function AdminPage() {
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <div className="h-9 w-9 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-pink-300 shadow-md">
-                    <Video className="h-5 w-5" />
+                    <Video className="h-5 w-5 animate-pulse" />
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 flex-wrap">
-                    <span>Live Video Call Surveillance Radar</span>
+                    <span>🎥 Total Surveillance Room &amp; Command Center</span>
                     <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider flex items-center gap-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
                       100% Invisible Admin
@@ -1577,30 +2008,98 @@ export default function AdminPage() {
                   </h3>
                 </div>
                 <p className="text-xs text-white/60 max-w-2xl">
-                  Supervise real-time WebRTC camera &amp; audio feeds across every active room simultaneously. Admin hardware cameras and microphones remain completely powered off (0 cam LED, 0 mic) and room participants receive zero notification.
+                  Simultaneously supervise live cinema movie playback and stealth WebRTC cameras across all rooms. All video playback is defaulted to muted with individual &amp; master audio toggles.
                 </p>
               </div>
 
-              {/* Master Control Action Bar */}
-              <div className="flex items-center gap-3 flex-wrap">
+              {/* Master Audio Action Controls */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Master Movie Audio Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setGlobalMovieAudio(!globalMovieAudio)}
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-lg ${
+                    globalMovieAudio
+                      ? 'bg-rose-600 border-rose-500 text-white shadow-rose-600/30 animate-pulse'
+                      : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/15'
+                  }`}
+                  title={globalMovieAudio ? 'Mute all room movies' : 'Unmute audio across all room movies'}
+                >
+                  {globalMovieAudio ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                  <span>{globalMovieAudio ? 'Movies Audio: UNMUTED 🔊' : 'Movies Audio: MUTED 🔇'}</span>
+                </button>
+
+                {/* Master Call Audio Toggle */}
                 <button
                   type="button"
                   onClick={() => setGlobalListenAudio(!globalListenAudio)}
-                  className={`px-4 py-2 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-lg ${
+                  className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-lg ${
                     globalListenAudio
                       ? 'bg-rose-600 border-rose-500 text-white shadow-rose-600/30 animate-pulse'
                       : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/15'
                   }`}
-                  title={globalListenAudio ? 'Mute all room calls' : 'Unmute audio across all monitored rooms'}
+                  title={globalListenAudio ? 'Mute all room calls' : 'Unmute audio across all room calls'}
                 >
                   {globalListenAudio ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                  <span>{globalListenAudio ? 'Master Audio: UNMUTED 🔊' : 'Master Audio: MUTED 🔇'}</span>
+                  <span>{globalListenAudio ? 'Calls Audio: UNMUTED 🔊' : 'Calls Audio: MUTED 🔇'}</span>
                 </button>
 
+                {/* Active Counters Pill */}
                 <div className="px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-slate-300 flex items-center gap-2">
+                  <Film className="h-3.5 w-3.5 text-pink-400" />
+                  <span>Rooms: <strong className="text-white">{filteredRooms.length}</strong></span>
+                  <span className="text-slate-500">•</span>
                   <Users className="h-3.5 w-3.5 text-cyan-400" />
-                  <span>Total Callers: <strong className="text-white">{allConnectedUsers.length}</strong></span>
+                  <span>Callers: <strong className="text-white">{allConnectedUsers.length}</strong></span>
                 </div>
+              </div>
+            </div>
+
+            {/* Surveillance Matrix View Switcher */}
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3 flex-wrap">
+              <div className="flex rounded-xl bg-white/5 p-1 border border-white/10 gap-1 text-xs max-w-full overflow-x-auto no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setSurveillanceMode('split')}
+                  className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                    surveillanceMode === 'split'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-pink-300" />
+                  <span>🎬 Split Cinema Matrix (Movie + Cams)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSurveillanceMode('movies')}
+                  className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                    surveillanceMode === 'movies'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Film className="h-3.5 w-3.5 text-rose-300" />
+                  <span>📺 Cinema CCTV Wall (All Room Movies)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSurveillanceMode('cams')}
+                  className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition cursor-pointer shrink-0 ${
+                    surveillanceMode === 'cams'
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Video className="h-3.5 w-3.5 text-purple-300" />
+                  <span>📹 Cams Radar (All Webcams)</span>
+                </button>
+              </div>
+
+              <div className="text-[11px] text-slate-400">
+                Mode: <strong className="text-white capitalize">{surveillanceMode} Matrix</strong> &bull; Videos Default Muted 🔇
               </div>
             </div>
 
@@ -1608,15 +2107,16 @@ export default function AdminPage() {
             {filteredRooms.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl space-y-3">
                 <Video className="mx-auto h-12 w-12 text-white/20" />
-                <h3 className="text-base font-semibold text-white">No active video call rooms</h3>
+                <h3 className="text-base font-semibold text-white">No active rooms found</h3>
                 <p className="text-xs text-white/50 max-w-sm mx-auto">
                   {search
-                    ? 'No rooms or callers match your search query.'
-                    : 'When visitors create or join cinema couches, their live video and audio streams will appear here in real-time.'}
+                    ? 'No rooms, movies, or callers match your search query.'
+                    : 'When visitors create or join cinema couches, their synchronized movie and live camera streams will appear here in real-time.'}
                 </p>
               </div>
-            ) : (
-              <div className="grid gap-6 lg:grid-cols-2">
+            ) : surveillanceMode === 'split' ? (
+              /* ================= MODE 1: SPLIT CINEMA MATRIX (MOVIE + CAMS) ================= */
+              <div className="space-y-6">
                 {filteredRooms.map((room) => {
                   const roomUsers = room.users || [];
                   const hostUser = roomUsers.find((u) => u.isHost) || roomUsers[0];
@@ -1624,24 +2124,24 @@ export default function AdminPage() {
                   return (
                     <div
                       key={room.roomId}
-                      className="rounded-2xl border border-pink-500/25 bg-[#0e0a16]/85 p-5 shadow-2xl backdrop-blur-2xl space-y-4 hover:border-pink-500/50 transition flex flex-col justify-between"
+                      className="rounded-2xl border border-pink-500/25 bg-[#0b0816]/90 p-4 sm:p-5 shadow-2xl backdrop-blur-2xl space-y-4 hover:border-pink-500/50 transition flex flex-col justify-between"
                     >
                       {/* Room Header inside Surveillance Grid */}
-                      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+                      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3 flex-wrap sm:flex-nowrap">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-mono text-base font-black text-white tracking-wide">
                               {room.roomId}
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 font-semibold">
+                            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 font-semibold">
                               {roomUsers.length} {roomUsers.length === 1 ? 'member' : 'members'}
                             </span>
                             {room.media?.title && (
                               <span
-                                className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-slate-300 border border-white/10 truncate max-w-[200px]"
+                                className="text-[10px] px-2.5 py-0.5 rounded-md bg-white/5 text-slate-300 border border-white/10 truncate max-w-[220px]"
                                 title={room.media.title}
                               >
-                                🎬 {room.media.title}
+                                🎬 {sanitizeDisplayTitle(room.media.title)}
                               </span>
                             )}
                           </div>
@@ -1664,16 +2164,16 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => handleGhostJoin(room.roomId)}
-                            className="rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 px-2.5 py-1 text-xs font-semibold text-purple-200 transition flex items-center gap-1 shadow-sm"
-                            title="Open full stealth ghost control modal for this room"
+                            className="rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 px-3 py-1.5 text-xs font-semibold text-purple-200 transition flex items-center gap-1 shadow-sm cursor-pointer"
+                            title="Open stealth ghost spectator modal"
                           >
-                            <span>👻 Ghost</span>
+                            <span>👻 Ghost Monitor</span>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => handleBlockRoom(room.roomId)}
-                            className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2 py-1 text-xs text-rose-300 transition flex items-center gap-1"
+                            className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2.5 py-1.5 text-xs text-rose-300 transition flex items-center gap-1 cursor-pointer"
                             title="Terminate room"
                           >
                             <Ban className="h-3.5 w-3.5" />
@@ -1681,17 +2181,111 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Embedded Live Video Call Feeds */}
-                      <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
-                        <StealthCallMonitor
-                          roomId={room.roomId}
-                          users={roomUsers}
-                          externalListenAudio={globalListenAudio}
-                        />
-                      </CallErrorBoundary>
+                      {/* Split Row: Movie Player (Left) + Video Calls (Right) */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                        {/* Column 1: Live Synchronized Movie Playback (Default Muted) */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-300 px-1">
+                            <span className="flex items-center gap-1.5 text-pink-300">
+                              <Film className="h-3.5 w-3.5" />
+                              <span>Synchronized Movie Playback</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {room.media?.title ? sanitizeDisplayTitle(room.media.title) : 'Idle'}
+                            </span>
+                          </div>
+                          <AdminRoomMoviePlayer
+                            roomId={room.roomId}
+                            media={room.media}
+                            playing={room.playing}
+                            currentTime={room.currentTime}
+                            masterMuted={globalMovieAudio}
+                            onRemoteControl={handleVideoControl}
+                            onOpenOverride={(rid) => setOverrideModal({ open: true, roomId: rid, src: '', title: '' })}
+                            onBlockUrl={handleBlockVideoUrl}
+                          />
+                        </div>
+
+                        {/* Column 2: Live Video Calls Stealth Radar */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-300 px-1">
+                            <span className="flex items-center gap-1.5 text-purple-300">
+                              <Video className="h-3.5 w-3.5" />
+                              <span>Room Video Calls ({roomUsers.length})</span>
+                            </span>
+                            <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                              <span>Live WebRTC</span>
+                            </span>
+                          </div>
+                          <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
+                            <StealthCallMonitor
+                              roomId={room.roomId}
+                              users={roomUsers}
+                              externalListenAudio={globalListenAudio}
+                            />
+                          </CallErrorBoundary>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
+              </div>
+            ) : surveillanceMode === 'movies' ? (
+              /* ================= MODE 2: CINEMA CCTV WALL (ALL ROOM MOVIES) ================= */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredRooms.map((room) => (
+                  <div
+                    key={room.roomId}
+                    className="rounded-2xl border border-pink-500/25 bg-black/85 p-3.5 shadow-2xl backdrop-blur-2xl space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between text-xs px-1 border-b border-white/10 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-white">{room.roomId}</span>
+                        <span className="text-[10px] text-slate-400">({room.users?.length || 0} users)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleGhostJoin(room.roomId)}
+                        className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-200 hover:bg-purple-500/30 transition cursor-pointer"
+                      >
+                        👻 Ghost
+                      </button>
+                    </div>
+                    <AdminRoomMoviePlayer
+                      roomId={room.roomId}
+                      media={room.media}
+                      playing={room.playing}
+                      currentTime={room.currentTime}
+                      masterMuted={globalMovieAudio}
+                      onRemoteControl={handleVideoControl}
+                      onOpenOverride={(rid) => setOverrideModal({ open: true, roomId: rid, src: '', title: '' })}
+                      onBlockUrl={handleBlockVideoUrl}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* ================= MODE 3: CAMS RADAR (ALL WEBCAMS) ================= */
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredRooms.map((room) => (
+                  <div
+                    key={room.roomId}
+                    className="rounded-2xl border border-pink-500/25 bg-black/85 p-3.5 shadow-2xl backdrop-blur-2xl space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between text-xs px-1 border-b border-white/10 pb-2">
+                      <span className="font-mono font-bold text-white">{room.roomId}</span>
+                      <span className="text-[10px] text-purple-300 font-semibold">{room.users?.length || 0} Callers</span>
+                    </div>
+                    <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
+                      <StealthCallMonitor
+                        roomId={room.roomId}
+                        users={room.users || []}
+                        externalListenAudio={globalListenAudio}
+                      />
+                    </CallErrorBoundary>
+                  </div>
+                ))}
               </div>
             )}
           </div>

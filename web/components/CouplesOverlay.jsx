@@ -247,7 +247,7 @@ export function Tile({
     <div
       onDoubleClick={disableFullscreen ? undefined : toggleFullscreen}
       className={`group relative overflow-hidden rounded-2xl bg-[#080612] transition-all duration-300 shrink-0 ${
-        className || 'aspect-video w-36 sm:w-44'
+        className || 'w-full h-full aspect-video'
       } ${
         isSpeaking
           ? 'ring-2 ring-pink-500 shadow-[0_0_25px_rgba(236,72,153,0.35)] scale-[1.01]'
@@ -954,19 +954,7 @@ export default function CouplesOverlay({
         })}
       </div>
 
-      {/* 1. MOBILE PHONE FLOATING MINI-PIP (Shown when user is on another tab like Chat or Watch, so call never covers typing) */}
-      {!isMobileCallActive && showCall && (
-        <button
-          type="button"
-          onClick={() => onSwitchToCallTab?.()}
-          className="lg:hidden fixed bottom-20 right-3 z-30 flex items-center gap-2 rounded-full border border-pink-500/40 bg-black/90 backdrop-blur-xl px-3.5 py-2 text-xs font-semibold text-white shadow-2xl cursor-pointer hover:border-pink-400 active:scale-95 transition"
-          title="Open Video Call Tab"
-        >
-          {cam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-          <span className="text-pink-200">Video Call</span>
-          {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />}
-        </button>
-      )}
+
 
       {/* 3. DESKTOP FLOATING WINDOW (Hidden on mobile phones, preserved for desktop displays) */}
       {isHidden ? (
@@ -1016,7 +1004,16 @@ export default function CouplesOverlay({
           <div className={`flex ${layout === 'side' ? 'flex-row overflow-x-auto max-w-[85vw]' : 'flex-col'} gap-2`}>
             {/* Local User Tile */}
             {!isGhost && (
-              <Tile stream={mine} name="You" isPartner={false} voiceOnly={voiceOnly} isSpeaking={localTalking} isCamOff={!cam} isMicMuted={!mic} />
+              <Tile
+                stream={mine}
+                name="You"
+                isPartner={false}
+                voiceOnly={voiceOnly}
+                isSpeaking={localTalking}
+                isCamOff={!cam}
+                isMicMuted={!mic}
+                className="aspect-video w-36 sm:w-44"
+              />
             )}
 
             {/* Remote Peer Tiles */}
@@ -1030,6 +1027,7 @@ export default function CouplesOverlay({
                 isSpeaking={!!remoteTalking[u.id]}
                 isCamOff={!!remoteCamOff[u.id]}
                 isMicMuted={!!remoteMicMuted[u.id]}
+                className="aspect-video w-36 sm:w-44"
               />
             ))}
           </div>
