@@ -72,8 +72,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       iconColor: 'text-cyan-400',
       title: 'Universal Media & Screen Share',
       tagline: 'Paste any video link or play directly from your disk.',
-      image: '/ad-sync-engine.jpg',
-      imageAlt: 'Universal Media Streaming Multi-Device Artwork',
+      image: '/ad-universal-media.jpg',
+      imageAlt: 'Holographic Streaming Media Portal Artwork',
       description:
         'Supports YouTube, direct MP4/HLS streams, local computer files without uploading to external servers, and instant browser screen sharing in crisp 1080p and 4K.',
       specs: ['YouTube Integration', 'Direct MP4 & HLS Links', 'Local File Sync', '1-Click Screen Share'],
@@ -86,8 +86,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       iconColor: 'text-amber-400',
       title: 'Zero Logins & Bcrypt Passcodes',
       tagline: 'Strictly confidential. No accounts or trackers.',
-      image: '/ad-theater-experience.jpg',
-      imageAlt: 'Confidential Watch Party Artwork',
+      image: '/ad-privacy-vault.jpg',
+      imageAlt: 'Cryptographic Privacy Vault Artwork',
       description:
         'SynCinema never asks for email, passwords, or personal logins. Every room is locked with bcrypt passcodes and automatically locks its doors when capacity is reached.',
       specs: ['No Accounts Needed', 'Bcrypt Hashed Passcodes', 'Auto-Lock on Entry', 'Zero Tracking Logs'],
@@ -100,8 +100,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       iconColor: 'text-pink-400',
       title: '4 Cinema Palettes & Soundscapes',
       tagline: 'Cozy vibes: rain on window, crackling fireplace.',
-      image: '/ad-duo-cinema.jpg',
-      imageAlt: 'Romantic Cozy Cinema Ambiance Artwork',
+      image: '/ad-luxury-soundscape.jpg',
+      imageAlt: 'Luxury Penthouse Night Rain & Fireplace Soundscape Artwork',
       description:
         'Immerse your room in Soft Pink Romance, Cyberpunk Neon, Velvet Lounge, or Emerald Aurora. Turn on background ambient rain or fireplace sounds for the ultimate date night.',
       specs: ['4 Curated Color Themes', 'Fireplace & Rain Audio', 'Synchronized Ambiance', 'OLED Zero Glare'],

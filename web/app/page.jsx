@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
+import HowItWorksGuide from '@/components/HowItWorksGuide';
 import {
   Heart,
   PlusCircle,
@@ -69,10 +70,6 @@ export default function SynCinemaPlatform() {
   const [maxSeats, setMaxSeats] = useState(2);
   const [createError, setCreateError] = useState('');
 
-  // Quick Stream Bar State
-  const [streamUrl, setStreamUrl] = useState('');
-  const [streamPass, setStreamPass] = useState('');
-  const [showStreamPass, setShowStreamPass] = useState(false);
 
   // Join Room State
   const [joinCode, setJoinCode] = useState('');
@@ -102,7 +99,6 @@ export default function SynCinemaPlatform() {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setRoomPass(code);
-    setStreamPass(code);
     setShowRoomPass(true);
     setCreateError('');
   };
@@ -155,27 +151,6 @@ export default function SynCinemaPlatform() {
     router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1&max=${maxSeats}`);
   };
 
-  // 1-Click Instant Watch Party for pasted video URL or movie title
-  const handleInstantStream = (e) => {
-    e?.preventDefault?.();
-    const query = streamUrl.trim();
-    if (!query) return;
-
-    const p = (streamPass || roomPass).trim() || 'cinema-' + Math.floor(100 + Math.random() * 900);
-    const roomId = safeId(10);
-
-    try {
-      sessionStorage.setItem('rp_' + roomId, p);
-      sessionStorage.setItem('is_create_' + roomId, '1');
-      sessionStorage.setItem('max_users_' + roomId, '2');
-      sessionStorage.setItem('init_video_' + roomId, query);
-      localStorage.setItem('rp_' + roomId, p);
-      localStorage.setItem('lastRoom', roomId);
-    } catch {}
-
-    notify(`🚀 Starting instant synced cinema!`);
-    router.push(`/room/${roomId}#pass=${encodeURIComponent(p)}&create=1&max=2`);
-  };
 
   // Join Room with Code or Link (Strict password check)
   const handleJoinRoom = (e) => {
@@ -273,37 +248,25 @@ export default function SynCinemaPlatform() {
         {/* Sleek Frosted Glass Cinema Console (No Heavy Opaque Boxes) */}
         <div className="w-full max-w-lg rounded-3xl border border-white/20 bg-black/45 backdrop-blur-2xl p-5 sm:p-7 shadow-[0_20px_70px_rgba(0,0,0,0.75)] space-y-5 text-left">
           {/* Segmented Pill Selector */}
-          <div className="grid grid-cols-3 rounded-2xl bg-black/50 p-1 border border-white/10 gap-1 backdrop-blur-md">
+          {/* Segmented Pill Selector */}
+          <div className="grid grid-cols-2 rounded-2xl bg-black/50 p-1 border border-white/10 gap-1 backdrop-blur-md">
             <button
               type="button"
               onClick={() => setActiveTab('create')}
-              className={`py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                 activeTab === 'create'
                   ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-pink-600/30'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <PlusCircle className="h-4 w-4" />
-              <span>Create</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('stream')}
-              className={`py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                activeTab === 'stream'
-                  ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-pink-600/30'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Zap className="h-4 w-4" />
-              <span>Instant Play</span>
+              <span>Create Room</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('join')}
-              className={`py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                 activeTab === 'join'
                   ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white shadow-lg shadow-pink-600/30'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -439,77 +402,7 @@ export default function SynCinemaPlatform() {
             </form>
           )}
 
-          {/* TAB 2: INSTANT STREAM (PASTE & PLAY) */}
-          {activeTab === 'stream' && (
-            <form onSubmit={handleInstantStream} className="space-y-4 animate-in fade-in duration-200">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200">
-                  Paste Any Video Link or Movie URL
-                </label>
-                <div className="relative flex items-center">
-                  <Link2 className="absolute left-3.5 h-4 w-4 text-pink-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={streamUrl}
-                    onChange={(e) => setStreamUrl(e.target.value)}
-                    placeholder="Paste YouTube, MP4, HLS, or video link..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-black/50 border border-white/15 text-sm text-white placeholder-slate-400 outline-none focus:border-pink-500 transition shadow-inner backdrop-blur-md"
-                    autoFocus
-                  />
-                </div>
-              </div>
 
-              {/* Password for Instant Room */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <label className="font-semibold text-slate-200 flex items-center gap-1.5">
-                    <Lock className="h-3.5 w-3.5 text-pink-400" />
-                    <span>Room Password (Required)</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => copyPassword(streamPass || roomPass)}
-                    className="text-slate-400 hover:text-white flex items-center gap-1 font-semibold transition"
-                  >
-                    {copiedPass ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                    <span>{copiedPass ? 'Copied' : 'Copy'}</span>
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showStreamPass ? 'text' : 'password'}
-                    value={streamPass || roomPass}
-                    onChange={(e) => setStreamPass(e.target.value)}
-                    placeholder="Room password"
-                    minLength={4}
-                    maxLength={64}
-                    required
-                    className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-black/50 border border-white/15 text-sm text-white placeholder-slate-400 outline-none focus:border-pink-500 transition shadow-inner backdrop-blur-md font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowStreamPass(!showStreamPass)}
-                    className="absolute right-3.5 top-3 text-slate-400 hover:text-white transition"
-                  >
-                    {showStreamPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <p className="text-[11px] text-pink-300/90 flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3 text-pink-400 shrink-0" />
-                  <span>Strictly protected: Share this password with your partner to join.</span>
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={!streamUrl.trim()}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 text-white font-extrabold text-sm shadow-xl shadow-pink-600/30 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer"
-              >
-                <Play className="h-4 w-4 fill-white" />
-                <span>Start Instant Watch Party ⚡</span>
-              </button>
-            </form>
-          )}
 
           {/* TAB 3: JOIN EXISTING ROOM */}
           {activeTab === 'join' && (
@@ -593,6 +486,14 @@ export default function SynCinemaPlatform() {
           </div>
         </div>
       </main>
+
+      {/* ================= STEP-BY-STEP DETAILED HOW IT WORKS GUIDE ================= */}
+      <HowItWorksGuide
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
 
       {/* ================= COMPACT ANIMATED ADS SHOWCASE WITH REAL ROOM SCREENSHOTS ================= */}
       <FeatureAdsShowcase

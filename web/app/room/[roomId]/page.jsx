@@ -346,7 +346,6 @@ export default function Room() {
 
       if (r.isGhost) {
         setIsGhost(true);
-        setShowCall(false); // Disable camera/mic completely in ghost mode
       }
 
       sessionStorage.removeItem('is_create_' + roomId);
@@ -414,7 +413,7 @@ export default function Room() {
       const admKey = params.get('adminKey');
       if (ghostParam === '1') {
         setIsGhost(true);
-        setShowCall(false);
+        setName((prev) => prev || 'Admin Ghost');
       }
       if (admKey) {
         sessionStorage.setItem('sc_admin_key', admKey);
@@ -1463,44 +1462,53 @@ export default function Room() {
                       </div>
                     )}
 
-                    {/* Local User Preview Pip */}
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
-                          <Tile
-                            stream={callMedia.mine}
-                            name="You"
-                            isPartner={false}
-                            voiceOnly={callMedia.voiceOnly}
-                            isSpeaking={callMedia.localTalking}
-                            isCamOff={!callCam}
-                          />
+                    {/* Local User Preview Pip / Ghost Indicator */}
+                    {!isGhost ? (
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
+                            <Tile
+                              stream={callMedia.mine}
+                              name="You"
+                              isPartner={false}
+                              voiceOnly={callMedia.voiceOnly}
+                              isSpeaking={callMedia.localTalking}
+                              isCamOff={!callCam}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-bold text-white truncate">You</div>
+                            <div className="text-[9px] text-slate-400">{callCam ? 'Camera Live' : 'Camera Off'}</div>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-bold text-white truncate">You</div>
-                          <div className="text-[9px] text-slate-400">{callCam ? 'Camera Live' : 'Camera Off'}</div>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => callControlsRef.current?.toggleCam?.()}
-                          className={`p-1.5 rounded-lg border ${callCam ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}
-                          title="Toggle Cam"
-                        >
-                          {callCam ? <Video className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => callControlsRef.current?.toggleMic?.()}
-                          className={`p-1.5 rounded-lg border ${callMic ? 'bg-slate-800 text-white border-slate-700' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
-                          title="Toggle Mic"
-                        >
-                          {callMic ? <Mic className="h-3 w-3 text-emerald-400" /> : <MicOff className="h-3 w-3 text-amber-400" />}
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleCam?.()}
+                            className={`p-1.5 rounded-lg border ${callCam ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'}`}
+                            title="Toggle Cam"
+                          >
+                            {callCam ? <Video className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleMic?.()}
+                            className={`p-1.5 rounded-lg border ${callMic ? 'bg-slate-800 text-white border-slate-700' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}`}
+                            title="Toggle Mic"
+                          >
+                            {callMic ? <Mic className="h-3 w-3 text-emerald-400" /> : <MicOff className="h-3 w-3 text-amber-400" />}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-purple-950/70 border border-purple-500/40 text-center">
+                        <span className="text-[11px] text-purple-200 font-bold flex items-center justify-center gap-1.5">
+                          👻 Stealth Ghost Active
+                        </span>
+                        <span className="text-[10px] text-purple-300/80 block">Zero camera or mic hardware used &bull; 100% Invisible</span>
+                      </div>
+                    )}
 
                     {/* Quick Romantic Actions */}
                     <div className="grid grid-cols-3 gap-1 pt-1">
@@ -1575,6 +1583,7 @@ export default function Room() {
             onStreamsChange={setCallMedia}
             isMobileCallActive={mobileTab === 'call'}
             onSwitchToCallTab={() => setMobileTab('call')}
+            isGhost={isGhost}
           />
         </div>
       )}
