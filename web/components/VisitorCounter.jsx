@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Users, Eye, Sparkles, Film, ShieldCheck, Radio, Lock } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
+import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
 export default function VisitorCounter() {
   const [stats, setStats] = useState({
@@ -38,11 +39,13 @@ export default function VisitorCounter() {
       }
     };
 
-    // 1. Fetch genuine real stats from verified endpoint
+    // 1. Fetch genuine real stats from verified endpoint (strictly human-only)
     const fetchRealStats = async (record = false) => {
+      if (!isRealHumanBrowser()) return;
       try {
+        const hp = getHumanProofToken();
         const res = await fetch(
-          `${base}/api/stats/visitors?record=${record ? '1' : '0'}&cid=${encodeURIComponent(clientId)}`
+          `${base}/api/stats/visitors?record=${record ? '1' : '0'}&cid=${encodeURIComponent(clientId)}&hp=${encodeURIComponent(hp)}`
         );
         if (res.ok) {
           const data = await res.json();

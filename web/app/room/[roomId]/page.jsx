@@ -26,6 +26,7 @@ import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
 import BrandLogo from '@/components/BrandLogo';
 import { detectRealLocation } from '@/lib/locationDetector';
+import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
 // Curated Cinema Color Themes (Home screen matches 'midnight')
 export const ROOM_THEMES = {
@@ -302,6 +303,13 @@ export default function Room() {
 
   const doJoin = (overridePass, overrideKey) => {
     if (!socket || !name) return;
+
+    // Strict Anti-Bot Human Browser Verification
+    if (!isRealHumanBrowser()) {
+      setErr('bot_detected');
+      return;
+    }
+
     const p = overridePass !== undefined
       ? overridePass
       : (sessionStorage.getItem('rp_' + roomId) || localStorage.getItem('rp_' + roomId) || '');
@@ -325,8 +333,10 @@ export default function Room() {
       isGhost: ghostFlag,
       adminKey: admKey,
       token: sessionStorage.tok || '',
+      hp: getHumanProofToken(),
     }, (r) => {
       if (!r) return;
+      if (r.error === 'bot_detected') return setErr('bot_detected');
       if (r.error === 'denied') return setNeedKey(true);
       if (['needpass', 'badpass'].includes(r.error)) {
         sessionStorage.removeItem('rp_' + roomId);
@@ -686,7 +696,9 @@ export default function Room() {
       icon={<Lock className="h-6 w-6 text-rose-400" />}
       cta="Back to Home"
       title={
-        err === 'room_locked'
+        err === 'bot_detected'
+          ? 'Bot Access Prohibited'
+          : err === 'room_locked'
           ? 'Room Locked by Host'
           : err === 'room_locked_security'
           ? 'Room Temporarily Protected'
@@ -697,7 +709,9 @@ export default function Room() {
           : 'Cannot Enter Room'
       }
       hint={
-        err === 'room_locked'
+        err === 'bot_detected'
+          ? 'Automated scripts, scrapers, and headless tools are strictly forbidden from entering SynCinema rooms. Please use a standard human web browser.'
+          : err === 'room_locked'
           ? 'The host has locked this room. No new members are currently allowed to enter.'
           : err === 'room_locked_security'
           ? 'This room was temporarily locked due to repeated incorrect password attempts to protect privacy.'
@@ -713,7 +727,9 @@ export default function Room() {
       }}
     >
       <div className="text-center py-2 text-xs text-white/50">
-        {err === 'room_locked_security'
+        {err === 'bot_detected'
+          ? 'Human verification shield active. Automated connections are blocked.'
+          : err === 'room_locked_security'
           ? 'Please verify the room password with the host and try again later.'
           : err === 'room_locked'
           ? 'Only existing members can rejoin.'

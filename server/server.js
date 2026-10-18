@@ -13,6 +13,7 @@ const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 const { resolveUniversalMedia } = require('./universalExtractor');
 const { recordVisit, pingSession, endSession, getVisitorStats } = require('./visitorTracker');
+const { botShieldMiddleware, isBotRequest } = require('./botShield');
 
 // Auto-load .env if present in root or server directory
 try {
@@ -189,6 +190,7 @@ const normalizeUserGeo = (geoData, ip) => {
 
 const app = express();
 app.set('trust proxy', 1);
+app.use(botShieldMiddleware);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false, frameguard: false }));
 app.use(cors({ origin }));
 app.use('/api', rateLimit({ windowMs: 60_000, max: 240 }));
@@ -919,8 +921,15 @@ app.get('/api/proxy', async (req, res) => {
 });
 
 const io = new Server(server, {
-  cors: { origin }, maxHttpBufferSize: 1e5,
-  allowRequest: (req, cb) => cb(null, !CLIENT_ORIGIN || !req.headers.origin || origin.includes(req.headers.origin)),  // block cross-site websockets
+  cors: { origin },
+  maxHttpBufferSize: 1e5,
+  allowRequest: (req, cb) => {
+    const check = isBotRequest(req);
+    if (check.blocked) {
+      return cb('Bot connections are strictly forbidden.', false);
+    }
+    cb(null, !CLIENT_ORIGIN || !req.headers.origin || origin.includes(req.headers.origin));
+  },
 });
 const rooms = new Map();
 const fresh = () => ({
@@ -1315,10 +1324,17 @@ io.on('connection', (socket) => {
     socket.emit('stats:visitors', getVisitorStats(activeRoomsCount));
   });
 
-  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax, isGhost, adminKey, geo } = {}, ack) => {
+  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax, isGhost, adminKey, geo, hp } = {}, ack) => {
     if (typeof ack !== 'function') return;
     const ip = ipOf(socket.handshake);
     if (locked(ip)) return ack({ error: 'locked' });
+
+    // Anti-Bot & Scraper Guard on Room Join
+    const botCheck = isBotRequest({ headers: socket.handshake?.headers || {}, url: socket.handshake?.url || '' });
+    if (botCheck.blocked) {
+      return ack({ error: 'bot_detected' });
+    }
+
     if (!keyOk(key)) { fail(ip); return ack({ error: 'denied' }); }
 
     // 👻 ADMIN GHOST JOIN: Invisibly join room without appearing in user count or presence

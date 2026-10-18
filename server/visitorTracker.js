@@ -36,9 +36,21 @@ function normalizeIp(ip) {
 
 // Bot and automated scraper filter
 const BOT_REGEX = /bot|crawl|spider|slurp|facebookexternalhit|lighthouse|headless|curl|wget|python|postman|go-http-client|apache-httpclient|node-fetch/i;
+let isBotRequestHelper = null;
+try {
+  isBotRequestHelper = require('./botShield').isBotRequest;
+} catch (e) {}
+
 function isBot(userAgent) {
-  if (!userAgent) return false;
-  return BOT_REGEX.test(userAgent);
+  if (!userAgent) return true; // Empty user-agents are rejected as automated
+  if (BOT_REGEX.test(userAgent)) return true;
+  if (isBotRequestHelper) {
+    try {
+      const res = isBotRequestHelper({ headers: { 'user-agent': userAgent }, url: '/' });
+      if (res && res.blocked) return true;
+    } catch {}
+  }
+  return false;
 }
 
 // Compute deterministic visitor fingerprint
