@@ -77,6 +77,20 @@ const fail = (ip) => {
   fails.set(ip, f);
 };
 
+const adminGate = (req, res, next) => {
+  const ip = ipOf(req);
+  if (locked(ip)) {
+    return res.status(429).json({ error: 'locked', message: 'Too many failed admin attempts. IP temporarily locked for 15 minutes.' });
+  }
+  const k = req.get('x-admin-key') || req.query.adminKey || req.body?.adminKey;
+  if (!adminKeyOk(k)) {
+    fail(ip);
+    return res.status(401).json({ error: 'unauthorized', message: 'Invalid admin credentials.' });
+  }
+  fails.delete(ip);
+  next();
+};
+
 // --- IP Geolocation Resolver & Cache for Member Locations ---
 const geoCache = new Map();
 const getGeoForIp = async (ip) => {
@@ -216,7 +230,7 @@ const sanitizeMaxUsers = (v) => {
 };
 
 app.post('/api/rooms', (_, res) => res.json({ roomId: crypto.randomBytes(4).toString('hex') }));
-app.get('/api/rooms', (req, res) => {
+app.get('/api/rooms', adminGate, (req, res) => {
   const activeRooms = [];
   for (const [id, r] of rooms.entries()) {
     const count = r.users ? r.users.size : 0;
@@ -229,7 +243,6 @@ app.get('/api/rooms', (req, res) => {
         createdAt: r.createdAt || r.at || Date.now(),
         adult: false,
       });
-
     }
   }
   activeRooms.sort((a, b) => b.createdAt - a.createdAt);
@@ -237,13 +250,17 @@ app.get('/api/rooms', (req, res) => {
 });
 
 app.get('/api/stats/visitors', (req, res) => {
+  const ip = ipOf(req);
+  const ua = req.get('user-agent') || '';
+  const clientId = req.query.cid || '';
   const record = req.query.record === '1' || req.query.record === 'true';
-  const clientId = req.query.cid || req.ip;
+
   if (record) {
-    recordVisit(clientId);
+    recordVisit(ip, clientId, ua);
   } else {
-    pingSession(clientId);
+    pingSession(ip, clientId);
   }
+
   let activeRoomsCount = 0;
   for (const r of rooms.values()) {
     if (r.users && r.users.size > 0) activeRoomsCount++;
@@ -1021,13 +1038,6 @@ const isVideoBlocked = (url) => {
   return false;
 };
 
-const adminGate = (req, res, next) => {
-  const k = req.get('x-admin-key') || req.query.adminKey || req.body?.adminKey;
-  if (!adminKeyOk(k)) {
-    return res.status(401).json({ error: 'unauthorized', message: 'Invalid admin credentials' });
-  }
-  next();
-};
 
 app.use('/api/admin', express.json());
 
@@ -1288,16 +1298,16 @@ app.post('/api/admin/broadcast', adminGate, (req, res) => {
 
 io.on('connection', (socket) => {
   let rid, room, user, n = 0, t = Date.now();
-  pingSession(socket.id);
+  const ip = ipOf(socket.handshake);
   socket.on('error', () => {});
   socket.use((_, next) => { if (Date.now() - t > 1000) { n = 0; t = Date.now(); } ++n <= 30 ? next() : next(new Error('rate')); });
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
 
   socket.on('stats:ping', (data) => {
-    const cid = data?.cid || socket.id;
-    pingSession(cid);
+    const cid = data?.cid || socket.clientCid;
     if (data?.cid) socket.clientCid = data.cid;
+    pingSession(ip, cid);
     let activeRoomsCount = 0;
     for (const r of rooms.values()) {
       if (r.users && r.users.size > 0) activeRoomsCount++;
@@ -1360,9 +1370,13 @@ io.on('connection', (socket) => {
     const p = typeof pass === 'string' ? pass.trim() : '';
     const activeUsersCount = [...(r.users?.values() || [])].filter(u => io.sockets.sockets.has(u.sid)).length;
 
+    if (r.bannedCids && r.bannedCids.has(cid)) {
+      return ack({ error: 'banned_from_room', message: 'You have been removed from this room by the host.' });
+    }
+
     if (isCreate) {
-      if (activeUsersCount > 0 && r.pass && !passOk(r, p)) {
-        return ack({ error: 'room_taken', message: 'A room with this name is currently active. Please join with its password or choose another name.' });
+      if (r.pass && !passOk(r, p)) {
+        return ack({ error: 'room_taken', message: 'A room with this name already exists. Please join with its password or choose another name.' });
       }
       if (!p || p.length < 4 || p.length > 64) {
         return ack({ error: 'needpass', message: 'Room password must be at least 4 characters.' });
@@ -1378,12 +1392,29 @@ io.on('connection', (socket) => {
       r.plainPass = p;
       r.entryLocked = false;
       r.createdAt = Date.now();
+      r.failedAttempts = 0;
+      r.lockedUntil = null;
       rooms.set(roomId, r);
       save();
     } else {
       if (r.pass) {                                    // locked room: right passkey or no entry
+        if (r.lockedUntil && Date.now() < r.lockedUntil) {
+          const rem = Math.ceil((r.lockedUntil - Date.now()) / 1000);
+          return ack({ error: 'room_locked_security', message: `Room temporarily locked due to repeated incorrect password attempts. Try again in ${rem}s.` });
+        }
         if (!p) return ack({ error: 'needpass' });
-        if (!passOk(r, p)) { fail(ip); return ack({ error: 'badpass' }); }
+        if (!passOk(r, p)) {
+          fail(ip);
+          r.failedAttempts = (r.failedAttempts || 0) + 1;
+          if (r.failedAttempts >= 5) {
+            r.lockedUntil = Date.now() + 10 * 60_000;
+            r.failedAttempts = 0;
+            io.to(roomId).emit('toast', '⚠️ Security Alert: Room locked for 10 min due to 5 failed password attempts.');
+          }
+          return ack({ error: 'badpass' });
+        }
+        r.failedAttempts = 0;
+        r.lockedUntil = null;
       } else if (p.length >= 4 && p.length <= 64) {
         r.pass = hashPass(p);
         r.plainPass = p;
@@ -1831,14 +1862,21 @@ io.on('connection', (socket) => {
 
   socket.on('room:update_pass', ({ pass: newPass } = {}, ack) => {
     if (typeof ack !== 'function') return;
-    if (!canControl()) return ack({ error: 'unauthorized', message: 'Only the host can update the room password.' });
+    if (!joined() || user.cid !== room.hostId) {
+      return ack({ error: 'unauthorized', message: 'Only the host can update the room password.' });
+    }
     const p = typeof newPass === 'string' ? newPass.trim() : '';
-    if (!p || p.length < 4 || p.length > 64) return ack({ error: 'invalid', message: 'Password must be between 4 and 64 characters.' });
+    if (!p || p.length < 4 || p.length > 64) {
+      return ack({ error: 'invalid', message: 'Password must be between 4 and 64 characters.' });
+    }
     room.pass = hashPass(p);
     room.plainPass = p;
+    room.failedAttempts = 0;
+    room.lockedUntil = null;
     save();
     ack({ ok: true });
     io.to(rid).emit('room:pass_updated', { updated: true });
+    io.to(rid).emit('toast', '🔒 Room password was updated by the host.');
   });
 
   // Host Entry Lock Control (Lock room against new members once all members are in)
@@ -1871,6 +1909,36 @@ io.on('connection', (socket) => {
     io.to(rid).emit('toast', `👥 Host changed room capacity to ${newCap} members.`);
     save();
     ack({ ok: true, maxUsers: newCap });
+  });
+
+  // Host Kick & Ban User from Room (High-Level Security Protection)
+  socket.on('room:kick_user', ({ targetCid, reason } = {}, ack) => {
+    if (typeof ack !== 'function') ack = () => {};
+    if (!joined()) return ack({ error: 'not_joined' });
+    if (user.cid !== room.hostId) return ack({ error: 'unauthorized', message: 'Only the room host can kick participants.' });
+    if (!targetCid || targetCid === room.hostId) return ack({ error: 'invalid', message: 'Cannot kick host.' });
+
+    const targetUser = room.users.get(targetCid);
+    if (!targetUser) return ack({ error: 'not_found', message: 'Participant not found in room.' });
+
+    if (!room.bannedCids) room.bannedCids = new Set();
+    room.bannedCids.add(targetCid);
+
+    // Eject target user's socket
+    if (targetUser.sid) {
+      const targetSocket = io.sockets.sockets.get(targetUser.sid);
+      if (targetSocket) {
+        targetSocket.emit('toast', '⛔ You were removed from this room by the host.');
+        targetSocket.emit('kicked', { reason: reason || 'Removed by host' });
+        targetSocket.leave(rid);
+      }
+    }
+
+    room.users.delete(targetCid);
+    presence(rid, room);
+    io.to(rid).emit('toast', `🛡️ ${targetUser.name} was removed from the room by the host.`);
+    save();
+    ack({ ok: true });
   });
 
   // 👻 Admin Stealth Ghost Join directly from Admin Command Center
@@ -2044,8 +2112,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    endSession(socket.id);
-    if (socket.clientCid) endSession(socket.clientCid);
+    endSession(ip, socket.clientCid);
     if (socket.isGhost) return; // 👻 Ghost admin disconnects silently without touching room users
     if (!joined() || user.sid !== socket.id) return;  // a newer socket already took over
     const [r, u, id] = [room, user, rid];

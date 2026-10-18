@@ -8,7 +8,7 @@ import {
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
   Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv,
-  MonitorPlay, Camera, Music, RefreshCw, Palette, Maximize2
+  MonitorPlay, Camera, Music, RefreshCw, Palette, Maximize2, UserX
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -340,6 +340,12 @@ export default function Room() {
       if (r.error === 'room_locked') {
         return setErr('room_locked');
       }
+      if (r.error === 'room_locked_security') {
+        return setErr('room_locked_security');
+      }
+      if (r.error === 'banned_from_room') {
+        return setErr('banned_from_room');
+      }
       if (r.error === 'full') {
         return setErr('full');
       }
@@ -474,6 +480,9 @@ export default function Room() {
     });
     socket.on('room:entry_locked', ({ locked }) => {
       setEntryLocked(!!locked);
+    });
+    socket.on('kicked', ({ reason } = {}) => {
+      setErr(reason || 'You have been removed from this room by the host.');
     });
     socket.on('chat', (m) => setChat((c) => [...c.slice(-99), m]));
     socket.on('chat:cleared', () => setChat([]));
@@ -610,6 +619,18 @@ export default function Room() {
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
   const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: dimming background lights' : 'Cinema mode off'); };
   const toggleHide = () => { setHidden((h) => { say(!h ? 'Screen hidden — hover or tap to peek' : 'Screen visible'); return !h; }); };
+  const handleKickUser = (targetCid, targetName) => {
+    if (me !== hostId) return;
+    if (confirm(`Remove and ban "${targetName}" from this private cinema room?`)) {
+      socket.emit('room:kick_user', { targetCid, reason: 'Removed by host' }, (res) => {
+        if (res?.ok) {
+          say(`Removed ${targetName} from the room 🛡️`);
+        } else {
+          say(res?.message || 'Could not kick user');
+        }
+      });
+    }
+  };
 
   if (name === null) return null;
   if (!name) return (
@@ -664,10 +685,24 @@ export default function Room() {
     <Gate
       icon={<Lock className="h-6 w-6 text-rose-400" />}
       cta="Back to Home"
-      title={err === 'room_locked' ? 'Room Locked by Host' : err === 'full' ? 'Room is Full' : 'Cannot Enter Room'}
+      title={
+        err === 'room_locked'
+          ? 'Room Locked by Host'
+          : err === 'room_locked_security'
+          ? 'Room Temporarily Protected'
+          : err === 'banned_from_room'
+          ? 'Removed from Room'
+          : err === 'full'
+          ? 'Room is Full'
+          : 'Cannot Enter Room'
+      }
       hint={
         err === 'room_locked'
           ? 'The host has locked this room. No new members are currently allowed to enter.'
+          : err === 'room_locked_security'
+          ? 'This room was temporarily locked due to repeated incorrect password attempts to protect privacy.'
+          : err === 'banned_from_room'
+          ? 'You have been removed from this private session by the room host.'
           : err === 'full'
           ? `This room has reached its maximum capacity (${maxSeats} members).`
           : String(err)
@@ -678,7 +713,11 @@ export default function Room() {
       }}
     >
       <div className="text-center py-2 text-xs text-white/50">
-        {err === 'room_locked' ? 'Only existing members can rejoin.' : 'Please wait for a seat to free up or join another room.'}
+        {err === 'room_locked_security'
+          ? 'Please verify the room password with the host and try again later.'
+          : err === 'room_locked'
+          ? 'Only existing members can rejoin.'
+          : 'Please return to the lobby or join another cinema room.'}
       </div>
     </Gate>
   );
@@ -1329,8 +1368,18 @@ export default function Room() {
                     </div>
                   )}
                   {users.filter(u => u.id !== me).map((u) => (
-                    <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
+                    <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md group">
                       <Tile stream={callMedia.remote[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia.voiceOnly} isSpeaking={!!callMedia.remoteTalking[u.id]} isCamOff={!!callMedia.remoteCamOff?.[u.id]} isMicMuted={!!callMedia.remoteMicMuted?.[u.id]} />
+                      {me === hostId && (
+                        <button
+                          type="button"
+                          onClick={() => handleKickUser(u.id, u.name)}
+                          title={`Kick ${u.name} from room`}
+                          className="absolute top-1 right-1 p-1 rounded bg-black/80 hover:bg-rose-600 text-rose-300 hover:text-white transition opacity-0 group-hover:opacity-100 cursor-pointer shadow z-10"
+                        >
+                          <UserX className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1414,7 +1463,7 @@ export default function Room() {
                     {users.filter(u => u.id !== me).length > 0 ? (
                       <div className={`grid gap-2.5 ${users.filter(u => u.id !== me).length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
                         {users.filter(u => u.id !== me).map((partner) => (
-                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-pink-500/30 shadow-xl">
+                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-pink-500/30 shadow-xl group">
                             <Tile
                               stream={callMedia.remote[partner.id]}
                               name={partner.name}
@@ -1424,6 +1473,16 @@ export default function Room() {
                               isCamOff={!!callMedia.remoteCamOff?.[partner.id]}
                               isMicMuted={!!callMedia.remoteMicMuted?.[partner.id]}
                             />
+                            {me === hostId && (
+                              <button
+                                type="button"
+                                onClick={() => handleKickUser(partner.id, partner.name)}
+                                title={`Kick ${partner.name}`}
+                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-rose-600 text-rose-300 hover:text-white transition shadow z-20 cursor-pointer"
+                              >
+                                <UserX className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1628,7 +1687,7 @@ export default function Room() {
                     {users.filter(u => u.id !== me).length > 0 ? (
                       <div className={`grid gap-2.5 ${users.filter(u => u.id !== me).length === 1 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
                         {users.filter(u => u.id !== me).map((partner) => (
-                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner">
+                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner group">
                             <Tile
                               stream={callMedia.remote[partner.id]}
                               name={partner.name}
@@ -1638,6 +1697,16 @@ export default function Room() {
                               isCamOff={!!callMedia.remoteCamOff?.[partner.id]}
                               isMicMuted={!!callMedia.remoteMicMuted?.[partner.id]}
                             />
+                            {me === hostId && (
+                              <button
+                                type="button"
+                                onClick={() => handleKickUser(partner.id, partner.name)}
+                                title={`Kick ${partner.name}`}
+                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-rose-600 text-rose-300 hover:text-white transition shadow z-20 cursor-pointer"
+                              >
+                                <UserX className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>

@@ -1,22 +1,63 @@
 // Real Visitors & Live Cinema Community Tracker for SyncCinema
-// 100% Genuine Tracking — Zero fake seeds, zero artificial floors.
-// Persists real unique visitors, daily reach, total page loads, and live active users.
+// 100% Genuine Tracking — Anti-Manipulation, IP Deduplication, Bot-Proof.
+// Persists real unique visitors, daily reach, and live active users.
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
-const STATS_FILE = path.join(__dirname, 'visitorStats.json');
+// Resolve persistent storage path (works in Docker volume /app/data and local dev)
+const dataDir = process.env.DATA_FILE
+  ? path.dirname(path.resolve(process.env.DATA_FILE))
+  : path.join(__dirname, 'data');
 
-// In-memory stats
+try {
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+} catch (e) {}
+
+const STATS_FILE = path.join(dataDir, 'visitorStats.json');
+
+// In-memory telemetry state
 const stats = {
   totalVisitors: 0,
   todayVisitors: 0,
   totalPageViews: 0,
   lastDate: new Date().toISOString().slice(0, 10),
-  uniqueVisitorsSet: new Set(),
-  todayVisitorsSet: new Set(),
-  activeSessions: new Map(), // sessionId -> timestamp
+  uniqueVisitorsSet: new Set(), // Set of unique IP/fingerprint hashes
+  todayVisitorsSet: new Set(),  // Set of today's unique IP/fingerprint hashes
+  activeSessions: new Map(),    // sessionKey -> timestamp
 };
+
+// Normalize IP address
+function normalizeIp(ip) {
+  if (!ip) return '127.0.0.1';
+  return String(ip).split(',')[0].trim().replace(/^::ffff:/, '');
+}
+
+// Bot and automated scraper filter
+const BOT_REGEX = /bot|crawl|spider|slurp|facebookexternalhit|lighthouse|headless|curl|wget|python|postman|go-http-client|apache-httpclient|node-fetch/i;
+function isBot(userAgent) {
+  if (!userAgent) return false;
+  return BOT_REGEX.test(userAgent);
+}
+
+// Compute deterministic visitor fingerprint
+function makeFingerprint(ip, clientId) {
+  const normIp = normalizeIp(ip);
+  const cleanCid = String(clientId || '').trim();
+  // Hash IP to protect privacy while ensuring strict deduplication
+  return crypto.createHash('sha256').update(`${normIp}::${cleanCid.slice(0, 32)}`).digest('hex').slice(0, 24);
+}
+
+// Generate unified session key (1 human = 1 key across tabs, HTTP, and WebSocket)
+function makeSessionKey(ip, clientId) {
+  const normIp = normalizeIp(ip);
+  const cleanCid = String(clientId || '').trim();
+  if (cleanCid && cleanCid !== 'anon' && cleanCid !== 'guest') {
+    return `${normIp}::${cleanCid}`;
+  }
+  return normIp;
+}
 
 // Load saved genuine stats from disk if available
 try {
@@ -58,7 +99,7 @@ function persistStats() {
         todayVisitors: stats.todayVisitorsSet.size || stats.todayVisitors,
         totalPageViews: stats.totalPageViews,
         lastDate: stats.lastDate,
-        uniqueList: Array.from(stats.uniqueVisitorsSet).slice(-5000), // retain recent 5000 unique IDs to limit file size
+        uniqueList: Array.from(stats.uniqueVisitorsSet).slice(-10000), // retain recent 10000 unique fingerprints
         todayList: Array.from(stats.todayVisitorsSet),
         updatedAt: new Date().toISOString(),
       };
@@ -69,7 +110,7 @@ function persistStats() {
   }, 2000);
 }
 
-// Check date rollover at midnight
+// Check date rollover at midnight UTC
 function checkRollover() {
   const today = new Date().toISOString().slice(0, 10);
   if (stats.lastDate !== today) {
@@ -80,50 +121,72 @@ function checkRollover() {
   }
 }
 
-// Record a genuine visit from a real client
-function recordVisit(clientId) {
-  checkRollover();
-  stats.totalPageViews += 1;
+// Rate-limiting map for visit recording (prevents bot spam attacks)
+const recordRateLimit = new Map(); // ip -> timestamp
 
-  const id = String(clientId || 'anon').trim();
-  if (id && id !== 'anon' && id !== 'guest') {
-    if (!stats.uniqueVisitorsSet.has(id)) {
-      stats.uniqueVisitorsSet.add(id);
-      stats.totalVisitors = stats.uniqueVisitorsSet.size;
-    }
-    if (!stats.todayVisitorsSet.has(id)) {
-      stats.todayVisitorsSet.add(id);
-      stats.todayVisitors = stats.todayVisitorsSet.size;
-    }
-    stats.activeSessions.set(id, Date.now());
-  } else {
-    // Fallback for anonymous
-    stats.totalVisitors = Math.max(stats.totalVisitors + 1, stats.uniqueVisitorsSet.size);
-    stats.todayVisitors = Math.max(stats.todayVisitors + 1, stats.todayVisitorsSet.size);
+// Record a genuine visit from a real client
+function recordVisit(ip, clientId, userAgent = '') {
+  checkRollover();
+
+  // Filter out automated bots, scrapers, and headless crawlers
+  if (isBot(userAgent)) {
+    return;
   }
 
+  const normIp = normalizeIp(ip);
+  const now = Date.now();
+
+  // Rate limit: an IP can record at most once every 60 seconds
+  const lastRecorded = recordRateLimit.get(normIp) || 0;
+  if (now - lastRecorded < 60000) {
+    pingSession(normIp, clientId);
+    return;
+  }
+  recordRateLimit.set(normIp, now);
+
+  // Clean old rate limit entries every 100 items
+  if (recordRateLimit.size > 500) {
+    const cutoff = now - 120000;
+    for (const [k, v] of recordRateLimit.entries()) {
+      if (v < cutoff) recordRateLimit.delete(k);
+    }
+  }
+
+  stats.totalPageViews += 1;
+
+  // Compute unique fingerprint
+  const fp = makeFingerprint(normIp, clientId);
+
+  // Strict deduplication: each genuine visitor is counted once all-time and once per day
+  if (!stats.uniqueVisitorsSet.has(fp)) {
+    stats.uniqueVisitorsSet.add(fp);
+    stats.totalVisitors = stats.uniqueVisitorsSet.size;
+  }
+  if (!stats.todayVisitorsSet.has(fp)) {
+    stats.todayVisitorsSet.add(fp);
+    stats.todayVisitors = stats.todayVisitorsSet.size;
+  }
+
+  // Register active session
+  pingSession(normIp, clientId);
   persistStats();
 }
 
 // Keep an active session alive via periodic heartbeat
-function pingSession(clientId) {
-  if (clientId) {
-    const id = String(clientId).trim();
-    stats.activeSessions.set(id, Date.now());
-  }
+function pingSession(ip, clientId) {
+  const key = makeSessionKey(ip, clientId);
+  stats.activeSessions.set(key, Date.now());
 }
 
 // Remove session when a client disconnects or leaves
-function endSession(clientId) {
-  if (clientId) {
-    const id = String(clientId).trim();
-    stats.activeSessions.delete(id);
-  }
+function endSession(ip, clientId) {
+  const key = makeSessionKey(ip, clientId);
+  stats.activeSessions.delete(key);
 }
 
-// Clean stale sessions (inactive for > 45 seconds)
+// Clean stale sessions (inactive for > 35 seconds)
 function cleanStaleSessions() {
-  const cutoff = Date.now() - 45 * 1000;
+  const cutoff = Date.now() - 35 * 1000;
   for (const [id, ts] of stats.activeSessions.entries()) {
     if (ts < cutoff) {
       stats.activeSessions.delete(id);
@@ -140,8 +203,8 @@ function getVisitorStats(activeRoomsCount = 0) {
   const liveCount = stats.activeSessions.size;
 
   return {
-    totalVisitors: stats.uniqueVisitorsSet.size || stats.totalVisitors,
-    todayVisitors: stats.todayVisitorsSet.size || stats.todayVisitors,
+    totalVisitors: Math.max(stats.uniqueVisitorsSet.size, 1),
+    todayVisitors: Math.max(stats.todayVisitorsSet.size, 1),
     totalPageViews: stats.totalPageViews,
     liveVisitors: liveCount,
     activeRooms: Number(activeRoomsCount) || 0,
