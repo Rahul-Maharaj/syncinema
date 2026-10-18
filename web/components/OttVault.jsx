@@ -4,7 +4,7 @@ import {
   Tv, Film, Play, Search, Sparkles, Globe, ExternalLink,
   ChevronRight, ArrowRight, Zap, CheckCircle2, Clapperboard, X
 } from 'lucide-react';
-import { OTT_PLATFORMS, OTT_CATALOGS, getCloudMirrorSources } from '@/lib/media';
+import { OTT_PLATFORMS, OTT_CATALOGS, getCloudMirrorSources, resolveTitleToMetadata } from '@/lib/media';
 
 export default function OttVault({
   socket,
@@ -52,15 +52,30 @@ export default function OttVault({
   }, [activePlatformFilter]);
 
   // 1-Tap Play Movie in Room (Zero Login Required!)
-  const handlePlayMovie = (movieTitle, platformName) => {
-    if (!movieTitle || !movieTitle.trim()) return;
-    const clean = movieTitle.trim();
+  const handlePlayMovie = async (movieItemOrTitle, platformName) => {
+    if (!movieItemOrTitle) return;
+    let meta = null;
+    let clean = '';
+    let isTv = false;
+
+    if (typeof movieItemOrTitle === 'object') {
+      meta = movieItemOrTitle;
+      clean = movieItemOrTitle.title || '';
+      isTv = Boolean(movieItemOrTitle.isTv);
+      platformName = movieItemOrTitle.ott || platformName;
+    } else {
+      clean = String(movieItemOrTitle).trim();
+      meta = await resolveTitleToMetadata(clean);
+      if (meta) isTv = Boolean(meta.isTv);
+    }
+
+    if (!clean) return;
     setPlayingTitle(clean);
 
     if (onPlayMovie) {
-      onPlayMovie(clean, platformName);
+      onPlayMovie(meta || clean, platformName);
     } else if (socket) {
-      const mirrorSources = getCloudMirrorSources(clean);
+      const mirrorSources = getCloudMirrorSources(meta || clean, isTv, clean);
       socket.emit('media:set', {
         media: {
           type: 'embed',
@@ -248,7 +263,7 @@ export default function OttVault({
               <div className="pt-3 mt-3 border-t border-white/5 flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => handlePlayMovie(movie.title, movie.ott)}
+                  onClick={() => handlePlayMovie(movie, movie.ott)}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition shadow-md cursor-pointer ${
                     isCurrentlyPlaying
                       ? 'bg-emerald-600 text-white'

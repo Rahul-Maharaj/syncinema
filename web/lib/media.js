@@ -284,103 +284,285 @@ export const resolveMedia = async (src) => {
   return null;
 };
 
-export const getCloudMirrorSources = (query) => {
-  if (!query) return [];
-  const clean = query.trim();
-  const encoded = encodeURIComponent(clean);
-  const isImdb = /^tt\d+$/i.test(clean);
+export const KNOWN_TITLES_MAP = {
+  // Hotstar Hits
+  'chhaava': { imdbId: 'tt27922706', isTv: false, title: 'Chhaava', year: '2025' },
+  'brahmastra': { imdbId: 'tt6277462', isTv: false, title: 'Brahmāstra: Part One – Shiva', year: '2022' },
+  'brahmastra part one shiva': { imdbId: 'tt6277462', isTv: false, title: 'Brahmāstra: Part One – Shiva', year: '2022' },
+  '12th fail': { imdbId: 'tt23849204', isTv: false, title: '12th Fail', year: '2023' },
+  'shogun': { imdbId: 'tt2788316', isTv: true, title: 'Shōgun', year: '2024' },
+  'lokah chapter 1': { imdbId: 'tt32420456', isTv: false, title: 'Lokah Chapter 1', year: '2025' },
+  'aarya': { imdbId: 'tt12439546', isTv: true, title: 'Aarya', year: '2020' },
 
+  // Netflix Blockbusters
+  'stranger things': { imdbId: 'tt4574334', isTv: true, title: 'Stranger Things', year: '2016' },
+  'squid game': { imdbId: 'tt10919420', isTv: true, title: 'Squid Game', year: '2021' },
+  'animal': { imdbId: 'tt13751694', isTv: false, title: 'Animal', year: '2023' },
+  'money heist': { imdbId: 'tt6468322', isTv: true, title: 'Money Heist', year: '2017' },
+  'wednesday': { imdbId: 'tt13443470', isTv: true, title: 'Wednesday', year: '2022' },
+  'leo': { imdbId: 'tt15654328', isTv: false, title: 'Leo', year: '2023' },
+  'the railway men': { imdbId: 'tt16278804', isTv: true, title: 'The Railway Men', year: '2023' },
+  'the haunting of hill house': { imdbId: 'tt6763664', isTv: true, title: 'The Haunting of Hill House', year: '2018' },
+  'dark': { imdbId: 'tt5753856', isTv: true, title: 'Dark', year: '2017' },
+  'breaking bad': { imdbId: 'tt0903747', isTv: true, title: 'Breaking Bad', year: '2008' },
+  'friends': { imdbId: 'tt0108778', isTv: true, title: 'Friends', year: '1994' },
+  'the crown': { imdbId: 'tt4786824', isTv: true, title: 'The Crown', year: '2016' },
+  'lucifer': { imdbId: 'tt4052886', isTv: true, title: 'Lucifer', year: '2016' },
+  'the witcher': { imdbId: 'tt5180504', isTv: true, title: 'The Witcher', year: '2019' },
+  'all of us are dead': { imdbId: 'tt14169960', isTv: true, title: 'All of Us Are Dead', year: '2022' },
+
+  // Prime Video
+  'the boys': { imdbId: 'tt1190634', isTv: true, title: 'The Boys', year: '2019' },
+  'mirzapur': { imdbId: 'tt6473300', isTv: true, title: 'Mirzapur', year: '2018' },
+  'panchayat': { imdbId: 'tt12004706', isTv: true, title: 'Panchayat', year: '2020' },
+  'fallout': { imdbId: 'tt12637874', isTv: true, title: 'Fallout', year: '2024' },
+  'farzi': { imdbId: 'tt14234472', isTv: true, title: 'Farzi', year: '2023' },
+  'citadel': { imdbId: 'tt11640018', isTv: true, title: 'Citadel', year: '2023' },
+
+  // JioCinema
+  'stree 2': { imdbId: 'tt27510174', isTv: false, title: 'Stree 2', year: '2024' },
+  'asur': { imdbId: 'tt11912196', isTv: true, title: 'Asur', year: '2020' },
+  'bloody daddy': { imdbId: 'tt16075936', isTv: false, title: 'Bloody Daddy', year: '2023' },
+  'bhediya': { imdbId: 'tt14081092', isTv: false, title: 'Bhediya', year: '2022' },
+
+  // Zee5
+  'gadar 2': { imdbId: 'tt15441054', isTv: false, title: 'Gadar 2', year: '2023' },
+  'sirf ek bandaa kaafi hai': { imdbId: 'tt22695536', isTv: false, title: 'Sirf Ek Bandaa Kaafi Hai', year: '2023' },
+  'sam bahadur': { imdbId: 'tt10406854', isTv: false, title: 'Sam Bahadur', year: '2023' },
+  'silence 2': { imdbId: 'tt31846503', isTv: false, title: 'Silence 2', year: '2024' },
+
+  // Global All-Time Blockbusters
+  'inception': { imdbId: 'tt1375666', isTv: false, title: 'Inception', year: '2010' },
+  'interstellar': { imdbId: 'tt0816692', isTv: false, title: 'Interstellar', year: '2014' },
+  'oppenheimer': { imdbId: 'tt15398776', isTv: false, title: 'Oppenheimer', year: '2023' },
+  'dune': { imdbId: 'tt1160419', isTv: false, title: 'Dune: Part One', year: '2021' },
+  'dune part two': { imdbId: 'tt15239678', isTv: false, title: 'Dune: Part Two', year: '2024' },
+  'game of thrones': { imdbId: 'tt0944947', isTv: true, title: 'Game of Thrones', year: '2011' },
+  'house of the dragon': { imdbId: 'tt11198330', isTv: true, title: 'House of the Dragon', year: '2022' },
+  'deadpool & wolverine': { imdbId: 'tt6263850', isTv: false, title: 'Deadpool & Wolverine', year: '2024' },
+};
+
+export const lookupKnownTitle = (query) => {
+  if (!query) return null;
+  const clean = String(query).trim().toLowerCase();
+  const normalized = clean.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+
+  if (KNOWN_TITLES_MAP[clean]) return KNOWN_TITLES_MAP[clean];
+  if (KNOWN_TITLES_MAP[normalized]) return KNOWN_TITLES_MAP[normalized];
+
+  for (const [k, v] of Object.entries(KNOWN_TITLES_MAP)) {
+    if (normalized === k || normalized.includes(k) || k.includes(normalized)) {
+      return v;
+    }
+  }
+
+  // Also search through all catalog items
+  if (typeof OTT_CATALOGS !== 'undefined') {
+    for (const items of Object.values(OTT_CATALOGS)) {
+      for (const item of items) {
+        const itemNorm = item.title.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+        if (itemNorm === normalized || normalized.includes(itemNorm) || itemNorm.includes(normalized)) {
+          return {
+            imdbId: item.imdbId,
+            isTv: item.isTv,
+            title: item.title,
+            year: item.year,
+          };
+        }
+      }
+    }
+  }
+  return null;
+};
+
+export const resolveTitleToMetadata = async (query) => {
+  if (!query) return null;
+  if (typeof query === 'object' && query.imdbId) return query;
+
+  const clean = String(query).trim();
+  if (/^tt\d+$/i.test(clean)) {
+    return { imdbId: clean, isTv: false, title: clean };
+  }
+
+  const known = lookupKnownTitle(clean);
+  if (known) return known;
+
+  // 1. Try server resolver
+  try {
+    const base = typeof window !== 'undefined' ? serverUrl() : '';
+    const res = await fetch(`${base}/api/ott/resolve?q=${encodeURIComponent(clean)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.imdbId) {
+        return data;
+      }
+    }
+  } catch {}
+
+  // 2. Direct client fallback to IMDb suggestion
+  try {
+    const first = clean.charAt(0).toLowerCase() || 'a';
+    const slug = clean.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30);
+    const imdbUrl = `https://v3.sg.media-imdb.com/suggestion/${first}/${encodeURIComponent(slug)}.json`;
+    const res = await fetch(imdbUrl);
+    if (res.ok) {
+      const data = await res.json();
+      const match = data?.d?.find((item) => item.id?.startsWith('tt'));
+      if (match) {
+        return {
+          imdbId: match.id,
+          title: match.l || clean,
+          year: match.y || match.tl || '',
+          isTv: Boolean(match.q?.includes('TV') || match.qid?.includes('tv') || match.yr),
+          poster: match.i?.imageUrl || '',
+        };
+      }
+    }
+  } catch {}
+
+  return { imdbId: '', isTv: false, title: clean };
+};
+
+export const getCloudMirrorSources = (queryOrMeta, isTvParam = false, titleParam = '') => {
+  if (!queryOrMeta) return [];
+  let imdbId = '';
+  let isTv = Boolean(isTvParam);
+  let title = titleParam;
+
+  if (typeof queryOrMeta === 'object' && queryOrMeta !== null) {
+    imdbId = queryOrMeta.imdbId || '';
+    if (queryOrMeta.isTv !== undefined) isTv = Boolean(queryOrMeta.isTv);
+    title = queryOrMeta.title || title;
+  } else if (typeof queryOrMeta === 'string') {
+    const clean = queryOrMeta.trim();
+    if (/^tt\d+$/i.test(clean)) {
+      imdbId = clean;
+    } else {
+      const known = lookupKnownTitle(clean);
+      if (known) {
+        imdbId = known.imdbId;
+        isTv = Boolean(known.isTv);
+        title = known.title || clean;
+      } else {
+        title = clean;
+      }
+    }
+  }
+
+  const encodedTitle = encodeURIComponent(title || 'movie');
+
+  // If a verified IMDb ID is available, generate working 1080p stream mirrors
+  if (imdbId) {
+    return [
+      {
+        name: 'Server 1 (VidSrc Pro 1080p Ultra)',
+        quality: '1080p Ultra',
+        tag: 'Instant',
+        url: isTv
+          ? `https://vidsrc.pm/embed/tv/${imdbId}`
+          : `https://vidsrc.pm/embed/movie/${imdbId}`,
+      },
+      {
+        name: 'Server 2 (AutoEmbed Multi-Audio HD)',
+        quality: '1080p HD',
+        tag: 'Dual Audio',
+        url: isTv
+          ? `https://autoembed.co/tv/imdb/${imdbId}-1-1`
+          : `https://autoembed.co/movie/imdb/${imdbId}`,
+      },
+      {
+        name: 'Server 3 (2Embed Crystal Stream)',
+        quality: '1080p HD',
+        tag: 'No Lag',
+        url: isTv
+          ? `https://www.2embed.skin/embedtv/${imdbId}&s=1&e=1`
+          : `https://www.2embed.skin/embed/${imdbId}`,
+      },
+      {
+        name: 'Server 4 (VidSrc SU HD)',
+        quality: '1080p',
+        tag: 'Multi-Lang',
+        url: isTv
+          ? `https://vidsrc.su/embed/tv/${imdbId}`
+          : `https://vidsrc.su/embed/movie/${imdbId}`,
+      },
+      {
+        name: 'Server 5 (2Embed Cinema VIP)',
+        quality: '1080p VIP',
+        tag: 'Worldwide',
+        url: isTv
+          ? `https://www.2embed.cc/embedtv/${imdbId}&s=1&e=1`
+          : `https://www.2embed.cc/embed/${imdbId}`,
+      },
+      {
+        name: 'Server 6 (VidSrc Classic)',
+        quality: 'HD',
+        tag: 'Backup',
+        url: isTv
+          ? `https://vidsrc.to/embed/tv/${imdbId}`
+          : `https://vidsrc.to/embed/movie/${imdbId}`,
+      },
+    ];
+  }
+
+  // Fallback if no IMDb ID could be resolved
   return [
     {
-      name: 'Server 1 (VidSrc 1080p Ultra HD)',
-      quality: '1080p Ultra',
-      tag: 'Fast',
-      url: isImdb
-        ? `https://vidsrc.to/embed/movie/${clean}`
-        : `https://vidsrc.to/embed/movie/${encoded}`,
-    },
-    {
-      name: 'Server 2 (AutoEmbed Multi-Source 1080p)',
+      name: 'Server 1 (AutoEmbed Search HD)',
       quality: '1080p HD',
-      tag: 'Multi-Lang',
-      url: `https://autoembed.cc/embed/player.php?id=${encoded}`,
+      tag: 'Auto',
+      url: `https://autoembed.co/movie/imdb/${encodedTitle}`,
     },
     {
-      name: 'Server 3 (EmbedSU Multi-Audio HD)',
-      quality: '1080p HD',
-      tag: 'Dual Audio',
-      url: `https://embed.su/embed/movie/${encoded}`,
-    },
-    {
-      name: 'Server 4 (VidSrc.me Crystal HD)',
-      quality: '1080p HD',
-      tag: 'Crystal',
-      url: isImdb
-        ? `https://vidsrc.me/embed/movie?imdb=${clean}`
-        : `https://vidsrc.me/embed/movie?title=${encoded}`,
-    },
-    {
-      name: 'Server 5 (2Embed Cinema 1080p)',
-      quality: '1080p HD',
-      tag: 'HQ',
-      url: `https://www.2embed.cc/embed/${encoded}`,
-    },
-    {
-      name: 'Server 6 (SmashyStream HD)',
-      quality: 'HD',
-      tag: 'Stable',
-      url: `https://player.smashy.stream/movie/${encoded}`,
-    },
-    {
-      name: 'Server 7 (MoviesAPI Full HD)',
+      name: 'Server 2 (2Embed Title Stream)',
       quality: '1080p',
-      tag: 'Backup',
-      url: `https://moviesapi.club/movie/${encoded}`,
+      tag: 'Global',
+      url: `https://www.2embed.cc/embed/${encodedTitle}`,
     },
     {
-      name: 'Server 8 (SuperEmbed Global VIP)',
-      quality: '1080p VIP',
-      tag: 'Worldwide',
-      url: `https://multiembed.mov/?video_id=${encoded}`,
+      name: 'Server 3 (2Embed Skin Direct)',
+      quality: '1080p',
+      tag: 'Fast',
+      url: `https://www.2embed.skin/embed/${encodedTitle}`,
     },
   ];
 };
 
 export const OTT_CATALOGS = {
   hotstar: [
-    { title: 'Chhaava', year: '2025', genre: 'Action / History', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Blockbuster' },
-    { title: 'Brahmāstra: Part One – Shiva', year: '2022', genre: 'Fantasy / Action', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Superhit' },
-    { title: '12th Fail', year: '2023', genre: 'Drama / Inspirational', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Top Rated' },
-    { title: 'Shōgun', year: '2024', genre: 'Drama / History', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Emmy Winner' },
-    { title: 'Lokah Chapter 1', year: '2025', genre: 'Sci-Fi / Thriller', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Trending' },
-    { title: 'Aarya', year: '2023', genre: 'Crime / Drama', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Popular' },
+    { title: 'Chhaava', imdbId: 'tt27922706', isTv: false, year: '2025', genre: 'Action / History', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Blockbuster' },
+    { title: 'Brahmāstra: Part One – Shiva', imdbId: 'tt6277462', isTv: false, year: '2022', genre: 'Fantasy / Action', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Superhit' },
+    { title: '12th Fail', imdbId: 'tt23849204', isTv: false, year: '2023', genre: 'Drama / Inspirational', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Top Rated' },
+    { title: 'Shōgun', imdbId: 'tt2788316', isTv: true, year: '2024', genre: 'Drama / History', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Emmy Winner' },
+    { title: 'Lokah Chapter 1', imdbId: 'tt32420456', isTv: false, year: '2025', genre: 'Sci-Fi / Thriller', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Trending' },
+    { title: 'Aarya', imdbId: 'tt12439546', isTv: true, year: '2023', genre: 'Crime / Drama', ott: 'Disney+ Hotstar', icon: '🌟', badge: 'Popular' },
   ],
   netflix: [
-    { title: 'Stranger Things', year: '2024', genre: 'Sci-Fi / Horror', ott: 'Netflix', icon: '🔴', badge: 'Global #1' },
-    { title: 'Squid Game', year: '2024', genre: 'Thriller / Survival', ott: 'Netflix', icon: '🔴', badge: 'Trending' },
-    { title: 'Animal', year: '2023', genre: 'Action / Crime', ott: 'Netflix', icon: '🔴', badge: 'Blockbuster' },
-    { title: 'Money Heist', year: '2021', genre: 'Heist / Thriller', ott: 'Netflix', icon: '🔴', badge: 'Fan Favorite' },
-    { title: 'Wednesday', year: '2023', genre: 'Fantasy / Mystery', ott: 'Netflix', icon: '🔴', badge: 'Viral Hit' },
-    { title: 'Leo', year: '2023', genre: 'Action / Thriller', ott: 'Netflix', icon: '🔴', badge: 'Action Hit' },
+    { title: 'Stranger Things', imdbId: 'tt4574334', isTv: true, year: '2024', genre: 'Sci-Fi / Horror', ott: 'Netflix', icon: '🔴', badge: 'Global #1' },
+    { title: 'Squid Game', imdbId: 'tt10919420', isTv: true, year: '2024', genre: 'Thriller / Survival', ott: 'Netflix', icon: '🔴', badge: 'Trending' },
+    { title: 'Animal', imdbId: 'tt13751694', isTv: false, year: '2023', genre: 'Action / Crime', ott: 'Netflix', icon: '🔴', badge: 'Blockbuster' },
+    { title: 'Money Heist', imdbId: 'tt6468322', isTv: true, year: '2021', genre: 'Heist / Thriller', ott: 'Netflix', icon: '🔴', badge: 'Fan Favorite' },
+    { title: 'Wednesday', imdbId: 'tt13443470', isTv: true, year: '2023', genre: 'Fantasy / Mystery', ott: 'Netflix', icon: '🔴', badge: 'Viral Hit' },
+    { title: 'Leo', imdbId: 'tt15654328', isTv: false, year: '2023', genre: 'Action / Thriller', ott: 'Netflix', icon: '🔴', badge: 'Action Hit' },
   ],
   prime: [
-    { title: 'The Boys', year: '2024', genre: 'Action / Superhero', ott: 'Prime Video', icon: '🔵', badge: 'Top Hit' },
-    { title: 'Mirzapur', year: '2024', genre: 'Crime / Drama', ott: 'Prime Video', icon: '🔵', badge: 'Mass Hit' },
-    { title: 'Panchayat', year: '2024', genre: 'Comedy / Drama', ott: 'Prime Video', icon: '🔵', badge: 'All-Time Fav' },
-    { title: 'Fallout', year: '2024', genre: 'Sci-Fi / Adventure', ott: 'Prime Video', icon: '🔵', badge: 'Critically Acclaimed' },
-    { title: 'Farzi', year: '2023', genre: 'Thriller / Con', ott: 'Prime Video', icon: '🔵', badge: 'Popular' },
-    { title: 'Citadel', year: '2023', genre: 'Action / Spy', ott: 'Prime Video', icon: '🔵', badge: 'High Octane' },
+    { title: 'The Boys', imdbId: 'tt1190634', isTv: true, year: '2024', genre: 'Action / Superhero', ott: 'Prime Video', icon: '🔵', badge: 'Top Hit' },
+    { title: 'Mirzapur', imdbId: 'tt6473300', isTv: true, year: '2024', genre: 'Crime / Drama', ott: 'Prime Video', icon: '🔵', badge: 'Mass Hit' },
+    { title: 'Panchayat', imdbId: 'tt12004706', isTv: true, year: '2024', genre: 'Comedy / Drama', ott: 'Prime Video', icon: '🔵', badge: 'All-Time Fav' },
+    { title: 'Fallout', imdbId: 'tt12637874', isTv: true, year: '2024', genre: 'Sci-Fi / Adventure', ott: 'Prime Video', icon: '🔵', badge: 'Critically Acclaimed' },
+    { title: 'Farzi', imdbId: 'tt14234472', isTv: true, year: '2023', genre: 'Thriller / Con', ott: 'Prime Video', icon: '🔵', badge: 'Popular' },
+    { title: 'Citadel', imdbId: 'tt11640018', isTv: true, year: '2023', genre: 'Action / Spy', ott: 'Prime Video', icon: '🔵', badge: 'High Octane' },
   ],
   jiocinema: [
-    { title: 'Stree 2', year: '2024', genre: 'Comedy / Horror', ott: 'JioCinema', icon: '🟣', badge: '₹800 Cr Mega Hit' },
-    { title: 'Asur', year: '2023', genre: 'Crime / Mythology', ott: 'JioCinema', icon: '🟣', badge: 'Masterpiece' },
-    { title: 'Bloody Daddy', year: '2023', genre: 'Action / Thriller', ott: 'JioCinema', icon: '🟣', badge: 'Non-stop Action' },
-    { title: 'Bhediya', year: '2022', genre: 'Comedy / Creature', ott: 'JioCinema', icon: '🟣', badge: 'Superhit' },
+    { title: 'Stree 2', imdbId: 'tt27510174', isTv: false, year: '2024', genre: 'Comedy / Horror', ott: 'JioCinema', icon: '🟣', badge: '₹800 Cr Mega Hit' },
+    { title: 'Asur', imdbId: 'tt11912196', isTv: true, year: '2023', genre: 'Crime / Mythology', ott: 'JioCinema', icon: '🟣', badge: 'Masterpiece' },
+    { title: 'Bloody Daddy', imdbId: 'tt16075936', isTv: false, year: '2023', genre: 'Action / Thriller', ott: 'JioCinema', icon: '🟣', badge: 'Non-stop Action' },
+    { title: 'Bhediya', imdbId: 'tt14081092', isTv: false, year: '2022', genre: 'Comedy / Creature', ott: 'JioCinema', icon: '🟣', badge: 'Superhit' },
   ],
   zee5: [
-    { title: 'Gadar 2', year: '2023', genre: 'Action / Drama', ott: 'Zee5', icon: '🟠', badge: '₹600 Cr Hit' },
-    { title: 'Sirf Ek Bandaa Kaafi Hai', year: '2023', genre: 'Courtroom / Drama', ott: 'Zee5', icon: '🟠', badge: 'Award Winner' },
-    { title: 'Sam Bahadur', year: '2023', genre: 'Biopic / War', ott: 'Zee5', icon: '🟠', badge: 'Must Watch' },
-    { title: 'Silence 2', year: '2024', genre: 'Crime / Mystery', ott: 'Zee5', icon: '🟠', badge: 'Edge of Seat' },
+    { title: 'Gadar 2', imdbId: 'tt15441054', isTv: false, year: '2023', genre: 'Action / Drama', ott: 'Zee5', icon: '🟠', badge: '₹600 Cr Hit' },
+    { title: 'Sirf Ek Bandaa Kaafi Hai', imdbId: 'tt22695536', isTv: false, year: '2023', genre: 'Courtroom / Drama', ott: 'Zee5', icon: '🟠', badge: 'Award Winner' },
+    { title: 'Sam Bahadur', imdbId: 'tt10406854', isTv: false, year: '2023', genre: 'Biopic / War', ott: 'Zee5', icon: '🟠', badge: 'Must Watch' },
+    { title: 'Silence 2', imdbId: 'tt31846503', isTv: false, year: '2024', genre: 'Crime / Mystery', ott: 'Zee5', icon: '🟠', badge: 'Edge of Seat' },
   ],
 };

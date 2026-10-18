@@ -251,6 +251,86 @@ app.get('/api/rooms', adminGate, (req, res) => {
   res.json({ rooms: activeRooms });
 });
 
+// High-Speed OTT & Cinema Title Resolver (Converts Movie / Series Titles to Verified IMDb IDs)
+const ottResolveCache = new Map();
+const KNOWN_SERVER_TITLES = {
+  'animal': { imdbId: 'tt13751694', isTv: false, title: 'Animal', year: '2023' },
+  'chhaava': { imdbId: 'tt27922706', isTv: false, title: 'Chhaava', year: '2025' },
+  'brahmastra': { imdbId: 'tt6277462', isTv: false, title: 'Brahmāstra: Part One – Shiva', year: '2022' },
+  '12th fail': { imdbId: 'tt23849204', isTv: false, title: '12th Fail', year: '2023' },
+  'shogun': { imdbId: 'tt2788316', isTv: true, title: 'Shōgun', year: '2024' },
+  'aarya': { imdbId: 'tt12439546', isTv: true, title: 'Aarya', year: '2020' },
+  'stranger things': { imdbId: 'tt4574334', isTv: true, title: 'Stranger Things', year: '2016' },
+  'squid game': { imdbId: 'tt10919420', isTv: true, title: 'Squid Game', year: '2021' },
+  'money heist': { imdbId: 'tt6468322', isTv: true, title: 'Money Heist', year: '2017' },
+  'wednesday': { imdbId: 'tt13443470', isTv: true, title: 'Wednesday', year: '2022' },
+  'leo': { imdbId: 'tt15654328', isTv: false, title: 'Leo', year: '2023' },
+  'the boys': { imdbId: 'tt1190634', isTv: true, title: 'The Boys', year: '2019' },
+  'mirzapur': { imdbId: 'tt6473300', isTv: true, title: 'Mirzapur', year: '2018' },
+  'panchayat': { imdbId: 'tt12004706', isTv: true, title: 'Panchayat', year: '2020' },
+  'fallout': { imdbId: 'tt12637874', isTv: true, title: 'Fallout', year: '2024' },
+  'farzi': { imdbId: 'tt14234472', isTv: true, title: 'Farzi', year: '2023' },
+  'citadel': { imdbId: 'tt11640018', isTv: true, title: 'Citadel', year: '2023' },
+  'stree 2': { imdbId: 'tt27510174', isTv: false, title: 'Stree 2', year: '2024' },
+  'asur': { imdbId: 'tt11912196', isTv: true, title: 'Asur', year: '2020' },
+  'bloody daddy': { imdbId: 'tt16075936', isTv: false, title: 'Bloody Daddy', year: '2023' },
+  'bhediya': { imdbId: 'tt14081092', isTv: false, title: 'Bhediya', year: '2022' },
+  'gadar 2': { imdbId: 'tt15441054', isTv: false, title: 'Gadar 2', year: '2023' },
+  'sirf ek bandaa kaafi hai': { imdbId: 'tt22695536', isTv: false, title: 'Sirf Ek Bandaa Kaafi Hai', year: '2023' },
+  'sam bahadur': { imdbId: 'tt10406854', isTv: false, title: 'Sam Bahadur', year: '2023' },
+  'silence 2': { imdbId: 'tt31846503', isTv: false, title: 'Silence 2', year: '2024' },
+  'lokah chapter 1': { imdbId: 'tt32420456', isTv: false, title: 'Lokah Chapter 1', year: '2025' },
+};
+
+app.get('/api/ott/resolve', async (req, res) => {
+  const q = String(req.query.q || req.query.title || '').trim();
+  if (!q) return res.status(400).json({ error: 'missing_query' });
+
+  if (/^tt\d+$/i.test(q)) {
+    return res.json({ imdbId: q, isTv: false, title: q });
+  }
+
+  const key = q.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  if (ottResolveCache.has(key)) {
+    return res.json(ottResolveCache.get(key));
+  }
+
+  if (KNOWN_SERVER_TITLES[key]) {
+    const val = KNOWN_SERVER_TITLES[key];
+    ottResolveCache.set(key, val);
+    return res.json(val);
+  }
+
+  // Live query IMDb suggestion
+  try {
+    const first = key.charAt(0) || 'a';
+    const slug = key.replace(/\s+/g, '_').slice(0, 30);
+    const imdbUrl = `https://v3.sg.media-imdb.com/suggestion/${first}/${encodeURIComponent(slug)}.json`;
+    const imdbRes = await fetch(imdbUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (imdbRes.ok) {
+      const data = await imdbRes.json();
+      const match = data?.d?.find((item) => item.id?.startsWith('tt'));
+      if (match) {
+        const isTv = Boolean(match.q?.includes('TV') || match.qid?.includes('tv') || match.yr);
+        const resolved = {
+          imdbId: match.id,
+          title: match.l || q,
+          year: match.y || match.tl || '',
+          isTv,
+          poster: match.i?.imageUrl || '',
+        };
+        ottResolveCache.set(key, resolved);
+        return res.json(resolved);
+      }
+    }
+  } catch (e) {}
+
+  res.json({ imdbId: '', isTv: false, title: q });
+});
+
 app.get('/api/stats/visitors', (req, res) => {
   const ip = ipOf(req);
   const ua = req.get('user-agent') || '';

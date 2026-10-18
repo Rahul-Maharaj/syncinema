@@ -10,7 +10,8 @@ import {
 import {
   detect, ytId, vimeoId, loadScript, ytReady, toEmbed, toProxyUrl,
   toStreamProxyUrl, resolveMedia, isAdultMedia, sanitizeDisplayTitle,
-  getOttPlatform, isOttPlatform, extractOttTitle, OTT_PLATFORMS, getCloudMirrorSources
+  getOttPlatform, isOttPlatform, extractOttTitle, OTT_PLATFORMS, getCloudMirrorSources,
+  resolveTitleToMetadata
 } from '@/lib/media';
 import { Tile } from './CouplesOverlay';
 
@@ -977,10 +978,25 @@ export default function VideoPlayer({
     }
   };
 
-  const playCloudMovie = (query, platformName) => {
+  const playCloudMovie = async (query, platformName) => {
     if (!query) return;
-    const clean = query.trim();
-    const mirrors = getCloudMirrorSources(clean);
+    let meta = null;
+    let clean = '';
+    let isTv = false;
+
+    if (typeof query === 'object') {
+      meta = query;
+      clean = query.title || '';
+      isTv = Boolean(query.isTv);
+      platformName = query.ott || platformName;
+    } else {
+      clean = String(query).trim();
+      meta = await resolveTitleToMetadata(clean);
+      if (meta) isTv = Boolean(meta.isTv);
+    }
+
+    if (!clean) return;
+    const mirrors = getCloudMirrorSources(meta || clean, isTv, clean);
     socket.emit('media:set', {
       media: {
         type: 'embed',
@@ -1008,7 +1024,9 @@ export default function VideoPlayer({
     const extracted = extractOttTitle(src);
     if (ott || force === 'hybrid' || extracted) {
       const titleToPlay = extracted || (ott ? `${ott.name} Cinema` : 'Cinema');
-      const mirrors = getCloudMirrorSources(titleToPlay);
+      const meta = await resolveTitleToMetadata(titleToPlay);
+      const isTv = Boolean(meta?.isTv);
+      const mirrors = getCloudMirrorSources(meta || titleToPlay, isTv, titleToPlay);
       return {
         type: 'embed',
         src: mirrors[0]?.url,
