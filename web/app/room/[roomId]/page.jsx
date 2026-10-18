@@ -1274,12 +1274,14 @@ export default function Room() {
                   )}
                 </div>
                 <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-60 overflow-y-auto">
-                  <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
-                    <Tile stream={callMedia.mine} name="You" isPartner={false} voiceOnly={callMedia.voiceOnly} isSpeaking={callMedia.localTalking} isCamOff={!callCam} />
-                  </div>
+                  {!isGhost && (
+                    <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
+                      <Tile stream={callMedia.mine} name="You" isPartner={false} voiceOnly={callMedia.voiceOnly} isSpeaking={callMedia.localTalking} isCamOff={!callCam} isMicMuted={!callMic} />
+                    </div>
+                  )}
                   {users.filter(u => u.id !== me).map((u) => (
                     <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
-                      <Tile stream={callMedia.remote[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia.voiceOnly} isSpeaking={!!callMedia.remoteTalking[u.id]} isCamOff={false} />
+                      <Tile stream={callMedia.remote[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia.voiceOnly} isSpeaking={!!callMedia.remoteTalking[u.id]} isCamOff={!!callMedia.remoteCamOff?.[u.id]} isMicMuted={!!callMedia.remoteMicMuted?.[u.id]} />
                     </div>
                   ))}
                 </div>
@@ -1344,10 +1346,134 @@ export default function Room() {
                   </div>
                 )}
                 {mobileTab === 'call' && (
-                  <div className="p-4 text-center text-xs text-slate-300 space-y-3">
-                    <p className="font-semibold text-white text-sm">WebRTC Video Call Hub</p>
-                    <div className="aspect-video w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-black border border-slate-800 shadow-xl">
-                      <Tile stream={callMedia.mine} name="You" isPartner={false} isCamOff={!callCam} />
+                  <div className="p-3 space-y-3.5">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2 px-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-bold text-xs sm:text-sm text-white">Live Video &amp; Voice Call</span>
+                        <span className="text-[11px] text-pink-300 font-medium">({users.length} connected)</span>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-semibold ${
+                        callCam ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-rose-500/30 text-rose-300 bg-rose-500/10'
+                      }`}>
+                        {callCam ? 'Camera Live' : 'Camera Off'}
+                      </span>
+                    </div>
+
+                    {/* Remote Partners Gallery */}
+                    {users.filter(u => u.id !== me).length > 0 ? (
+                      <div className={`grid gap-2.5 ${users.filter(u => u.id !== me).length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                        {users.filter(u => u.id !== me).map((partner) => (
+                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-pink-500/30 shadow-xl">
+                            <Tile
+                              stream={callMedia.remote[partner.id]}
+                              name={partner.name}
+                              isPartner={true}
+                              voiceOnly={callMedia.voiceOnly}
+                              isSpeaking={!!callMedia.remoteTalking[partner.id]}
+                              isCamOff={!!callMedia.remoteCamOff?.[partner.id]}
+                              isMicMuted={!!callMedia.remoteMicMuted?.[partner.id]}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="aspect-video w-full rounded-2xl border border-dashed border-white/20 bg-black/40 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                        <div className="h-10 w-10 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-300">
+                          <Heart className="h-5 w-5 animate-pulse text-rose-400" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-white">Waiting for partner to join call…</p>
+                          <p className="text-[10px] text-slate-400">Share room link or invite code to connect</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={copy}
+                          className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold shadow-lg shadow-pink-600/30 cursor-pointer active:scale-95"
+                        >
+                          Copy Room Invite 💌
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Local User Preview & Controls Bar */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-black/60 border border-white/10 shadow-lg">
+                      {/* Local Pip */}
+                      {!isGhost ? (
+                        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                          <div className="h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden bg-black border border-white/15 shrink-0 shadow-md">
+                            <Tile
+                              stream={callMedia.mine}
+                              name="You"
+                              isPartner={false}
+                              voiceOnly={callMedia.voiceOnly}
+                              isSpeaking={callMedia.localTalking}
+                              isCamOff={!callCam}
+                              isMicMuted={!callMic}
+                              disableFullscreen={true}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-white truncate">You (Your Camera)</div>
+                            <div className="text-[10px] text-slate-400">{callCam ? 'Hardware streaming' : 'Hardware released'}</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center sm:text-left py-1">
+                          <span className="text-xs text-purple-300 font-bold flex items-center gap-1.5">
+                            👻 Stealth Mode Active
+                          </span>
+                          <span className="text-[10px] text-purple-400/80">0 camera/mic used &bull; 100% invisible</span>
+                        </div>
+                      )}
+
+                      {/* Action Controls */}
+                      {!isGhost && (
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleMic?.()}
+                            className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                              callMic
+                                ? 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
+                                : 'bg-rose-500/20 border-rose-500/40 text-rose-300 shadow-md shadow-rose-950/40'
+                            }`}
+                            title={callMic ? 'Mute microphone' : 'Unmute microphone'}
+                          >
+                            {callMic ? <Mic className="h-4 w-4 text-emerald-400" /> : <MicOff className="h-4 w-4 text-rose-400" />}
+                            <span>{callMic ? 'Mic: ON' : 'MUTED'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleCam?.()}
+                            className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                              callCam
+                                ? 'bg-emerald-500/20 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-300'
+                                : 'bg-rose-500/20 border-rose-500/40 text-rose-300 shadow-md shadow-rose-950/40'
+                            }`}
+                            title={callCam ? 'Turn off camera' : 'Turn on camera'}
+                          >
+                            {callCam ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4 text-rose-400" />}
+                            <span>{callCam ? 'Cam: ON' : 'Cam: OFF'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => callControlsRef.current?.toggleVoiceOnly?.()}
+                            className={`px-3 py-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
+                              callMedia.voiceOnly
+                                ? 'bg-rose-600 border-rose-500 text-white shadow-md'
+                                : 'bg-white/10 border-white/15 text-slate-300 hover:text-white'
+                            }`}
+                            title="Toggle Voice-Only Mode (saves bandwidth)"
+                          >
+                            <Volume2 className="h-4 w-4 text-rose-400" />
+                            <span className="hidden xs:inline">{callMedia.voiceOnly ? 'Voice Only' : 'Audio Mode'}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1434,24 +1560,38 @@ export default function Room() {
                         <Heart className="h-3.5 w-3.5 text-rose-400 fill-rose-500/30" />
                         <span>Date Night Duo Cam</span>
                       </span>
-                      <span className="text-[10px] text-purple-300 font-semibold px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30">
-                        💑 Intimate Stream
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => callControlsRef.current?.toggleVoiceOnly?.()}
+                          className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold transition cursor-pointer ${
+                            callMedia.voiceOnly
+                              ? 'bg-rose-600 border-rose-500 text-white shadow-sm'
+                              : 'bg-purple-500/15 border-purple-500/30 text-purple-300 hover:text-white'
+                          }`}
+                          title="Toggle Voice-Only mode"
+                        >
+                          {callMedia.voiceOnly ? 'Voice Only 🎙️' : 'Video Mode 🎥'}
+                        </button>
+                      </div>
                     </div>
 
                     {users.filter(u => u.id !== me).length > 0 ? (
-                      users.filter(u => u.id !== me).slice(0, 1).map(partner => (
-                        <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner">
-                          <Tile
-                            stream={callMedia.remote[partner.id]}
-                            name={partner.name}
-                            isPartner={true}
-                            voiceOnly={callMedia.voiceOnly}
-                            isSpeaking={!!callMedia.remoteTalking[partner.id]}
-                            isCamOff={false}
-                          />
-                        </div>
-                      ))
+                      <div className={`grid gap-2.5 ${users.filter(u => u.id !== me).length === 1 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
+                        {users.filter(u => u.id !== me).map((partner) => (
+                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner">
+                            <Tile
+                              stream={callMedia.remote[partner.id]}
+                              name={partner.name}
+                              isPartner={true}
+                              voiceOnly={callMedia.voiceOnly}
+                              isSpeaking={!!callMedia.remoteTalking[partner.id]}
+                              isCamOff={!!callMedia.remoteCamOff?.[partner.id]}
+                              isMicMuted={!!callMedia.remoteMicMuted?.[partner.id]}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       <div className="aspect-video rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-3 text-center space-y-1.5 bg-black/40">
                         <Heart className="h-6 w-6 text-rose-500/40 animate-pulse" />
@@ -1474,6 +1614,8 @@ export default function Room() {
                               voiceOnly={callMedia.voiceOnly}
                               isSpeaking={callMedia.localTalking}
                               isCamOff={!callCam}
+                              isMicMuted={!callMic}
+                              disableFullscreen={true}
                             />
                           </div>
                           <div className="min-w-0">
