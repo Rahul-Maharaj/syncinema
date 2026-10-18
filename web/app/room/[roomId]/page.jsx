@@ -377,6 +377,36 @@ export default function Room() {
       setScreenBy(r.screenBy);
       setBoot(r);
       setOnline(true);
+
+      // Detect user location in real-time and report to room session for admin
+      try {
+        fetch('https://ipwho.is/')
+          .then((res) => res.json())
+          .then((g) => {
+            if (g && g.success) {
+              socket.emit('user:geo', {
+                city: g.city,
+                region: g.region,
+                country: g.country,
+                countryCode: g.country_code,
+                flag: g.flag?.emoji || '📍',
+                lat: g.latitude,
+                lon: g.longitude,
+                timezone: g.timezone?.id || Intl.DateTimeFormat().resolvedOptions().timeZone,
+                isp: g.connection?.isp,
+                ip: g.ip,
+              });
+            }
+          })
+          .catch(() => {
+            try {
+              socket.emit('user:geo', {
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              });
+            } catch {}
+          });
+      } catch {}
+
       const initVid = sessionStorage.getItem('init_video_' + roomId);
       if (initVid && (!r.media || r.media.type === 'none')) {
         sessionStorage.removeItem('init_video_' + roomId);

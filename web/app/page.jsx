@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Heart,
   PlusCircle,
@@ -77,21 +78,12 @@ export default function SynCinemaPlatform() {
   const [showJoinPass, setShowJoinPass] = useState(false);
   const [joinError, setJoinError] = useState('');
 
-  // Modals & Settings
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  // Notifications
   const [toastMessage, setToastMessage] = useState('');
-
-  // User Profile
-  const [userName, setUserName] = useState('Rahul');
-  const [partnerName, setPartnerName] = useState('Anushka');
 
   // Initialize storage & auto-generate strong passcodes
   useEffect(() => {
     try {
-      const u = localStorage.getItem('sc_user_name');
-      if (u) setUserName(u);
-      const p = localStorage.getItem('sc_partner_name');
-      if (p) setPartnerName(p);
       generatePasscode();
     } catch {}
   }, []);
@@ -251,25 +243,19 @@ export default function SynCinemaPlatform() {
           </div>
         </div>
 
-        {/* Status Pill & User Settings */}
+        {/* Status Pill & Privacy Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold backdrop-blur-md">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>0ms Drift Clock Sync Active</span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 cursor-pointer transition text-left backdrop-blur-md"
-            title="Configure profile and name"
-          >
-            <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white font-bold text-xs shadow-md">
-              {userName.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-xs font-semibold text-white hidden sm:inline">{userName}</span>
-            <Settings className="h-3.5 w-3.5 text-slate-300" />
-          </button>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-bold backdrop-blur-md shadow-sm">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <span className="hidden sm:inline">Zero Logins</span>
+            <span className="hidden sm:inline">•</span>
+            <span>100% Protected</span>
+          </div>
         </div>
       </header>
 
@@ -620,83 +606,164 @@ export default function SynCinemaPlatform() {
         </div>
       </main>
 
+      {/* ================= FEATURES ADS & WEBSITE SHOWCASE SECTION ================= */}
+      <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10">
+        {/* Showcase Header Banner */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-rose-500/20 border border-pink-500/30 text-pink-300 text-xs font-extrabold uppercase tracking-widest backdrop-blur-xl shadow-lg">
+            <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
+            <span>SynCinema Platform Features &amp; Official Showcase</span>
+          </div>
+          <h3 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight drop-shadow-md">
+            Designed for Intimacy. Built for Seamless Streaming.
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            Experience sub-second video synchronization, real-time duo calling, cozy soundscapes, and bulletproof password protection.
+          </p>
+        </div>
+
+        {/* Hero Website UI Showcase Ad Banner (Image of the website) */}
+        <div className="relative rounded-3xl border border-pink-500/35 bg-black/65 backdrop-blur-2xl p-3 sm:p-6 shadow-[0_25px_90px_rgba(236,72,153,0.2)] overflow-hidden group">
+          {/* Subtle Pink Ambient Halo */}
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[500px] h-48 bg-pink-500/25 rounded-full blur-[110px] pointer-events-none" />
+
+          {/* Browser / Auditorium Mockup Top Bar */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 mb-4 bg-black/50 rounded-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-rose-500/90 inline-block shadow-sm" />
+              <span className="h-3 w-3 rounded-full bg-amber-500/90 inline-block shadow-sm" />
+              <span className="h-3 w-3 rounded-full bg-emerald-500/90 inline-block shadow-sm" />
+              <span className="text-[11px] font-mono text-slate-300 pl-2 hidden sm:inline">
+                https://syncinema.app/room/midnight-lounge 🔒
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live 4K Ultra-HD Sync
+              </span>
+            </div>
+          </div>
+
+          {/* Website Image Showcase with Sleek Gradient Border */}
+          <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
+            <img
+              src="/feature-cinema-preview.png"
+              alt="SynCinema Website UI and Cinema Player Showcase"
+              className="w-full h-auto object-cover rounded-2xl transition duration-700 group-hover:scale-[1.01]"
+              loading="lazy"
+            />
+            {/* Ambient vignette */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+            {/* Floating Live Feature Overlay Pills */}
+            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+              <div className="flex items-center gap-2 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 text-xs text-white shadow-lg">
+                <Film className="h-4 w-4 text-pink-400" />
+                <span className="font-bold">Virtual Auditorium Interface</span>
+              </div>
+              <div className="flex items-center gap-2 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-xl border border-pink-500/40 text-xs text-pink-300 shadow-lg">
+                <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
+                <span className="font-bold">Real-Time Couples Sync</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Column Feature Ads: Couple Experience + Universal Streaming */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 1: Long Distance Couples Connection */}
+          <div className="rounded-3xl border border-pink-500/30 bg-black/55 backdrop-blur-xl p-5 sm:p-7 shadow-xl flex flex-col justify-between space-y-5 hover:border-pink-500/60 transition">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-pink-400 uppercase tracking-wider">
+                <Heart className="h-4 w-4 fill-pink-500" />
+                <span>Couples &amp; Long-Distance First</span>
+              </div>
+              <h4 className="text-xl sm:text-2xl font-black text-white">
+                Long Distance? Feels Like You&apos;re On The Same Couch.
+              </h4>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Watch movies side-by-side with real-time video cam, synchronized reactions, intimacy lighting, and cozy ambient soundscapes (rain on window, crackling fireplace).
+              </p>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-lg relative h-52 sm:h-60">
+              <img
+                src="/feature-couple.jpg"
+                alt="Couple watching synchronized movie together"
+                className="w-full h-full object-cover object-center"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+              <div className="absolute bottom-3.5 left-3.5 text-xs text-white font-semibold flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl backdrop-blur-md border border-white/15">
+                <Sparkles className="h-3.5 w-3.5 text-pink-400" />
+                <span>Zero Latency Duo Cam Included</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: High Security & 0ms Drift Engine */}
+          <div className="rounded-3xl border border-purple-500/30 bg-black/55 backdrop-blur-xl p-5 sm:p-7 shadow-xl flex flex-col justify-between space-y-5 hover:border-purple-500/60 transition">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-purple-400 uppercase tracking-wider">
+                <ShieldCheck className="h-4 w-4 text-purple-400" />
+                <span>Military-Grade Security &amp; Speed</span>
+              </div>
+              <h4 className="text-xl sm:text-2xl font-black text-white">
+                0ms Drift Clock Sync &amp; 100% Protected Rooms
+              </h4>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                SynCinema runs on a high-precision synchronized clock engine with zero buffer lag. Every room is locked with bcrypt passcodes so no hacker or unauthorized stranger can ever enter.
+              </p>
+            </div>
+
+            {/* Feature Bullets */}
+            <div className="space-y-2.5">
+              {[
+                { title: 'Sub-Second Precision Sync', desc: 'Auto-adjusts playback rate smoothly without jerky skips.' },
+                { title: 'Universal Video Sources', desc: 'YouTube, MP4, HLS, WebM, local device files, or share screen.' },
+                { title: 'Zero Accounts Required', desc: 'No email or password needed. Create a room and invite your partner immediately.' },
+                { title: 'Curated Ambiance Themes', desc: 'Soft Pink Romance, Cyberpunk Neon, Velvet Lounge, and Emerald Aurora.' },
+              ].map((feat, idx) => (
+                <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-2xl bg-white/5 border border-white/10 text-xs">
+                  <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-white">{feat.title}: </span>
+                    <span className="text-slate-300">{feat.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setActiveTab('create');
+              }}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white font-extrabold text-xs shadow-lg shadow-pink-600/30 hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Create Your Cinema Room Now</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Sleek Translucent Footer */}
-      <footer className="relative z-10 text-center text-xs text-slate-300/80 py-5 max-w-4xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-white/10">
+      <footer className="relative z-10 text-center text-xs text-slate-300/80 py-6 max-w-4xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10">
         <div className="flex items-center gap-2">
           <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
           <span className="font-semibold text-white">SynCinema Virtual Auditorium</span>
         </div>
-        <span className="text-pink-300 font-medium">Different places... Same screen. 💖</span>
-      </footer>
-
-      {/* Profile & Name Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-3xl border border-white/15 bg-black/85 backdrop-blur-2xl p-6 space-y-5 shadow-2xl text-left">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-bold text-base text-white flex items-center gap-2">
-                <Settings className="h-4 w-4 text-pink-400" />
-                <span>Profile &amp; Display Preferences</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white transition"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">Your Display Name</label>
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={(e) => {
-                    const clean = sanitizeInput(e.target.value);
-                    setUserName(clean);
-                    try { localStorage.setItem('sc_user_name', clean); } catch {}
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-xs sm:text-sm text-white outline-none focus:border-pink-500 font-medium"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">Partner&apos;s Display Name</label>
-                <input
-                  type="text"
-                  value={partnerName}
-                  onChange={(e) => {
-                    const clean = sanitizeInput(e.target.value);
-                    setPartnerName(clean);
-                    try { localStorage.setItem('sc_partner_name', clean); } catch {}
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 text-xs sm:text-sm text-white outline-none focus:border-pink-500 font-medium"
-                />
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-xs text-pink-200 space-y-1">
-                <p className="font-bold text-white flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                  Zero Accounts • Strict Password Security
-                </p>
-                <p className="text-[11px] text-pink-200/80">
-                  SynCinema requires zero logins or accounts. Rooms are created on-the-fly and secured with host passcodes.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowSettingsModal(false)}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 text-white font-bold text-xs cursor-pointer shadow-lg hover:brightness-110 transition"
-              >
-                Done
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-4 text-xs">
+          <span className="text-pink-300 font-medium">Different places... Same screen. 💖</span>
+          <Link href="/admin" className="text-slate-400 hover:text-white transition underline font-mono text-[11px]">
+            Admin
+          </Link>
         </div>
-      )}
+      </footer>
     </div>
   );
 }

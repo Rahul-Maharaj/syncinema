@@ -5,7 +5,7 @@ import {
   Shield, ShieldAlert, ShieldCheck, Lock, Unlock, Users, Film, Pause, Play,
   Square, Ban, Trash2, RefreshCw, Eye, EyeOff, Search, AlertTriangle,
   CheckCircle, Video, Flame, Clock, Key, ArrowRight, ExternalLink, LogOut,
-  Copy, Radio, Sparkles, X, Tv
+  Copy, Radio, Sparkles, X, Tv, MapPin, Globe, Compass, Navigation, Activity, Wifi
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
 
@@ -14,6 +14,21 @@ const fmt = (s) => {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+};
+
+// Haversine distance calculator between two coordinates (km)
+const haversineKm = (lat1, lon1, lat2, lon2) => {
+  const l1 = Number(lat1), o1 = Number(lon1), l2 = Number(lat2), o2 = Number(lon2);
+  if (!l1 || !o1 || !l2 || !o2 || isNaN(l1) || isNaN(o1) || isNaN(l2) || isNaN(o2)) return null;
+  const toRad = (x) => (x * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(l2 - l1);
+  const dLon = toRad(o2 - o1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(l1)) * Math.cos(toRad(l2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
 };
 
 export default function AdminPage() {
@@ -40,7 +55,7 @@ export default function AdminPage() {
     blocked: { users: [], ips: [], rooms: [], videos: [] },
   });
 
-  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'ott' | 'security' | 'broadcast'
+  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'locations' | 'ott' | 'security' | 'broadcast'
   const [ottFilter, setOttFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -54,6 +69,9 @@ export default function AdminPage() {
   const [ghostModal, setGhostModal] = useState({ open: false, roomId: '', data: null });
   const [ghostSyncState, setGhostSyncState] = useState(null);
   const [ghostChat, setGhostChat] = useState([]);
+
+  // Interactive Map Pinpoint Modal State
+  const [mapModal, setMapModal] = useState({ open: false, user: null, roomId: '' });
 
   // Override Video Modal
   const [overrideModal, setOverrideModal] = useState({ open: false, roomId: '', src: '', title: '' });
@@ -419,14 +437,51 @@ export default function AdminPage() {
     }
   };
 
-  // Filtered rooms
+  // Filtered rooms (supports searching by city, country, IP, name, and room ID)
   const filteredRooms = data.rooms.filter((r) => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     const matchesId = r.roomId?.toLowerCase().includes(q);
     const matchesTitle = r.media?.title?.toLowerCase().includes(q) || r.media?.src?.toLowerCase().includes(q);
-    const matchesUser = r.users?.some((u) => u.name?.toLowerCase().includes(q) || u.cid?.toLowerCase().includes(q) || u.ip?.includes(q));
+    const matchesUser = r.users?.some((u) =>
+      u.name?.toLowerCase().includes(q) ||
+      u.cid?.toLowerCase().includes(q) ||
+      u.ip?.includes(q) ||
+      u.geo?.city?.toLowerCase().includes(q) ||
+      u.geo?.country?.toLowerCase().includes(q) ||
+      u.geo?.region?.toLowerCase().includes(q)
+    );
     return matchesId || matchesTitle || matchesUser;
+  });
+
+  // All online members flattened for Locations Tab
+  const allConnectedUsers = [];
+  data.rooms.forEach((r) => {
+    if (Array.isArray(r.users)) {
+      r.users.forEach((u) => {
+        allConnectedUsers.push({
+          ...u,
+          roomId: r.roomId,
+          mediaTitle: r.media?.title || r.media?.src || 'No Stream',
+          isPlaying: r.playing,
+        });
+      });
+    }
+  });
+
+  const filteredUsers = allConnectedUsers.filter((u) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.cid?.toLowerCase().includes(q) ||
+      u.ip?.includes(q) ||
+      u.roomId?.toLowerCase().includes(q) ||
+      u.geo?.city?.toLowerCase().includes(q) ||
+      u.geo?.region?.toLowerCase().includes(q) ||
+      u.geo?.country?.toLowerCase().includes(q) ||
+      u.geo?.isp?.toLowerCase().includes(q)
+    );
   });
 
   const getPlatformIcon = (platform) => {
@@ -679,6 +734,18 @@ export default function AdminPage() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab('locations')}
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
+                activeTab === 'locations'
+                  ? 'bg-[#d9467a] text-white shadow-md'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <MapPin className="h-3.5 w-3.5 text-pink-300" />
+              <span>🗺️ Member Locations ({allConnectedUsers.length})</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('ott')}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
                 activeTab === 'ott'
@@ -715,14 +782,20 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {(activeTab === 'rooms' || activeTab === 'ott') && (
+          {(activeTab === 'rooms' || activeTab === 'ott' || activeTab === 'locations') && (
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={activeTab === 'ott' ? 'Search platform, account, room, or user…' : 'Search room ID, media, or user…'}
+                placeholder={
+                  activeTab === 'ott'
+                    ? 'Search platform, account, room…'
+                    : activeTab === 'locations'
+                    ? 'Search city, country, IP, user…'
+                    : 'Search room ID, media, or user…'
+                }
                 className="w-full rounded-xl bg-white/5 border border-white/10 pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:border-[#d9467a] focus:outline-none transition"
               />
             </div>
@@ -977,47 +1050,109 @@ export default function AdminPage() {
                         </div>
                       )}
 
-                      {/* Connected Users */}
-                      <div className="space-y-2 pt-1">
-                        <span className="text-xs font-semibold text-white/70">Connected Viewers ({room.users?.length || 0}):</span>
+                      {/* Connected Users with Exact Locations */}
+                      <div className="space-y-2.5 pt-2 border-t border-white/10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white/80 flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 text-pink-400" />
+                            <span>Room Members &amp; Exact Locations ({room.users?.length || 0}):</span>
+                          </span>
+                        </div>
+
+                        {/* Partner Distance Banner (if room has 2 members) */}
+                        {room.users?.length === 2 && (() => {
+                          const u1 = room.users[0];
+                          const u2 = room.users[1];
+                          const dist = (u1?.geo?.lat && u2?.geo?.lat) ? haversineKm(u1.geo.lat, u1.geo.lon, u2.geo.lat, u2.geo.lon) : null;
+                          if (dist === null) return null;
+                          return (
+                            <div className="rounded-xl bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-rose-500/15 border border-pink-500/30 p-2.5 px-3 text-xs flex items-center justify-between text-pink-200 shadow-sm">
+                              <div className="flex items-center gap-2 font-semibold">
+                                <Heart className="h-4 w-4 text-rose-400 fill-rose-500 shrink-0" />
+                                <span>
+                                  {dist <= 5
+                                    ? 'Partners are in the same home / city! 💖 (0 km apart)'
+                                    : `Partners are ${dist.toLocaleString()} km (~${Math.round(dist * 0.621371).toLocaleString()} miles) apart ✈️`}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-pink-300 font-mono uppercase bg-pink-500/20 px-2 py-0.5 rounded-full border border-pink-500/30">
+                                Couple Distance
+                              </span>
+                            </div>
+                          );
+                        })()}
+
                         {(!room.users || room.users.length === 0) ? (
-                          <p className="text-xs text-white/40 italic">Waiting for users to enter…</p>
+                          <p className="text-xs text-white/40 italic py-2">Waiting for users to enter…</p>
                         ) : (
-                          <div className="space-y-1.5">
+                          <div className="space-y-2">
                             {room.users.map((u) => (
                               <div
                                 key={u.cid}
-                                className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/30 p-2 text-xs"
+                                className="rounded-2xl border border-white/10 bg-black/40 p-3 text-xs space-y-2 hover:border-pink-500/30 transition backdrop-blur-md shadow-sm"
                               >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: u.color || '#d9467a' }} />
-                                  <span className="font-semibold text-white truncate">{u.name}</span>
-                                  {u.isHost && (
-                                    <span className="rounded bg-amber-500/20 text-amber-300 text-[10px] px-1 font-bold">
-                                      Host
-                                    </span>
-                                  )}
-                                  <span className="font-mono text-[10px] text-white/40 truncate">({u.cid})</span>
+                                {/* Member Top Row */}
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className="h-3.5 w-3.5 rounded-full shrink-0 ring-2 ring-white/20"
+                                      style={{ backgroundColor: u.color || '#d9467a' }}
+                                    />
+                                    <span className="font-bold text-white text-xs sm:text-sm truncate">{u.name}</span>
+                                    {u.isHost && (
+                                      <span className="rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/40 text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
+                                        Host
+                                      </span>
+                                    )}
+                                    <span className="font-mono text-[10px] text-white/40 truncate">({u.cid})</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => setMapModal({ open: true, user: u, roomId: room.roomId })}
+                                      className="rounded-lg bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/35 px-2.5 py-1 text-[11px] font-semibold text-pink-300 transition flex items-center gap-1 cursor-pointer shadow-sm"
+                                      title="Show exact coordinates and pinpoint on OpenStreetMap"
+                                    >
+                                      <MapPin className="h-3 w-3 text-pink-400" />
+                                      <span>View on Map</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleBlockUser(u, room.roomId)}
+                                      className="rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 px-2 py-1 text-[11px] font-semibold text-rose-300 transition flex items-center gap-1 cursor-pointer"
+                                      title={`Kick and permanently ban user "${u.name}"`}
+                                    >
+                                      <Ban className="h-3 w-3" />
+                                      <span>Block</span>
+                                    </button>
+                                  </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 shrink-0">
-                                  <span
-                                    className="font-mono text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1"
-                                    title="Real IP address captured by server. Completely shielded from peers & external streaming sites."
-                                  >
-                                    <Shield className="h-2.5 w-2.5 text-emerald-400" />
-                                    <span>Real IP: {u.ip || '127.0.0.1'}</span>
-                                  </span>
+                                {/* Member Exact Location & Network Badge */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-white/5 text-[11px]">
+                                  {/* City, Region, Country */}
+                                  <div className="flex items-center gap-1.5 text-white/90 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5 truncate">
+                                    <span className="text-sm shrink-0">{u.geo?.flag || '📍'}</span>
+                                    <span className="font-semibold truncate">
+                                      {u.geo?.city || 'Detecting City'}
+                                      {u.geo?.region ? `, ${u.geo.region}` : ''}
+                                      {u.geo?.country ? ` (${u.geo.country})` : ''}
+                                    </span>
+                                  </div>
 
-                                  <button
-                                    type="button"
-                                    onClick={() => handleBlockUser(u, room.roomId)}
-                                    className="rounded bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 px-2 py-0.5 text-[11px] text-rose-300 transition flex items-center gap-1"
-                                    title={`Kick and permanently ban user "${u.name}"`}
-                                  >
-                                    <Ban className="h-3 w-3" />
-                                    <span>Block</span>
-                                  </button>
+                                  {/* Coordinates & IP */}
+                                  <div className="flex items-center justify-between gap-1.5 bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5 text-slate-300">
+                                    <div className="flex items-center gap-1 font-mono text-[10px] text-cyan-300 truncate" title="Latitude & Longitude">
+                                      <Compass className="h-3 w-3 text-cyan-400 shrink-0" />
+                                      <span>{u.geo?.lat ? `${Number(u.geo.lat).toFixed(4)}, ${Number(u.geo.lon).toFixed(4)}` : 'Coords detected'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 font-mono text-[10px] text-emerald-300 shrink-0" title="Captured Client IP">
+                                      <Shield className="h-2.5 w-2.5 text-emerald-400" />
+                                      <span>{u.ip || '127.0.0.1'}</span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -1027,6 +1162,151 @@ export default function AdminPage() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= TAB 2: LIVE MEMBER LOCATIONS & GEO-RADAR ================= */}
+        {activeTab === 'locations' && (
+          <div className="space-y-4">
+            {/* Geo Radar Overview Banner */}
+            <div className="rounded-2xl border border-pink-500/30 bg-black/50 p-4 sm:p-5 shadow-xl backdrop-blur-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-pink-400" />
+                  <span>Live Room Member Locations &amp; Satellite Radar</span>
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 font-bold">
+                    {allConnectedUsers.length} Online Viewers
+                  </span>
+                </h3>
+                <p className="text-xs text-white/50">
+                  Real-time geographic breakdown of all active couch members with IP address, city, region, country, and GPS coordinates.
+                </p>
+              </div>
+
+              {/* Geo summary pills */}
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5 text-slate-300">
+                  <Globe className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>
+                    Countries:{' '}
+                    <strong className="text-white">
+                      {new Set(allConnectedUsers.map((u) => u.geo?.country).filter(Boolean)).size || 1}
+                    </strong>
+                  </span>
+                </div>
+                <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-1.5 text-slate-300">
+                  <Compass className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>
+                    Cities:{' '}
+                    <strong className="text-white">
+                      {new Set(allConnectedUsers.map((u) => u.geo?.city).filter(Boolean)).size || 1}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* User Location Cards Grid */}
+            {filteredUsers.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl space-y-3">
+                <MapPin className="mx-auto h-10 w-10 text-white/30" />
+                <h3 className="text-base font-semibold text-white">No active members found</h3>
+                <p className="text-xs text-white/50 max-w-sm mx-auto">
+                  {search
+                    ? 'No connected members match your location search filter.'
+                    : 'When viewers join any room, their exact location and network details will appear live here.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredUsers.map((u) => (
+                  <div
+                    key={`${u.roomId}-${u.cid}`}
+                    className="rounded-2xl border border-white/10 bg-black/50 p-4 shadow-xl backdrop-blur-2xl hover:border-pink-500/40 transition flex flex-col justify-between space-y-3"
+                  >
+                    {/* Top Row: User Avatar, Name, Room, Host badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className="h-9 w-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shadow-md shrink-0"
+                          style={{ backgroundColor: u.color || '#d9467a' }}
+                        >
+                          {u.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-white text-sm truncate">{u.name}</span>
+                            {u.isHost && (
+                              <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider">
+                                Host
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-pink-300/80 font-mono truncate">
+                            Room: <span className="text-white font-semibold">{u.roomId}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleBlockUser(u, u.roomId)}
+                        className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2 py-1 text-[11px] text-rose-300 transition flex items-center gap-1 shrink-0 cursor-pointer"
+                        title={`Kick and block user "${u.name}"`}
+                      >
+                        <Ban className="h-3 w-3" />
+                        <span>Kick</span>
+                      </button>
+                    </div>
+
+                    {/* Location Badge */}
+                    <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 space-y-1.5 text-xs">
+                      <div className="flex items-center gap-2 text-white font-semibold">
+                        <span className="text-base shrink-0">{u.geo?.flag || '📍'}</span>
+                        <span className="truncate">
+                          {u.geo?.city || 'Detecting City'}
+                          {u.geo?.region ? `, ${u.geo.region}` : ''}
+                          {u.geo?.country ? ` (${u.geo.country})` : ''}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-300 font-mono pt-1 border-t border-white/5">
+                        <span className="text-cyan-300 flex items-center gap-1 truncate" title="Coordinates">
+                          <Compass className="h-3 w-3 text-cyan-400 shrink-0" />
+                          <span>
+                            {u.geo?.lat ? `${Number(u.geo.lat).toFixed(4)}, ${Number(u.geo.lon).toFixed(4)}` : 'Coords detected'}
+                          </span>
+                        </span>
+                        <span className="text-purple-300 truncate" title="Timezone">
+                          {u.geo?.timezone || 'Local'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Network & ISP Details */}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-300 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+                      <span className="flex items-center gap-1 text-emerald-300 truncate">
+                        <Shield className="h-2.5 w-2.5 text-emerald-400 shrink-0" />
+                        <span>IP: {u.ip || '127.0.0.1'}</span>
+                      </span>
+                      <span className="text-slate-400 truncate max-w-[120px]" title={u.geo?.isp || 'Broadband'}>
+                        {u.geo?.isp || 'Broadband'}
+                      </span>
+                    </div>
+
+                    {/* Open on Map Button */}
+                    <button
+                      type="button"
+                      onClick={() => setMapModal({ open: true, user: u, roomId: u.roomId })}
+                      className="w-full py-2 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/35 text-pink-300 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-pink-400" />
+                      <span>View Satellite Map Pinpoint</span>
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1525,6 +1805,118 @@ export default function AdminPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Map Pinpoint Modal */}
+      {mapModal.open && mapModal.user && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl rounded-3xl border border-pink-500/30 bg-[#0d0718] p-5 sm:p-6 shadow-2xl space-y-4 text-left relative overflow-hidden">
+            {/* Modal Top Bar */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-2xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-xl shadow-md">
+                  {mapModal.user.geo?.flag || '📍'}
+                </div>
+                <div>
+                  <h3 className="font-black text-white text-base sm:text-lg flex items-center gap-2">
+                    <span>{mapModal.user.name}&apos;s Exact Location</span>
+                    {mapModal.user.isHost && (
+                      <span className="text-[10px] bg-amber-500/20 border border-amber-500/40 text-amber-300 px-2 py-0.5 rounded-full font-bold">
+                        HOST
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-pink-300 font-medium">
+                    Room: <span className="font-mono text-white font-bold">{mapModal.roomId}</span> • CID: <span className="font-mono text-slate-400">{mapModal.user.cid}</span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMapModal({ open: false, user: null, roomId: '' })}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Geolocation Diagnostic Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">City &amp; Country</span>
+                <span className="font-bold text-white block truncate">
+                  {mapModal.user.geo?.city || 'Detecting'}, {mapModal.user.geo?.country || 'Online'}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Coordinates</span>
+                <span className="font-mono font-bold text-cyan-300 block truncate">
+                  {mapModal.user.geo?.lat ? `${Number(mapModal.user.geo.lat).toFixed(4)}, ${Number(mapModal.user.geo.lon).toFixed(4)}` : '28.6139, 77.2090'}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Timezone</span>
+                <span className="font-bold text-purple-300 block truncate">
+                  {mapModal.user.geo?.timezone || 'Local UTC'}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Network / IP</span>
+                <span className="font-mono font-bold text-emerald-300 block truncate">
+                  {mapModal.user.ip || '127.0.0.1'}
+                </span>
+              </div>
+            </div>
+
+            {/* Embedded OpenStreetMap Live Viewer */}
+            <div className="rounded-2xl overflow-hidden border border-white/15 bg-black h-72 sm:h-80 relative shadow-inner">
+              {mapModal.user.geo?.lat && mapModal.user.geo?.lon ? (
+                <iframe
+                  title="User Location Map Pin"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  scrolling="no"
+                  marginHeight="0"
+                  marginWidth="0"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(mapModal.user.geo.lon) - 0.08}%2C${Number(mapModal.user.geo.lat) - 0.08}%2C${Number(mapModal.user.geo.lon) + 0.08}%2C${Number(mapModal.user.geo.lat) + 0.08}&layer=mapnik&marker=${Number(mapModal.user.geo.lat)}%2C${Number(mapModal.user.geo.lon)}`}
+                  className="w-full h-full opacity-90 contrast-125"
+                />
+              ) : (
+                <div className="h-full w-full flex flex-col items-center justify-center space-y-2 text-slate-400">
+                  <Compass className="h-8 w-8 text-pink-400 animate-spin" />
+                  <p className="text-xs">Resolving satellite coordinates…</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={
+                  mapModal.user.geo?.lat && mapModal.user.geo?.lon
+                    ? `https://www.google.com/maps?q=${mapModal.user.geo.lat},${mapModal.user.geo.lon}`
+                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapModal.user.geo?.city || 'India')}`
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-pink-300 hover:text-white flex items-center gap-1.5 transition underline font-semibold"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Open Full Satellite Map on Google Maps</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setMapModal({ open: false, user: null, roomId: '' })}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

@@ -71,6 +71,72 @@ const fail = (ip) => {
   if (++f.n >= 8) { f.until = Date.now() + 15 * 60_000; f.n = 0; }
   fails.set(ip, f);
 };
+
+// --- IP Geolocation Resolver & Cache for Member Locations ---
+const geoCache = new Map();
+const getGeoForIp = async (ip) => {
+  if (!ip || isLocalIp(ip)) {
+    return {
+      city: 'Local / Host Node',
+      region: 'Host Machine',
+      country: 'Local Network',
+      countryCode: 'LOC',
+      flag: '🏠',
+      lat: 28.6139,
+      lon: 77.2090,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
+      isp: 'Direct Local Loopback',
+      ip: ip || '127.0.0.1',
+    };
+  }
+  if (geoCache.has(ip)) return geoCache.get(ip);
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2200);
+    const res = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,regionName,city,lat,lon,timezone,isp,query`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.status === 'success') {
+        const flag = data.countryCode
+          ? String.fromCodePoint(...[...data.countryCode.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)))
+          : '📍';
+        const geo = {
+          city: data.city || 'Metro City',
+          region: data.regionName || '',
+          country: data.country || 'Global',
+          countryCode: data.countryCode || '',
+          flag,
+          lat: Number(data.lat || 0),
+          lon: Number(data.lon || 0),
+          timezone: data.timezone || 'UTC',
+          isp: data.isp || 'Broadband ISP',
+          ip: data.query || ip,
+        };
+        geoCache.set(ip, geo);
+        return geo;
+      }
+    }
+  } catch {}
+
+  const fallback = {
+    city: 'Online Viewer',
+    region: 'Connected Node',
+    country: 'Active Peer',
+    countryCode: 'GL',
+    flag: '🌐',
+    lat: 0,
+    lon: 0,
+    timezone: 'UTC',
+    isp: 'Broadband',
+    ip,
+  };
+  geoCache.set(ip, fallback);
+  return fallback;
+};
 const app = express();
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false, frameguard: false }));
@@ -893,6 +959,18 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
           sid: u.sid,
           ip: u.ip || 'Unknown',
           isHost: u.cid === r.hostId,
+          geo: u.geo || {
+            city: isLocalIp(u.ip) ? 'Local / Host Node' : 'Detecting Location...',
+            region: isLocalIp(u.ip) ? 'Host Machine' : '',
+            country: isLocalIp(u.ip) ? 'Local Network' : 'Online User',
+            countryCode: isLocalIp(u.ip) ? 'LOC' : '',
+            flag: isLocalIp(u.ip) ? '🏠' : '📍',
+            lat: isLocalIp(u.ip) ? 28.6139 : 0,
+            lon: isLocalIp(u.ip) ? 77.2090 : 0,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
+            isp: isLocalIp(u.ip) ? 'Direct Local Loopback' : 'Broadband ISP',
+            ip: u.ip || '127.0.0.1',
+          },
         });
       }
     }
@@ -1123,7 +1201,7 @@ io.on('connection', (socket) => {
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
 
-  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax, isGhost, adminKey } = {}, ack) => {
+  socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax, isGhost, adminKey, geo } = {}, ack) => {
     if (typeof ack !== 'function') return;
     const ip = ipOf(socket.handshake);
     if (locked(ip)) return ack({ error: 'locked' });
@@ -1233,6 +1311,24 @@ io.on('connection', (socket) => {
     user = room.users.get(cid) || { cid, token: crypto.randomBytes(16).toString('hex'), color: `hsl(${Math.random() * 360 | 0} 70% 62%)` };
     clearTimeout(user.timer);                        // reconnect within grace → same seat
     Object.assign(user, { name: (String(name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24) || 'Guest'), sid: socket.id, ip });
+    if (geo && typeof geo === 'object') {
+      user.geo = {
+        city: String(geo.city || 'Unknown City').slice(0, 50),
+        region: String(geo.region || geo.regionName || '').slice(0, 50),
+        country: String(geo.country || 'Unknown Country').slice(0, 50),
+        countryCode: String(geo.countryCode || geo.country_code || '').slice(0, 6),
+        flag: geo.flag || (geo.countryCode ? String.fromCodePoint(...[...geo.countryCode.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : '📍'),
+        lat: Number(geo.lat || geo.latitude || 0),
+        lon: Number(geo.lon || geo.longitude || 0),
+        timezone: String(geo.timezone || '').slice(0, 40),
+        isp: String(geo.isp || geo.org || '').slice(0, 60),
+        ip: geo.ip || ip,
+      };
+    } else if (!user.geo) {
+      getGeoForIp(ip).then((g) => {
+        if (!user.geo) user.geo = g;
+      }).catch(() => {});
+    }
     room.users.set(cid, user);
     if (!room.hostId || !room.users.has(room.hostId)) room.hostId = cid;
     socket.join(rid);
@@ -1268,6 +1364,24 @@ io.on('connection', (socket) => {
     });
     socket.emit('state', snapshot(room));            // re-sync player after reconnect
     presence(rid, room);
+  });
+
+  socket.on('user:geo', (geoData) => {
+    if (!joined() || !user) return;
+    if (geoData && typeof geoData === 'object') {
+      user.geo = {
+        city: String(geoData.city || 'Unknown City').slice(0, 50),
+        region: String(geoData.region || geoData.regionName || '').slice(0, 50),
+        country: String(geoData.country || 'Unknown Country').slice(0, 50),
+        countryCode: String(geoData.countryCode || geoData.country_code || '').slice(0, 6),
+        flag: geoData.flag || (geoData.countryCode ? String.fromCodePoint(...[...geoData.countryCode.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : '📍'),
+        lat: Number(geoData.lat || geoData.latitude || 0),
+        lon: Number(geoData.lon || geoData.longitude || 0),
+        timezone: String(geoData.timezone || geoData.time_zone || '').slice(0, 40),
+        isp: String(geoData.isp || geoData.org || '').slice(0, 60),
+        ip: geoData.ip || user.ip || ipOf(socket.handshake),
+      };
+    }
   });
 
   socket.on('media:set', ({ media } = {}) => {
