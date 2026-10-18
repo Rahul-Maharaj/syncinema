@@ -9,9 +9,41 @@ process.env.PORT = API_PORT;
 require('./server');                                   // API + sockets + WebRTC signaling
 const webDir = path.join(__dirname, '../web');
 const web = spawn(process.execPath, [path.join(webDir, 'node_modules/next/dist/bin/next'), 'start', '-p', WEB_PORT], { cwd: webDir, stdio: 'inherit' });
-const api = httpProxy.createProxyServer({ target: `http://localhost:${API_PORT}`, ws: true });
-const ui = httpProxy.createProxyServer({ target: `http://localhost:${WEB_PORT}`, ws: true });
-for (const p of [api, ui]) p.on('error', (_, __, res) => res?.writeHead?.(502).end('starting…'));
+
+// High-Concurrency Connection Pooling (Reuses sockets to prevent port exhaustion & latency spikes)
+const keepAliveAgent = new http.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 15000,
+  maxSockets: 10000,
+  maxFreeSockets: 512,
+  timeout: 60000,
+});
+
+const api = httpProxy.createProxyServer({
+  target: `http://localhost:${API_PORT}`,
+  ws: true,
+  agent: keepAliveAgent,
+  xfwd: true,
+});
+
+const ui = httpProxy.createProxyServer({
+  target: `http://localhost:${WEB_PORT}`,
+  ws: true,
+  agent: keepAliveAgent,
+  xfwd: true,
+});
+
+api.on('error', (err, req, res) => {
+  if (res?.writeHead && !res.headersSent) {
+    res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Service temporarily unavailable, retrying…');
+  }
+});
+
+ui.on('error', (err, req, res) => {
+  if (res?.writeHead && !res.headersSent) {
+    res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Starting SyncCinema UI…');
+  }
+});
 const isApi = (u = '') => /^\/(socket\.io|peerjs|api|health)(\/|\?|$)/.test(u);
 // real client IP for the brute-force lockout (never trust a client-supplied header)
 // TRUST_PROXY=1 (Render/Railway/Fly): the platform proxy appends the real client IP as the LAST x-forwarded-for entry
@@ -20,7 +52,7 @@ const stamp = (req) => {
   req.headers['x-forwarded-for'] = req.headers['cf-connecting-ip'] || (process.env.TRUST_PROXY && xf[xf.length - 1]) || req.socket.remoteAddress;
 };
 
-http.createServer((req, res) => {
+const gateway = http.createServer((req, res) => {
   stamp(req);
 
   // Allow internal healthcheck
@@ -54,6 +86,9 @@ http.createServer((req, res) => {
     }
 
     (isApi(req.url) ? api : ui).ws(req, sock, head);
-  })
-  .listen(GATEWAY_PORT, () => console.log(`\nSyncCinema → http://localhost:${GATEWAY_PORT}\nShare free over HTTPS:  cloudflared tunnel --url http://localhost:${GATEWAY_PORT}\n`));
+  });
+
+gateway.keepAliveTimeout = 65000;
+gateway.headersTimeout = 66000;
+gateway.listen(GATEWAY_PORT, () => console.log(`\nSyncCinema → http://localhost:${GATEWAY_PORT}\nShare free over HTTPS:  cloudflared tunnel --url http://localhost:${GATEWAY_PORT}\n`));
 process.on('exit', () => web.kill());

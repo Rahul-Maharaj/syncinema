@@ -3,6 +3,7 @@ const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
@@ -190,10 +191,17 @@ const normalizeUserGeo = (geoData, ip) => {
 
 const app = express();
 app.set('trust proxy', 1);
+app.use(compression({ threshold: 1024 }));
 app.use(botShieldMiddleware);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false, frameguard: false }));
 app.use(cors({ origin }));
-app.use('/api', rateLimit({ windowMs: 60_000, max: 240 }));
+app.use('/api', rateLimit({
+  windowMs: 60_000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.url === '/health' || req.url === '/api/health',
+}));
 const server = http.createServer(app);
 app.use('/peerjs', ExpressPeerServer(server, {
   path: '/', key: PEER_KEY, allow_discovery: false,
@@ -926,7 +934,11 @@ app.get('/api/stream', async (req, res) => {
 
     if (upstream.body) {
       const { Readable } = require('stream');
-      Readable.fromWeb(upstream.body).pipe(res);
+      const bodyStream = Readable.fromWeb(upstream.body);
+      req.on('close', () => {
+        try { bodyStream.destroy(); } catch {}
+      });
+      bodyStream.pipe(res);
     } else {
       res.end();
     }
@@ -1003,6 +1015,11 @@ app.get('/api/proxy', async (req, res) => {
 const io = new Server(server, {
   cors: { origin },
   maxHttpBufferSize: 1e5,
+  pingTimeout: 30000,
+  pingInterval: 25000,
+  connectTimeout: 30000,
+  perMessageDeflate: false, // Disables per-packet zlib compression to eliminate CPU spikes on micro sync frames
+  httpCompression: false,
   allowRequest: (req, cb) => {
     const check = isBotRequest(req);
     if (check.blocked) {
@@ -1049,27 +1066,68 @@ try {
   }
 } catch {}
 let saveT;                                          // persist rooms so "our room" survives restarts
-const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try {
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  const dataToSave = Object.fromEntries([...rooms].map(([id, r]) => [id, {
-    pass: r.pass,
-    plainPass: r.plainPass || null,
-    pin: r.pin,
-    maxUsers: sanitizeMaxUsers(r.maxUsers),
-    media: r.media,
-    queue: r.queue,
-    watchlist: r.watchlist || [],
-    chat: r.chat,
-    lock: r.lock,
-    entryLocked: !!r.entryLocked,
-    reviews: r.reviews || [],
-    ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
-    adult: !!r.adult,
-    ottAccounts: r.ottAccounts || {},
-  }]));
-  dataToSave.__globalOttLogins = globalOttLogins;
-  fs.writeFileSync(DATA_FILE, JSON.stringify(dataToSave));
-} catch (e) { console.error('save failed', e.message); } }, 1000); };
+let isSavingRooms = false;
+const save = () => {
+  clearTimeout(saveT);
+  saveT = setTimeout(async () => {
+    if (isSavingRooms) return;
+    isSavingRooms = true;
+    try {
+      await fs.promises.mkdir(path.dirname(DATA_FILE), { recursive: true });
+      const now = Date.now();
+      const dataToSave = {};
+      for (const [id, r] of rooms.entries()) {
+        const hasUsers = r.users && r.users.size > 0;
+        const wasRecent = r.at && now - r.at < 24 * 3600 * 1000;
+        const hasHistoryOrQueue = (r.queue && r.queue.length > 0) || (r.watchlist && r.watchlist.length > 0) || (r.chat && r.chat.length > 0);
+        if (hasUsers || r.pass || wasRecent || hasHistoryOrQueue) {
+          dataToSave[id] = {
+            pass: r.pass,
+            plainPass: r.plainPass || null,
+            pin: r.pin,
+            maxUsers: sanitizeMaxUsers(r.maxUsers),
+            media: r.media,
+            queue: r.queue,
+            watchlist: r.watchlist || [],
+            chat: r.chat,
+            lock: r.lock,
+            entryLocked: !!r.entryLocked,
+            reviews: r.reviews || [],
+            ambient: r.ambient || { preset: 'love', intensity: 80, flicker: false },
+            adult: !!r.adult,
+            ottAccounts: r.ottAccounts || {},
+          };
+        }
+      }
+      dataToSave.__globalOttLogins = globalOttLogins;
+      await fs.promises.writeFile(DATA_FILE, JSON.stringify(dataToSave), 'utf8');
+    } catch (e) {
+      console.error('save failed', e.message);
+    } finally {
+      isSavingRooms = false;
+    }
+  }, 1500);
+};
+
+// Automated Room Garbage Collector (Prunes dead / abandoned empty rooms to protect memory)
+setInterval(() => {
+  const now = Date.now();
+  let pruned = 0;
+  for (const [id, r] of rooms.entries()) {
+    const userCount = r.users ? r.users.size : 0;
+    if (userCount === 0) {
+      const age = now - (r.at || r.createdAt || now);
+      const maxAge = r.pass ? 24 * 3600 * 1000 : 4 * 3600 * 1000;
+      if (age > maxAge) {
+        rooms.delete(id);
+        pruned++;
+      }
+    }
+  }
+  if (pruned > 0) {
+    save();
+  }
+}, 10 * 60 * 1000).unref();
 // room passkey: stored only as a salted scrypt hash, so even the server file never holds it
 const hashPass = (p) => { const salt = crypto.randomBytes(16); return salt.toString('hex') + ':' + crypto.scryptSync(p, salt, 32).toString('hex'); };
 const verifyHash = (storedHash, input) => {

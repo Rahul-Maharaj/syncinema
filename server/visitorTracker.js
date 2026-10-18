@@ -99,12 +99,15 @@ try {
   console.warn('visitorStats.json not found or corrupt, starting fresh real tracking:', e.message);
 }
 
-// Debounced save to disk
+// Debounced asynchronous save to disk (Non-blocking I/O)
 let saveTimer = null;
+let isSaving = false;
 function persistStats() {
   if (saveTimer) return;
-  saveTimer = setTimeout(() => {
+  saveTimer = setTimeout(async () => {
     saveTimer = null;
+    if (isSaving) return;
+    isSaving = true;
     try {
       const payload = {
         totalVisitors: stats.uniqueVisitorsSet.size || stats.totalVisitors,
@@ -115,12 +118,19 @@ function persistStats() {
         todayList: Array.from(stats.todayVisitorsSet),
         updatedAt: new Date().toISOString(),
       };
-      fs.writeFileSync(STATS_FILE, JSON.stringify(payload, null, 2), 'utf8');
+      await fs.promises.writeFile(STATS_FILE, JSON.stringify(payload), 'utf8');
     } catch (e) {
       console.warn('Failed to save visitorStats.json:', e.message);
+    } finally {
+      isSaving = false;
     }
-  }, 2000);
+  }, 2500);
 }
+
+// Automated background stale session cleanup (keeps memory lean and bounded)
+setInterval(() => {
+  cleanStaleSessions();
+}, 20000).unref();
 
 // Check date rollover at midnight UTC
 function checkRollover() {

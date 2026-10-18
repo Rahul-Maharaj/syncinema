@@ -63,17 +63,30 @@ export default function VisitorCounter() {
       socket.emit('stats:ping', { cid: clientId });
     }
 
-    // 3. Heartbeat every 20 seconds to keep genuine session active
+    // 3. Heartbeat every 25 seconds to keep genuine session active (skips when tab is hidden to save server capacity)
     const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       if (socket && socket.connected) {
         socket.emit('stats:ping', { cid: clientId });
       } else {
         fetchRealStats(false);
       }
-    }, 20000);
+    }, 25000);
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        fetchRealStats(false);
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
 
     return () => {
       clearInterval(timer);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
       if (socket) {
         socket.off('stats:visitors', applyStats);
       }
