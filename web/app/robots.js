@@ -21,7 +21,7 @@ export default function robots() {
         disallow: ['/aurelia', '/aurelia/', '/api/'],
       },
     ],
-    sitemap: 'https://synccinema.onrender.com/sitemap.xml',
-    host: 'https://synccinema.onrender.com',
+    sitemap: 'https://www.syncinema.site/sitemap.xml',
+    host: 'https://www.syncinema.site',
   };
 }

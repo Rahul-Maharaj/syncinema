@@ -6,7 +6,7 @@ const display = Fraunces({ subsets: ['latin'], variable: '--font-display' });
 const body = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
 
 export const metadata = {
-  metadataBase: new URL('https://synccinema.onrender.com'),
+  metadataBase: new URL('https://www.syncinema.site'),
   title: {
     default: 'SyncCinema — Real-Time Watch Party & Private Virtual Cinema',
     template: '%s | SyncCinema',
@@ -14,6 +14,8 @@ export const metadata = {
   description: 'SyncCinema is a free, real-time synchronized video streaming platform and private virtual theater. Watch movies, YouTube, anime, and web videos together with friends and partners in zero-latency sync with crystal-clear video calls, voice chat, and end-to-end encrypted rooms.',
   keywords: [
     'sync cinema',
+    'syncinema',
+    'syncinema.site',
     'watch party',
     'watch together',
     'sync video',
@@ -26,7 +28,7 @@ export const metadata = {
     'private cinema room',
     'SyncCinema',
   ],
-  authors: [{ name: 'SyncCinema Team', url: 'https://synccinema.onrender.com' }],
+  authors: [{ name: 'SyncCinema Team', url: 'https://www.syncinema.site' }],
   creator: 'SyncCinema',
   publisher: 'SyncCinema',
   applicationName: 'SyncCinema',
@@ -45,12 +47,12 @@ export const metadata = {
     },
   },
   alternates: {
-    canonical: 'https://synccinema.onrender.com',
+    canonical: 'https://www.syncinema.site',
   },
   openGraph: {
     title: 'SyncCinema — Real-Time Watch Party & Private Virtual Cinema',
     description: 'Stream movies and videos in real-time sync with friends and loved ones. Zero-latency playback, HD video calls, and encrypted rooms.',
-    url: 'https://synccinema.onrender.com',
+    url: 'https://www.syncinema.site',
     siteName: 'SyncCinema',
     images: [
       {
@@ -94,7 +96,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
   name: 'SyncCinema',
-  url: 'https://synccinema.onrender.com',
+  url: 'https://www.syncinema.site',
   description: 'Free real-time synchronized video streaming and virtual cinema platform with integrated video calls and private rooms.',
   applicationCategory: 'EntertainmentApplication',
   operatingSystem: 'All',
@@ -111,7 +113,7 @@ const jsonLd = {
     'Support for YouTube, MP4, HLS, WebM, and third-party media sources',
     'Interactive couple gestures, intimacy modes, and cinema color palettes',
   ],
-  image: 'https://synccinema.onrender.com/ad-theater-experience.jpg',
+  image: 'https://www.syncinema.site/ad-theater-experience.jpg',
 };
 
 const themeInit = `try{var t=localStorage.theme;if(t==='light')document.documentElement.classList.remove('dark')}catch(e){};if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})};`;

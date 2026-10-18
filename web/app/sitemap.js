@@ -1,5 +1,5 @@
 export default function sitemap() {
-  const baseUrl = 'https://synccinema.onrender.com';
+  const baseUrl = 'https://www.syncinema.site';
 
   return [
     {

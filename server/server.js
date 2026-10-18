@@ -12,7 +12,7 @@ const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 const { resolveUniversalMedia } = require('./universalExtractor');
-const { recordVisit, pingSession, getVisitorStats } = require('./visitorTracker');
+const { recordVisit, pingSession, endSession, getVisitorStats } = require('./visitorTracker');
 
 // Auto-load .env if present in root or server directory
 try {
@@ -47,7 +47,10 @@ try {
 const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json', ADMIN_KEY = process.env.ADMIN_KEY || 'admin123' } = process.env;
 const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: strictly 2 seats (host & partner)
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
-const origin = CLIENT_ORIGIN ? CLIENT_ORIGIN.split(',') : true;
+const defaultOrigins = ['https://www.syncinema.site', 'https://syncinema.site', 'http://localhost:3000', 'http://127.0.0.1:3000'];
+const origin = CLIENT_ORIGIN
+  ? [...new Set([...CLIENT_ORIGIN.split(',').map((o) => o.trim()), ...defaultOrigins])]
+  : true;
 const PEER_KEY = ACCESS_KEY ? crypto.createHmac('sha256', ACCESS_KEY).update('peer').digest('hex').slice(0, 32) : 'peerjs';
 const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy', 'hybrid', 'ott', 'ott_hub'];
 const ROOM_RE = /^[\w-]{2,64}$/;
@@ -1291,8 +1294,10 @@ io.on('connection', (socket) => {
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
 
-  socket.on('stats:ping', () => {
-    pingSession(socket.id);
+  socket.on('stats:ping', (data) => {
+    const cid = data?.cid || socket.id;
+    pingSession(cid);
+    if (data?.cid) socket.clientCid = data.cid;
     let activeRoomsCount = 0;
     for (const r of rooms.values()) {
       if (r.users && r.users.size > 0) activeRoomsCount++;
@@ -2039,6 +2044,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    endSession(socket.id);
+    if (socket.clientCid) endSession(socket.clientCid);
     if (socket.isGhost) return; // 👻 Ghost admin disconnects silently without touching room users
     if (!joined() || user.sid !== socket.id) return;  // a newer socket already took over
     const [r, u, id] = [room, user, rid];
