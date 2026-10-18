@@ -24,6 +24,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
 import BrandLogo from '@/components/BrandLogo';
+import { detectRealLocation } from '@/lib/locationDetector';
 
 // Curated Cinema Color Themes (Home screen matches 'midnight')
 export const ROOM_THEMES = {
@@ -379,33 +380,15 @@ export default function Room() {
       setBoot(r);
       setOnline(true);
 
-      // Detect user location in real-time and report to room session for admin
+      // High-Precision Real Location & Anti-VPN Geolocation Resolver
       try {
-        fetch('https://ipwho.is/')
-          .then((res) => res.json())
-          .then((g) => {
-            if (g && g.success) {
-              socket.emit('user:geo', {
-                city: g.city,
-                region: g.region,
-                country: g.country,
-                countryCode: g.country_code,
-                flag: g.flag?.emoji || '📍',
-                lat: g.latitude,
-                lon: g.longitude,
-                timezone: g.timezone?.id || Intl.DateTimeFormat().resolvedOptions().timeZone,
-                isp: g.connection?.isp,
-                ip: g.ip,
-              });
+        detectRealLocation()
+          .then((realGeo) => {
+            if (realGeo && socket.connected) {
+              socket.emit('user:geo', realGeo);
             }
           })
-          .catch(() => {
-            try {
-              socket.emit('user:geo', {
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              });
-            } catch {}
-          });
+          .catch(() => {});
       } catch {}
 
       const initVid = sessionStorage.getItem('init_video_' + roomId);
@@ -558,6 +541,31 @@ export default function Room() {
     const t = setTimeout(() => { playerRef.current?.pause?.(); setSleep(0); say('Sleep timer done — movie paused. Sweet dreams 🌙'); }, sleep * 60000);
     return () => clearTimeout(t);
   }, [sleep]);
+
+  // Periodic and on-focus real location update (picks up GPS permission approval / network changes)
+  useEffect(() => {
+    if (!boot || !socket) return;
+    const syncRealGeo = () => {
+      try {
+        detectRealLocation()
+          .then((realGeo) => {
+            if (realGeo && socket.connected) {
+              socket.emit('user:geo', realGeo);
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    };
+
+    const timer = setTimeout(syncRealGeo, 2000);
+    const interval = setInterval(syncRealGeo, 20000);
+    window.addEventListener('focus', syncRealGeo);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+      window.removeEventListener('focus', syncRealGeo);
+    };
+  }, [!!boot, socket]);
 
   useEffect(() => {
     if (!boot) return;

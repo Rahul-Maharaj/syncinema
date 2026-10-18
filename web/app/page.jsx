@@ -226,19 +226,19 @@ export default function SynCinemaPlatform() {
       {/* Soft Ambient Cinema Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-pink-500/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Modern Translucent Top Bar */}
-      <header className="relative z-20 px-4 sm:px-8 py-3.5 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between gap-4">
+      {/* Transparent Floating Header (No rectangular box) */}
+      <header className="relative z-20 px-4 sm:px-8 py-4 sm:py-5 bg-transparent border-none flex items-center justify-between gap-4">
         {/* Brand */}
         <BrandLogo size="md" showTagline={true} href="/" />
 
         {/* Status Pill & Privacy Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold backdrop-blur-md">
+          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold backdrop-blur-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>0ms Drift Clock Sync Active</span>
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-bold backdrop-blur-md shadow-sm">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-300 text-xs font-bold backdrop-blur-sm shadow-sm">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
             <span className="hidden sm:inline">Zero Logins</span>
             <span className="hidden sm:inline">•</span>

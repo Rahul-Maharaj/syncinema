@@ -137,6 +137,37 @@ const getGeoForIp = async (ip) => {
   geoCache.set(ip, fallback);
   return fallback;
 };
+
+// Normalize and preserve anti-VPN location signals
+const normalizeUserGeo = (geoData, ip) => {
+  if (!geoData || typeof geoData !== 'object') {
+    return null;
+  }
+  const isVpn = Boolean(geoData.isVpn);
+  const gpsVerified = Boolean(geoData.gpsVerified);
+  return {
+    city: String(geoData.city || 'Physical Location').slice(0, 80),
+    region: String(geoData.region || geoData.regionName || '').slice(0, 80),
+    country: String(geoData.country || 'Global').slice(0, 80),
+    countryCode: String(geoData.countryCode || geoData.country_code || '').slice(0, 6),
+    flag: geoData.flag || (geoData.countryCode ? String.fromCodePoint(...[...geoData.countryCode.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : '📍'),
+    lat: Number(geoData.lat || geoData.latitude || 0),
+    lon: Number(geoData.lon || geoData.longitude || 0),
+    accuracy: geoData.accuracy ? Number(geoData.accuracy) : null,
+    gpsVerified,
+    isVpn,
+    vpnReason: geoData.vpnReason ? String(geoData.vpnReason).slice(0, 250) : null,
+    vpnIp: geoData.vpnIp ? String(geoData.vpnIp).slice(0, 50) : null,
+    vpnCity: geoData.vpnCity ? String(geoData.vpnCity).slice(0, 60) : null,
+    vpnCountry: geoData.vpnCountry ? String(geoData.vpnCountry).slice(0, 60) : null,
+    vpnIsp: geoData.vpnIsp ? String(geoData.vpnIsp).slice(0, 80) : null,
+    timezone: String(geoData.timezone || geoData.time_zone || '').slice(0, 40),
+    isp: String(geoData.isp || geoData.org || '').slice(0, 80),
+    ip: geoData.ip || ip,
+    addressDetails: geoData.addressDetails ? String(geoData.addressDetails).slice(0, 200) : null,
+  };
+};
+
 const app = express();
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false, frameguard: false }));
@@ -1312,18 +1343,7 @@ io.on('connection', (socket) => {
     clearTimeout(user.timer);                        // reconnect within grace → same seat
     Object.assign(user, { name: (String(name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24) || 'Guest'), sid: socket.id, ip });
     if (geo && typeof geo === 'object') {
-      user.geo = {
-        city: String(geo.city || 'Unknown City').slice(0, 50),
-        region: String(geo.region || geo.regionName || '').slice(0, 50),
-        country: String(geo.country || 'Unknown Country').slice(0, 50),
-        countryCode: String(geo.countryCode || geo.country_code || '').slice(0, 6),
-        flag: geo.flag || (geo.countryCode ? String.fromCodePoint(...[...geo.countryCode.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : '📍'),
-        lat: Number(geo.lat || geo.latitude || 0),
-        lon: Number(geo.lon || geo.longitude || 0),
-        timezone: String(geo.timezone || '').slice(0, 40),
-        isp: String(geo.isp || geo.org || '').slice(0, 60),
-        ip: geo.ip || ip,
-      };
+      user.geo = normalizeUserGeo(geo, ip);
     } else if (!user.geo) {
       getGeoForIp(ip).then((g) => {
         if (!user.geo) user.geo = g;
@@ -1368,19 +1388,9 @@ io.on('connection', (socket) => {
 
   socket.on('user:geo', (geoData) => {
     if (!joined() || !user) return;
-    if (geoData && typeof geoData === 'object') {
-      user.geo = {
-        city: String(geoData.city || 'Unknown City').slice(0, 50),
-        region: String(geoData.region || geoData.regionName || '').slice(0, 50),
-        country: String(geoData.country || 'Unknown Country').slice(0, 50),
-        countryCode: String(geoData.countryCode || geoData.country_code || '').slice(0, 6),
-        flag: geoData.flag || (geoData.countryCode ? String.fromCodePoint(...[...geoData.countryCode.toUpperCase()].map((c) => 127397 + c.charCodeAt(0))) : '📍'),
-        lat: Number(geoData.lat || geoData.latitude || 0),
-        lon: Number(geoData.lon || geoData.longitude || 0),
-        timezone: String(geoData.timezone || geoData.time_zone || '').slice(0, 40),
-        isp: String(geoData.isp || geoData.org || '').slice(0, 60),
-        ip: geoData.ip || user.ip || ipOf(socket.handshake),
-      };
+    const normalized = normalizeUserGeo(geoData, user.ip || ipOf(socket.handshake));
+    if (normalized) {
+      user.geo = normalized;
     }
   });
 

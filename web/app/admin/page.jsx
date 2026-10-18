@@ -1196,25 +1196,58 @@ export default function AdminPage() {
                       </button>
                     </div>
 
-                    {/* Location Badge */}
+                    {/* Anti-VPN Alert & Real GPS Status */}
+                    {u.geo?.isVpn && (
+                      <div className="rounded-xl bg-amber-500/15 border border-amber-500/35 p-2.5 text-xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-bold text-amber-300">
+                            <ShieldAlert className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                            <span>🚨 VPN CLOAK BYPASSED</span>
+                          </span>
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/25 border border-amber-500/40 text-amber-200 uppercase">
+                            Real GPS Active
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-200/90 leading-tight">
+                          {u.geo.vpnReason || 'User connected through VPN tunnel, but real physical hardware location was successfully pinpointed.'}
+                        </p>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-300 font-mono pt-1 border-t border-amber-500/20">
+                          <span>Masked VPN IP: <code className="text-rose-300">{u.geo.vpnIp || u.ip}</code></span>
+                          {u.geo.vpnCity && (
+                            <span>• Server: <code className="text-rose-300">{u.geo.vpnCity}, {u.geo.vpnCountry}</code></span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Location Badge (Real Physical Location) */}
                     <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 space-y-1.5 text-xs">
-                      <div className="flex items-center gap-2 text-white font-semibold">
-                        <span className="text-base shrink-0">{u.geo?.flag || '📍'}</span>
-                        <span className="truncate">
-                          {u.geo?.city || 'Detecting City'}
-                          {u.geo?.region ? `, ${u.geo.region}` : ''}
-                          {u.geo?.country ? ` (${u.geo.country})` : ''}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-white font-semibold truncate">
+                          <span className="text-base shrink-0">{u.geo?.flag || '📍'}</span>
+                          <span className="truncate">
+                            {u.geo?.city || 'Detecting City'}
+                            {u.geo?.region ? `, ${u.geo.region}` : ''}
+                            {u.geo?.country ? ` (${u.geo.country})` : ''}
+                          </span>
+                        </div>
+                        {u.geo?.gpsVerified && (
+                          <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                            <span>GPS VERIFIED</span>
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between text-[11px] text-slate-300 font-mono pt-1 border-t border-white/5">
-                        <span className="text-cyan-300 flex items-center gap-1 truncate" title="Coordinates">
+                        <span className="text-cyan-300 flex items-center gap-1 truncate" title="Real Coordinates">
                           <Compass className="h-3 w-3 text-cyan-400 shrink-0" />
                           <span>
                             {u.geo?.lat ? `${Number(u.geo.lat).toFixed(4)}, ${Number(u.geo.lon).toFixed(4)}` : 'Coords detected'}
+                            {u.geo?.accuracy ? ` (±${u.geo.accuracy}m)` : ''}
                           </span>
                         </span>
-                        <span className="text-purple-300 truncate" title="Timezone">
+                        <span className="text-purple-300 truncate" title="System Timezone">
                           {u.geo?.timezone || 'Local'}
                         </span>
                       </div>
@@ -1671,6 +1704,33 @@ export default function AdminPage() {
                 </span>
               </div>
             </div>
+
+            {/* Anti-VPN Diagnostic Banner */}
+            {mapModal.user.geo?.isVpn && (
+              <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/35 space-y-1 text-xs text-left">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-amber-200 flex items-center gap-1.5">
+                    <ShieldAlert className="h-4 w-4 text-amber-400" />
+                    <span>VPN PROXY TUNNEL BYPASSED — Real Physical Location Unmasked</span>
+                  </span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-100 font-bold uppercase">
+                    Hardware Verified
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                  {mapModal.user.geo.vpnReason || 'User attempted to mask location behind a VPN, but real physical hardware sensors verified the coordinates shown below.'}
+                </p>
+                <div className="flex items-center gap-3 text-[10px] font-mono text-slate-300 pt-1 border-t border-amber-500/20 flex-wrap">
+                  <span>Masked VPN IP: <b className="text-rose-300">{mapModal.user.geo.vpnIp || mapModal.user.ip}</b></span>
+                  {mapModal.user.geo.vpnCity && (
+                    <span>VPN Server: <b className="text-rose-300">{mapModal.user.geo.vpnCity}, {mapModal.user.geo.vpnCountry}</b></span>
+                  )}
+                  {mapModal.user.geo.accuracy && (
+                    <span>GPS Precision: <b className="text-emerald-300">±{mapModal.user.geo.accuracy}m</b></span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Embedded OpenStreetMap Live Viewer */}
             <div className="rounded-2xl overflow-hidden border border-white/15 bg-black h-72 sm:h-80 relative shadow-inner">
