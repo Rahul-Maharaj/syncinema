@@ -5,6 +5,8 @@ import {
   Sparkles, KeyRound, Copy, Check, QrCode, Sliders,
   Share2, Heart, AlertTriangle, Fingerprint, RefreshCw, X, Crown
 } from 'lucide-react';
+import { getHybridInviteUrl } from '@/lib/invite';
+import { getKey } from '@/lib/vault';
 
 export default function IntimacyMode({
   socket,
@@ -118,7 +120,16 @@ export default function IntimacyMode({
 
   // Build Invite link
   const getInviteText = () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
+    let url = typeof window !== 'undefined' ? window.location.href : '';
+    if (typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/\/room\/([^\/\?#]+)/);
+      if (match && match[1]) {
+        const rId = match[1];
+        const rp = sessionStorage.getItem('rp_' + rId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + rId) : '') || '';
+        const sk = getKey();
+        url = getHybridInviteUrl(window.location.origin, rId, rp, sk);
+      }
+    }
     switch (inviteStyle) {
       case 'romantic':
         return `Hey love, our private couch is ready for date night 🍿💗 Tap to join me:\n${url}`;

@@ -1,12 +1,75 @@
 import './globals.css';
 import { Fraunces, DM_Sans } from 'next/font/google';
 import Floaters from '@/components/Floaters';
+
 const display = Fraunces({ subsets: ['latin'], variable: '--font-display' });
 const body = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
+
 export const metadata = {
-  title: 'SyncCinema',
-  description: 'Watch together, wherever you are.',
-  robots: { index: false, follow: false, nocache: true },
+  metadataBase: new URL('https://synccinema.onrender.com'),
+  title: {
+    default: 'SyncCinema — Real-Time Watch Party & Private Virtual Cinema',
+    template: '%s | SyncCinema',
+  },
+  description: 'SyncCinema is a free, real-time synchronized video streaming platform and private virtual theater. Watch movies, YouTube, anime, and web videos together with friends and partners in zero-latency sync with crystal-clear video calls, voice chat, and end-to-end encrypted rooms.',
+  keywords: [
+    'sync cinema',
+    'watch party',
+    'watch together',
+    'sync video',
+    'synced cinema',
+    'watch movies together online',
+    'virtual theater',
+    'couples movie night',
+    'synchronized stream',
+    'video call watch party',
+    'private cinema room',
+    'SyncCinema',
+  ],
+  authors: [{ name: 'SyncCinema Team', url: 'https://synccinema.onrender.com' }],
+  creator: 'SyncCinema',
+  publisher: 'SyncCinema',
+  applicationName: 'SyncCinema',
+  category: 'Entertainment',
+  classification: 'Media & Streaming',
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://synccinema.onrender.com',
+  },
+  openGraph: {
+    title: 'SyncCinema — Real-Time Watch Party & Private Virtual Cinema',
+    description: 'Stream movies and videos in real-time sync with friends and loved ones. Zero-latency playback, HD video calls, and encrypted rooms.',
+    url: 'https://synccinema.onrender.com',
+    siteName: 'SyncCinema',
+    images: [
+      {
+        url: '/ad-theater-experience.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'SyncCinema — The Ultimate Virtual Theater Experience',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SyncCinema — Real-Time Watch Party & Private Virtual Cinema',
+    description: 'Stream movies and videos in real-time sync with friends and loved ones.',
+    images: ['/ad-theater-experience.jpg'],
+    creator: '@synccinema',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -18,6 +81,7 @@ export const metadata = {
     ],
   },
 };
+
 export const viewport = {
   themeColor: '#09090b',
   width: 'device-width',
@@ -25,7 +89,33 @@ export const viewport = {
   maximumScale: 1,
   viewportFit: 'cover',
 };
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'SyncCinema',
+  url: 'https://synccinema.onrender.com',
+  description: 'Free real-time synchronized video streaming and virtual cinema platform with integrated video calls and private rooms.',
+  applicationCategory: 'EntertainmentApplication',
+  operatingSystem: 'All',
+  browserRequirements: 'Requires modern web browser with HTML5 and WebRTC support',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  featureList: [
+    'Zero-latency video synchronization',
+    'Integrated WebRTC HD video and voice calls',
+    'End-to-end encrypted room passwords and vault keys',
+    'Support for YouTube, MP4, HLS, WebM, and third-party media sources',
+    'Interactive couple gestures, intimacy modes, and cinema color palettes',
+  ],
+  image: 'https://synccinema.onrender.com/ad-theater-experience.jpg',
+};
+
 const themeInit = `try{var t=localStorage.theme;if(t==='light')document.documentElement.classList.remove('dark')}catch(e){};if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})};`;
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning className={`dark ${display.variable} ${body.variable}`}>
@@ -37,6 +127,10 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className="bg-black text-white min-h-screen">
         <div className="relative z-10">{children}</div>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
+import { getHybridInviteUrl, parseHybridInvite } from '@/lib/invite';
 import VideoPlayer from '@/components/VideoPlayer';
 import CouplesOverlay, { Tile } from '@/components/CouplesOverlay';
 import CinemaPlugins from '@/components/CinemaPlugins';
@@ -403,14 +404,29 @@ export default function Room() {
     setName(localStorage.getItem('name') || '');
     try {
       const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-      const params = new URLSearchParams(hash || (typeof window !== 'undefined' ? window.location.search : ''));
-      const p = params.get('pass');
-      const k = params.get('key');
-      const v = params.get('video');
-      const createFlag = params.get('create');
-      const maxParam = params.get('max');
-      const ghostParam = params.get('ghost');
-      const admKey = params.get('adminKey');
+      const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+      const hashParams = new URLSearchParams(hash);
+
+      // Support production hybrid invite tokens (No plaintext pass or key in URL)
+      const inv = searchParams.get('inv') || hashParams.get('inv');
+      if (inv) {
+        const parsed = parseHybridInvite(inv, roomId);
+        if (parsed?.pass) {
+          sessionStorage.setItem('rp_' + roomId, parsed.pass);
+          try { localStorage.setItem('rp_' + roomId, parsed.pass); } catch {}
+        }
+        if (parsed?.key) setKey(parsed.key);
+      }
+
+      // Legacy fallback params
+      const p = searchParams.get('pass') || hashParams.get('pass');
+      const k = searchParams.get('key') || hashParams.get('key');
+      const v = searchParams.get('video') || hashParams.get('video');
+      const createFlag = searchParams.get('create') || hashParams.get('create');
+      const maxParam = searchParams.get('max') || hashParams.get('max');
+      const ghostParam = searchParams.get('ghost') || hashParams.get('ghost');
+      const admKey = searchParams.get('adminKey') || hashParams.get('adminKey');
+
       if (ghostParam === '1') {
         setIsGhost(true);
         setName((prev) => prev || 'Admin Ghost');
@@ -431,6 +447,13 @@ export default function Room() {
       }
       if (k) setKey(k);
       if (v) sessionStorage.setItem('init_video_' + roomId, v);
+
+      // Instantly cleanse browser address bar so tickets, credentials, and hash never linger in URL bar or history
+      if (typeof window !== 'undefined' && (window.location.search || window.location.hash)) {
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch {}
+      }
     } catch {}
   }, [roomId]);
 
@@ -578,15 +601,11 @@ export default function Room() {
   const copy = () => {
     const rp = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
     const sk = getKey();
-    const parts = [];
-    if (rp) parts.push(`pass=${encodeURIComponent(rp)}`);
-    if (sk) parts.push(`key=${encodeURIComponent(sk)}`);
-    const hash = parts.length ? `#${parts.join('&')}` : '';
-    const inviteUrl = `${location.origin}/room/${roomId}${hash}`;
+    const inviteUrl = getHybridInviteUrl(location.origin, roomId, rp, sk);
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
-    say('Invite link with password copied — send it to your partner 💗');
+    say('Hybrid invite link copied (No pass or key exposed) 🔒✨');
   };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
   const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: dimming background lights' : 'Cinema mode off'); };

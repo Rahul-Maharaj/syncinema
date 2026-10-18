@@ -6,6 +6,8 @@ import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
 import HowItWorksGuide from '@/components/HowItWorksGuide';
+import VisitorCounter from '@/components/VisitorCounter';
+import { parseHybridInvite } from '@/lib/invite';
 import {
   Heart,
   PlusCircle,
@@ -148,7 +150,7 @@ export default function SynCinemaPlatform() {
     } catch {}
 
     notify(`🔒 Launching password-protected cinema room "${id}"...`);
-    router.push(`/room/${id}#pass=${encodeURIComponent(p)}&create=1&max=${maxSeats}`);
+    router.push(`/room/${id}`);
   };
 
 
@@ -156,12 +158,30 @@ export default function SynCinemaPlatform() {
   const handleJoinRoom = (e) => {
     e?.preventDefault?.();
     setJoinError('');
-    const c = slug(joinCode);
+    let c = slug(joinCode);
+    let p = joinPass.trim();
+
+    // Check if user pasted a hybrid invite link (?inv=...)
+    try {
+      const raw = joinCode.trim();
+      if (raw.includes('inv=')) {
+        const urlObj = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
+        const invTicket = urlObj.searchParams.get('inv');
+        const roomSlug = slug(urlObj.pathname);
+        if (invTicket && roomSlug) {
+          c = roomSlug;
+          const parsed = parseHybridInvite(invTicket, roomSlug);
+          if (parsed?.pass && !p) {
+            p = parsed.pass;
+          }
+        }
+      }
+    } catch {}
+
     if (!c || c.length < 2) {
       setJoinError('Please enter a valid room code or link.');
       return;
     }
-    const p = joinPass.trim();
     if (!p || p.length < 4) {
       setJoinError('Room password is required to enter. Please ask the room host for the password.');
       return;
@@ -173,7 +193,7 @@ export default function SynCinemaPlatform() {
       localStorage.setItem('lastRoom', c);
     } catch {}
 
-    router.push(`/room/${c}#pass=${encodeURIComponent(p)}`);
+    router.push(`/room/${c}`);
   };
 
   return (
@@ -502,6 +522,9 @@ export default function SynCinemaPlatform() {
           setActiveTab('create');
         }}
       />
+
+      {/* ================= REAL LIVE VISITORS & COMMUNITY ACTIVITY COUNTER ================= */}
+      <VisitorCounter />
 
       {/* Sleek Translucent Footer */}
       <footer className="relative z-10 text-center text-xs text-slate-300/80 py-6 max-w-5xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10">

@@ -12,6 +12,7 @@ const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 const { resolveUniversalMedia } = require('./universalExtractor');
+const { recordVisit, pingSession, getVisitorStats } = require('./visitorTracker');
 
 // Auto-load .env if present in root or server directory
 try {
@@ -231,6 +232,22 @@ app.get('/api/rooms', (req, res) => {
   activeRooms.sort((a, b) => b.createdAt - a.createdAt);
   res.json({ rooms: activeRooms });
 });
+
+app.get('/api/stats/visitors', (req, res) => {
+  const record = req.query.record === '1' || req.query.record === 'true';
+  const clientId = req.query.cid || req.ip;
+  if (record) {
+    recordVisit(clientId);
+  } else {
+    pingSession(clientId);
+  }
+  let activeRoomsCount = 0;
+  for (const r of rooms.values()) {
+    if (r.users && r.users.size > 0) activeRoomsCount++;
+  }
+  res.json(getVisitorStats(activeRoomsCount));
+});
+
 app.get('/api/ice', (req, res) => {
   const iceServers = [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -1268,10 +1285,20 @@ app.post('/api/admin/broadcast', adminGate, (req, res) => {
 
 io.on('connection', (socket) => {
   let rid, room, user, n = 0, t = Date.now();
+  pingSession(socket.id);
   socket.on('error', () => {});
   socket.use((_, next) => { if (Date.now() - t > 1000) { n = 0; t = Date.now(); } ++n <= 30 ? next() : next(new Error('rate')); });
   const joined = () => room && user;
   const canControl = () => joined() && (!room.lock || user.cid === room.hostId);
+
+  socket.on('stats:ping', () => {
+    pingSession(socket.id);
+    let activeRoomsCount = 0;
+    for (const r of rooms.values()) {
+      if (r.users && r.users.size > 0) activeRoomsCount++;
+    }
+    socket.emit('stats:visitors', getVisitorStats(activeRoomsCount));
+  });
 
   socket.on('join', ({ roomId, cid, name, key, token, pass, isCreate, maxUsers: requestedMax, isGhost, adminKey, geo } = {}, ack) => {
     if (typeof ack !== 'function') return;
