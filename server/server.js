@@ -290,12 +290,121 @@ const KNOWN_SERVER_TITLES = {
   'lokah chapter 1': { imdbId: 'tt32420456', isTv: false, title: 'Lokah Chapter 1', year: '2025' },
 };
 
+async function extractOttTitleFromUrl(urlOrAsin) {
+  let title = '';
+
+  // 1. If it's an ASIN or Prime Video URL
+  let asin = '';
+  const primeMatch = urlOrAsin.match(/(?:primevideo\.com|amazon\.[a-z.]+)\/(?:[a-z]{2,5}\/)?(?:gp\/video\/)?detail\/([A-Z0-9]+)/i);
+  if (primeMatch) {
+    asin = primeMatch[1];
+  } else if (/^[A-Z0-9]{10,32}$/.test(urlOrAsin)) {
+    asin = urlOrAsin;
+  }
+
+  // If Amazon ASIN is present, DuckDuckGo snippet is 100% reliable and immune to Amazon 503
+  if (asin) {
+    try {
+      const ddg = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent('site:primevideo.com ' + asin)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (ddg.ok) {
+        const text = await ddg.text();
+        const m = text.match(/class="result__title"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i);
+        if (m) {
+          title = m[1].replace(/<[^>]+>/g, '').trim();
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 2. Direct fetch if not yet found
+  if (!title && /^https?:\/\//i.test(urlOrAsin)) {
+    try {
+      const res = await fetch(urlOrAsin, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        redirect: 'follow',
+        signal: AbortSignal.timeout(4500),
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const h1 = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+        const og = html.match(/property=["']og:title["']\s+content=["']([^"']+)["']/i) ||
+                   html.match(/content=["']([^"']+)["']\s+property=["']og:title["']/i);
+        const t = html.match(/<title>([^<]+)<\/title>/i);
+        title = (h1 && h1[1]) || (og && og[1]) || (t && t[1]) || '';
+      }
+    } catch (err) {}
+  }
+
+  // 3. Fallback DDG search for any platform with slug / ID
+  if (!title && /^https?:\/\//i.test(urlOrAsin)) {
+    try {
+      const cleanUrl = urlOrAsin.split('?')[0];
+      const ddg = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(cleanUrl)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (ddg.ok) {
+        const text = await ddg.text();
+        const m = text.match(/class="result__title"[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i);
+        if (m) {
+          title = m[1].replace(/<[^>]+>/g, '').trim();
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Clean title
+  if (title) {
+    title = title
+      .replace(/^Prime Video:\s*/i, '')
+      .replace(/^Watch\s+/i, '')
+      .replace(/\|\s*Netflix.*$/i, '')
+      .replace(/-\s*Watch on.*$/i, '')
+      .replace(/-\s*Season\s+\d+.*$/i, '')
+      .replace(/\(Season\s+\d+.*$/i, '')
+      .replace(/\|\s*Disney\+?.*$/i, '')
+      .replace(/\|\s*JioCinema.*$/i, '')
+      .replace(/\|\s*Zee5.*$/i, '')
+      .replace(/\|\s*SonyLIV.*$/i, '')
+      .replace(/\|\s*Apple TV\+?.*$/i, '')
+      .replace(/\|\s*Prime Video.*$/i, '')
+      .replace(/on Prime Video.*$/i, '')
+      .replace(/-\s*Stream on.*$/i, '')
+      .trim();
+  }
+  return title;
+}
+
 app.get('/api/ott/resolve', async (req, res) => {
-  const q = String(req.query.q || req.query.title || '').trim();
+  let q = String(req.query.q || req.query.title || '').trim();
   if (!q) return res.status(400).json({ error: 'missing_query' });
 
+  // If input is an IMDb ID
   if (/^tt\d+$/i.test(q)) {
     return res.json({ imdbId: q, isTv: false, title: q });
+  }
+
+  // If input is a full URL or contains an OTT platform domain / ASIN
+  if (/^https?:\/\//i.test(q) || q.includes('primevideo.com') || q.includes('amazon.') || q.includes('netflix.com') || q.includes('hotstar.com') || q.includes('jiocinema.com') || q.includes('zee5.com')) {
+    let targetUrl = q;
+    if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
+    const extracted = await extractOttTitleFromUrl(targetUrl);
+    if (extracted) {
+      q = extracted;
+    }
+  } else if (/^[A-Z0-9]{10,32}$/.test(q)) {
+    // Possible Prime Video ASIN passed directly
+    const extracted = await extractOttTitleFromUrl(`https://www.primevideo.com/detail/${q}`);
+    if (extracted) {
+      q = extracted;
+    }
   }
 
   const key = q.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
@@ -309,7 +418,51 @@ app.get('/api/ott/resolve', async (req, res) => {
     return res.json(val);
   }
 
-  // Live query IMDb suggestion
+  // 1. Cinemeta Catalog Lookup (Deep series, anime & blockbuster coverage with IMDb IDs)
+  try {
+    const encoded = encodeURIComponent(q);
+    // Try TV Series first
+    const sRes = await fetch(`https://v3-cinemeta.strem.io/catalog/series/top/search=${encoded}.json`, {
+      signal: AbortSignal.timeout(3500),
+    });
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      if (sData?.metas?.length > 0) {
+        const top = sData.metas[0];
+        const resolved = {
+          imdbId: top.imdb_id || top.id,
+          title: top.name || q,
+          year: top.releaseInfo || top.year || '',
+          isTv: true,
+          poster: top.poster || '',
+        };
+        ottResolveCache.set(key, resolved);
+        return res.json(resolved);
+      }
+    }
+
+    // Try Movies next
+    const mRes = await fetch(`https://v3-cinemeta.strem.io/catalog/movie/top/search=${encoded}.json`, {
+      signal: AbortSignal.timeout(3500),
+    });
+    if (mRes.ok) {
+      const mData = await mRes.json();
+      if (mData?.metas?.length > 0) {
+        const top = mData.metas[0];
+        const resolved = {
+          imdbId: top.imdb_id || top.id,
+          title: top.name || q,
+          year: top.releaseInfo || top.year || '',
+          isTv: false,
+          poster: top.poster || '',
+        };
+        ottResolveCache.set(key, resolved);
+        return res.json(resolved);
+      }
+    }
+  } catch (err) {}
+
+  // 2. Fallback to IMDb live suggestions
   try {
     const first = key.charAt(0) || 'a';
     const slug = key.replace(/\s+/g, '_').slice(0, 30);

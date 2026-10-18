@@ -32,7 +32,8 @@ export function isRealHumanBrowser() {
       return false;
     }
   } catch (e) {
-    return false;
+    // Fail-open: Never block real mobile devices on unexpected environment differences
+    return true;
   }
 
   return true;

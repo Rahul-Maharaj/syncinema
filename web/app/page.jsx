@@ -7,6 +7,7 @@ import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
 import HowItWorksGuide from '@/components/HowItWorksGuide';
 import VisitorCounter from '@/components/VisitorCounter';
+import InstallPrompt from '@/components/InstallPrompt';
 import { parseHybridInvite } from '@/lib/invite';
 import {
   Heart,
@@ -228,6 +229,8 @@ export default function SynCinemaPlatform() {
 
         {/* Status Pill & Privacy Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <InstallPrompt variant="button" />
+
           <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold backdrop-blur-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>0ms Drift Clock Sync Active</span>
@@ -525,6 +528,9 @@ export default function SynCinemaPlatform() {
 
       {/* ================= REAL LIVE VISITORS & COMMUNITY ACTIVITY COUNTER ================= */}
       <VisitorCounter />
+
+      {/* Mobile & Tablet App Install Banner */}
+      <InstallPrompt variant="banner" />
 
       {/* Sleek Translucent Footer */}
       <footer className="relative z-10 text-center text-xs text-slate-300/80 py-6 max-w-5xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10">

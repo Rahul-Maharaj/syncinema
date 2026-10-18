@@ -94,8 +94,12 @@ function isBotRequest(req) {
   const url = String(req.url || '');
   const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
 
-  // 1. Immediately drop already banned bot IPs
-  if (bannedBotIps.has(ip)) {
+  // 1. Immediately drop already banned bot IPs (except legitimate human browser WebSockets on shared mobile CGNAT)
+  const isBrowserWs = (url.includes('/socket.io') || req.headers?.upgrade === 'websocket') &&
+                      ua.includes('Mozilla/') &&
+                      !BOT_UA_PATTERNS.some((p) => p.test(ua));
+
+  if (bannedBotIps.has(ip) && !isBrowserWs) {
     return { blocked: true, reason: 'Permanently blocked bot IP' };
   }
 

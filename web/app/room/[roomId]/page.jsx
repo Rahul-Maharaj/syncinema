@@ -939,12 +939,15 @@ export default function Room() {
             <LogOut className="h-3.5 w-3.5" />
           </Link>
 
+          {/* Install Phone App */}
+          <InstallPrompt variant="button" className="hidden md:flex" />
+
           {/* Room Settings Trigger Button */}
           <button
             type="button"
             onClick={() => setShowMenu(true)}
             className="hidden sm:flex h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold items-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white shrink-0"
-            title="Room Controls &amp; Settings"
+            title="Room Controls & Settings"
           >
             <Sliders className="h-3.5 w-3.5 text-rose-400" />
             <span>Settings</span>
@@ -1224,6 +1227,18 @@ export default function Room() {
 
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
+      {!boot && !err && (
+        <div className="flex-1 w-full flex flex-col items-center justify-center p-8 text-center space-y-4 min-h-[50vh]">
+          <div className="relative grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-600 shadow-2xl shadow-pink-950/80 animate-pulse">
+            <Film className="h-8 w-8 text-white animate-spin [animation-duration:3s]" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Connecting to Private Cinema Room</h3>
+            <p className="text-xs text-pink-300/80">Securing zero-latency sync tunnel &amp; encrypted media stream...</p>
+          </div>
+        </div>
+      )}
+
       {boot && (
         <div className="flex-1 w-full flex flex-col lg:flex-row p-2 sm:p-4 gap-3 sm:gap-4 min-h-0">
           {/* Main Cinema Auditorium (Left / Center) */}

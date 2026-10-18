@@ -1023,8 +1023,11 @@ export default function VideoPlayer({
     const ott = getOttPlatform(src);
     const extracted = extractOttTitle(src);
     if (ott || force === 'hybrid' || extracted) {
-      const titleToPlay = extracted || (ott ? `${ott.name} Cinema` : 'Cinema');
-      const meta = await resolveTitleToMetadata(titleToPlay);
+      // If extracted is empty or an opaque alphanumeric ID/ASIN, pass full URL to resolve title from server
+      const isOpaqueId = !extracted || /^[A-Za-z0-9_-]{10,}$/.test(extracted) || /^\d+$/.test(extracted);
+      const queryToResolve = isOpaqueId ? src : extracted;
+      const meta = await resolveTitleToMetadata(queryToResolve);
+      const titleToPlay = meta?.title || (isOpaqueId ? (ott ? `${ott.name} Cinema` : 'Cinema') : extracted);
       const isTv = Boolean(meta?.isTv);
       const mirrors = getCloudMirrorSources(meta || titleToPlay, isTv, titleToPlay);
       return {
@@ -1034,7 +1037,7 @@ export default function VideoPlayer({
         platform: ott?.name || 'OTT Cinema',
         icon: ott?.icon || '🍿',
         color: ott?.color || '#e11d48',
-        title: extracted ? `${ott?.name || 'OTT'}: ${extracted}` : titleToPlay,
+        title: meta?.title ? `${ott?.name || 'OTT'}: ${meta.title}` : (extracted && !isOpaqueId ? `${ott?.name || 'OTT'}: ${extracted}` : titleToPlay),
         movieTitle: titleToPlay,
         mirrorSources: mirrors,
         currentServerIndex: 0,

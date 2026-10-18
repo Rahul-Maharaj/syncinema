@@ -407,7 +407,43 @@ export const resolveTitleToMetadata = async (query) => {
     }
   } catch {}
 
-  // 2. Direct client fallback to IMDb suggestion
+  // 2. Direct client fallback: Cinemeta catalog (TV Series & Movies)
+  try {
+    const encoded = encodeURIComponent(clean);
+    // Try TV series first
+    const sRes = await fetch(`https://v3-cinemeta.strem.io/catalog/series/top/search=${encoded}.json`);
+    if (sRes.ok) {
+      const sData = await sRes.json();
+      if (sData?.metas?.length > 0) {
+        const top = sData.metas[0];
+        return {
+          imdbId: top.imdb_id || top.id,
+          title: top.name || clean,
+          year: top.releaseInfo || top.year || '',
+          isTv: true,
+          poster: top.poster || '',
+        };
+      }
+    }
+
+    // Try Movies next
+    const mRes = await fetch(`https://v3-cinemeta.strem.io/catalog/movie/top/search=${encoded}.json`);
+    if (mRes.ok) {
+      const mData = await mRes.json();
+      if (mData?.metas?.length > 0) {
+        const top = mData.metas[0];
+        return {
+          imdbId: top.imdb_id || top.id,
+          title: top.name || clean,
+          year: top.releaseInfo || top.year || '',
+          isTv: false,
+          poster: top.poster || '',
+        };
+      }
+    }
+  } catch {}
+
+  // 3. Fallback to IMDb suggestions
   try {
     const first = clean.charAt(0).toLowerCase() || 'a';
     const slug = clean.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30);
