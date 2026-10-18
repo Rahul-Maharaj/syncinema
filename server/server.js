@@ -973,27 +973,107 @@ app.get('/api/proxy', async (req, res) => {
     if (ct.includes('text/html')) {
       let html = await upstream.text();
       const finalUrl = upstream.url || target;
+
+      // 🛡️ High-Precision Ad-Stripper: Purge known ad networks, popunders, and trackers
+      const AD_SCRIPT_PATTERNS = [
+        /poringasitia/i,
+        /gussiessmutchy/i,
+        /histats/i,
+        /monetag/i,
+        /adsterra/i,
+        /popcash/i,
+        /propeller/i,
+        /onclickprediction/i,
+        /alwingulla/i,
+        /highperformancegate/i,
+        /syndication\.exoclick/i,
+        /trafficjunky/i,
+        /juicyads/i,
+        /ero-advertising/i,
+        /tsyndicate/i,
+        /realsrv/i,
+        /bidgear/i,
+        /adtrue/i,
+        /clickadu/i,
+        /evadav/i,
+        /richpush/i,
+        /mgid/i,
+        /adkeeper/i,
+      ];
+
+      for (const pattern of AD_SCRIPT_PATTERNS) {
+        html = html.replace(new RegExp(`<script[^>]*src=[^>]*${pattern.source}[^>]*>.*?<\\/script>`, 'gi'), '');
+        html = html.replace(new RegExp(`<script[^>]*src=[^>]*${pattern.source}[^>]*\\/>`, 'gi'), '');
+        html = html.replace(new RegExp(`<script[^>]*>[^<]*${pattern.source}[^<]*<\\/script>`, 'gi'), '');
+      }
+
       // Neutralize anti-sandbox redirects on movie sites
       html = html.replace(/\/sandboxed\.html[^\s"']*/g, 'javascript:void(0)');
       const baseTag = `<base href="${finalUrl}">`;
       const antiAd = `<style>
         div[style*="z-index: 2147483647"], div[style*="z-index:2147483647"],
         div[style*="z-index: 9999999"], div[style*="z-index:9999999"],
-        .ad-overlay, .ads-banner, [id*="ad-overlay"] { display: none !important; pointer-events: none !important; }
+        div[style*="z-index: 99999"], div[style*="z-index:99999"],
+        .ad-overlay, .ads-banner, [id*="ad-overlay"], [class*="ad-overlay"],
+        [id*="popunder"], [class*="popunder"], iframe[src*="doubleclick"],
+        iframe[src*="adsterra"], iframe[src*="googleads"], .banner-ad,
+        #ads, #ad-container, [class*="ad_banner"] {
+          display: none !important;
+          pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
+          opacity: 0 !important;
+        }
       </style>
       <script>
-        try {
-          Object.defineProperty(window, 'top', { get: () => window.self });
-          Object.defineProperty(window, 'parent', { get: () => window.self });
-          window.open = function() { console.log('Ad popup blocked'); return null; };
-          if (window.frameElement) {
-            window.frameElement.hasAttribute = function(attr) {
-              if (attr === 'sandbox') return false;
-              return Element.prototype.hasAttribute.call(this, attr);
-            };
-          }
-        } catch (e) {}
+        (function() {
+          try {
+            // Block all popups, alert spam, and new tabs
+            window.open = function() { return null; };
+            window.alert = function() { return true; };
+            window.confirm = function() { return true; };
+            window.prompt = function() { return null; };
+
+            // Prevent frame busting / top navigation hijack
+            Object.defineProperty(window, 'top', { get: () => window.self });
+            Object.defineProperty(window, 'parent', { get: () => window.self });
+
+            // Block clickjacking transparent overlay links
+            document.addEventListener('click', function(e) {
+              var target = e.target;
+              if (target && (target.tagName === 'A' || target.closest('a'))) {
+                var a = target.tagName === 'A' ? target : target.closest('a');
+                var href = a.getAttribute('href') || '';
+                var tgt = a.getAttribute('target') || '';
+                if (tgt === '_blank' || href.startsWith('http') || href.includes('ad') || href.includes('click')) {
+                  if (!a.closest('.jw-controlbar') && !a.closest('.vjs-control-bar') && !a.closest('video')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }
+              }
+            }, true);
+
+            // Automatically clean clickjack overlays every 800ms
+            setInterval(function() {
+              try {
+                var allDivs = document.querySelectorAll('div, a');
+                for (var i = 0; i < allDivs.length; i++) {
+                  var el = allDivs[i];
+                  var s = window.getComputedStyle(el);
+                  if (s.position === 'fixed' || s.position === 'absolute') {
+                    var z = parseInt(s.zIndex, 10);
+                    if (z > 9999 && !el.querySelector('video') && !el.querySelector('button') && !el.classList.contains('jw-wrapper')) {
+                      el.remove();
+                    }
+                  }
+                }
+              } catch (e) {}
+            }, 800);
+          } catch(e) {}
+        })();
       </script>`;
+
       if (/<head[^>]*>/i.test(html)) {
         html = html.replace(/<head[^>]*>/i, `$&${baseTag}${antiAd}`);
       } else {

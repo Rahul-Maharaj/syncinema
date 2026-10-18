@@ -1498,10 +1498,11 @@ export default function VideoPlayer({
           <iframe
             src={media.src || 'about:blank'}
             referrerPolicy="origin"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             loading="eager"
-            className="absolute inset-0 h-full w-full bg-black"
+            className="absolute inset-0 h-full w-full bg-black border-0"
           />
         )}
         {T === 'local' && !localUrl && !stream && (

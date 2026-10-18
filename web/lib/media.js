@@ -265,8 +265,16 @@ export const toEmbed = (src) => {
     m = s.match(/filefly\.[a-z]+\/(?:file|embed|v|d)\/([a-zA-Z0-9]+)/i);
     if (m) return toProxyUrl(`https://filefly.xyz/embed/${m[1]}`);
 
-    return u.href;
-  } catch { return src; }
+    // If already routed through our server proxy, return as is
+    if (u.pathname.startsWith('/api/proxy') || u.pathname.startsWith('/api/stream')) {
+      return u.href;
+    }
+
+    // Default: Route all generic 3rd-party video/embed links through /api/proxy to strip ads, prevent popups & bypass X-Frame-Options
+    return toProxyUrl(u.href);
+  } catch {
+    return (src && src.startsWith('http')) ? toProxyUrl(src) : src;
+  }
 };
 
 export const resolveMedia = async (src) => {
@@ -455,44 +463,46 @@ export const getCloudMirrorSources = (queryOrMeta, isTvParam = false, titleParam
   if (imdbId) {
     return [
       {
-        name: 'Server 1 (VidSrc Pro 1080p Ultra)',
-        quality: '1080p Ultra',
-        tag: 'Instant',
-        url: isTv
-          ? `https://vidsrc.pm/embed/tv/${imdbId}`
-          : `https://vidsrc.pm/embed/movie/${imdbId}`,
-      },
-      {
-        name: 'Server 2 (AutoEmbed Multi-Audio HD)',
-        quality: '1080p HD',
-        tag: 'Dual Audio',
-        url: isTv
-          ? `https://autoembed.co/tv/imdb/${imdbId}-1-1`
-          : `https://autoembed.co/movie/imdb/${imdbId}`,
-      },
-      {
-        name: 'Server 3 (2Embed Crystal Stream)',
-        quality: '1080p HD',
-        tag: 'No Lag',
+        name: 'Server 1 (Crystal Stream 1080p Ad-Free)',
+        quality: '1080p Crystal',
+        tag: 'Ad-Free',
         url: isTv
           ? `https://www.2embed.skin/embedtv/${imdbId}&s=1&e=1`
           : `https://www.2embed.skin/embed/${imdbId}`,
       },
       {
-        name: 'Server 4 (VidSrc SU HD)',
-        quality: '1080p',
-        tag: 'Multi-Lang',
+        name: 'Server 2 (VidSrc SU Clean HD)',
+        quality: '1080p HD',
+        tag: 'Clean 1080p',
         url: isTv
           ? `https://vidsrc.su/embed/tv/${imdbId}`
           : `https://vidsrc.su/embed/movie/${imdbId}`,
       },
       {
-        name: 'Server 5 (2Embed Cinema VIP)',
+        name: 'Server 3 (AutoEmbed Multi-Source HD)',
+        quality: '1080p HD',
+        tag: 'Multi-Source',
+        url: isTv
+          ? `https://autoembed.co/tv/imdb/${imdbId}-1-1`
+          : `https://autoembed.co/movie/imdb/${imdbId}`,
+      },
+      {
+        name: 'Server 4 (2Embed Cinema VIP)',
         quality: '1080p VIP',
-        tag: 'Worldwide',
+        tag: 'VIP Stream',
         url: isTv
           ? `https://www.2embed.cc/embedtv/${imdbId}&s=1&e=1`
           : `https://www.2embed.cc/embed/${imdbId}`,
+      },
+      {
+        name: 'Server 5 (VidSrc Shield Ad-Free)',
+        quality: '1080p',
+        tag: 'Ad-Shield',
+        url: toProxyUrl(
+          isTv
+            ? `https://vidsrc.pm/embed/tv/${imdbId}`
+            : `https://vidsrc.pm/embed/movie/${imdbId}`
+        ),
       },
       {
         name: 'Server 6 (VidSrc Classic)',
@@ -508,22 +518,22 @@ export const getCloudMirrorSources = (queryOrMeta, isTvParam = false, titleParam
   // Fallback if no IMDb ID could be resolved
   return [
     {
-      name: 'Server 1 (AutoEmbed Search HD)',
+      name: 'Server 1 (2Embed Skin Direct HD)',
+      quality: '1080p Crystal',
+      tag: 'Ad-Free',
+      url: `https://www.2embed.skin/embed/${encodedTitle}`,
+    },
+    {
+      name: 'Server 2 (AutoEmbed Multi-Source HD)',
       quality: '1080p HD',
       tag: 'Auto',
       url: `https://autoembed.co/movie/imdb/${encodedTitle}`,
     },
     {
-      name: 'Server 2 (2Embed Title Stream)',
+      name: 'Server 3 (2Embed Cinema VIP)',
       quality: '1080p',
-      tag: 'Global',
+      tag: 'VIP',
       url: `https://www.2embed.cc/embed/${encodedTitle}`,
-    },
-    {
-      name: 'Server 3 (2Embed Skin Direct)',
-      quality: '1080p',
-      tag: 'Fast',
-      url: `https://www.2embed.skin/embed/${encodedTitle}`,
     },
   ];
 };
