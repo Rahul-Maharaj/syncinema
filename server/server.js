@@ -11,6 +11,7 @@ const { Server } = require('socket.io');
 const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
+const { resolveUniversalMedia } = require('./universalExtractor');
 
 // Auto-load .env if present in root or server directory
 try {
@@ -597,7 +598,47 @@ app.get('/api/resolve', async (req, res) => {
 
   const isAdult = isAdultUrl(target);
 
-  // 1. Try extracting direct stream for full HTML5 synchronized playback
+  // 1. Universal Video & Direct Stream Extractor (Vidmate, third-party sites, file hosts, cloud drives, iframes)
+  try {
+    const universal = await resolveUniversalMedia(target);
+    if (universal && universal.stream) {
+      if (universal.type === 'hls' || universal.type === 'file') {
+        return res.json({
+          type: universal.type,
+          src: `/api/stream?url=${encodeURIComponent(universal.stream)}`,
+          origSrc: isAdult ? '🔒 Private Stream' : target,
+          title: isAdult ? '🔒 Private Stream' : (universal.title || ''),
+          platform: universal.platform || '',
+        });
+      }
+      if (universal.type === 'dash') {
+        return res.json({
+          type: 'dash',
+          src: universal.stream,
+          origSrc: isAdult ? '🔒 Private Stream' : target,
+          title: isAdult ? '🔒 Private Stream' : (universal.title || ''),
+          platform: universal.platform || '',
+        });
+      }
+      if (universal.type === 'embed') {
+        // Isolated embed player ONLY (avoids opening the outer website with ads and banners)
+        const embedUrl = universal.stream;
+        return res.json({
+          type: 'embed',
+          src: embedUrl.startsWith('http') ? `/api/proxy?url=${encodeURIComponent(embedUrl)}` : embedUrl,
+          origSrc: isAdult ? '🔒 Private Stream' : target,
+          title: isAdult ? '🔒 Private Stream' : (universal.title || ''),
+          embedUrl,
+          platform: universal.platform || 'Embedded Player',
+          isolated: true,
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Universal media resolution error:', err);
+  }
+
+  // 2. Try extracting direct stream for full HTML5 synchronized playback
   const directStream = await extractDirectStream(target);
   if (directStream) {
     return res.json({
@@ -608,7 +649,7 @@ app.get('/api/resolve', async (req, res) => {
     });
   }
 
-  // 2. Tube / adult platforms: return PROXIED embed so ISP blocks and X-Frame-Options are 100% bypassed!
+  // 3. Tube / adult platforms: return PROXIED embed so ISP blocks and X-Frame-Options are 100% bypassed!
   const tubeEmbed = convertTubeUrl(target);
   if (tubeEmbed) {
     return res.json({

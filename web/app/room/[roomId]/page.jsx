@@ -8,7 +8,7 @@ import {
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
   Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv,
-  MonitorPlay, Camera, Music, RefreshCw, Palette
+  MonitorPlay, Camera, Music, RefreshCw, Palette, Maximize2
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
@@ -1064,6 +1064,24 @@ export default function Room() {
                 </div>
               </button>
 
+              {/* Full Screen Mode */}
+              <button
+                type="button"
+                onClick={() => {
+                  playerRef.current?.toggleFullscreen?.();
+                  setShowMenu(false);
+                }}
+                className="p-3 rounded-2xl bg-gradient-to-r from-pink-600/15 via-rose-600/15 to-purple-600/15 hover:from-pink-600/25 hover:to-purple-600/25 border border-pink-500/30 hover:border-pink-400 text-left flex items-start gap-2.5 transition group"
+              >
+                <div className="p-2 rounded-xl bg-pink-500/20 text-pink-300 border border-pink-500/30 group-hover:scale-105 transition">
+                  <Maximize2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Full Screen Cinema</div>
+                  <div className="text-[10px] text-pink-300/80 mt-0.5">Theater with movable video call</div>
+                </div>
+              </button>
+
               {/* Cinema Lights Mode */}
               <button
                 type="button"
@@ -1169,6 +1187,7 @@ export default function Room() {
                 callControlsRef={callControlsRef}
                 onOpenRecent={() => { setMobileTab('recent'); setDesktopTab('recent'); }}
                 ottAccounts={ottAccounts}
+                isGhost={isGhost}
               />
             </div>
 
@@ -1252,6 +1271,17 @@ export default function Room() {
                 >
                   <Film className="h-3.5 w-3.5 text-amber-400" />
                   <span className="text-[11px] hidden sm:inline">Cinema</span>
+                </button>
+
+                {/* Full Screen Theater Mode with Movable Video Call */}
+                <button
+                  type="button"
+                  onClick={() => playerRef.current?.toggleFullscreen?.()}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold transition cursor-pointer shadow-md shadow-pink-900/30 active:scale-95 border border-pink-400/40"
+                  title="Full Screen Theater Mode (Movable Video Call)"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                  <span className="text-[11px]">Full Screen</span>
                 </button>
               </div>
             </div>

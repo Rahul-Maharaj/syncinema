@@ -273,7 +273,13 @@ export const resolveMedia = async (src) => {
   try {
     const base = typeof window !== 'undefined' ? serverUrl() : '';
     const res = await fetch(`${base}/api/resolve?url=${encodeURIComponent(src)}`);
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.src && data.src.startsWith('/api/')) {
+        data.src = `${base}${data.src}`;
+      }
+      return data;
+    }
   } catch {}
   return null;
 };

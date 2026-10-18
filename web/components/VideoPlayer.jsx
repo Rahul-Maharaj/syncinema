@@ -4,7 +4,7 @@ import {
   Link2, MonitorUp, MonitorOff, ExternalLink, AlertTriangle, FolderOpen,
   Captions, ListPlus, Play, Volume2, Sliders, Radio, Zap, Settings,
   RefreshCw, Sparkles, FastForward, Check, RotateCcw, Mic, History,
-  Maximize2, Minimize2, Video, VideoOff, MicOff, Move, X, EyeOff, Eye,
+  Maximize2, Minimize2, Video, VideoOff, MicOff, Move, GripHorizontal, X, EyeOff, Eye,
   Tv, Film, Search, Globe
 } from 'lucide-react';
 import {
@@ -33,6 +33,7 @@ export default function VideoPlayer({
   callControlsRef,
   onOpenRecent,
   ottAccounts = {},
+  isGhost = false,
 }) {
   const [media, setMedia] = useState(initial.media);
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
@@ -77,13 +78,18 @@ export default function VideoPlayer({
   const [resolvingStatus, setResolvingStatus] = useState('');
   const [screenAudioLocked, setScreenAudioLocked] = useState(false);
 
-  // Fullscreen & Floating Video Call PiP State
+  // Fullscreen & Floating Video Call PiP State (Fluid Draggable & Movable)
   const containerRef = useRef(null);
+  const pipRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showFsPip, setShowFsPip] = useState(true);
+  const [pipPos, setPipPos] = useState(null); // { x: number, y: number } | null
+  const [isDraggingPip, setIsDraggingPip] = useState(false);
   const [pipCorner, setPipCorner] = useState('bottom-right'); // 'bottom-right' | 'bottom-left' | 'top-left' | 'top-right'
+  const [showFsLocalPip, setShowFsLocalPip] = useState(false);
   const [showOverlayControls, setShowOverlayControls] = useState(true);
   const overlayTimerRef = useRef(null);
+  const dragStartRef = useRef({ startX: 0, startY: 0, initialPipX: 0, initialPipY: 0 });
 
   const cornerClasses = {
     'bottom-right': 'bottom-4 right-4 sm:bottom-6 sm:right-6',
@@ -92,8 +98,80 @@ export default function VideoPlayer({
     'top-right': 'top-16 right-4 sm:top-18 sm:right-6',
   };
 
+  const handlePipDragStart = useCallback((e) => {
+    e?.stopPropagation?.();
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+    if (clientX === undefined || clientY === undefined) return;
+
+    const pipEl = pipRef.current;
+    const containerEl = containerRef.current;
+    if (!pipEl || !containerEl) return;
+
+    const pipRect = pipEl.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+
+    dragStartRef.current = {
+      startX: clientX,
+      startY: clientY,
+      initialPipX: pipRect.left - containerRect.left,
+      initialPipY: pipRect.top - containerRect.top,
+    };
+    setIsDraggingPip(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isDraggingPip) return;
+
+    const handlePointerMove = (e) => {
+      const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+      const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+      if (clientX === undefined || clientY === undefined) return;
+
+      const { startX, startY, initialPipX, initialPipY } = dragStartRef.current;
+      const containerEl = containerRef.current;
+      const pipEl = pipRef.current;
+      if (!containerEl || !pipEl) return;
+
+      const containerWidth = containerEl.clientWidth;
+      const containerHeight = containerEl.clientHeight;
+      const pipWidth = pipEl.offsetWidth;
+      const pipHeight = pipEl.offsetHeight;
+
+      const deltaX = clientX - startX;
+      const deltaY = clientY - startY;
+
+      let newX = initialPipX + deltaX;
+      let newY = initialPipY + deltaY;
+
+      newX = Math.max(10, Math.min(newX, containerWidth - pipWidth - 10));
+      newY = Math.max(10, Math.min(newY, containerHeight - pipHeight - 10));
+
+      setPipPos({ x: newX, y: newY });
+    };
+
+    const handlePointerUp = () => {
+      setIsDraggingPip(false);
+    };
+
+    window.addEventListener('mousemove', handlePointerMove, { passive: true });
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove, { passive: true });
+    window.addEventListener('touchend', handlePointerUp);
+    window.addEventListener('touchcancel', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+      window.removeEventListener('touchcancel', handlePointerUp);
+    };
+  }, [isDraggingPip]);
+
   const cyclePipCorner = useCallback((e) => {
     e?.stopPropagation?.();
+    setPipPos(null); // Snap back to corner cycle
     setPipCorner((prev) => {
       if (prev === 'bottom-right') return 'bottom-left';
       if (prev === 'bottom-left') return 'top-left';
@@ -691,6 +769,7 @@ export default function VideoPlayer({
       pause: () => { api.current.pause(); send('PAUSE'); setPlaybackSpeed(1.0); },
       time: () => api.current.time(),
       seek: (t) => { api.current.seek(t); send('SEEK'); },
+      toggleFullscreen,
     };
 
     return () => {
@@ -992,7 +1071,7 @@ export default function VideoPlayer({
     // 4. Server-side auto-resolver
     try {
       const resolved = await resolveMedia(src);
-      if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed' || resolved.type === 'proxy')) {
+      if (resolved && (resolved.type === 'hls' || resolved.type === 'file' || resolved.type === 'embed' || resolved.type === 'proxy' || resolved.type === 'dash')) {
         if (resolved.subtitle) setSub(resolved.subtitle);
         if (isAdult) {
           resolved.title = '🔒 Private Stream';
@@ -1204,6 +1283,7 @@ export default function VideoPlayer({
 
       <div
         ref={containerRef}
+        onClick={isFullscreen ? resetOverlayTimer : undefined}
         onMouseMove={isFullscreen ? resetOverlayTimer : undefined}
         onTouchStart={isFullscreen ? resetOverlayTimer : undefined}
         className={`vault relative overflow-hidden bg-black transition-all ${
@@ -1297,7 +1377,7 @@ export default function VideoPlayer({
             className={`absolute top-3 right-3 z-20 flex items-center gap-2 transition-all duration-300 ${
               isFullscreen
                 ? (!showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100')
-                : 'opacity-0 group-hover:opacity-100 hover:opacity-100 focus-within:opacity-100 pointer-events-auto'
+                : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:opacity-100 focus-within:opacity-100 pointer-events-auto'
             }`}
           >
             <button
@@ -1454,49 +1534,68 @@ export default function VideoPlayer({
 
         <div id="reaction-layer" className="pointer-events-none absolute inset-0" />
 
-        {/* Floating Video Call PiP inside Full Screen Mode (Compact & Partner-Only) */}
+        {/* Floating Video Call PiP inside Full Screen Mode (Movable & Draggable) */}
         {isFullscreen && showFsPip && (
           <div
-            className={`absolute z-40 transition-all duration-300 ${cornerClasses[pipCorner]}`}
+            ref={pipRef}
+            style={pipPos ? { left: `${pipPos.x}px`, top: `${pipPos.y}px`, right: 'auto', bottom: 'auto' } : undefined}
+            className={`absolute z-40 ${pipPos ? '' : cornerClasses[pipCorner]} ${isDraggingPip ? 'select-none transition-none' : 'transition-all duration-200'}`}
             onMouseMove={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >
-            <div className="relative rounded-xl bg-black/90 backdrop-blur-md border border-white/20 p-1 sm:p-1.5 shadow-2xl overflow-hidden group/pip">
-              {/* PiP Header Toolbar (Compact) */}
-              <div className="flex items-center justify-between gap-1 px-1 pb-1 text-white/80 border-b border-white/10 mb-1 text-[10px]">
-                <div className="flex items-center gap-1 font-semibold truncate max-w-[90px] sm:max-w-[120px]">
-                  <span className="relative flex h-1.5 w-1.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            <div className="relative rounded-2xl bg-black/95 backdrop-blur-xl border border-pink-500/40 p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden group/pip ring-1 ring-white/10">
+              {/* PiP Header Toolbar (Draggable Grip) */}
+              <div
+                onMouseDown={handlePipDragStart}
+                onTouchStart={handlePipDragStart}
+                className="flex items-center justify-between gap-1.5 px-1 pb-1 text-white/80 border-b border-white/10 mb-1.5 text-[10px] cursor-grab active:cursor-grabbing select-none touch-none bg-white/[0.04] rounded-lg p-1"
+                title="Hold & drag to move video call anywhere on screen"
+              >
+                <div className="flex items-center gap-1.5 font-semibold truncate max-w-[100px] sm:max-w-[130px]">
+                  <GripHorizontal className="h-3 w-3 text-pink-400 shrink-0" />
+                  <span className="text-white text-[10px] font-bold truncate">
+                    {users.find((u) => u.id !== me)?.name || 'Video Call'}
                   </span>
-                  <span className="text-white text-[10px] truncate">
-                    {users.find((u) => u.id !== me)?.name || 'Partner'}
-                  </span>
+                  {(callMedia?.localTalking || Object.values(callMedia?.remoteTalking || {}).some(Boolean)) && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  )}
                 </div>
                 <div className="flex items-center gap-0.5 shrink-0">
+                  {!isGhost && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowFsLocalPip((prev) => !prev); }}
+                      className={`p-1 rounded text-[9px] font-semibold transition cursor-pointer ${
+                        showFsLocalPip ? 'bg-pink-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+                      }`}
+                      title={showFsLocalPip ? 'Hide my preview' : 'Show my preview'}
+                    >
+                      You
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={cyclePipCorner}
                     className="p-1 rounded bg-white/10 hover:bg-white/20 text-white/90 text-[9px] transition cursor-pointer"
-                    title="Move call to next corner (keeps movie subtitles visible)"
+                    title="Snap call to next corner (keeps movie subtitles clear)"
                   >
                     <Move className="h-2.5 w-2.5" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowFsPip(false)}
+                    onClick={(e) => { e.stopPropagation(); setShowFsPip(false); }}
                     className="p-1 rounded bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition cursor-pointer"
-                    title="Hide video call (Audio stays active; click 'Show Call' anytime)"
+                    title="Minimize video call (Audio stays active; click 'Show Call' anytime)"
                   >
                     <X className="h-2.5 w-2.5" />
                   </button>
                 </div>
               </div>
 
-              {/* Main Video Call Area: ONLY the other partner's stream (Local user preview removed) */}
+              {/* Main Video Call Area: Remote partners + optional local preview */}
               <div className="relative">
                 {users.filter((u) => u.id !== me).length > 0 ? (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     {users.filter((u) => u.id !== me).map((u) => (
                       <Tile
                         key={u.id}
@@ -1505,57 +1604,77 @@ export default function VideoPlayer({
                         isPartner={true}
                         voiceOnly={callMedia?.voiceOnly}
                         isSpeaking={!!callMedia?.remoteTalking?.[u.id]}
-                        isCamOff={false}
+                        isCamOff={!!callMedia?.remoteCamOff?.[u.id]}
+                        isMicMuted={!!callMedia?.remoteMicMuted?.[u.id]}
                         disableFullscreen={true}
-                        className="!w-28 sm:!w-36 md:!w-40 aspect-video rounded-lg overflow-hidden shadow-md"
+                        className="!w-32 sm:!w-40 md:!w-48 aspect-video rounded-xl overflow-hidden shadow-md"
                       />
                     ))}
+                    {showFsLocalPip && !isGhost && (
+                      <div className="pt-1 border-t border-white/10">
+                        <Tile
+                          stream={callMedia?.mine}
+                          name="You"
+                          isPartner={false}
+                          voiceOnly={callMedia?.voiceOnly}
+                          isSpeaking={callMedia?.localTalking}
+                          isCamOff={!callMedia?.cam}
+                          isMicMuted={!callMedia?.mic}
+                          disableFullscreen={true}
+                          className="!w-32 sm:!w-40 md:!w-48 aspect-video rounded-xl overflow-hidden shadow-md opacity-90"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="w-28 sm:w-36 md:w-40 aspect-video rounded-lg bg-black/80 border border-white/10 flex flex-col items-center justify-center p-2 text-center">
+                  <div className="w-32 sm:w-40 md:!w-48 aspect-video rounded-xl bg-black/80 border border-white/10 flex flex-col items-center justify-center p-2 text-center">
                     <Video className="h-4 w-4 text-rose-400 opacity-70 mb-0.5 animate-pulse" />
-                    <p className="text-[10px] text-white/80 font-medium">Solo in Room</p>
+                    <p className="text-[10px] text-white/80 font-bold">Solo in Room</p>
                     <p className="text-[8px] text-white/40">Waiting for partner</p>
                   </div>
                 )}
               </div>
 
               {/* Quick In-Call Controls: Slim mic/cam controls */}
-              <div className="flex items-center justify-between gap-1 pt-1 mt-1 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (callMedia?.toggleMic) callMedia.toggleMic();
-                    else callControlsRef?.current?.toggleMic?.();
-                  }}
-                  className={`flex-1 flex items-center justify-center gap-0.5 py-0.5 px-1 rounded text-[9px] font-semibold transition ${
-                    callMedia?.mic
-                      ? 'bg-white/10 hover:bg-white/20 text-white'
-                      : 'bg-rose-500/25 border border-rose-500/40 text-rose-300'
-                  }`}
-                  title={callMedia?.mic ? 'Mute microphone' : 'Unmute microphone'}
-                >
-                  {callMedia?.mic ? <Mic className="h-2.5 w-2.5 text-white" /> : <MicOff className="h-2.5 w-2.5 text-rose-400" />}
-                  <span>{callMedia?.mic ? 'Mic' : 'Muted'}</span>
-                </button>
+              {!isGhost && (
+                <div className="flex items-center justify-between gap-1 pt-1.5 mt-1.5 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (callMedia?.toggleMic) callMedia.toggleMic();
+                      else callControlsRef?.current?.toggleMic?.();
+                    }}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
+                      callMedia?.mic
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : 'bg-rose-500/25 border border-rose-500/40 text-rose-300 shadow-sm'
+                    }`}
+                    title={callMedia?.mic ? 'Mute microphone' : 'Unmute microphone'}
+                  >
+                    {callMedia?.mic ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5" />}
+                    <span>{callMedia?.mic ? 'Mic On' : 'Muted'}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (callMedia?.toggleCam) callMedia.toggleCam();
-                    else callControlsRef?.current?.toggleCam?.();
-                  }}
-                  className={`flex-1 flex items-center justify-center gap-0.5 py-0.5 px-1 rounded text-[9px] font-semibold transition ${
-                    callMedia?.cam
-                      ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-500/25 border border-rose-500/40 text-rose-300'
-                  }`}
-                  title={callMedia?.cam ? 'Turn off camera' : 'Turn on camera'}
-                >
-                  {callMedia?.cam ? <Video className="h-2.5 w-2.5 text-emerald-400" /> : <VideoOff className="h-2.5 w-2.5 text-rose-400" />}
-                  <span>{callMedia?.cam ? 'Cam' : 'Off'}</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (callMedia?.toggleCam) callMedia.toggleCam();
+                      else callControlsRef?.current?.toggleCam?.();
+                    }}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
+                      callMedia?.cam
+                        ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
+                        : 'bg-rose-500/25 border border-rose-500/40 text-rose-300 shadow-sm'
+                    }`}
+                    title={callMedia?.cam ? 'Turn off camera' : 'Turn on camera'}
+                  >
+                    {callMedia?.cam ? <Video className="h-2.5 w-2.5 text-emerald-400" /> : <VideoOff className="h-2.5 w-2.5 text-rose-400" />}
+                    <span>{callMedia?.cam ? 'Cam On' : 'Off'}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
