@@ -247,10 +247,10 @@ export default function HolographicStreamPortal({ onStartRoom }) {
                   ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
                   : 'bg-[#1A1A1D] border-pink-500/20 text-pink-300/70 hover:text-white'
               }`}
-              title="Listen to English love instrumental tune"
+              title="Listen to Hindi love instrumental lo-fi songs (Bansuri flute & vinyl tape)"
             >
               {soundActive ? <Volume2 className="h-3.5 w-3.5 text-emerald-400" /> : <VolumeX className="h-3.5 w-3.5" />}
-              <span>{soundActive ? 'English Love Tune ON' : 'English Love Tune OFF'}</span>
+              <span>{soundActive ? 'Hindi Love Lofi ON' : 'Hindi Love Lofi OFF'}</span>
             </button>
 
             <span className="text-xs font-mono font-bold text-pink-300 px-3 py-1.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20">

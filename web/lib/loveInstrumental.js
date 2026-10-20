@@ -192,28 +192,30 @@ class LoveInstrumentalEngine {
   }
 }
 
-// Singleton instance accessor
-let globalLoveEngine = null;
+import { hindiLofi, HINDI_LOFI_SONGS } from './hindiLofiSongs';
 
-export function getLoveInstrumental() {
-  if (typeof window === 'undefined') return null;
-  if (!globalLoveEngine) {
-    globalLoveEngine = new LoveInstrumentalEngine();
-  }
-  return globalLoveEngine;
-}
+// Re-export Hindi Lo-Fi as primary love instrumental engine
+export { hindiLofi, HINDI_LOFI_SONGS };
 
 export const loveInstrumental = {
-  start: () => getLoveInstrumental()?.start(),
-  stop: () => getLoveInstrumental()?.stop(),
-  setDucked: (isDucked) => getLoveInstrumental()?.setDucked(isDucked),
-  setVolume: (vol) => getLoveInstrumental()?.setVolume(vol),
-  getByteFrequencyData: (arr) => getLoveInstrumental()?.getByteFrequencyData(arr),
+  start: () => hindiLofi.start(),
+  stop: () => hindiLofi.stop(),
+  setSong: (id) => hindiLofi.setSong(id),
+  setDucked: (isDucked) => hindiLofi.setDucked(isDucked),
+  setVolume: (vol) => hindiLofi.setVolume(vol),
+  getByteFrequencyData: (arr) => hindiLofi.getByteFrequencyData(arr),
   get active() {
-    return getLoveInstrumental()?.active || false;
+    return hindiLofi.active;
+  },
+  get activeSongId() {
+    return hindiLofi.activeSongId;
+  },
+  get currentSong() {
+    return hindiLofi.currentSong;
   },
   get analyser() {
-    return getLoveInstrumental()?.analyser || null;
+    return hindiLofi.analyser;
   },
 };
+
 
