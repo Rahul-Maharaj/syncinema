@@ -62,32 +62,52 @@ const ROOM_RE = /^[\w-]{2,64}$/;
 
 // Secret word access removed: open access to website, room security handled by room passwords
 const keyOk = (k) => true;
+// --- SECURITY ENGINE & FIREWALL ---
+const blockedUsers = new Map();  // cid -> { reason, at, ip }
+const blockedIps = new Set();    // IP firewall blacklist
+const fails = new Map();         // brute-force lockout & progressive throttle
+
 const adminKeyOk = (k) => {
   const expected = ADMIN_KEY || 'admin123';
   if (!k) return false;
   const a = Buffer.from(String(k).trim()), b = Buffer.from(String(expected).trim());
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
-const fails = new Map();                             // brute-force lockout: 8 wrong tries → 15 min ban per IP
+
 const ipOf = (r) => String(r.headers['x-forwarded-for'] || r.address || r.socket?.remoteAddress || '').split(',')[0].trim();
 const isLocalIp = (ip) => !ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === '::ffff:127.0.0.1';
 const locked = (ip) => !isLocalIp(ip) && (fails.get(ip)?.until || 0) > Date.now();
+
 const fail = (ip) => {
   if (isLocalIp(ip)) return;
   const f = fails.get(ip) || { n: 0 };
-  if (++f.n >= 8) { f.until = Date.now() + 15 * 60_000; f.n = 0; }
+  f.n = (f.n || 0) + 1;
+  if (f.n >= 7) {
+    blockedIps.add(ip);
+    f.until = Date.now() + 24 * 60 * 60_000;
+    console.warn(`[Admin Security Firewall] Maximum failed attempts exceeded. Permanent IP ban applied: ${ip}`);
+  } else if (f.n >= 4) {
+    f.until = Date.now() + 30 * 60_000;
+    console.warn(`[Admin Security Firewall] 30m IP lock applied for suspicious probe from: ${ip}`);
+  }
   fails.set(ip, f);
 };
 
+// High-Grade Stealth Admin Gate: Decoy 404 response on unauthorized queries to prevent route discovery
 const adminGate = (req, res, next) => {
   const ip = ipOf(req);
-  if (locked(ip)) {
-    return res.status(429).json({ error: 'locked', message: 'Too many failed admin attempts. IP temporarily locked for 15 minutes.' });
+  if (blockedIps.has(ip) || locked(ip)) {
+    // Decoy 404: Scanners and blocked bots believe the admin endpoint does not exist
+    return res.status(404).send('Not Found');
   }
   const k = req.get('x-admin-key') || req.query.adminKey || req.body?.adminKey;
   if (!adminKeyOk(k)) {
     fail(ip);
-    return res.status(401).json({ error: 'unauthorized', message: 'Invalid admin credentials.' });
+    // Tarpit delay (deliberate 750ms throttle) to exhaust automated brute-force tools
+    setTimeout(() => {
+      res.status(404).send('Not Found');
+    }, 750);
+    return;
   }
   fails.delete(ip);
   next();
@@ -223,6 +243,26 @@ app.use('/api', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
   }
   next();
+});
+
+// --- HIGH-GRADE ANTI-BOT HONEYPOT TRAPS ---
+// Automatically traps scanners probing for admin panels and permanently firewalls their IP
+const HONEYPOT_PATHS = [
+  '/admin', '/admin/*', '/wp-admin', '/wp-admin/*', '/administrator',
+  '/aurelia-login', '/panel', '/cpanel', '/phpmyadmin', '/pma',
+  '/adm', '/login/admin', '/manager/html', '/console/login', '/.env',
+  '/.git/config', '/actuator/health'
+];
+HONEYPOT_PATHS.forEach((p) => {
+  app.all(p, (req, res) => {
+    const ip = ipOf(req);
+    if (!isLocalIp(ip)) {
+      blockedIps.add(ip);
+      console.warn(`[Honeypot Shield] Trapped and permanently banned scanning bot from IP: ${ip} (Probed: ${req.url})`);
+    }
+    res.setHeader('Connection', 'close');
+    res.status(404).send('Not Found');
+  });
 });
 const gate = (req, res, next) => next();
 app.get('/api/verify', (_, res) => res.json({ ok: true }));
@@ -1476,8 +1516,6 @@ const setMedia = (id, r, m) => { r.media = m; r.time = 0; r.playing = false; r.a
 const num = (v) => (Number.isFinite(+v) && +v >= 0 && +v < 1e6 ? +v : 0);
 
 // --- ADMIN SYSTEM & SECURITY ENGINE ---
-const blockedUsers = new Map();  // cid -> { reason, at, ip }
-const blockedIps = new Set();
 const blockedRooms = new Map();  // roomId -> { reason, at }
 const blockedVideos = new Set(); // url strings or keywords
 

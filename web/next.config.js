@@ -34,12 +34,27 @@ module.exports = {
     }
 
     return [
-      // Protect stealth admin and internal API from search indexing
+      // Protect stealth admin and internal API from search indexing and framing attacks
       {
         source: '/aurelia/:path*',
         headers: [
-          ...commonHeaders,
-          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          ...commonHeaders.filter((h) => h.key !== 'X-Frame-Options'),
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet' },
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
+      {
+        source: '/aurelia',
+        headers: [
+          ...commonHeaders.filter((h) => h.key !== 'X-Frame-Options'),
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive, nosnippet' },
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, proxy-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
         ],
       },
       {

