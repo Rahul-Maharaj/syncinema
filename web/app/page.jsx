@@ -160,18 +160,23 @@ export default function SynCinemaPlatform() {
     let c = slug(joinCode);
     let p = joinPass.trim();
 
-    // Check if user pasted a hybrid invite link (?inv=...)
+    // Check if user pasted a hybrid invite link (?inv=... or #pass=...)
     try {
       const raw = joinCode.trim();
-      if (raw.includes('inv=')) {
+      if (raw.includes('inv=') || raw.includes('#pass=') || raw.includes('/room/')) {
         const urlObj = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
         const invTicket = urlObj.searchParams.get('inv');
+        const hashParams = new URLSearchParams(urlObj.hash.replace(/^#/, ''));
+        const hashPass = hashParams.get('pass');
         const roomSlug = slug(urlObj.pathname);
-        if (invTicket && roomSlug) {
+        if (roomSlug) {
           c = roomSlug;
-          const parsed = parseHybridInvite(invTicket, roomSlug);
-          if (parsed?.pass && !p) {
-            p = parsed.pass;
+          if (invTicket) {
+            const parsed = parseHybridInvite(invTicket, roomSlug);
+            if (parsed?.pass && !p) p = parsed.pass;
+          }
+          if (hashPass && !p) {
+            p = hashPass;
           }
         }
       }

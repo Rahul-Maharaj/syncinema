@@ -11,7 +11,7 @@ const csp = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  "frame-ancestors 'self' https: http:",
 ].join('; ');
 
 module.exports = {

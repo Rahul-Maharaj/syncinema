@@ -5,6 +5,11 @@ export function isRealHumanBrowser() {
   if (typeof window === 'undefined') return true;
 
   try {
+    // 0. Real mobile and tablet devices are always permitted (WhatsApp webview, mobile Chrome, Safari, etc.)
+    if (/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || '')) {
+      return true;
+    }
+
     // 1. Detect standard WebDriver automation (Selenium, Puppeteer, Playwright)
     if (navigator.webdriver) {
       return false;

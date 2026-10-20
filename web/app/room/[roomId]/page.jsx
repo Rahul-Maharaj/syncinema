@@ -865,14 +865,50 @@ export default function Room() {
     return () => ctx.revert();
   }, [!!boot]);
 
-  const copy = () => {
+  const copy = async () => {
     const rp = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
     const sk = getKey();
-    const inviteUrl = getHybridInviteUrl(location.origin, roomId, rp, sk);
-    navigator.clipboard.writeText(inviteUrl);
+    const inviteUrl = getHybridInviteUrl(typeof window !== 'undefined' ? window.location.origin : '', roomId, rp, sk);
+
+    // 1. Try native Web Share on mobile (WhatsApp, Telegram, SMS, etc.)
+    if (typeof navigator !== 'undefined' && navigator.share && /android|iphone|ipad|mobile/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share({
+          title: `Join my SyncCinema room "${roomId}"`,
+          text: `🍿 Watch together in sync on SyncCinema!\nRoom: ${roomId}${rp ? `\nPassword: ${rp}` : ''}\n\nTap to enter room:\n`,
+          url: inviteUrl,
+        });
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        say('Invite shared with partner! 💌');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return; // User simply closed the share sheet
+      }
+    }
+
+    // 2. Clipboard copy fallback
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(inviteUrl);
+      } else {
+        throw new Error('Fallback required');
+      }
+    } catch {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = inviteUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {}
+    }
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-    say('Hybrid invite link copied (No pass or key exposed) 🔒✨');
+    setTimeout(() => setCopied(false), 2000);
+    say('Invite link copied! Share with your partner 💌✨');
   };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
   const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: dimming background lights' : 'Cinema mode off'); };

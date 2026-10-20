@@ -45,11 +45,11 @@ ui.on('error', (err, req, res) => {
   }
 });
 const isApi = (u = '') => /^\/(socket\.io|peerjs|api|health)(\/|\?|$)/.test(u);
-// real client IP for the brute-force lockout (never trust a client-supplied header)
-// TRUST_PROXY=1 (Render/Railway/Fly): the platform proxy appends the real client IP as the LAST x-forwarded-for entry
+// real client IP for security & rate limiting
+// Cloudflare passes cf-connecting-ip; reverse proxies prepend original client to x-forwarded-for (first entry)
 const stamp = (req) => {
   const xf = String(req.headers['x-forwarded-for'] || '').split(',').map((v) => v.trim()).filter(Boolean);
-  req.headers['x-forwarded-for'] = req.headers['cf-connecting-ip'] || (process.env.TRUST_PROXY && xf[xf.length - 1]) || req.socket.remoteAddress;
+  req.headers['x-forwarded-for'] = req.headers['cf-connecting-ip'] || req.headers['x-real-ip'] || (xf.length ? xf[0] : req.socket?.remoteAddress || '');
 };
 
 const gateway = http.createServer((req, res) => {

@@ -1,8 +1,9 @@
 // Anti-Bot Shield & Threat Defense Engine for SyncCinema
-// 100% Bot-Free Enforcement: Blocks scrapers, automated headless tools, scanners, exploit probes, and AI harvesters.
+// 100% Bot-Free Enforcement: Blocks malicious scrapers, automated headless exploit tools, and scanners
+// while 100% preserving access for mobile devices, social media invite previews (WhatsApp, Telegram, Discord, etc.), and human users across CGNAT networks.
 
 const BOT_UA_PATTERNS = [
-  // HTTP Libraries & Script Scrapers
+  // HTTP Libraries & Script Scrapers (NOTE: okhttp is explicitly excluded as Android WebViews & apps rely on it)
   /curl\//i,
   /wget\//i,
   /python-requests/i,
@@ -14,14 +15,13 @@ const BOT_UA_PATTERNS = [
   /axios\//i,
   /node-fetch/i,
   /got\//i,
-  /okhttp/i,
   /scrapy/i,
   /mechanize/i,
   /java\/\d/i,
   /apache-httpclient/i,
   /php\/\d/i,
 
-  // Headless Browsers & Automation Frameworks
+  // Headless Automation Browsers (Unless on real mobile / social webview)
   /headlesschrome/i,
   /phantomjs/i,
   /selenium/i,
@@ -55,7 +55,7 @@ const BOT_UA_PATTERNS = [
   /havij/i,
   /netsparker/i,
 
-  // AI Scrapers & Commercial Aggressors
+  // AI Harvesters & Aggressive Commercial Scrapers
   /gptbot/i,
   /chatgpt-user/i,
   /ccbot/i,
@@ -77,6 +77,25 @@ const BOT_UA_PATTERNS = [
   /yisouspider/i,
 ];
 
+// Social Messaging Preview Fetchers (MUST ALWAYS BE ALLOWED to render rich cinema invite cards)
+const SOCIAL_PREVIEW_PATTERNS = [
+  /whatsapp/i,
+  /telegrambot/i,
+  /facebookexternalhit/i,
+  /twitterbot/i,
+  /discordbot/i,
+  /applebot/i,
+  /slackbot/i,
+  /skypeuripreview/i,
+  /linkedinbot/i,
+  /vkshare/i,
+  /redditbot/i,
+  /pinterest/i,
+  /quora\s+link\s+preview/i,
+  /bingpreview/i,
+  /google-read-aloud/i,
+];
+
 // Dangerous file probes and exploit scanning patterns
 const PROBE_PATTERNS = [
   /\.(env|git|svn|htaccess|aws|sql|bak|old|swp|tar|gz|zip|conf|ini|yaml|yml)($|\/|\?)/i,
@@ -84,46 +103,65 @@ const PROBE_PATTERNS = [
 ];
 
 // Legitimate search engines (only allowed on static public roots for SEO indexing)
-const LEGIT_SEARCH_ENGINES = /googlebot|bingbot/i;
+const LEGIT_SEARCH_ENGINES = /googlebot|bingbot|duckduckbot/i;
 
-// In-memory auto-banned bot IPs
-const bannedBotIps = new Set();
+// In-memory auto-banned bot IPs with expiration (5-minute cooldown, avoids permanent mobile CGNAT lockouts)
+const bannedIpMap = new Map();
+const BAN_DURATION_MS = 5 * 60 * 1000;
+
+function isPrivateIp(ip) {
+  if (!ip) return true;
+  const clean = ip.replace(/^::ffff:/, '');
+  return (
+    clean === '127.0.0.1' ||
+    clean === '::1' ||
+    clean.startsWith('10.') ||
+    clean.startsWith('192.168.') ||
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(clean)
+  );
+}
+
+function cleanExpiredBans() {
+  const now = Date.now();
+  for (const [ip, until] of bannedIpMap.entries()) {
+    if (now >= until) {
+      bannedIpMap.delete(ip);
+    }
+  }
+}
+setInterval(cleanExpiredBans, 60000).unref();
+
+function extractClientIp(req) {
+  const cfIp = req.headers?.['cf-connecting-ip'];
+  const realIp = req.headers?.['x-real-ip'];
+  const xf = String(req.headers?.['x-forwarded-for'] || '').split(',').map((v) => v.trim()).filter(Boolean);
+  return cfIp || realIp || (xf.length ? xf[0] : req.socket?.remoteAddress || '');
+}
 
 function isBotRequest(req) {
-  const ua = String(req.headers['user-agent'] || '').trim();
+  const ua = String(req.headers?.['user-agent'] || '').trim();
   const url = String(req.url || '');
-  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+  const ip = extractClientIp(req);
 
-  // 1. Immediately drop already banned bot IPs (except legitimate human browser WebSockets on shared mobile CGNAT)
-  const isBrowserWs = (url.includes('/socket.io') || req.headers?.upgrade === 'websocket') &&
-                      ua.includes('Mozilla/') &&
-                      !BOT_UA_PATTERNS.some((p) => p.test(ua));
-
-  if (bannedBotIps.has(ip) && !isBrowserWs) {
-    return { blocked: true, reason: 'Permanently blocked bot IP' };
-  }
-
-  // 2. Block vulnerability / exploit probes
+  // 1. Exploit Probe Detection (Always block regardless of user-agent)
   for (const pattern of PROBE_PATTERNS) {
     if (pattern.test(url)) {
-      bannedBotIps.add(ip);
+      if (!isPrivateIp(ip)) {
+        bannedIpMap.set(ip, Date.now() + BAN_DURATION_MS);
+      }
       return { blocked: true, reason: 'Exploit probe attempt detected', ban: true };
     }
   }
 
-  // 3. Reject missing or abnormally short User-Agents (< 8 chars)
-  if (!ua || ua.length < 8) {
-    return { blocked: true, reason: 'Missing or invalid browser User-Agent' };
-  }
-
-  // 4. Check for known bot signatures
-  for (const pattern of BOT_UA_PATTERNS) {
-    if (pattern.test(ua)) {
-      return { blocked: true, reason: 'Automated bot or scraper detected' };
+  // 2. Social Preview Crawlers (WhatsApp, Telegram, Discord, etc. for room invite cards)
+  if (SOCIAL_PREVIEW_PATTERNS.some((p) => p.test(ua))) {
+    // Social previewers are allowed on public pages, invite links, room pages, and assets
+    if (url === '/' || url.startsWith('/room/') || url.startsWith('/_next/') || url.includes('.')) {
+      return { blocked: false, isSocialPreview: true };
     }
   }
 
-  // 5. Allow Googlebot and Bingbot ONLY on public discovery pages (/robots.txt, /sitemap.xml, /)
+  // 3. Search Engine Indexers (Googlebot / Bingbot) on public discovery routes
   if (LEGIT_SEARCH_ENGINES.test(ua)) {
     const isPublicDiscovery = url === '/' || url.startsWith('/sitemap') || url.startsWith('/robots') || url.startsWith('/_next/');
     if (!isPublicDiscovery) {
@@ -132,8 +170,40 @@ function isBotRequest(req) {
     return { blocked: false };
   }
 
-  // 6. Generic "bot" / "spider" / "crawler" catch-all
-  if (/\b(bot|crawler|spider|scraper)\b/i.test(ua) && !LEGIT_SEARCH_ENGINES.test(ua)) {
+  // 4. Temporary IP penalty check (Protect human browsers on mobile CGNAT)
+  const isHumanBrowser = ua.includes('Mozilla/') &&
+    /safari|chrome|firefox|mobile|android|iphone|ipad|edg/i.test(ua) &&
+    !BOT_UA_PATTERNS.some((p) => p.test(ua));
+
+  if (!isPrivateIp(ip) && bannedIpMap.has(ip)) {
+    const banUntil = bannedIpMap.get(ip);
+    if (Date.now() < banUntil) {
+      // If it's a legitimate human browser navigating to a room or home page, forgive the shared CGNAT IP
+      const isRoomOrHome = url === '/' || url.startsWith('/room/') || url.includes('/socket.io') || req.headers?.upgrade === 'websocket';
+      if (isHumanBrowser && isRoomOrHome) {
+        bannedIpMap.delete(ip);
+      } else {
+        return { blocked: true, reason: 'Temporarily rate-limited probe IP' };
+      }
+    } else {
+      bannedIpMap.delete(ip);
+    }
+  }
+
+  // 5. Missing User-Agent check (Block completely empty UAs)
+  if (!ua || ua.length < 4) {
+    return { blocked: true, reason: 'Missing or empty browser User-Agent' };
+  }
+
+  // 6. Check for known malicious bot signatures
+  for (const pattern of BOT_UA_PATTERNS) {
+    if (pattern.test(ua)) {
+      return { blocked: true, reason: 'Automated bot or scraper detected' };
+    }
+  }
+
+  // 7. Generic crawler catch-all (Exclude social previews and legit search engines)
+  if (/\b(bot|crawler|spider|scraper)\b/i.test(ua)) {
     return { blocked: true, reason: 'Generic crawler or bot detected' };
   }
 
@@ -149,7 +219,7 @@ function botShieldMiddleware(req, res, next) {
 
   const check = isBotRequest(req);
   if (check.blocked) {
-    const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+    const ip = extractClientIp(req);
     console.warn(`[BotShield] Blocked bot from ${ip} - Path: ${req.url} - Reason: ${check.reason}`);
     res.setHeader('X-Bot-Shield', 'Access-Denied');
     res.setHeader('Connection', 'close');
@@ -172,5 +242,5 @@ function botShieldMiddleware(req, res, next) {
 module.exports = {
   isBotRequest,
   botShieldMiddleware,
-  bannedBotIps,
+  bannedBotIps: bannedIpMap,
 };

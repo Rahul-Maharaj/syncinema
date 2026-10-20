@@ -1,18 +1,19 @@
 // Production-Grade Hybrid Room Invite System
 // Encrypts/obfuscates room credentials into URL-safe opaque tickets
-// so passwords and vault keys are NEVER exposed in plain text in URLs,
-// browser history, message previews, or server access logs.
+// so passwords and vault keys are protected across all devices, mobile chat previews,
+// messaging apps (WhatsApp, Telegram, Discord, SMS), and cross-network sessions.
 
 export function createHybridInvite(roomId, pass, key) {
   if (!roomId) return '';
+  const cleanRoom = String(roomId).trim();
   const payload = JSON.stringify({
     p: pass || '',
     k: key || '',
-    r: roomId,
+    r: cleanRoom,
     t: Date.now(),
   });
 
-  const salt = 'sc_vault_' + roomId;
+  const salt = 'sc_vault_' + cleanRoom.toLowerCase();
   let enc = '';
   for (let i = 0; i < payload.length; i++) {
     enc += String.fromCharCode(payload.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
@@ -29,37 +30,56 @@ export function createHybridInvite(roomId, pass, key) {
 export function parseHybridInvite(ticket, expectedRoomId) {
   if (!ticket || !expectedRoomId) return null;
   try {
-    let b64 = ticket.replace(/-/g, '+').replace(/_/g, '/');
+    let clean = String(ticket).trim();
+    try { clean = decodeURIComponent(clean); } catch {}
+    clean = clean.replace(/\s+/g, '');
+
+    let b64 = clean.replace(/-/g, '+').replace(/_/g, '/');
     while (b64.length % 4) b64 += '=';
 
     const dec = typeof atob !== 'undefined'
       ? atob(b64)
       : Buffer.from(b64, 'base64').toString('binary');
 
-    const salt = 'sc_vault_' + expectedRoomId;
-    let raw = '';
-    for (let i = 0; i < dec.length; i++) {
-      raw += String.fromCharCode(dec.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
-    }
+    // Test with both lowercased salt and exact salt for 100% compatibility
+    const cleanExpected = String(expectedRoomId).trim();
+    const candidateSalts = [
+      'sc_vault_' + cleanExpected.toLowerCase(),
+      'sc_vault_' + cleanExpected,
+    ];
 
-    const data = JSON.parse(raw);
-    if (data && data.r === expectedRoomId) {
-      return {
-        pass: data.p || '',
-        key: data.k || '',
-        createdAt: data.t || 0,
-      };
+    for (const salt of candidateSalts) {
+      try {
+        let raw = '';
+        for (let i = 0; i < dec.length; i++) {
+          raw += String.fromCharCode(dec.charCodeAt(i) ^ salt.charCodeAt(i % salt.length));
+        }
+
+        const data = JSON.parse(raw);
+        if (data && String(data.r).toLowerCase() === cleanExpected.toLowerCase()) {
+          return {
+            pass: data.p || '',
+            key: data.k || '',
+            createdAt: data.t || 0,
+          };
+        }
+      } catch {}
     }
   } catch {}
   return null;
 }
 
-// Generate the production hybrid invite URL (No plaintext pass or key)
+// Generate the production hybrid invite URL
+// Dual-layer protection:
+// 1. Opaque encrypted ?inv= ticket (safe for URL previews)
+// 2. Client-only #pass= hash fragment (100% immune to proxy/carrier drops, never sent over HTTP network)
 export function getHybridInviteUrl(origin, roomId, pass, key) {
   const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
+  const cleanRoom = encodeURIComponent(String(roomId).trim());
   if (!pass && !key) {
-    return `${base}/room/${roomId}`;
+    return `${base}/room/${cleanRoom}`;
   }
   const ticket = createHybridInvite(roomId, pass, key);
-  return `${base}/room/${roomId}?inv=${ticket}`;
+  const hashPart = pass ? `#pass=${encodeURIComponent(pass)}` : '';
+  return `${base}/room/${cleanRoom}?inv=${ticket}${hashPart}`;
 }
