@@ -127,7 +127,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
           return (
             <div
               key={card.id}
-              className="card-blackhole group rounded-3xl border border-white/10 bg-[#161619]/90 backdrop-blur-xl p-4 sm:p-5 shadow-lg hover:shadow-2xl hover:border-[#FF6D1F]/60 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-3.5 relative overflow-hidden"
+              className="group rounded-3xl border border-white/10 bg-[#222222] p-4 sm:p-5 shadow-lg hover:shadow-2xl hover:border-[#FF6D1F]/60 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-3.5 relative overflow-hidden"
             >
               {/* Electric Tangerine Ambient Hover Glow */}
               <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#FF6D1F]/10 rounded-full blur-2xl group-hover:bg-[#FF6D1F]/25 transition duration-500 pointer-events-none" />
@@ -189,8 +189,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
         })}
       </div>
 
-      {/* Bottom Quick Call To Action Banner (Aceternity UI Border Beam Style) */}
-      <div className="rounded-3xl border border-[#FF6D1F]/40 bg-gradient-to-r from-[#222222]/90 via-[#1A1A1D]/90 to-[#101012]/95 p-5 sm:p-6 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl relative overflow-hidden">
+      {/* Bottom Quick Call To Action Banner */}
+      <div className="rounded-3xl border border-[#FF6D1F]/30 bg-[#222222] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-1/4 w-48 h-48 bg-[#FF6D1F]/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-1 text-center sm:text-left relative z-10">

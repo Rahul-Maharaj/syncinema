@@ -177,8 +177,8 @@ export default function ChatPanel({
               <p
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-1.5 text-sm ${
                   mine
-                    ? 'rounded-tr-sm bg-rose-600 text-white'
-                    : 'rounded-tl-sm bg-white/10 text-white/90 border border-white/5'
+                    ? 'rounded-tr-sm bg-gradient-to-r from-[#FF6D1F] to-[#FF8E42] text-[#FAF3E1] shadow-md shadow-[#FF6D1F]/20'
+                    : 'rounded-tl-sm bg-[#222222] text-[#FAF3E1] border border-white/10'
                 }`}
               >
                 {m.text}
@@ -242,17 +242,17 @@ export default function ChatPanel({
             }
           }}
           placeholder="Say something sweet…"
-          className="field flex-1 !bg-black/60 border border-white/15 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 text-sm text-white px-3 py-2 rounded-xl outline-none transition"
+          className="field flex-1 !bg-[#1A1A1D] border border-white/10 focus:border-[#FF6D1F] focus:ring-2 focus:ring-[#FF6D1F]/20 text-sm text-[#FAF3E1] px-3 py-2 rounded-xl outline-none transition"
           autoComplete="off"
           maxLength={1000}
         />
         <button
           type="submit"
           disabled={!text.trim()}
-          className="btn !px-3.5 !py-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-tangerine !px-3.5 !py-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Send message"
         >
-          <Send className="h-4 w-4" />
+          <Send className="h-4 w-4 text-[#FAF3E1]" />
         </button>
       </form>
     </div>

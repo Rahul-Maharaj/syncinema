@@ -44,9 +44,9 @@
   display: inline-block;
 }
 
-/* Base Body Styling: Dark Obsidian Black Hole with Sustainable Linen Text */
+/* Base Body Styling: Dark Black Hole #222222 with Sustainable Linen Text */
 html, body {
-  background: #0D0D10 !important;
+  background: #222222 !important;
   color: #FAF3E1;
   font-family: 'Plus Jakarta Sans', var(--font-body), sans-serif;
   min-height: 100vh;
@@ -73,12 +73,12 @@ html, body {
   background: transparent !important;
 }
 
-/* Modern Component Layer (Inspired by Magic UI, Aceternity UI, skiper.ui, 21st.dev) */
+/* Modern Component Layer (Clean Solid #222222 surfaces) */
 @layer components {
   /* Black Hole Cards with Warm Linen Border */
   .card {
     @apply rounded-2xl border border-white/10 text-linen transition-all duration-300;
-    background: #1C1C1F !important;
+    background: #222222 !important;
     border-color: rgba(250, 243, 225, 0.12) !important;
   }
   .card:hover {
@@ -88,7 +88,7 @@ html, body {
 
   .card-blackhole {
     @apply rounded-3xl border border-white/10 p-5 sm:p-7 backdrop-blur-2xl transition-all duration-300;
-    background: rgba(34, 34, 34, 0.75) !important;
+    background: #222222 !important;
     border-color: rgba(250, 243, 225, 0.12) !important;
   }
   .card-blackhole:hover {
@@ -150,41 +150,19 @@ html, body {
   }
 }
 
-/* Magic UI Inspired Border Beam Effect */
+/* Static Solid Premium Border Card (No moving light streaks) */
 .border-beam-card {
   position: relative;
-  overflow: hidden;
   border-radius: 1.5rem;
+  background: #222222 !important;
 }
 
 .border-beam-card::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  background: conic-gradient(from 0deg, transparent 0 340deg, #FF6D1F 360deg);
-  border-radius: inherit;
-  animation: border-beam 4s linear infinite;
-  pointer-events: none;
-  opacity: 0.8;
+  display: none !important;
 }
 
 .border-beam-card::after {
-  content: '';
-  position: absolute;
-  inset: 1px;
-  background: inherit;
-  border-radius: inherit;
-  z-index: 1;
-}
-
-.border-beam-card > * {
-  position: relative;
-  z-index: 2;
-}
-
-@keyframes border-beam {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  display: none !important;
 }
 
 /* MicroKit UI Inspired Shimmer Hover Badge */

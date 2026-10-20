@@ -1307,7 +1307,7 @@ export default function VideoPlayer({
         onClick={isFullscreen ? resetOverlayTimer : undefined}
         onMouseMove={isFullscreen ? resetOverlayTimer : undefined}
         onTouchStart={isFullscreen ? resetOverlayTimer : undefined}
-        className={`vault relative overflow-hidden bg-black transition-all ${
+        className={`vault relative overflow-hidden bg-[#222222] transition-all ${
           isFullscreen
             ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-0 flex items-center justify-center'
             : 'aspect-video rounded-2xl border border-white/10'
@@ -1465,7 +1465,7 @@ export default function VideoPlayer({
           autoPlay
           playsInline
           muted={screenBy === me}
-          className={`absolute inset-0 h-full w-full bg-black object-contain will-change-transform ${stream ? '' : 'hidden'}`}
+          className={`absolute inset-0 h-full w-full bg-[#222222] object-contain will-change-transform ${stream ? '' : 'hidden'}`}
           style={{ transform: 'translateZ(0)' }}
         />
         {/* Tap for Sound Button (Mobile Autoplay Unmute) */}
@@ -1505,16 +1505,16 @@ export default function VideoPlayer({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             loading="eager"
-            className="absolute inset-0 h-full w-full bg-black border-0"
+            className="absolute inset-0 h-full w-full bg-[#222222] border-0"
           />
         )}
         {T === 'local' && !localUrl && !stream && (
-          <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/90 bg-black/85 backdrop-blur-sm z-20">
+          <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/90 bg-[#222222]/90 backdrop-blur-sm z-20">
             <div className="max-w-sm space-y-3">
-              <FolderOpen className="h-10 w-10 mx-auto text-rose-400" />
-              <p className="font-semibold text-sm sm:text-base">Partner picked: {media.name}</p>
-              <p className="text-xs text-white/70">Wait a moment while the file uploads, or tap below to pick this file if you already have it on your phone.</p>
-              <span className="btn !py-2 !px-4 text-xs inline-flex items-center gap-1.5">
+              <FolderOpen className="h-10 w-10 mx-auto text-[#FF6D1F]" />
+              <p className="font-semibold text-sm sm:text-base text-[#FAF3E1]">Partner picked: {media.name}</p>
+              <p className="text-xs text-[#F5E7C6]/80">Wait a moment while the file uploads, or tap below to pick this file if you already have it on your phone.</p>
+              <span className="btn-tangerine !py-2 !px-4 text-xs inline-flex items-center gap-1.5 text-[#FAF3E1]">
                 <FolderOpen className="h-3.5 w-3.5" />
                 Pick File from Device
                 <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
@@ -1523,12 +1523,12 @@ export default function VideoPlayer({
           </label>
         )}
         {T === 'none' && !stream && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0c0d24] via-black to-[#060714] p-4 text-center text-white">
-            <div className="relative mb-2 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-tr from-rose-600 to-pink-600 shadow-xl shadow-rose-950/70 animate-pulse">
-              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-white text-white ml-0.5" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#222222] p-4 text-center text-[#FAF3E1]">
+            <div className="relative mb-2 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-tr from-[#FF6D1F] to-[#FF8E42] shadow-xl shadow-[#FF6D1F]/30 animate-pulse">
+              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-[#FAF3E1] text-[#FAF3E1] ml-0.5" />
             </div>
-            <p className="font-display text-sm sm:text-base font-bold text-white tracking-wide">Ready to Stream</p>
-            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 max-w-xs">
+            <p className="font-display text-sm sm:text-base font-bold text-[#FAF3E1] tracking-wide">Ready to Stream</p>
+            <p className="text-[11px] sm:text-xs text-[#F5E7C6]/80 mt-0.5 max-w-xs">
               Paste any movie or video link below to watch together in 0ms sync
             </p>
           </div>
@@ -1955,9 +1955,9 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 shadow-lg shadow-pink-600/30 text-white cursor-pointer active:scale-95"
+              className="btn-tangerine !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 shadow-lg shadow-[#FF6D1F]/30 text-[#FAF3E1] cursor-pointer active:scale-95"
             >
-              <Play className="h-3.5 w-3.5 fill-white" />
+              <Play className="h-3.5 w-3.5 fill-[#FAF3E1]" />
               <span>Play for All</span>
             </button>
           </div>

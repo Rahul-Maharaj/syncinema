@@ -46,20 +46,20 @@ export const ROOM_THEMES = {
     name: 'Electric Tangerine & Black Hole',
     tag: 'Sustainable Linen & Tangerine Ambiance',
     icon: '🍊',
-    bgClass: 'bg-[#0D0D10]',
-    navBg: 'bg-[#1C1C1F]/90 border-[#FF6D1F]/30 shadow-lg shadow-[#FF6D1F]/20',
-    asideBg: 'bg-[#1C1C1F]/90 border-[#FF6D1F]/25',
-    tabBg: 'bg-[#0D0D10]/95',
-    overlayGradient: 'bg-gradient-to-b from-[#1C1C1F]/80 via-[#0D0D10]/60 to-[#050508]/90',
-    ambientGlow: 'bg-gradient-to-r from-[#FF6D1F]/30 via-[#F5E7C6]/20 to-[#FF6D1F]/30',
-    borderColor: 'border-[#FF6D1F]/30',
-    cardBorder: 'border-[#FF6D1F]/40 shadow-xl shadow-[#FF6D1F]/20',
+    bgClass: 'bg-[#222222]',
+    navBg: 'bg-[#222222] border-white/10 shadow-lg shadow-black/40',
+    asideBg: 'bg-[#222222] border-white/10',
+    tabBg: 'bg-[#222222]',
+    overlayGradient: 'bg-[#222222]',
+    ambientGlow: 'bg-transparent',
+    borderColor: 'border-white/10',
+    cardBorder: 'border-white/15 shadow-xl shadow-black/50',
     accentGradient: 'from-[#FF6D1F] via-[#FF853E] to-[#E05A12]',
     accentText: 'text-[#FAF3E1]',
     accentBg: 'bg-[#FF6D1F]',
     themeBtnClass: 'bg-[#FF6D1F]/20 border-[#FF6D1F]/40 text-[#FAF3E1] hover:brightness-110 shadow-md shadow-[#FF6D1F]/30',
-    swatches: ['#0D0D10', '#222222', '#FF6D1F', '#FAF3E1'],
-    showWallpaperDefault: true,
+    swatches: ['#222222', '#2E2E32', '#FF6D1F', '#FAF3E1'],
+    showWallpaperDefault: false,
   },
   midnight: {
     id: 'midnight',
@@ -990,8 +990,8 @@ export default function Room() {
 
   return (
     <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} text-slate-100 font-sans selection:bg-purple-600 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
-      {/* Dynamic Ambient Cinema Background (Matches Home Screen) */}
-      {showWallpaper && (
+      {/* Dynamic Ambient Cinema Background */}
+      {showWallpaper && theme.id !== 'tangerine' && (
         <div 
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-25"
           style={{ 
