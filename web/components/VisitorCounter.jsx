@@ -5,6 +5,7 @@ import { serverUrl, getSocket } from '@/lib/socket';
 import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
 export default function VisitorCounter() {
+  const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState({
     totalVisitors: 1,
     todayVisitors: 1,
@@ -13,6 +14,7 @@ export default function VisitorCounter() {
   });
 
   useEffect(() => {
+    setMounted(true);
     const base = serverUrl();
     const socket = getSocket();
 
@@ -98,78 +100,78 @@ export default function VisitorCounter() {
       aria-label="Real-Time Verified Community Statistics"
       className="relative z-10 w-full max-w-5xl mx-auto px-4 py-8 select-none"
     >
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#222222]/90 via-[#1C1C1F]/90 to-[#121214]/95 border border-[#FF6D1F]/30 p-5 sm:p-7 backdrop-blur-2xl shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#222222]/95 via-[#1E1424]/90 to-[#140D1A]/95 border border-pink-500/30 p-5 sm:p-7 backdrop-blur-2xl shadow-[0_10px_40px_rgba(236,72,153,0.15)]">
         {/* Ambient Top Glow Line */}
-        <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-[#FF6D1F]/60 to-transparent" />
+        <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-pink-500/60 to-transparent" />
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Left Title & Live Badge */}
           <div className="text-center md:text-left space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold tracking-wide shadow-sm">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-bold tracking-wide shadow-sm">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
               </span>
               <span>100% REAL LIVE AUDIENCE</span>
             </div>
-            <h3 className="text-lg sm:text-xl font-display font-extrabold text-[#FAF3E1] tracking-tight flex items-center justify-center md:justify-start gap-2">
+            <h3 className="text-lg sm:text-xl font-display font-extrabold text-pink-100 tracking-tight flex items-center justify-center md:justify-start gap-2">
               <span>Verified Audience Telemetry</span>
-              <Sparkles className="h-4 w-4 text-[#FF6D1F]" />
+              <Sparkles className="h-4 w-4 text-pink-400" />
             </h3>
-            <p className="text-xs text-[#F5E7C6]/80 max-w-md">
+            <p className="text-xs text-pink-200/80 max-w-md">
               Genuine real-time audience metrics for{' '}
-              <span className="text-[#FF6D1F] font-semibold">syncinema.site</span>. Deduplicated by IP and device fingerprint.
+              <span className="text-pink-400 font-semibold">syncinema.site</span>. Deduplicated by IP and device fingerprint.
             </p>
           </div>
 
           {/* Right Real Counters Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full md:w-auto">
             {/* Real Live Online Now */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-emerald-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
-              <div className="flex items-center justify-center gap-1.5 text-emerald-400 mb-1">
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-pink-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
+              <div className="flex items-center justify-center gap-1.5 text-pink-400 mb-1">
                 <Radio className="h-3.5 w-3.5 animate-pulse" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">Online Now</span>
               </div>
-              <div className="text-xl sm:text-2xl font-display font-black text-[#FAF3E1]">
-                {stats.liveVisitors.toLocaleString()}
+              <div suppressHydrationWarning className="text-xl sm:text-2xl font-display font-black text-pink-100">
+                {mounted ? stats.liveVisitors.toLocaleString() : '1'}
               </div>
-              <div className="text-[10px] text-emerald-300/80 font-medium mt-0.5">Live Viewers</div>
+              <div className="text-[10px] text-pink-300/80 font-medium mt-0.5">Live Viewers</div>
             </div>
 
             {/* Real All-Time Unique Visitors */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-[#FF6D1F]/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
-              <div className="flex items-center justify-center gap-1.5 text-[#FF6D1F] mb-1">
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-pink-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
+              <div className="flex items-center justify-center gap-1.5 text-pink-400 mb-1">
                 <Users className="h-3.5 w-3.5" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">All-Time</span>
               </div>
-              <div className="text-xl sm:text-2xl font-display font-black text-[#FAF3E1]">
-                {stats.totalVisitors.toLocaleString()}
+              <div suppressHydrationWarning className="text-xl sm:text-2xl font-display font-black text-pink-100">
+                {mounted ? stats.totalVisitors.toLocaleString() : '1'}
               </div>
-              <div className="text-[10px] text-[#F5E7C6]/80 font-medium mt-0.5">Real Visitors Reached</div>
+              <div className="text-[10px] text-pink-200/80 font-medium mt-0.5">Real Visitors Reached</div>
             </div>
 
             {/* Real Today's Unique Visitors */}
             <div className="col-span-2 sm:col-span-1 p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-white/10 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
-              <div className="flex items-center justify-center gap-1.5 text-[#FF8E42] mb-1">
+              <div className="flex items-center justify-center gap-1.5 text-pink-300 mb-1">
                 <Film className="h-3.5 w-3.5" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">Today</span>
               </div>
-              <div className="text-xl sm:text-2xl font-display font-black text-[#FAF3E1]">
-                {stats.todayVisitors.toLocaleString()}
+              <div suppressHydrationWarning className="text-xl sm:text-2xl font-display font-black text-pink-100">
+                {mounted ? stats.todayVisitors.toLocaleString() : '1'}
               </div>
-              <div className="text-[10px] text-[#F5E7C6]/80 font-medium mt-0.5">Unique Today</div>
+              <div className="text-[10px] text-pink-200/80 font-medium mt-0.5">Unique Today</div>
             </div>
           </div>
         </div>
 
         {/* Bottom Trust & Security Banner */}
-        <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#F5E7C6]/70">
-          <div className="flex items-center gap-1.5 text-[#FAF3E1] font-medium">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+        <div className="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-[11px] text-pink-200/70">
+          <div className="flex items-center gap-1.5 text-pink-100 font-medium">
+            <ShieldCheck className="h-3.5 w-3.5 text-pink-400" />
             <span>Anti-Bot Shield Active &bull; Zero Manipulation Telemetry &bull; Zero Log Encryption</span>
           </div>
-          <div className="flex items-center gap-2 font-semibold text-[#FAF3E1]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#FF6D1F] animate-pulse" />
+          <div className="flex items-center gap-2 font-semibold text-pink-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-pulse" />
             <span>{stats.activeRooms} Private Theaters Active</span>
           </div>
         </div>

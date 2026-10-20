@@ -136,7 +136,7 @@ export default function ChatPanel({
             onClick={handleClearChat}
             title="Delete chat history"
             aria-label="Delete chat history"
-            className="ml-auto rounded-lg p-1 text-white/40 hover:text-[#FF8E42] transition hover:bg-white/5"
+            className="ml-auto rounded-lg p-1 text-white/40 hover:text-pink-400 transition hover:bg-white/5"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -159,7 +159,7 @@ export default function ChatPanel({
               className={`flex flex-col text-sm leading-snug ${mine ? 'items-end' : 'items-start'}`}
             >
               <div className="flex items-center gap-1.5 text-xs mb-0.5">
-                <b style={{ color: m.color || (mine ? '#FF8E42' : '#F5E7C6') }}>{mine ? 'You' : m.user}</b>
+                <b style={{ color: m.color || (mine ? '#F472B6' : '#FCE7F3') }}>{mine ? 'You' : m.user}</b>
                 {m.vt !== undefined && (
                   <button
                     type="button"
@@ -168,7 +168,7 @@ export default function ChatPanel({
                       say?.(`Jumped to ${fmt(m.vt)} ⏱️`);
                     }}
                     title="Jump to this video moment"
-                    className="rounded bg-[#FF6D1F]/15 px-1 text-[10px] text-[#FF8E42] hover:bg-[#FF6D1F]/30 transition font-mono"
+                    className="rounded bg-pink-500/15 px-1 text-[10px] text-pink-300 hover:bg-pink-500/30 transition font-mono"
                   >
                     {fmt(m.vt)}
                   </button>
@@ -177,8 +177,8 @@ export default function ChatPanel({
               <p
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-1.5 text-sm ${
                   mine
-                    ? 'rounded-tr-sm bg-gradient-to-r from-[#FF6D1F] to-[#FF8E42] text-[#FAF3E1] shadow-md shadow-[#FF6D1F]/20'
-                    : 'rounded-tl-sm bg-[#222222] text-[#FAF3E1] border border-white/10'
+                    ? 'rounded-tr-sm bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 text-white shadow-md shadow-pink-500/20'
+                    : 'rounded-tl-sm bg-[#222222] text-pink-100 border border-pink-500/20'
                 }`}
               >
                 {m.text}
@@ -211,7 +211,7 @@ export default function ChatPanel({
             type="button"
             onClick={attachTimestamp}
             title="Attach current video timestamp"
-            className="rounded-lg text-[11px] text-[#FF8E42] bg-white/5 hover:bg-white/10 border border-[#FF6D1F]/30 px-2 py-1 font-mono transition flex items-center gap-1"
+            className="rounded-lg text-[11px] text-pink-300 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 px-2 py-1 font-mono transition flex items-center gap-1"
           >
             <span>⏱️</span>
             <span>{fmt(playerRef?.current?.time?.() || 0)}</span>
@@ -242,17 +242,17 @@ export default function ChatPanel({
             }
           }}
           placeholder="Say something sweet…"
-          className="field flex-1 !bg-[#1A1A1D] border border-white/10 focus:border-[#FF6D1F] focus:ring-2 focus:ring-[#FF6D1F]/20 text-sm text-[#FAF3E1] px-3 py-2 rounded-xl outline-none transition"
+          className="field flex-1 !bg-[#1A1A1D] border border-pink-500/25 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 text-sm text-pink-100 placeholder-pink-300/40 px-3 py-2 rounded-xl outline-none transition"
           autoComplete="off"
           maxLength={1000}
         />
         <button
           type="submit"
           disabled={!text.trim()}
-          className="btn-tangerine !px-3.5 !py-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-pink !px-3.5 !py-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-pink-500/30"
           aria-label="Send message"
         >
-          <Send className="h-4 w-4 text-[#FAF3E1]" />
+          <Send className="h-4 w-4 text-white" />
         </button>
       </form>
     </div>

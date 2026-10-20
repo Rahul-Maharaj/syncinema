@@ -235,13 +235,13 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
         </div>
       )}
 
-      {/* Couple Gestures Toolbar styled in Black Hole & Electric Tangerine */}
-      <div className="card-blackhole my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-[#1C1C1F]/90 border border-white/10 shadow-lg">
+      {/* Couple Gestures Toolbar styled in Black Hole & Romantic Pink */}
+      <div className="card-blackhole my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-[#1C1C1F]/90 border border-pink-500/20 shadow-lg">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF6D1F]/20 text-[#FAF3E1] border border-[#FF6D1F]/30">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-500/20 text-pink-100 border border-pink-500/30">
             <Heart3D size={20} />
           </div>
-          <span className="font-display text-xs sm:text-sm font-bold tracking-wide text-[#FAF3E1]">
+          <span className="font-display text-xs sm:text-sm font-bold tracking-wide text-pink-100">
             Couple Gestures
           </span>
         </div>
@@ -252,7 +252,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('kiss')}
             title="Blow a sweet kiss to your partner"
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-pink-100 bg-[#222222] border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">💋</span>
             <span>Kiss</span>
@@ -263,7 +263,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('hug')}
             title="Send a warm, cozy cuddle"
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-pink-100 bg-[#222222] border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">🫂</span>
             <span>Hug</span>
@@ -276,8 +276,8 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             title={holdingHand ? 'Holding hands! Tap to release' : 'Hold hands with your partner'}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 cursor-pointer flex items-center gap-1 ${
               holdingHand || partnerHolding
-                ? 'btn-tangerine text-[#FAF3E1]'
-                : 'text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50'
+                ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-100 bg-[#222222] border border-pink-500/20 hover:border-pink-500/50'
             }`}
           >
             <span className="text-sm">🤝</span>
@@ -291,7 +291,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('popcorn')}
             title="Feed your partner popcorn"
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-pink-100 bg-[#222222] border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">🍿</span>
             <span>Popcorn</span>
@@ -302,7 +302,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('cheers')}
             title="Cheers with a glass of champagne"
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-pink-100 bg-[#222222] border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">🥂</span>
             <span>Cheers</span>
@@ -314,7 +314,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             onClick={toggleCandle}
             title={candleMode ? 'Turn off candlelight' : 'Light candlelight for romantic ambience'}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 cursor-pointer flex items-center gap-1 ${
-              candleMode ? 'bg-[#FF6D1F]/30 border-[#FF6D1F] text-[#FAF3E1]' : 'text-[#FAF3E1] bg-[#222222] border border-white/10'
+              candleMode ? 'bg-pink-500/30 border-pink-500 text-pink-100' : 'text-pink-100 bg-[#222222] border border-pink-500/20'
             }`}
           >
             <span className="text-sm">🕯️</span>
@@ -327,24 +327,24 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
               type="button"
               onClick={() => setShowWhispers(!showWhispers)}
               title="Whisper a sweet love note to your partner"
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-pink-100 bg-[#222222] border border-pink-500/20 hover:border-pink-500/50 hover:bg-pink-500/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
             >
-              <MessageCircleHeart className="h-3.5 w-3.5 text-[#FF6D1F]" />
+              <MessageCircleHeart className="h-3.5 w-3.5 text-pink-400" />
               <span>Whisper</span>
             </button>
 
             {/* Whisper Dropdown Menu */}
             {showWhispers && (
-              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/15 bg-[#1C1C1F] p-3 z-50 text-[#FAF3E1] shadow-2xl backdrop-blur-xl">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
-                  <span className="text-xs font-semibold text-[#FF6D1F] flex items-center gap-1.5">
-                    <Heart className="h-3.5 w-3.5 fill-current" />
+              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-pink-500/30 bg-[#1C1C1F] p-3 z-50 text-pink-100 shadow-2xl backdrop-blur-xl">
+                <div className="flex items-center justify-between pb-2 border-b border-pink-500/20 mb-2">
+                  <span className="text-xs font-semibold text-pink-400 flex items-center gap-1.5">
+                    <Heart className="h-3.5 w-3.5 fill-current text-pink-400" />
                     Whisper a Sweet Note
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowWhispers(false)}
-                    className="text-xs text-[#F5E7C6]/60 hover:text-white"
+                    className="text-xs text-pink-200/60 hover:text-white"
                   >
                     ✕
                   </button>
@@ -355,7 +355,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
                       key={idx}
                       type="button"
                       onClick={() => sendWhisper(w)}
-                      className="w-full text-left text-xs rounded-xl p-2 bg-[#222222] hover:bg-[#FF6D1F]/20 text-[#FAF3E1] hover:text-white transition"
+                      className="w-full text-left text-xs rounded-xl p-2 bg-[#222222] hover:bg-pink-500/20 text-pink-100 hover:text-white transition"
                     >
                       {w}
                     </button>
@@ -366,17 +366,17 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
                     e.preventDefault();
                     sendWhisper(customWhisper);
                   }}
-                  className="mt-2.5 pt-2 border-t border-white/10 flex gap-1.5"
+                  className="mt-2.5 pt-2 border-t border-pink-500/20 flex gap-1.5"
                 >
                   <input
                     type="text"
                     value={customWhisper}
                     onChange={(e) => setCustomWhisper(e.target.value)}
                     placeholder="Write a custom whisper…"
-                    className="flex-1 py-1.5 px-3 text-xs bg-[#0D0D10] border border-white/10 rounded-xl text-[#FAF3E1] outline-none focus:border-[#FF6D1F]"
+                    className="flex-1 py-1.5 px-3 text-xs bg-[#0D0D10] border border-pink-500/25 rounded-xl text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500"
                     maxLength={100}
                   />
-                  <button type="submit" className="btn-tangerine py-1 px-3 text-xs rounded-xl font-bold shrink-0">
+                  <button type="submit" className="btn-pink py-1 px-3 text-xs rounded-xl font-bold text-white shrink-0 shadow-md shadow-pink-500/30">
                     Send
                   </button>
                 </form>

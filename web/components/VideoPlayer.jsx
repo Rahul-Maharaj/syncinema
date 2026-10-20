@@ -1321,17 +1321,17 @@ export default function VideoPlayer({
           }`}
         >
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/10 text-[11px] text-white/90 shadow-lg">
-            <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#FF6D1F]'}`} />
+            <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#EC4899]'}`} />
             <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
             {syncOffset !== 0 && (
-              <span className="text-[10px] text-[#FF8E42] font-mono ml-0.5">
+              <span className="text-[10px] text-[#F472B6] font-mono ml-0.5">
                 ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
               </span>
             )}
           </div>
 
           {isLiveStream && (
-            <div className="btn-tangerine flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-[#FAF3E1] border border-white/20 shadow-lg backdrop-blur-md">
+            <div className="btn-pink flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-[#FCE7F3] border border-white/20 shadow-lg backdrop-blur-md">
               <Radio className="h-3 w-3" />
               <span>LIVE</span>
               <button
@@ -1358,10 +1358,10 @@ export default function VideoPlayer({
           >
             <div className="flex items-center gap-2 min-w-0">
               <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6D1F] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF6D1F]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EC4899] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EC4899]"></span>
               </span>
-              <span className="text-xs font-semibold text-[#FAF3E1] truncate">
+              <span className="text-xs font-semibold text-[#FCE7F3] truncate">
                 {screenBy === me
                   ? '🖥️ You are sharing your screen'
                   : `🖥️ ${users.find((u) => u.id === screenBy)?.name || 'Partner'} is sharing screen`}
@@ -1372,7 +1372,7 @@ export default function VideoPlayer({
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="btn-tangerine !py-1 !px-3 text-xs flex items-center gap-1.5 text-[#FAF3E1] border-0 shadow-md font-semibold cursor-pointer"
+                className="btn-pink !py-1 !px-3 text-xs flex items-center gap-1.5 text-[#FCE7F3] border-0 shadow-md font-semibold cursor-pointer"
                 title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
               >
                 {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -1382,10 +1382,10 @@ export default function VideoPlayer({
                 <button
                   type="button"
                   onClick={stopShare}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FF6D1F]/20 hover:bg-[#FF6D1F]/30 text-[#FAF3E1] border border-[#FF6D1F]/30 text-xs font-medium cursor-pointer transition"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EC4899]/20 hover:bg-[#EC4899]/30 text-[#FCE7F3] border border-[#EC4899]/30 text-xs font-medium cursor-pointer transition"
                   title="Stop sharing your screen"
                 >
-                  <MonitorOff className="h-3.5 w-3.5 text-[#FF8E42]" />
+                  <MonitorOff className="h-3.5 w-3.5 text-[#F472B6]" />
                   <span className="hidden sm:inline">Stop</span>
                 </button>
               )}
@@ -1407,12 +1407,12 @@ export default function VideoPlayer({
               onClick={toggleFullscreen}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 isFullscreen
-                  ? 'btn-tangerine text-[#FAF3E1] border-white/30'
-                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FAF3E1]/90 hover:text-[#FAF3E1] border-white/20 hover:border-white/40'
+                  ? 'btn-pink text-[#FCE7F3] border-white/30'
+                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FCE7F3]/90 hover:text-[#FCE7F3] border-white/20 hover:border-white/40'
               }`}
               title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
             >
-              {isFullscreen ? <Minimize2 className="h-3 w-3 text-[#FAF3E1]" /> : <Maximize2 className="h-3 w-3 text-[#FF8E42]" />}
+              {isFullscreen ? <Minimize2 className="h-3 w-3 text-[#FCE7F3]" /> : <Maximize2 className="h-3 w-3 text-[#F472B6]" />}
               <span className="hidden sm:inline">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
 
@@ -1421,12 +1421,12 @@ export default function VideoPlayer({
               onClick={() => setShowSettings(!showSettings)}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 showSettings
-                  ? 'btn-tangerine text-[#FAF3E1] border-white/30'
-                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FAF3E1]/80 hover:text-[#FAF3E1] border-white/10 hover:border-white/30'
+                  ? 'btn-pink text-[#FCE7F3] border-white/30'
+                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FCE7F3]/80 hover:text-[#FCE7F3] border-white/10 hover:border-white/30'
               }`}
               title="Precision Sync, Speed & Audio Settings"
             >
-              <Sliders className="h-3 w-3 text-[#FF8E42]" />
+              <Sliders className="h-3 w-3 text-[#F472B6]" />
               <span className="hidden sm:inline">Sync & Audio</span>
             </button>
           </div>
@@ -1445,7 +1445,7 @@ export default function VideoPlayer({
         {/* Desync Recovery Banner */}
         {syncStatus === 'desync' && (
           <div className="absolute inset-x-4 bottom-14 z-30 mx-auto max-w-sm rise">
-            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#222222]/95 backdrop-blur-md border border-[#FF6D1F]/40 text-[#FAF3E1] text-xs shadow-2xl">
+            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#222222]/95 backdrop-blur-md border border-[#EC4899]/40 text-[#FCE7F3] text-xs shadow-2xl">
               <div className="flex items-center gap-1.5">
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                 <span>Drift detected</span>
@@ -1480,7 +1480,7 @@ export default function VideoPlayer({
                 setScreenAudioLocked(false);
               }
             }}
-            className="btn-tangerine absolute bottom-4 right-4 z-40 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[#FAF3E1] text-xs font-semibold shadow-2xl cursor-pointer"
+            className="btn-pink absolute bottom-4 right-4 z-40 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[#FCE7F3] text-xs font-semibold shadow-2xl cursor-pointer"
           >
             <Volume2 className="h-3.5 w-3.5" />
             <span>Tap for Sound 🔊</span>
@@ -1537,10 +1537,10 @@ export default function VideoPlayer({
         {T === 'local' && !localUrl && !stream && (
           <label className="absolute inset-0 grid cursor-pointer place-items-center p-6 text-center text-white/90 bg-[#222222]/90 backdrop-blur-sm z-20">
             <div className="max-w-sm space-y-3">
-              <FolderOpen className="h-10 w-10 mx-auto text-[#FF6D1F]" />
-              <p className="font-semibold text-sm sm:text-base text-[#FAF3E1]">Partner picked: {media.name}</p>
-              <p className="text-xs text-[#F5E7C6]/80">Wait a moment while the file uploads, or tap below to pick this file if you already have it on your phone.</p>
-              <span className="btn-tangerine !py-2 !px-4 text-xs inline-flex items-center gap-1.5 text-[#FAF3E1]">
+              <FolderOpen className="h-10 w-10 mx-auto text-[#EC4899]" />
+              <p className="font-semibold text-sm sm:text-base text-[#FCE7F3]">Partner picked: {media.name}</p>
+              <p className="text-xs text-[#FBCFE8]/80">Wait a moment while the file uploads, or tap below to pick this file if you already have it on your phone.</p>
+              <span className="btn-pink !py-2 !px-4 text-xs inline-flex items-center gap-1.5 text-[#FCE7F3]">
                 <FolderOpen className="h-3.5 w-3.5" />
                 Pick File from Device
                 <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
@@ -1549,12 +1549,12 @@ export default function VideoPlayer({
           </label>
         )}
         {T === 'none' && !stream && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#222222] p-4 text-center text-[#FAF3E1]">
-            <div className="relative mb-2 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-tr from-[#FF6D1F] to-[#FF8E42] shadow-xl shadow-[#FF6D1F]/30 animate-pulse">
-              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-[#FAF3E1] text-[#FAF3E1] ml-0.5" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#222222] p-4 text-center text-[#FCE7F3]">
+            <div className="relative mb-2 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] shadow-xl shadow-[#EC4899]/30 animate-pulse">
+              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-[#FCE7F3] text-[#FCE7F3] ml-0.5" />
             </div>
-            <p className="font-display text-sm sm:text-base font-bold text-[#FAF3E1] tracking-wide">Ready to Stream</p>
-            <p className="text-[11px] sm:text-xs text-[#F5E7C6]/80 mt-0.5 max-w-xs">
+            <p className="font-display text-sm sm:text-base font-bold text-[#FCE7F3] tracking-wide">Ready to Stream</p>
+            <p className="text-[11px] sm:text-xs text-[#FBCFE8]/80 mt-0.5 max-w-xs">
               Paste any movie or video link below to watch together in 0ms sync
             </p>
           </div>
@@ -1572,11 +1572,11 @@ export default function VideoPlayer({
             }}
             className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer p-4 text-center transition"
           >
-            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-tr from-[#FF6D1F] to-[#FF8E42] shadow-[0_0_30px_rgba(255,109,31,0.6)] animate-pulse">
-              <Play className="h-8 w-8 fill-[#FAF3E1] text-[#FAF3E1] ml-1" />
+            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-tr from-[#EC4899] to-[#F472B6] shadow-[0_0_30px_rgba(255,109,31,0.6)] animate-pulse">
+              <Play className="h-8 w-8 fill-[#FCE7F3] text-[#FCE7F3] ml-1" />
             </div>
-            <p className="font-semibold text-base sm:text-lg text-[#FAF3E1]">Tap to Sync &amp; Play</p>
-            <p className="text-xs text-[#F5E7C6]/80 mt-1 max-w-xs">Your partner is watching! Tap anywhere to join in real-time sync 🍿</p>
+            <p className="font-semibold text-base sm:text-lg text-[#FCE7F3]">Tap to Sync &amp; Play</p>
+            <p className="text-xs text-[#FBCFE8]/80 mt-1 max-w-xs">Your partner is watching! Tap anywhere to join in real-time sync 🍿</p>
           </div>
         )}
 
@@ -1591,16 +1591,16 @@ export default function VideoPlayer({
             onMouseMove={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >
-            <div className="relative rounded-2xl bg-[#222222]/95 backdrop-blur-xl border border-[#FF6D1F]/40 p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden group/pip ring-1 ring-white/10">
+            <div className="relative rounded-2xl bg-[#222222]/95 backdrop-blur-xl border border-[#EC4899]/40 p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden group/pip ring-1 ring-white/10">
               {/* PiP Header Toolbar (Draggable Grip) */}
               <div
                 onMouseDown={handlePipDragStart}
                 onTouchStart={handlePipDragStart}
-                className="flex items-center justify-between gap-1.5 px-1 pb-1 text-[#FAF3E1]/80 border-b border-white/10 mb-1.5 text-[10px] cursor-grab active:cursor-grabbing select-none touch-none bg-white/[0.04] rounded-lg p-1"
+                className="flex items-center justify-between gap-1.5 px-1 pb-1 text-[#FCE7F3]/80 border-b border-white/10 mb-1.5 text-[10px] cursor-grab active:cursor-grabbing select-none touch-none bg-white/[0.04] rounded-lg p-1"
                 title="Hold & drag to move video call anywhere on screen"
               >
                 <div className="flex items-center gap-1.5 font-semibold truncate max-w-[100px] sm:max-w-[130px]">
-                  <GripHorizontal className="h-3 w-3 text-[#FF8E42] shrink-0" />
+                  <GripHorizontal className="h-3 w-3 text-[#F472B6] shrink-0" />
                   <span className="text-white text-[10px] font-bold truncate">
                     {users.find((u) => u.id !== me)?.name || 'Video Call'}
                   </span>
@@ -1614,7 +1614,7 @@ export default function VideoPlayer({
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowFsLocalPip((prev) => !prev); }}
                       className={`p-1 rounded text-[9px] font-semibold transition cursor-pointer ${
-                        showFsLocalPip ? 'bg-[#FF6D1F] text-white shadow-md' : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+                        showFsLocalPip ? 'bg-[#EC4899] text-white shadow-md' : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
                       }`}
                       title={showFsLocalPip ? 'Hide my preview' : 'Show my preview'}
                     >
@@ -1676,9 +1676,9 @@ export default function VideoPlayer({
                   </div>
                 ) : (
                   <div className="w-32 sm:w-40 md:!w-48 aspect-video rounded-xl bg-[#222222] border border-white/10 flex flex-col items-center justify-center p-2 text-center">
-                    <Video className="h-4 w-4 text-[#FF8E42] opacity-70 mb-0.5 animate-pulse" />
-                    <p className="text-[10px] text-[#FAF3E1] font-bold">Solo in Room</p>
-                    <p className="text-[8px] text-[#F5E7C6]/60">Waiting for partner</p>
+                    <Video className="h-4 w-4 text-[#F472B6] opacity-70 mb-0.5 animate-pulse" />
+                    <p className="text-[10px] text-[#FCE7F3] font-bold">Solo in Room</p>
+                    <p className="text-[8px] text-[#FBCFE8]/60">Waiting for partner</p>
                   </div>
                 )}
               </div>
@@ -1696,11 +1696,11 @@ export default function VideoPlayer({
                     className={`flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
                       callMedia?.mic
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 text-[#FAF3E1] shadow-sm'
+                        : 'bg-[#EC4899]/20 border border-[#EC4899]/40 text-[#FCE7F3] shadow-sm'
                     }`}
                     title={callMedia?.mic ? 'Mute microphone' : 'Unmute microphone'}
                   >
-                    {callMedia?.mic ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5 text-[#FF8E42]" />}
+                    {callMedia?.mic ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5 text-[#F472B6]" />}
                     <span>{callMedia?.mic ? 'Mic On' : 'Muted'}</span>
                   </button>
 
@@ -1714,11 +1714,11 @@ export default function VideoPlayer({
                     className={`flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
                       callMedia?.cam
                         ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
-                        : 'bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 text-[#FAF3E1] shadow-sm'
+                        : 'bg-[#EC4899]/20 border border-[#EC4899]/40 text-[#FCE7F3] shadow-sm'
                     }`}
                     title={callMedia?.cam ? 'Turn off camera' : 'Turn on camera'}
                   >
-                    {callMedia?.cam ? <Video className="h-2.5 w-2.5 text-emerald-400" /> : <VideoOff className="h-2.5 w-2.5 text-[#FF8E42]" />}
+                    {callMedia?.cam ? <Video className="h-2.5 w-2.5 text-emerald-400" /> : <VideoOff className="h-2.5 w-2.5 text-[#F472B6]" />}
                     <span>{callMedia?.cam ? 'Cam On' : 'Off'}</span>
                   </button>
                 </div>
@@ -1732,10 +1732,10 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => setShowFsPip(true)}
-            className={`absolute z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#222222]/95 backdrop-blur-md border border-white/20 text-[#FAF3E1] text-xs hover:border-[#FF6D1F] transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
+            className={`absolute z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#222222]/95 backdrop-blur-md border border-white/20 text-[#FCE7F3] text-xs hover:border-[#EC4899] transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
             title="Show Video Call PiP"
           >
-            <Video className="h-3.5 w-3.5 text-[#FF8E42]" />
+            <Video className="h-3.5 w-3.5 text-[#F472B6]" />
             <span>Show Call</span>
             {(callMedia?.localTalking || Object.values(callMedia?.remoteTalking || {}).some(Boolean)) && (
               <span className="relative flex h-2 w-2">
@@ -1777,7 +1777,7 @@ export default function VideoPlayer({
                   }}
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 cursor-pointer flex items-center gap-1 ${
                     isActive
-                      ? 'btn-tangerine text-[#FAF3E1] shadow-md font-bold border border-[#FF6D1F]/50'
+                      ? 'btn-pink text-[#FCE7F3] shadow-md font-bold border border-[#EC4899]/50'
                       : 'bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
                   }`}
                   title={`${srv.name} (${srv.quality || '1080p'})`}
@@ -1795,8 +1795,8 @@ export default function VideoPlayer({
       {showSettings && (
         <div className="card p-4 !bg-[#222222] border border-white/10 space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <span className="text-xs font-bold text-[#FAF3E1] uppercase tracking-wider flex items-center gap-1.5">
-              <Sliders className="h-4 w-4 text-[#FF8E42]" /> Precision Sync &amp; Audio Controls
+            <span className="text-xs font-bold text-[#FCE7F3] uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="h-4 w-4 text-[#F472B6]" /> Precision Sync &amp; Audio Controls
             </span>
             <button onClick={() => setShowSettings(false)} className="text-xs opacity-60 hover:opacity-100">✕ Close</button>
           </div>
@@ -1805,8 +1805,8 @@ export default function VideoPlayer({
             {/* Playback Speed (Synced) */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-white/80">
-                <span className="font-semibold flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-[#FF8E42]" /> Shared Speed</span>
-                <span className="font-mono text-[#FAF3E1]">{sharedSpeed}x</span>
+                <span className="font-semibold flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-[#F472B6]" /> Shared Speed</span>
+                <span className="font-mono text-[#FCE7F3]">{sharedSpeed}x</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {SPEEDS.map((s) => (
@@ -1816,7 +1816,7 @@ export default function VideoPlayer({
                     onClick={() => changeSharedSpeed(s)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                       sharedSpeed === s
-                        ? 'btn-tangerine text-white shadow-md'
+                        ? 'btn-pink text-white shadow-md'
                         : 'bg-white/10 text-white/70 hover:bg-white/20'
                     }`}
                   >
@@ -1858,7 +1858,7 @@ export default function VideoPlayer({
                   step="0.05"
                   value={syncOffset}
                   onChange={(e) => setSyncOffset(+e.target.value)}
-                  className="w-full accent-[#FF6D1F] cursor-pointer"
+                  className="w-full accent-[#EC4899] cursor-pointer"
                 />
                 <button
                   type="button"
@@ -1914,7 +1914,7 @@ export default function VideoPlayer({
             <div className="flex items-center justify-between py-2 border-t border-white/10 mt-1">
               <div className="min-w-0 pr-2">
                 <p className="text-xs font-semibold text-white flex items-center gap-1.5">
-                  <Mic className="h-3.5 w-3.5 text-[#FF8E42]" /> Smart Voice Ducking
+                  <Mic className="h-3.5 w-3.5 text-[#F472B6]" /> Smart Voice Ducking
                 </p>
                 <p className="text-[10px] text-white/50">Auto-slows video (0.82x) and lowers movie volume when anyone speaks</p>
               </div>
@@ -1922,7 +1922,7 @@ export default function VideoPlayer({
                 type="button"
                 onClick={() => setSmartDuckingEnabled((prev) => !prev)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition shrink-0 ${
-                  smartDuckingEnabled ? 'btn-tangerine text-white shadow-md' : 'bg-white/10 text-white/50'
+                  smartDuckingEnabled ? 'btn-pink text-white shadow-md' : 'bg-white/10 text-white/50'
                 }`}
               >
                 {smartDuckingEnabled ? 'Enabled' : 'Disabled'}
@@ -1935,11 +1935,11 @@ export default function VideoPlayer({
       {uploading && (
         <div className="card flex items-center justify-between gap-3 p-3 !bg-[#222222] border border-white/20 text-xs text-white">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#FF6D1F] shrink-0" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#EC4899] shrink-0" />
             <span className="truncate">Sharing <b>{uploading.name}</b> with partner&apos;s phone ({uploading.progress}%)…</span>
           </div>
           <div className="h-2 w-28 bg-white/15 rounded-full overflow-hidden shrink-0">
-            <div className="h-full bg-gradient-to-r from-[#FF6D1F] to-[#FF8E42] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
+            <div className="h-full bg-gradient-to-r from-[#EC4899] to-[#F472B6] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
           </div>
         </div>
       )}
@@ -1953,8 +1953,8 @@ export default function VideoPlayer({
 
       <form onSubmit={load} className="flex flex-col gap-2">
         {resolvingStatus && (
-          <div className="flex items-center gap-2 text-xs text-[#FAF3E1] font-medium py-1.5 px-3 rounded-xl bg-[#FF6D1F]/15 border border-[#FF6D1F]/30">
-            <Sparkles className="h-3.5 w-3.5 text-[#FF8E42] shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-[#FCE7F3] font-medium py-1.5 px-3 rounded-xl bg-[#EC4899]/15 border border-[#EC4899]/30">
+            <Sparkles className="h-3.5 w-3.5 text-[#F472B6] shrink-0" />
             <span>{resolvingStatus}</span>
           </div>
         )}
@@ -1973,7 +1973,7 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/25 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover:border-[#FF6D1F]/60 hover:text-[#FAF3E1] backdrop-blur-md"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/25 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover:border-[#EC4899]/60 hover:text-[#FCE7F3] backdrop-blur-md"
               title="Paste link from clipboard and play immediately"
             >
               <span>📋</span>
@@ -1981,9 +1981,9 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn-tangerine !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 shadow-lg shadow-[#FF6D1F]/30 text-[#FAF3E1] cursor-pointer active:scale-95"
+              className="btn-pink !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 shadow-lg shadow-[#EC4899]/30 text-[#FCE7F3] cursor-pointer active:scale-95"
             >
-              <Play className="h-3.5 w-3.5 fill-[#FAF3E1]" />
+              <Play className="h-3.5 w-3.5 fill-[#FCE7F3]" />
               <span>Play for All</span>
             </button>
           </div>
@@ -1994,27 +1994,27 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={enqueue}
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             title="Add this link to the Up next list"
           >
-            <ListPlus className="h-4 w-4 text-[#FF8E42] shrink-0" />
+            <ListPlus className="h-4 w-4 text-[#F472B6] shrink-0" />
             <span>Add to queue</span>
           </button>
 
           <label
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             title="Play a movie file from your own device"
           >
-            <FolderOpen className="h-4 w-4 text-[#FF8E42] shrink-0" />
+            <FolderOpen className="h-4 w-4 text-[#F472B6] shrink-0" />
             <span>My file</span>
             <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
           </label>
 
           <label
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             title="Add .srt or .vtt subtitles"
           >
-            <Captions className="h-4 w-4 text-[#FF8E42] shrink-0" />
+            <Captions className="h-4 w-4 text-[#F472B6] shrink-0" />
             <span>Subtitles</span>
             <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
           </label>
@@ -2033,7 +2033,7 @@ export default function VideoPlayer({
 
           {audioTracks.length > 1 && (
             <div className="flex items-center gap-1.5 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white shadow-md backdrop-blur-md" title="Audio track / language">
-              <Volume2 className="h-4 w-4 text-[#FF8E42] shrink-0" />
+              <Volume2 className="h-4 w-4 text-[#F472B6] shrink-0" />
               <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-semibold">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
               </select>
@@ -2044,9 +2044,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={stopShare}
-              className="px-3 py-2 rounded-xl bg-[#FF6D1F]/30 hover:bg-[#FF6D1F]/50 border border-[#FF6D1F]/60 text-white font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-[#EC4899]/30 hover:bg-[#EC4899]/50 border border-[#EC4899]/60 text-white font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             >
-              <MonitorOff className="h-4 w-4 text-[#FF8E42] shrink-0" />
+              <MonitorOff className="h-4 w-4 text-[#F472B6] shrink-0" />
               <span>Stop sharing</span>
             </button>
           ) : (
@@ -2066,10 +2066,10 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 text-[#FF8E42] shrink-0" /> : <Maximize2 className="h-4 w-4 text-[#FF8E42] shrink-0" />}
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-[#F472B6] shrink-0" /> : <Maximize2 className="h-4 w-4 text-[#F472B6] shrink-0" />}
               <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}
@@ -2078,7 +2078,7 @@ export default function VideoPlayer({
             value={force}
             onChange={(e) => setForce(e.target.value)}
             aria-label="Link type"
-            className="px-3 py-2 rounded-xl border border-white/25 bg-[#222222] text-white text-xs font-semibold shadow-md backdrop-blur-md outline-none focus:border-[#FF6D1F] transition cursor-pointer"
+            className="px-3 py-2 rounded-xl border border-white/25 bg-[#222222] text-white text-xs font-semibold shadow-md backdrop-blur-md outline-none focus:border-[#EC4899] transition cursor-pointer"
             title="Link type (Auto detects it for you)"
           >
             {TYPES.map((t) => <option key={t} value={t} className="text-black bg-white">{t === 'auto' ? 'Type: Auto' : t.toUpperCase()}</option>)}

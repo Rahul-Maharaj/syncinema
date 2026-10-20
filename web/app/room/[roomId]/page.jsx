@@ -39,46 +39,46 @@ import {
 import { detectRealLocation } from '@/lib/locationDetector';
 import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
-// Curated Cinema Color Themes (Electric Tangerine & Black Hole default)
+// Curated Cinema Color Themes (Cozy Pink Romance & Velvet default matching home-bg.jpg)
 export const ROOM_THEMES = {
   tangerine: {
     id: 'tangerine',
-    name: 'Electric Tangerine & Black Hole',
-    tag: 'Sustainable Linen & Tangerine Ambiance',
-    icon: '🍊',
+    name: 'Cozy Pink Romance',
+    tag: 'Romantic Pink & Cozy Cinema Ambiance',
+    icon: '💕',
     bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222] border-white/10 shadow-lg shadow-black/40',
-    asideBg: 'bg-[#222222] border-white/10',
+    navBg: 'bg-[#222222]/95 border-pink-500/20 shadow-lg shadow-black/40',
+    asideBg: 'bg-[#222222]/95 border-pink-500/20',
     tabBg: 'bg-[#222222]',
     overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/65 to-[#222222]/45',
-    ambientGlow: 'bg-[#FF6D1F]/5',
-    borderColor: 'border-white/10',
-    cardBorder: 'border-white/15 shadow-xl shadow-black/50',
-    accentGradient: 'from-[#FF6D1F] via-[#FF853E] to-[#E05A12]',
-    accentText: 'text-[#FAF3E1]',
-    accentBg: 'bg-[#FF6D1F]',
-    themeBtnClass: 'bg-[#FF6D1F]/20 border-[#FF6D1F]/40 text-[#FAF3E1] hover:brightness-110 shadow-md shadow-[#FF6D1F]/30',
-    swatches: ['#222222', '#2E2E32', '#FF6D1F', '#FAF3E1'],
+    ambientGlow: 'bg-pink-500/10',
+    borderColor: 'border-pink-500/25',
+    cardBorder: 'border-pink-500/30 shadow-xl shadow-pink-500/10',
+    accentGradient: 'from-pink-500 via-rose-500 to-pink-400',
+    accentText: 'text-pink-100',
+    accentBg: 'bg-pink-600',
+    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/30',
+    swatches: ['#222222', '#F472B6', '#EC4899', '#FCE7F3'],
     showWallpaperDefault: true,
   },
   midnight: {
     id: 'midnight',
-    name: 'Soft Rose Ambiance',
-    tag: 'Cozy Pastel Rose & Linen Ambiance',
-    icon: '💕',
+    name: 'Soft Blush Ambiance',
+    tag: 'Cozy Pastel Rose Ambiance',
+    icon: '🌸',
     bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/90 border-white/10 shadow-lg shadow-black/40',
-    asideBg: 'bg-[#222222]/90 border-white/10',
+    navBg: 'bg-[#222222]/90 border-pink-500/20 shadow-lg shadow-black/40',
+    asideBg: 'bg-[#222222]/90 border-pink-500/20',
     tabBg: 'bg-[#222222]/95',
     overlayGradient: 'bg-gradient-to-b from-[#222222]/80 via-[#222222]/60 to-[#222222]/85',
-    ambientGlow: 'bg-[#FF8E42]/15',
-    borderColor: 'border-[#FF8E42]/30',
-    cardBorder: 'border-[#FF8E42]/40 shadow-xl shadow-black/50',
-    accentGradient: 'from-[#FF8E42] via-[#FF6D1F] to-[#FAF3E1]',
-    accentText: 'text-[#FAF3E1]',
-    accentBg: 'bg-[#FF6D1F]',
-    themeBtnClass: 'bg-[#FF6D1F]/20 border-[#FF6D1F]/40 text-[#FAF3E1] hover:brightness-110 shadow-md shadow-[#FF6D1F]/30',
-    swatches: ['#222222', '#FF8E42', '#FAF3E1', '#F5E7C6'],
+    ambientGlow: 'bg-pink-400/15',
+    borderColor: 'border-pink-500/30',
+    cardBorder: 'border-pink-500/40 shadow-xl shadow-black/50',
+    accentGradient: 'from-pink-400 via-rose-400 to-pink-100',
+    accentText: 'text-pink-100',
+    accentBg: 'bg-pink-500',
+    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/30',
+    swatches: ['#222222', '#F472B6', '#FCE7F3', '#FBCFE8'],
     showWallpaperDefault: true,
   },
   neon: {
@@ -185,18 +185,18 @@ const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
     />
     <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#222222] via-[#222222]/70 to-[#222222]/40 pointer-events-none" />
 
-    <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 p-7 text-center rounded-3xl border border-white/10 bg-[#222222]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.85)] rise">
-      <div className="relative mx-auto h-16 w-16 drop-shadow-[0_4px_16px_rgba(255,109,31,0.55)]">
+    <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 p-7 text-center rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(236,72,153,0.25)] rise">
+      <div className="relative mx-auto h-16 w-16 drop-shadow-[0_4px_16px_rgba(236,72,153,0.55)]">
         <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain" />
       </div>
-      <h1 className="font-display text-2xl font-bold text-[#FAF3E1] flex items-center justify-center gap-2">
+      <h1 className="font-display text-2xl font-bold text-pink-100 flex items-center justify-center gap-2">
         {icon}
         <span>{title}</span>
       </h1>
-      <p className="text-sm text-[#F5E7C6]/85">{hint}</p>
+      <p className="text-sm text-pink-200/85">{hint}</p>
       {children}
-      <button className="btn-tangerine w-full !py-3 font-bold text-[#FAF3E1] rounded-2xl shadow-lg cursor-pointer">{cta}</button>
-      <Link href="/" className="block text-xs text-[#FF6D1F] hover:underline font-medium">Back to home</Link>
+      <button className="btn-pink w-full !py-3 font-bold text-white rounded-2xl shadow-lg shadow-pink-500/30 cursor-pointer">{cta}</button>
+      <Link href="/" className="block text-xs text-pink-400 hover:text-pink-200 hover:underline font-medium">Back to home</Link>
     </form>
   </main>
 );
@@ -223,17 +223,17 @@ function MobileCallTabDeck({
   return (
     <div className="p-3 space-y-3.5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2 px-1">
+      <div className="flex items-center justify-between border-b border-pink-500/20 pb-2 px-1">
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="font-bold text-xs sm:text-sm text-white">Live Video &amp; Voice Call</span>
-          <span className="text-[11px] text-[#FAF3E1] font-medium">({(users || []).length} connected)</span>
+          <span className="font-bold text-xs sm:text-sm text-pink-100">Live Video &amp; Voice Call</span>
+          <span className="text-[11px] text-pink-200 font-medium">({(users || []).length} connected)</span>
         </div>
         <span
           className={`text-[10px] px-2.5 py-0.5 rounded-full border font-semibold ${
             callCam
               ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10'
-              : 'border-[#FF6D1F]/30 text-[#FAF3E1] bg-[#FF6D1F]/10'
+              : 'border-pink-500/30 text-pink-200 bg-pink-500/10'
           }`}
         >
           {callCam ? 'Camera Live' : 'Camera Off'}
@@ -267,7 +267,7 @@ function MobileCallTabDeck({
                   type="button"
                   onClick={() => handleKickUser?.(partner.id, partner.name)}
                   title={`Kick ${partner.name}`}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-[#FF6D1F] text-[#FAF3E1] hover:text-white transition shadow z-20 cursor-pointer"
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-pink-600 text-pink-100 hover:text-white transition shadow z-20 cursor-pointer"
                 >
                   <UserX className="h-3.5 w-3.5" />
                 </button>
@@ -276,18 +276,18 @@ function MobileCallTabDeck({
           ))}
         </div>
       ) : (
-        <div className="aspect-video w-full rounded-2xl border border-dashed border-white/20 bg-black/40 flex flex-col items-center justify-center p-4 text-center space-y-2">
-          <div className="h-10 w-10 rounded-full bg-[#FF6D1F]/20 border border-[#FF6D1F]/30 flex items-center justify-center text-[#FF8E42]">
-            <Heart className="h-5 w-5 animate-pulse text-[#FF8E42]" />
+        <div className="aspect-video w-full rounded-2xl border border-dashed border-pink-500/30 bg-black/40 flex flex-col items-center justify-center p-4 text-center space-y-2">
+          <div className="h-10 w-10 rounded-full bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-400">
+            <Heart className="h-5 w-5 animate-pulse text-pink-400" />
           </div>
           <div>
-            <p className="text-xs font-bold text-white">Waiting for partner to join call…</p>
-            <p className="text-[10px] text-slate-400">Share room link or invite code to connect</p>
+            <p className="text-xs font-bold text-pink-100">Waiting for partner to join call…</p>
+            <p className="text-[10px] text-pink-200/70">Share room link or invite code to connect</p>
           </div>
           <button
             type="button"
             onClick={copy}
-            className="btn-tangerine px-4 py-1.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-[#FF6D1F]/30 cursor-pointer active:scale-95"
+            className="btn-pink px-4 py-1.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-pink-500/30 cursor-pointer active:scale-95"
           >
             Copy Room Invite 💌
           </button>
@@ -295,7 +295,7 @@ function MobileCallTabDeck({
       )}
 
       {/* Local User Preview & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-black/60 border border-white/10 shadow-lg">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-black/60 border border-pink-500/20 shadow-lg">
         {/* Local Pip */}
         {!isGhost ? (
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -313,8 +313,8 @@ function MobileCallTabDeck({
               />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-white truncate">You (Your Camera)</div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-xs font-bold text-pink-100 truncate">You (Your Camera)</div>
+              <div className="text-[10px] text-pink-200/70">
                 {callCam ? 'Hardware streaming' : 'Hardware released'}
               </div>
             </div>
@@ -342,12 +342,12 @@ function MobileCallTabDeck({
               }}
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
                 callMic
-                  ? 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
-                  : 'bg-[#FF6D1F]/20 border-[#FF6D1F]/40 text-[#FAF3E1] shadow-md shadow-black/40'
+                  ? 'bg-white/10 hover:bg-white/15 border-white/15 text-pink-100'
+                  : 'bg-pink-500/20 border-pink-500/40 text-pink-100 shadow-md shadow-pink-500/20'
               }`}
               title={callMic ? 'Mute microphone' : 'Unmute microphone'}
             >
-              {callMic ? <Mic className="h-4 w-4 text-emerald-400" /> : <MicOff className="h-4 w-4 text-[#FF8E42]" />}
+              {callMic ? <Mic className="h-4 w-4 text-emerald-400" /> : <MicOff className="h-4 w-4 text-pink-400" />}
               <span>{callMic ? 'Mic: ON' : 'MUTED'}</span>
             </button>
 
@@ -363,11 +363,11 @@ function MobileCallTabDeck({
               className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
                 callCam
                   ? 'bg-emerald-500/20 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-300'
-                  : 'bg-[#FF6D1F]/20 border-[#FF6D1F]/40 text-[#FAF3E1] shadow-md shadow-black/40'
+                  : 'bg-pink-500/20 border-pink-500/40 text-pink-100 shadow-md shadow-pink-500/20'
               }`}
               title={callCam ? 'Turn off camera' : 'Turn on camera'}
             >
-              {callCam ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4 text-[#FF8E42]" />}
+              {callCam ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4 text-pink-400" />}
               <span>{callCam ? 'Cam: ON' : 'Cam: OFF'}</span>
             </button>
 
@@ -382,12 +382,12 @@ function MobileCallTabDeck({
               }}
               className={`px-3 py-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
                 callMedia?.voiceOnly
-                  ? 'btn-tangerine text-white shadow-md'
-                  : 'bg-white/10 border-white/15 text-slate-300 hover:text-white'
+                  ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                  : 'bg-white/10 border-white/15 text-pink-200/80 hover:text-pink-100'
               }`}
               title="Toggle Voice-Only Mode (saves bandwidth)"
             >
-              <Volume2 className="h-4 w-4 text-[#FF8E42]" />
+              <Volume2 className="h-4 w-4 text-pink-400" />
               <span className="hidden xs:inline">{callMedia?.voiceOnly ? 'Voice Only' : 'Audio Mode'}</span>
             </button>
           </div>
@@ -900,7 +900,7 @@ export default function Room() {
 
 
   if (needPass) return (
-    <Gate icon={<Lock className="h-6 w-6 text-[#FF8E42]" />} cta="Unlock & Enter Room 🍿"
+    <Gate icon={<Lock className="h-6 w-6 text-pink-400" />} cta="Unlock & Enter Room 🍿"
       title="Room Password Required"
       hint={
         needPass === 'badpass'
@@ -932,7 +932,7 @@ export default function Room() {
           className="field text-center font-mono !py-3 w-full" 
           required 
         />
-        <p className="text-[11px] text-[#F5E7C6]">
+        <p className="text-[11px] text-pink-200/90">
           Enter the password shared by the room host.
         </p>
       </div>
@@ -941,7 +941,7 @@ export default function Room() {
 
   if (err) return (
     <Gate
-      icon={<Lock className="h-6 w-6 text-[#FF8E42]" />}
+      icon={<Lock className="h-6 w-6 text-pink-400" />}
       cta="Back to Home"
       title={
         err === 'bot_detected'
@@ -989,11 +989,11 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} text-slate-100 font-sans selection:bg-[#FF6D1F] selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
+    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} text-pink-100 font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
       {/* Dynamic Ambient Cinema Background */}
       {showWallpaper && (
         <div 
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-50"
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-60"
           style={{ 
             backgroundImage: `url('/home-bg.jpg')`,
             backgroundPosition: 'center 40%',
@@ -1690,14 +1690,14 @@ export default function Room() {
                       onClick={() => setMobileTab(tab.id)}
                       className={`flex-1 py-2 px-1 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer relative ${
                         active
-                          ? 'btn-tangerine text-[#FAF3E1] shadow-md shadow-[#FF6D1F]/30'
-                          : 'text-[#F5E7C6]/70 hover:text-[#FAF3E1] hover:bg-white/5'
+                          ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                          : 'text-pink-200/70 hover:text-pink-100 hover:bg-pink-500/10'
                       }`}
                     >
                       <div className="relative flex items-center">
                         {Icon3D ? <Icon3D size={18} /> : <Icon className="h-4 w-4" />}
                         {tab.badge > 0 && (
-                          <span className="absolute -top-1.5 -right-2 bg-[#FF6D1F] text-white text-[9px] font-bold px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center">
+                          <span className="absolute -top-1.5 -right-2 bg-pink-500 text-white text-[9px] font-bold px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center">
                             {tab.badge > 99 ? '99+' : tab.badge}
                           </span>
                         )}
@@ -1792,8 +1792,8 @@ export default function Room() {
                       onClick={() => setDesktopTab(t.id)}
                       className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
                         active
-                          ? 'btn-tangerine text-[#FAF3E1] shadow-md shadow-[#FF6D1F]/30'
-                          : 'text-[#F5E7C6]/70 hover:text-[#FAF3E1] hover:bg-white/5'
+                          ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                          : 'text-pink-200/70 hover:text-pink-100 hover:bg-pink-500/10'
                       }`}
                     >
                       {Icon3D ? <Icon3D size={16} /> : <Icon className="h-3.5 w-3.5" />}
@@ -2302,11 +2302,11 @@ export default function Room() {
               {/* Wallpaper Toggle */}
               <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
                 <div className="space-y-0.5">
-                  <div className="text-xs font-semibold text-white flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-[#FF8E42]" />
+                  <div className="text-xs font-semibold text-pink-100 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-pink-400" />
                     <span>Romantic Ambient Wallpaper</span>
                   </div>
-                  <p className="text-[11px] text-slate-400">Display subtle couple watching background behind the theater</p>
+                  <p className="text-[11px] text-pink-200/70">Display subtle couple watching background behind the theater</p>
                 </div>
                 <button
                   type="button"
@@ -2316,7 +2316,7 @@ export default function Room() {
                     try { localStorage.setItem('sc_show_wallpaper', next ? '1' : '0'); } catch {}
                   }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    showWallpaper ? 'bg-[#FF6D1F]' : 'bg-white/20'
+                    showWallpaper ? 'bg-pink-600' : 'bg-white/20'
                   }`}
                 >
                   <span
@@ -2332,9 +2332,9 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => selectTheme(currentThemeId, true)}
-                  className="w-full py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-[#FAF3E1] font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                  className="w-full py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-pink-500/20 text-pink-100 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                 >
-                  <Crown className="h-3.5 w-3.5 text-amber-400" />
+                  <Crown className="h-3.5 w-3.5 text-pink-300" />
                   <span>Sync &ldquo;{ROOM_THEMES[currentThemeId]?.name}&rdquo; To All Room Members</span>
                 </button>
               )}

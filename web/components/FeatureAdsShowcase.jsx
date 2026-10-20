@@ -27,7 +27,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'duo-cam',
       badge: 'Duo Date Night',
-      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: DuoCam3D,
       title: 'Duo Video Cam & Real-Time Voice',
       tagline: 'See their reaction to every plot twist live.',
@@ -40,7 +40,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'theater-auditorium',
       badge: 'Watch Party Mode',
-      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Clapper3D,
       title: 'Virtual Cinema & Shared Queue',
       tagline: 'From cozy date nights for 2 up to 30 friends.',
@@ -53,7 +53,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'drift-sync',
       badge: 'Proprietary 0ms Drift',
-      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: SyncBolt3D,
       title: 'Sub-Second Precision Clock Sync',
       tagline: 'Never count down "3, 2, 1, Play" ever again.',
@@ -66,7 +66,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'universal-streaming',
       badge: 'Play Anything',
-      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Ticket3D,
       title: 'Universal Media & Screen Share',
       tagline: 'Paste any video link or play directly from your disk.',
@@ -79,7 +79,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'strict-security',
       badge: 'Hacker-Proof Privacy',
-      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Shield3D,
       title: 'Zero Logins & Bcrypt Passcodes',
       tagline: 'Strictly confidential. No accounts or trackers.',
@@ -92,7 +92,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'soundscapes-ambiance',
       badge: 'Luxury Atmosphere',
-      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Popcorn3D,
       title: '4 Cinema Palettes & Soundscapes',
       tagline: 'Cozy vibes: rain on window, crackling fireplace.',
@@ -108,14 +108,14 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 space-y-8">
       {/* Section Header */}
       <div className="text-center space-y-2.5 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FF6D1F]/15 border border-[#FF6D1F]/30 text-[#FAF3E1] text-[11px] font-extrabold uppercase tracking-widest backdrop-blur-md shadow-md">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-100 text-[11px] font-extrabold uppercase tracking-widest backdrop-blur-md shadow-md">
           <SparkleStar3D size={18} />
           <span>Real Room Previews &amp; Platform Features</span>
         </div>
-        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#FAF3E1] tracking-tight">
+        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-pink-100 tracking-tight">
           How It Looks &amp; How It Works
         </h3>
-        <p className="text-xs sm:text-sm text-[#F5E7C6]/80 font-medium">
+        <p className="text-xs sm:text-sm text-pink-200/80 font-medium">
           Compact, distraction-free rooms engineered for couples and friends to watch in true harmony.
         </p>
       </div>
@@ -127,10 +127,10 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
           return (
             <div
               key={card.id}
-              className="group rounded-3xl border border-white/10 bg-[#222222] p-4 sm:p-5 shadow-lg hover:shadow-2xl hover:border-[#FF6D1F]/60 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-3.5 relative overflow-hidden"
+              className="group rounded-3xl border border-pink-500/25 bg-[#222222]/90 backdrop-blur-md p-4 sm:p-5 shadow-lg hover:shadow-2xl hover:border-pink-500/60 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-3.5 relative overflow-hidden"
             >
-              {/* Electric Tangerine Ambient Hover Glow */}
-              <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#FF6D1F]/10 rounded-full blur-2xl group-hover:bg-[#FF6D1F]/25 transition duration-500 pointer-events-none" />
+              {/* Romantic Pink Ambient Hover Glow */}
+              <div className="absolute -top-12 -right-12 w-36 h-36 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-500/25 transition duration-500 pointer-events-none" />
 
               {/* Card Top Pill & 3D Art Icon */}
               <div className="flex items-center justify-between gap-2">
@@ -145,7 +145,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
               {/* Room Screenshot Preview Box */}
               <div
                 onClick={() => setZoomImage({ src: card.image, title: card.title })}
-                className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0C] h-36 sm:h-40 group/img cursor-pointer shadow-inner"
+                className="relative rounded-2xl overflow-hidden border border-pink-500/20 bg-[#0A0A0C] h-36 sm:h-40 group/img cursor-pointer shadow-inner"
               >
                 <img
                   src={card.image}
@@ -156,30 +156,30 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D10]/90 via-black/20 to-transparent opacity-85 group-hover/img:opacity-60 transition" />
                 
                 {/* Expand Pill */}
-                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/20 text-[10px] font-bold text-[#FAF3E1] opacity-90 group-hover/img:opacity-100 transition shadow-md">
-                  <Maximize2 className="h-3 w-3 text-[#FF6D1F]" />
+                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-pink-500/30 text-[10px] font-bold text-pink-100 opacity-90 group-hover/img:opacity-100 transition shadow-md">
+                  <Maximize2 className="h-3 w-3 text-pink-400" />
                   <span>Zoom Screenshot</span>
                 </div>
               </div>
 
               {/* Text Information */}
               <div className="space-y-1.5">
-                <h4 className="font-extrabold text-[#FAF3E1] text-base leading-snug group-hover:text-[#FF8E42] transition">
+                <h4 className="font-extrabold text-pink-100 text-base leading-snug group-hover:text-pink-300 transition">
                   {card.title}
                 </h4>
-                <p className="text-[11px] font-semibold text-[#FF6D1F] leading-tight">
+                <p className="text-[11px] font-semibold text-pink-400 leading-tight">
                   {card.tagline}
                 </p>
-                <p className="text-xs text-[#F5E7C6]/85 leading-relaxed pt-1">
+                <p className="text-xs text-pink-200/85 leading-relaxed pt-1">
                   {card.description}
                 </p>
               </div>
 
               {/* Specs Micro Pills */}
-              <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-white/10 text-[10px]">
+              <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-pink-500/15 text-[10px]">
                 {card.specs.map((spec, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[#F5E7C6]/90 truncate">
-                    <Check className="h-3 w-3 text-[#FF6D1F] shrink-0" />
+                  <div key={i} className="flex items-center gap-1.5 text-pink-200/90 truncate">
+                    <Check className="h-3 w-3 text-pink-400 shrink-0" />
                     <span className="truncate">{spec}</span>
                   </div>
                 ))}
@@ -190,17 +190,17 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       </div>
 
       {/* Bottom Quick Call To Action Banner */}
-      <div className="rounded-3xl border border-[#FF6D1F]/30 bg-[#222222] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-48 h-48 bg-[#FF6D1F]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="rounded-3xl border border-pink-500/30 bg-[#222222] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-48 h-48 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-1 text-center sm:text-left relative z-10">
           <div className="flex items-center gap-2 justify-center sm:justify-start">
             <SparkleStar3D size={20} />
-            <h4 className="font-black text-[#FAF3E1] text-base sm:text-lg">
+            <h4 className="font-black text-pink-100 text-base sm:text-lg">
               Ready for Movie Night?
             </h4>
           </div>
-          <p className="text-xs text-[#F5E7C6]/80 font-medium">
+          <p className="text-xs text-pink-200/80 font-medium">
             Create your password-protected room in 5 seconds and invite your partner.
           </p>
         </div>
@@ -214,9 +214,9 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          className="btn-tangerine shrink-0 py-3 px-6 rounded-2xl text-[#FAF3E1] font-extrabold text-xs shadow-xl transition active:scale-95 flex items-center gap-2 cursor-pointer relative z-10"
+          className="btn-pink shrink-0 py-3 px-6 rounded-2xl text-white font-extrabold text-xs shadow-xl shadow-pink-500/30 transition active:scale-95 flex items-center gap-2 cursor-pointer relative z-10"
         >
-          <Play className="h-4 w-4 fill-[#FAF3E1]" />
+          <Play className="h-4 w-4 fill-white" />
           <span>Launch Your Room Now</span>
           <ArrowRight className="h-4 w-4" />
         </button>
@@ -230,23 +230,23 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-4xl rounded-3xl border border-[#FF6D1F]/40 bg-[#161619] p-4 sm:p-5 shadow-2xl space-y-3 relative"
+            className="w-full max-w-4xl rounded-3xl border border-pink-500/40 bg-[#161619] p-4 sm:p-5 shadow-2xl space-y-3 relative"
           >
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-              <h4 className="font-bold text-[#FAF3E1] text-sm sm:text-base flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-pink-500/20 pb-2.5">
+              <h4 className="font-bold text-pink-100 text-sm sm:text-base flex items-center gap-2">
                 <Clapper3D size={22} />
                 <span>{zoomImage.title} • Live Room Screenshot</span>
               </h4>
               <button
                 type="button"
                 onClick={() => setZoomImage(null)}
-                className="p-1.5 rounded-xl text-[#F5E7C6]/60 hover:text-[#FAF3E1] hover:bg-white/10 transition"
+                className="p-1.5 rounded-xl text-pink-300/70 hover:text-pink-100 hover:bg-pink-500/20 transition"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="rounded-2xl overflow-hidden border border-white/15 max-h-[75vh] flex items-center justify-center bg-black shadow-inner">
+            <div className="rounded-2xl overflow-hidden border border-pink-500/20 max-h-[75vh] flex items-center justify-center bg-black shadow-inner">
               <img
                 src={zoomImage.src}
                 alt="Enlarged Room Preview"

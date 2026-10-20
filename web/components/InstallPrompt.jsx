@@ -70,32 +70,33 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
       {/* 1. BUTTON / PILL VARIANT */}
       {variant === 'button' && (
         <button
+          suppressHydrationWarning
           type="button"
           onClick={handleInstallClick}
           title="Install SyncCinema as an app on your phone, tablet, or PC"
-          className={`glass-btn !px-3 !py-1.5 text-xs font-semibold text-[#FAF3E1] hover:border-[#FF6D1F]/60 hover:bg-[#FF6D1F]/20 transition flex items-center gap-1.5 shadow-md shadow-[#FF6D1F]/20 ${className}`}
+          className={`glass-btn !px-3 !py-1.5 text-xs font-semibold text-pink-100 hover:border-pink-500/60 hover:bg-pink-500/20 transition flex items-center gap-1.5 shadow-md shadow-pink-500/20 ${className}`}
         >
-          <Smartphone className="h-3.5 w-3.5 text-[#FF6D1F] shrink-0" />
+          <Smartphone className="h-3.5 w-3.5 text-pink-400 shrink-0" />
           <span>Install Phone App</span>
         </button>
       )}
 
       {/* 2. FLOATING MOBILE / TABLET BOTTOM BANNER VARIANT */}
       {variant === 'banner' && !dismissedBanner && (
-        <div className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-md z-40 animate-in fade-in slide-in-from-bottom duration-500">
-          <div className="relative flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-[#1C1C1F]/95 border border-[#FF6D1F]/40 shadow-[0_10px_35px_rgba(255,109,31,0.25)] backdrop-blur-2xl">
+        <div suppressHydrationWarning className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-md z-40 animate-in fade-in slide-in-from-bottom duration-500">
+          <div className="relative flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-[#1C1C1F]/95 border border-pink-500/40 shadow-[0_10px_35px_rgba(236,72,153,0.25)] backdrop-blur-2xl">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#FF6D1F] to-[#FF8E42] p-0.5 shadow-lg shadow-[#FF6D1F]/30 shrink-0 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-pink-500 to-rose-500 p-0.5 shadow-lg shadow-pink-500/30 shrink-0 flex items-center justify-center">
                 <img src="/logo.png" alt="SyncCinema" className="h-8 w-8 object-contain rounded-lg" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-[#FAF3E1] text-xs truncate">Install SyncCinema App</span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 text-[9px] font-extrabold text-[#FF6D1F] uppercase">
+                  <span className="font-bold text-pink-100 text-xs truncate">Install SyncCinema App</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-pink-500/20 border border-pink-500/40 text-[9px] font-extrabold text-pink-300 uppercase">
                     Phone / Tab
                   </span>
                 </div>
-                <p className="text-[11px] text-[#F5E7C6]/70 truncate">Fast 0ms sync, full screen, & zero browser lag</p>
+                <p className="text-[11px] text-pink-200/70 truncate">Fast 0ms sync, full screen, &amp; zero browser lag</p>
               </div>
             </div>
 
@@ -103,7 +104,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="btn-tangerine px-3 py-1.5 rounded-xl text-[#FAF3E1] font-bold text-xs shadow-lg transition cursor-pointer flex items-center gap-1"
+                className="btn-pink px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow-lg transition cursor-pointer flex items-center gap-1"
               >
                 <Download className="h-3 w-3" />
                 <span>Install</span>
@@ -124,16 +125,16 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
       {/* 3. STEP-BY-STEP INSTALL GUIDE MODAL FOR ALL PHONES & TABLETS */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="relative w-full max-w-sm rounded-3xl bg-[#1C1C1F] border border-[#FF6D1F]/40 p-5 shadow-[0_20px_60px_rgba(255,109,31,0.3)] text-[#FAF3E1] space-y-4">
+          <div className="relative w-full max-w-sm rounded-3xl bg-[#1C1C1F] border border-pink-500/40 p-5 shadow-[0_20px_60px_rgba(236,72,153,0.3)] text-pink-100 space-y-4">
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-[#FF6D1F] via-[#FF8E42] to-[#FAF3E1] p-0.5 shadow-xl shadow-[#FF6D1F]/30">
+                <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-pink-300 p-0.5 shadow-xl shadow-pink-500/30">
                   <img src="/logo.png" alt="SyncCinema" className="h-full w-full object-contain rounded-xl" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-[#FAF3E1]">SyncCinema Mobile App</h3>
-                  <p className="text-[11px] text-[#FF6D1F] font-medium">Ready for Phone &amp; Tablet</p>
+                  <h3 className="font-bold text-sm text-pink-100">SyncCinema Mobile App</h3>
+                  <p className="text-[11px] text-pink-400 font-medium">Ready for Phone &amp; Tablet</p>
                 </div>
               </div>
               <button
@@ -147,11 +148,11 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
 
             {/* Platform Instructions */}
             {deviceType === 'ios' ? (
-              <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-white/10 text-xs">
-                <p className="font-semibold text-[#FF8E42] flex items-center gap-1.5">
+              <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-pink-500/20 text-xs">
+                <p className="font-semibold text-pink-400 flex items-center gap-1.5">
                   <span>🍎</span> Install on iPhone / iPad (Safari):
                 </p>
-                <ol className="space-y-2.5 text-white/80 list-decimal list-inside text-[11px] leading-relaxed">
+                <ol className="space-y-2.5 text-pink-100/90 list-decimal list-inside text-[11px] leading-relaxed">
                   <li>
                     Tap the <b>Share</b> button <span className="inline-block px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">⎋</span> at the bottom of Safari.
                   </li>
@@ -164,11 +165,11 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
                 </ol>
               </div>
             ) : (
-              <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-white/10 text-xs">
-                <p className="font-semibold text-[#FF8E42] flex items-center gap-1.5">
+              <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-pink-500/20 text-xs">
+                <p className="font-semibold text-pink-400 flex items-center gap-1.5">
                   <span>🤖</span> Install on Android (Chrome / Samsung):
                 </p>
-                <ol className="space-y-2.5 text-white/80 list-decimal list-inside text-[11px] leading-relaxed">
+                <ol className="space-y-2.5 text-pink-100/90 list-decimal list-inside text-[11px] leading-relaxed">
                   <li>
                     Open Chrome or Samsung Internet menu <span className="inline-block px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">⋮</span> (top right or bottom).
                   </li>
@@ -183,12 +184,12 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
             )}
 
             {/* Quick Benefits */}
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-white/70">
-              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-white/5">
-                <Sparkles className="h-3 w-3 text-[#FF8E42] shrink-0" />
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-pink-200/80">
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-pink-500/10">
+                <Sparkles className="h-3 w-3 text-pink-400 shrink-0" />
                 <span>Full screen cinema</span>
               </div>
-              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-white/5">
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-pink-500/10">
                 <Check className="h-3 w-3 text-emerald-400 shrink-0" />
                 <span>Zero browser address bar</span>
               </div>
@@ -197,7 +198,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="btn-tangerine w-full py-2.5 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#FF6D1F]/30 hover:brightness-110 transition cursor-pointer"
+              className="btn-pink w-full py-2.5 rounded-xl text-white font-bold text-xs shadow-lg shadow-pink-500/30 hover:brightness-110 transition cursor-pointer"
             >
               Got It, Continue Streaming
             </button>

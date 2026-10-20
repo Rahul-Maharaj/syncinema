@@ -135,7 +135,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="bg-[#222222] text-white min-h-screen">
+      <body suppressHydrationWarning className="bg-[#222222] text-pink-100 min-h-screen">
         <AutoFixWatchdog />
         <div className="relative z-10">{children}</div>
       </body>

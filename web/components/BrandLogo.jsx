@@ -27,7 +27,7 @@ export default function BrandLogo({
   const content = (
     <div className={`inline-flex items-center gap-2.5 sm:gap-3 group select-none ${className}`}>
       {/* Brand Icon Image (New SC Heart Film Strip) */}
-      <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_4px_16px_rgba(255,109,31,0.55)]`}>
+      <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_4px_16px_rgba(236,72,153,0.55)]`}>
         <img
           src="/logo.png"
           alt="SynCinema Logo Icon"

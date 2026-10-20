@@ -47,23 +47,23 @@ export default class CallErrorBoundary extends React.Component {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="rounded-2xl border border-[#FF6D1F]/30 bg-[#222222]/95 p-4 text-center space-y-2.5 backdrop-blur-md shadow-xl my-2">
-          <div className="h-9 w-9 rounded-full bg-[#FF6D1F]/20 text-[#FAF3E1] mx-auto flex items-center justify-center border border-[#FF6D1F]/30">
-            <Video className="h-4 w-4 text-[#FF6D1F]" />
+        <div className="rounded-2xl border border-pink-500/30 bg-[#222222]/95 p-4 text-center space-y-2.5 backdrop-blur-md shadow-xl my-2">
+          <div className="h-9 w-9 rounded-full bg-pink-500/20 text-pink-100 mx-auto flex items-center justify-center border border-pink-500/30">
+            <Video className="h-4 w-4 text-pink-400" />
           </div>
           <div>
-            <p className="text-xs font-bold text-[#FAF3E1] flex items-center justify-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-[#FF6D1F] animate-pulse" />
+            <p className="text-xs font-bold text-pink-100 flex items-center justify-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
               <span>{this.props.title || 'Video Stream Auto-Healing Engine Active'}</span>
             </p>
-            <p className="text-[11px] text-[#F5E7C6]/80 mt-0.5">
+            <p className="text-[11px] text-pink-200/80 mt-0.5">
               Auto-restoring feed in {this.state.countdown}s &bull; Audio and controls active
             </p>
           </div>
           <button
             type="button"
             onClick={this.handleReset}
-            className="btn-tangerine px-4 py-1.5 rounded-xl text-[#FAF3E1] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md transition active:scale-95"
+            className="btn-pink px-4 py-1.5 rounded-xl text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md shadow-pink-500/30 transition active:scale-95"
           >
             <RefreshCw className="h-3 w-3 animate-spin" />
             <span>Instant Resume</span>
