@@ -136,7 +136,7 @@ export default function ChatPanel({
             onClick={handleClearChat}
             title="Delete chat history"
             aria-label="Delete chat history"
-            className="ml-auto rounded-lg p-1 text-white/40 hover:text-rose-400 transition hover:bg-white/5"
+            className="ml-auto rounded-lg p-1 text-white/40 hover:text-[#FF8E42] transition hover:bg-white/5"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -159,7 +159,7 @@ export default function ChatPanel({
               className={`flex flex-col text-sm leading-snug ${mine ? 'items-end' : 'items-start'}`}
             >
               <div className="flex items-center gap-1.5 text-xs mb-0.5">
-                <b style={{ color: m.color || (mine ? '#f43f5e' : '#c084fc') }}>{mine ? 'You' : m.user}</b>
+                <b style={{ color: m.color || (mine ? '#FF8E42' : '#F5E7C6') }}>{mine ? 'You' : m.user}</b>
                 {m.vt !== undefined && (
                   <button
                     type="button"
@@ -168,7 +168,7 @@ export default function ChatPanel({
                       say?.(`Jumped to ${fmt(m.vt)} ⏱️`);
                     }}
                     title="Jump to this video moment"
-                    className="rounded bg-rose-500/15 px-1 text-[10px] text-rose-400 hover:bg-rose-500/30 transition font-mono"
+                    className="rounded bg-[#FF6D1F]/15 px-1 text-[10px] text-[#FF8E42] hover:bg-[#FF6D1F]/30 transition font-mono"
                   >
                     {fmt(m.vt)}
                   </button>
@@ -211,7 +211,7 @@ export default function ChatPanel({
             type="button"
             onClick={attachTimestamp}
             title="Attach current video timestamp"
-            className="rounded-lg text-[11px] text-rose-400 bg-white/5 hover:bg-white/10 border border-rose-500/30 px-2 py-1 font-mono transition flex items-center gap-1"
+            className="rounded-lg text-[11px] text-[#FF8E42] bg-white/5 hover:bg-white/10 border border-[#FF6D1F]/30 px-2 py-1 font-mono transition flex items-center gap-1"
           >
             <span>⏱️</span>
             <span>{fmt(playerRef?.current?.time?.() || 0)}</span>

@@ -148,7 +148,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
             {/* Platform Instructions */}
             {deviceType === 'ios' ? (
               <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-white/10 text-xs">
-                <p className="font-semibold text-pink-300 flex items-center gap-1.5">
+                <p className="font-semibold text-[#FF8E42] flex items-center gap-1.5">
                   <span>🍎</span> Install on iPhone / iPad (Safari):
                 </p>
                 <ol className="space-y-2.5 text-white/80 list-decimal list-inside text-[11px] leading-relaxed">
@@ -165,7 +165,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
               </div>
             ) : (
               <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-white/10 text-xs">
-                <p className="font-semibold text-pink-300 flex items-center gap-1.5">
+                <p className="font-semibold text-[#FF8E42] flex items-center gap-1.5">
                   <span>🤖</span> Install on Android (Chrome / Samsung):
                 </p>
                 <ol className="space-y-2.5 text-white/80 list-decimal list-inside text-[11px] leading-relaxed">
@@ -185,7 +185,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
             {/* Quick Benefits */}
             <div className="grid grid-cols-2 gap-2 text-[10px] text-white/70">
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-white/5">
-                <Sparkles className="h-3 w-3 text-pink-400 shrink-0" />
+                <Sparkles className="h-3 w-3 text-[#FF8E42] shrink-0" />
                 <span>Full screen cinema</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-white/5">
@@ -197,7 +197,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 text-white font-bold text-xs shadow-lg shadow-rose-950/50 hover:brightness-110 transition cursor-pointer"
+              className="btn-tangerine w-full py-2.5 rounded-xl text-white font-bold text-xs shadow-lg shadow-[#FF6D1F]/30 hover:brightness-110 transition cursor-pointer"
             >
               Got It, Continue Streaming
             </button>

@@ -207,7 +207,7 @@ export default function SynCinemaPlatform() {
 
       {/* High-Resolution Couple Cinema Background - Clear & Visible */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-20"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-65"
         style={{ 
           backgroundImage: `url('/home-bg.jpg')`,
           backgroundPosition: 'center 40%',
@@ -215,7 +215,7 @@ export default function SynCinemaPlatform() {
       />
 
       {/* Cinematic Vignette Overlay in Solid Black Hole HEX #222222 */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#222222] via-[#222222]/90 to-[#222222]/80 pointer-events-none" />
+      <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/35 pointer-events-none" />
 
       {/* Soft Ambient Electric Tangerine Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#FF6D1F]/10 rounded-full blur-[140px] pointer-events-none" />
@@ -243,13 +243,122 @@ export default function SynCinemaPlatform() {
         </div>
       </header>
 
-      {/* Main Hero: SIDE-BY-SIDE (Left: Create Room Box, Right: Text & Features) */}
+      {/* Main Hero: SIDE-BY-SIDE (Left: Text & High-Security Highlights, Right: Create Room Box) */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* LEFT SIDE: Create Room / Join Room Box (Clean Solid #222222, ZERO ANIMATIONS) */}
-          <div className="lg:col-span-6 xl:col-span-5 order-2 lg:order-1 w-full max-w-lg mx-auto lg:mx-0">
-            <div className="w-full rounded-3xl border border-white/10 bg-[#222222] p-5 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.85)] space-y-5 text-left">
+          {/* LEFT SIDE: Text, 3D Art Badges & High-Security Information Highlights */}
+          <div className="lg:col-span-7 xl:col-span-7 order-1 lg:order-1 space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#222222]/90 border border-[#FF6D1F]/40 text-[#FAF3E1] text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
+              <SparkleStar3D size={18} />
+              <span>Virtual Cinema For Two or More</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#FAF3E1] tracking-tight leading-[1.1] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+              Same Movie.{' '}
+              <span className="bg-gradient-to-r from-[#FF6D1F] via-[#FF8E42] to-[#FAF3E1] bg-clip-text text-transparent">
+                Different Places.
+              </span>
+              <br />
+              One Screen.
+            </h1>
+
+            <p className="text-sm sm:text-base lg:text-lg text-[#F5E7C6]/90 font-medium max-w-2xl mx-auto lg:mx-0 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+              Stream YouTube, movies, or direct links in sub-second synchronization with real-time video calls. Every room is strictly password protected with zero-leak peer-to-peer privacy.
+            </p>
+
+            {/* Feature Badges with 3D Icons */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1 text-xs">
+              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-[#FF6D1F]/50 transition">
+                <SyncBolt3D size={20} />
+                <span>0ms Drift Clock Sync</span>
+              </div>
+              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-[#FF6D1F]/50 transition">
+                <Shield3D size={20} />
+                <span>100% Password Protected</span>
+              </div>
+              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-[#FF6D1F]/50 transition">
+                <Clapper3D size={20} />
+                <span>1080p &amp; 4K HD Playback</span>
+              </div>
+              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-[#FF6D1F]/50 transition">
+                <DuoCam3D size={20} />
+                <span>Duo Cam &amp; Voice Chat</span>
+              </div>
+            </div>
+
+            {/* DETAILED HIGH-SECURITY & PRIVACY VAULT INFORMATION HIGHLIGHTS CARD */}
+            <div className="rounded-3xl border border-white/10 bg-[#222222]/90 backdrop-blur-md p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.7)] space-y-4 text-left mt-4">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-3.5">
+                <div className="p-2 rounded-xl bg-[#FF6D1F]/20 text-[#FF6D1F] border border-[#FF6D1F]/30 shrink-0">
+                  <Shield3D size={26} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-sm sm:text-base text-[#FAF3E1]">
+                      High-Security Privacy Guarantee
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#FF6D1F]/20 text-[#FAF3E1] border border-[#FF6D1F]/40 font-bold">
+                      Zero-Leak
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#FF8E42] font-semibold mt-0.5">
+                    🛡️ Only You &amp; Your Invited Partner Can See &amp; Hear You
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Guarantee 1 */}
+                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-white/5 space-y-1">
+                  <div className="font-bold text-[#FAF3E1] flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-[#FF6D1F]" />
+                    <span>Direct Peer-to-Peer Encryption</span>
+                  </div>
+                  <p className="text-[11px] text-[#F5E7C6]/75 leading-relaxed">
+                    Camera and mic feeds stream point-to-point directly between your browsers via WebRTC DTLS/SRTP. No video or voice data is ever recorded or routed to external media servers.
+                  </p>
+                </div>
+
+                {/* Guarantee 2 */}
+                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-white/5 space-y-1">
+                  <div className="font-bold text-[#FAF3E1] flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    <span>Hardware Sensor Killswitch</span>
+                  </div>
+                  <p className="text-[11px] text-[#F5E7C6]/75 leading-relaxed">
+                    When you switch Camera or Mic off, device hardware media tracks are fully terminated in your browser—the physical green/red indicator LED on your camera shuts off completely.
+                  </p>
+                </div>
+
+                {/* Guarantee 3 */}
+                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-white/5 space-y-1">
+                  <div className="font-bold text-[#FAF3E1] flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-amber-400" />
+                    <span>Zero Logins &amp; Ephemeral Keys</span>
+                  </div>
+                  <p className="text-[11px] text-[#F5E7C6]/75 leading-relaxed">
+                    No email address, login accounts, or tracking cookies required. Every room is guarded by a bcrypt-hashed passcode known exclusively to you and your invited guest.
+                  </p>
+                </div>
+
+                {/* Guarantee 4 */}
+                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-white/5 space-y-1">
+                  <div className="font-bold text-[#FAF3E1] flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-sky-400" />
+                    <span>10-Minute Inactivity Auto-Destruct</span>
+                  </div>
+                  <p className="text-[11px] text-[#F5E7C6]/75 leading-relaxed">
+                    Once all members leave or if the room remains idle for 10 minutes, the room code, chat memory, and sync session automatically self-destruct from active memory.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: Create Room / Join Room Console Box (Clean Solid #222222, ZERO ANIMATIONS) */}
+          <div className="lg:col-span-5 xl:col-span-5 order-2 lg:order-2 w-full max-w-lg mx-auto lg:mx-0">
+            <div className="w-full rounded-3xl border border-white/10 bg-[#222222]/95 backdrop-blur-md p-5 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.85)] space-y-5 text-left">
               {/* Segmented Pill Selector (skiper.ui style) */}
               <div className="grid grid-cols-2 rounded-2xl bg-[#1A1A1D] p-1.5 border border-white/10 gap-1.5">
                 <button
@@ -388,7 +497,7 @@ export default function SynCinemaPlatform() {
                   </div>
 
                   {createError && (
-                    <p className="text-xs text-rose-300 bg-rose-500/20 border border-rose-500/30 p-2.5 rounded-2xl">
+                    <p className="text-xs text-[#FAF3E1] bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 p-2.5 rounded-2xl font-medium">
                       {createError}
                     </p>
                   )}
@@ -449,7 +558,7 @@ export default function SynCinemaPlatform() {
                   </div>
 
                   {joinError && (
-                    <p className="text-xs text-rose-300 bg-rose-500/20 border border-rose-500/30 p-2.5 rounded-2xl">
+                    <p className="text-xs text-[#FAF3E1] bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 p-2.5 rounded-2xl font-medium">
                       {joinError}
                     </p>
                   )}
@@ -464,47 +573,6 @@ export default function SynCinemaPlatform() {
                   </button>
                 </form>
               )}
-            </div>
-          </div>
-
-          {/* RIGHT SIDE: Text & Feature Highlights */}
-          <div className="lg:col-span-6 xl:col-span-7 order-1 lg:order-2 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#222222] border border-[#FF6D1F]/40 text-[#FAF3E1] text-xs font-bold tracking-wider uppercase shadow-md">
-              <SparkleStar3D size={18} />
-              <span>Virtual Cinema For Two or More</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#FAF3E1] tracking-tight leading-[1.1] drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]">
-              Same Movie.{' '}
-              <span className="bg-gradient-to-r from-[#FF6D1F] via-[#FF8E42] to-[#FAF3E1] bg-clip-text text-transparent">
-                Different Places.
-              </span>
-              <br />
-              One Screen.
-            </h1>
-
-            <p className="text-sm sm:text-base lg:text-lg text-[#F5E7C6]/90 font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
-              Stream YouTube, movies, or direct links in sub-second synchronization with real-time video calls. Every room is strictly password protected.
-            </p>
-
-            {/* Feature Badges with 3D Icons placed below text */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-2 text-xs">
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222] border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg hover:border-[#FF6D1F]/50 transition">
-                <SyncBolt3D size={20} />
-                <span>0ms Drift Clock Sync</span>
-              </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222] border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg hover:border-[#FF6D1F]/50 transition">
-                <Shield3D size={20} />
-                <span>100% Password Protected</span>
-              </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222] border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg hover:border-[#FF6D1F]/50 transition">
-                <Clapper3D size={20} />
-                <span>1080p &amp; 4K HD Playback</span>
-              </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222] border border-white/10 text-[#FAF3E1] font-semibold flex items-center gap-2 shadow-lg hover:border-[#FF6D1F]/50 transition">
-                <DuoCam3D size={20} />
-                <span>Duo Cam &amp; Voice Chat</span>
-              </div>
             </div>
           </div>
 

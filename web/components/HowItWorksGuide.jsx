@@ -333,7 +333,7 @@ export default function HowItWorksGuide({ onStartRoom }) {
       <div className="mt-12 sm:mt-16 space-y-4 max-w-4xl mx-auto text-left">
         <div className="text-center space-y-1 mb-6">
           <h3 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center justify-center gap-2">
-            <HelpCircle className="h-5 w-5 text-pink-400" />
+            <HelpCircle className="h-5 w-5 text-[#FF8E42]" />
             <span>Frequently Asked Questions</span>
           </h3>
           <p className="text-xs text-slate-400">Everything you need to know about watching together</p>
@@ -350,10 +350,10 @@ export default function HowItWorksGuide({ onStartRoom }) {
                 <button
                   type="button"
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-white hover:text-pink-300 transition cursor-pointer"
+                  className="w-full p-4 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-white hover:text-[#FAF3E1] transition cursor-pointer"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown className={`h-4 w-4 text-pink-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 text-[#FF8E42] shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isOpen && (
                   <div className="px-4 pb-4 text-xs text-slate-300 leading-relaxed border-t border-white/5 pt-2 animate-in fade-in duration-150">

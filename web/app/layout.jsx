@@ -1,6 +1,7 @@
 import './globals.css';
 import { Fraunces, DM_Sans } from 'next/font/google';
 import Floaters from '@/components/Floaters';
+import AutoFixWatchdog from '@/components/AutoFixWatchdog';
 
 const display = Fraunces({ subsets: ['latin'], variable: '--font-display' });
 const body = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
@@ -134,7 +135,8 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="bg-black text-white min-h-screen">
+      <body className="bg-[#222222] text-white min-h-screen">
+        <AutoFixWatchdog />
         <div className="relative z-10">{children}</div>
       </body>
     </html>

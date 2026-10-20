@@ -14,6 +14,7 @@ import {
   resolveTitleToMetadata
 } from '@/lib/media';
 import { Tile } from './CouplesOverlay';
+import { autoFixEngine } from '@/lib/autoFixEngine';
 
 const TYPES = ['auto', 'hybrid', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -1320,17 +1321,17 @@ export default function VideoPlayer({
           }`}
         >
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/10 text-[11px] text-white/90 shadow-lg">
-            <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-rose-400'}`} />
+            <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#FF6D1F]'}`} />
             <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
             {syncOffset !== 0 && (
-              <span className="text-[10px] text-rose-400 font-mono ml-0.5">
+              <span className="text-[10px] text-[#FF8E42] font-mono ml-0.5">
                 ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
               </span>
             )}
           </div>
 
           {isLiveStream && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-600 text-[11px] font-bold text-white border border-white/20 shadow-lg backdrop-blur-md">
+            <div className="btn-tangerine flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-[#FAF3E1] border border-white/20 shadow-lg backdrop-blur-md">
               <Radio className="h-3 w-3" />
               <span>LIVE</span>
               <button
@@ -1339,7 +1340,7 @@ export default function VideoPlayer({
                   if (hlsRef.current?.liveSyncPosition) vref.current.currentTime = hlsRef.current.liveSyncPosition;
                   else if (vref.current && Number.isFinite(vref.current.duration)) vref.current.currentTime = vref.current.duration;
                 }}
-                className="ml-1 underline hover:text-white/80 text-[10px] cursor-pointer"
+                className="ml-1 underline hover:text-white text-[10px] cursor-pointer"
                 title="Jump to live edge"
               >
                 Catch up
@@ -1351,16 +1352,16 @@ export default function VideoPlayer({
         {/* Screensharing Active Header & Full Screen Toggle */}
         {stream && (
           <div
-            className={`absolute top-3 inset-x-3 z-30 flex items-center justify-between gap-2 p-2 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 transition-opacity duration-300 ${
+            className={`absolute top-3 inset-x-3 z-30 flex items-center justify-between gap-2 p-2 rounded-xl bg-[#222222]/90 backdrop-blur-md border border-white/15 transition-opacity duration-300 ${
               isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
           >
             <div className="flex items-center gap-2 min-w-0">
               <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6D1F] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF6D1F]"></span>
               </span>
-              <span className="text-xs font-semibold text-white truncate">
+              <span className="text-xs font-semibold text-[#FAF3E1] truncate">
                 {screenBy === me
                   ? '🖥️ You are sharing your screen'
                   : `🖥️ ${users.find((u) => u.id === screenBy)?.name || 'Partner'} is sharing screen`}
@@ -1371,7 +1372,7 @@ export default function VideoPlayer({
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="btn !py-1 !px-3 text-xs flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white border-0 shadow-md font-semibold cursor-pointer"
+                className="btn-tangerine !py-1 !px-3 text-xs flex items-center gap-1.5 text-[#FAF3E1] border-0 shadow-md font-semibold cursor-pointer"
                 title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
               >
                 {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -1381,10 +1382,10 @@ export default function VideoPlayer({
                 <button
                   type="button"
                   onClick={stopShare}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-medium cursor-pointer transition"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FF6D1F]/20 hover:bg-[#FF6D1F]/30 text-[#FAF3E1] border border-[#FF6D1F]/30 text-xs font-medium cursor-pointer transition"
                   title="Stop sharing your screen"
                 >
-                  <MonitorOff className="h-3.5 w-3.5 text-rose-400" />
+                  <MonitorOff className="h-3.5 w-3.5 text-[#FF8E42]" />
                   <span className="hidden sm:inline">Stop</span>
                 </button>
               )}
@@ -1406,12 +1407,12 @@ export default function VideoPlayer({
               onClick={toggleFullscreen}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 isFullscreen
-                  ? 'bg-rose-600 text-white border-white/30'
-                  : 'bg-black/85 hover:bg-black text-white/90 hover:text-white border-white/20 hover:border-white/40'
+                  ? 'btn-tangerine text-[#FAF3E1] border-white/30'
+                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FAF3E1]/90 hover:text-[#FAF3E1] border-white/20 hover:border-white/40'
               }`}
               title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
             >
-              {isFullscreen ? <Minimize2 className="h-3 w-3 text-white" /> : <Maximize2 className="h-3 w-3 text-rose-400" />}
+              {isFullscreen ? <Minimize2 className="h-3 w-3 text-[#FAF3E1]" /> : <Maximize2 className="h-3 w-3 text-[#FF8E42]" />}
               <span className="hidden sm:inline">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
 
@@ -1420,12 +1421,12 @@ export default function VideoPlayer({
               onClick={() => setShowSettings(!showSettings)}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 showSettings
-                  ? 'bg-rose-600 text-white border-white/30'
-                  : 'bg-black/85 hover:bg-black text-white/80 hover:text-white border-white/10 hover:border-white/30'
+                  ? 'btn-tangerine text-[#FAF3E1] border-white/30'
+                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FAF3E1]/80 hover:text-[#FAF3E1] border-white/10 hover:border-white/30'
               }`}
               title="Precision Sync, Speed & Audio Settings"
             >
-              <Sliders className="h-3 w-3 text-rose-400" />
+              <Sliders className="h-3 w-3 text-[#FF8E42]" />
               <span className="hidden sm:inline">Sync & Audio</span>
             </button>
           </div>
@@ -1434,7 +1435,7 @@ export default function VideoPlayer({
         {/* Partner Buffering Alert Banner */}
         {partnerBuffering?.active && (
           <div className="absolute inset-x-4 top-14 z-30 mx-auto max-w-md">
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-black border border-amber-500/40 text-amber-200 text-xs">
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#222222] border border-amber-500/40 text-amber-200 text-xs">
               <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
               <span><b>{partnerBuffering.name}</b> is buffering… Paused smoothly so you stay in sync 🍿</span>
             </div>
@@ -1444,7 +1445,7 @@ export default function VideoPlayer({
         {/* Desync Recovery Banner */}
         {syncStatus === 'desync' && (
           <div className="absolute inset-x-4 bottom-14 z-30 mx-auto max-w-sm rise">
-            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-black/90 backdrop-blur-md border border-rose-500/40 text-white text-xs shadow-2xl">
+            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#222222]/95 backdrop-blur-md border border-[#FF6D1F]/40 text-[#FAF3E1] text-xs shadow-2xl">
               <div className="flex items-center gap-1.5">
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                 <span>Drift detected</span>
@@ -1479,7 +1480,7 @@ export default function VideoPlayer({
                 setScreenAudioLocked(false);
               }
             }}
-            className="absolute bottom-4 right-4 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-2xl cursor-pointer"
+            className="btn-tangerine absolute bottom-4 right-4 z-40 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[#FAF3E1] text-xs font-semibold shadow-2xl cursor-pointer"
           >
             <Volume2 className="h-3.5 w-3.5" />
             <span>Tap for Sound 🔊</span>
@@ -1490,6 +1491,31 @@ export default function VideoPlayer({
           controls
           playsInline
           preload="auto"
+          onError={(e) => {
+            console.warn('HTML5 Video error, invoking auto-healing engine:', e);
+            autoFixEngine.autoFixVideo(vref.current, {
+              currentTime: st.current?.time || 0,
+              src: media?.src || '',
+              onReloadSource: (t) => {
+                if (media?.src) loadUrl(media.src, t);
+              },
+              onFallbackProxy: (t) => {
+                if (media?.src) loadUrl(toStreamProxyUrl(media.src), t);
+              },
+            });
+          }}
+          onWaiting={() => {
+            clearTimeout(vref.current?.__stallTimer);
+            vref.current.__stallTimer = setTimeout(() => {
+              if (vref.current && vref.current.readyState < 3 && playing.current) {
+                autoFixEngine.autoFixVideo(vref.current, { currentTime: st.current?.time || 0, src: media?.src });
+              }
+            }, 3500);
+          }}
+          onPlaying={() => {
+            clearTimeout(vref.current?.__stallTimer);
+            autoFixEngine.markHealthy(media?.src || 'current_video');
+          }}
           className={`absolute inset-0 h-full w-full ${show(['file', 'hls', 'dash', 'local'].includes(T))}`}
           style={{ transform: 'translateZ(0)' }}
         >
@@ -1546,11 +1572,11 @@ export default function VideoPlayer({
             }}
             className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer p-4 text-center transition"
           >
-            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-full bg-rose-600 shadow-[0_0_30px_rgba(225,29,72,0.8)] animate-pulse">
-              <Play className="h-8 w-8 fill-white text-white ml-1" />
+            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-tr from-[#FF6D1F] to-[#FF8E42] shadow-[0_0_30px_rgba(255,109,31,0.6)] animate-pulse">
+              <Play className="h-8 w-8 fill-[#FAF3E1] text-[#FAF3E1] ml-1" />
             </div>
-            <p className="font-semibold text-base sm:text-lg text-white">Tap to Sync &amp; Play</p>
-            <p className="text-xs text-white/70 mt-1 max-w-xs">Your partner is watching! Tap anywhere to join in real-time sync 🍿</p>
+            <p className="font-semibold text-base sm:text-lg text-[#FAF3E1]">Tap to Sync &amp; Play</p>
+            <p className="text-xs text-[#F5E7C6]/80 mt-1 max-w-xs">Your partner is watching! Tap anywhere to join in real-time sync 🍿</p>
           </div>
         )}
 
@@ -1565,16 +1591,16 @@ export default function VideoPlayer({
             onMouseMove={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >
-            <div className="relative rounded-2xl bg-black/95 backdrop-blur-xl border border-pink-500/40 p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden group/pip ring-1 ring-white/10">
+            <div className="relative rounded-2xl bg-[#222222]/95 backdrop-blur-xl border border-[#FF6D1F]/40 p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden group/pip ring-1 ring-white/10">
               {/* PiP Header Toolbar (Draggable Grip) */}
               <div
                 onMouseDown={handlePipDragStart}
                 onTouchStart={handlePipDragStart}
-                className="flex items-center justify-between gap-1.5 px-1 pb-1 text-white/80 border-b border-white/10 mb-1.5 text-[10px] cursor-grab active:cursor-grabbing select-none touch-none bg-white/[0.04] rounded-lg p-1"
+                className="flex items-center justify-between gap-1.5 px-1 pb-1 text-[#FAF3E1]/80 border-b border-white/10 mb-1.5 text-[10px] cursor-grab active:cursor-grabbing select-none touch-none bg-white/[0.04] rounded-lg p-1"
                 title="Hold & drag to move video call anywhere on screen"
               >
                 <div className="flex items-center gap-1.5 font-semibold truncate max-w-[100px] sm:max-w-[130px]">
-                  <GripHorizontal className="h-3 w-3 text-pink-400 shrink-0" />
+                  <GripHorizontal className="h-3 w-3 text-[#FF8E42] shrink-0" />
                   <span className="text-white text-[10px] font-bold truncate">
                     {users.find((u) => u.id !== me)?.name || 'Video Call'}
                   </span>
@@ -1588,7 +1614,7 @@ export default function VideoPlayer({
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowFsLocalPip((prev) => !prev); }}
                       className={`p-1 rounded text-[9px] font-semibold transition cursor-pointer ${
-                        showFsLocalPip ? 'bg-pink-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+                        showFsLocalPip ? 'bg-[#FF6D1F] text-white shadow-md' : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
                       }`}
                       title={showFsLocalPip ? 'Hide my preview' : 'Show my preview'}
                     >
@@ -1649,10 +1675,10 @@ export default function VideoPlayer({
                     )}
                   </div>
                 ) : (
-                  <div className="w-32 sm:w-40 md:!w-48 aspect-video rounded-xl bg-black/80 border border-white/10 flex flex-col items-center justify-center p-2 text-center">
-                    <Video className="h-4 w-4 text-rose-400 opacity-70 mb-0.5 animate-pulse" />
-                    <p className="text-[10px] text-white/80 font-bold">Solo in Room</p>
-                    <p className="text-[8px] text-white/40">Waiting for partner</p>
+                  <div className="w-32 sm:w-40 md:!w-48 aspect-video rounded-xl bg-[#222222] border border-white/10 flex flex-col items-center justify-center p-2 text-center">
+                    <Video className="h-4 w-4 text-[#FF8E42] opacity-70 mb-0.5 animate-pulse" />
+                    <p className="text-[10px] text-[#FAF3E1] font-bold">Solo in Room</p>
+                    <p className="text-[8px] text-[#F5E7C6]/60">Waiting for partner</p>
                   </div>
                 )}
               </div>
@@ -1670,11 +1696,11 @@ export default function VideoPlayer({
                     className={`flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
                       callMedia?.mic
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-rose-500/25 border border-rose-500/40 text-rose-300 shadow-sm'
+                        : 'bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 text-[#FAF3E1] shadow-sm'
                     }`}
                     title={callMedia?.mic ? 'Mute microphone' : 'Unmute microphone'}
                   >
-                    {callMedia?.mic ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5" />}
+                    {callMedia?.mic ? <Mic className="h-2.5 w-2.5" /> : <MicOff className="h-2.5 w-2.5 text-[#FF8E42]" />}
                     <span>{callMedia?.mic ? 'Mic On' : 'Muted'}</span>
                   </button>
 
@@ -1688,11 +1714,11 @@ export default function VideoPlayer({
                     className={`flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded-lg text-[9px] font-bold transition cursor-pointer ${
                       callMedia?.cam
                         ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
-                        : 'bg-rose-500/25 border border-rose-500/40 text-rose-300 shadow-sm'
+                        : 'bg-[#FF6D1F]/20 border border-[#FF6D1F]/40 text-[#FAF3E1] shadow-sm'
                     }`}
                     title={callMedia?.cam ? 'Turn off camera' : 'Turn on camera'}
                   >
-                    {callMedia?.cam ? <Video className="h-2.5 w-2.5 text-emerald-400" /> : <VideoOff className="h-2.5 w-2.5 text-rose-400" />}
+                    {callMedia?.cam ? <Video className="h-2.5 w-2.5 text-emerald-400" /> : <VideoOff className="h-2.5 w-2.5 text-[#FF8E42]" />}
                     <span>{callMedia?.cam ? 'Cam On' : 'Off'}</span>
                   </button>
                 </div>
@@ -1706,10 +1732,10 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => setShowFsPip(true)}
-            className={`absolute z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/90 backdrop-blur-md border border-white/20 text-white text-xs hover:border-rose-500 transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
+            className={`absolute z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#222222]/95 backdrop-blur-md border border-white/20 text-[#FAF3E1] text-xs hover:border-[#FF6D1F] transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
             title="Show Video Call PiP"
           >
-            <Video className="h-3.5 w-3.5 text-rose-400" />
+            <Video className="h-3.5 w-3.5 text-[#FF8E42]" />
             <span>Show Call</span>
             {(callMedia?.localTalking || Object.values(callMedia?.remoteTalking || {}).some(Boolean)) && (
               <span className="relative flex h-2 w-2">
@@ -1723,7 +1749,7 @@ export default function VideoPlayer({
 
       {/* Dynamic Stream Server Switcher (Multi-mirror fast fallback & 1080p HD Selector) */}
       {media?.mirrorSources && media.mirrorSources.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto py-2 px-3 bg-black/90 border border-white/10 rounded-2xl my-2 text-xs backdrop-blur-xl">
+        <div className="flex items-center gap-2 overflow-x-auto py-2 px-3 bg-[#222222] border border-white/10 rounded-2xl my-2 text-xs backdrop-blur-xl">
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-extrabold text-[10px] tracking-wider uppercase flex items-center gap-1">
               <span>💎</span>
@@ -1751,7 +1777,7 @@ export default function VideoPlayer({
                   }}
                   className={`px-2.5 py-1 rounded-xl text-[11px] font-semibold transition shrink-0 cursor-pointer flex items-center gap-1 ${
                     isActive
-                      ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md font-bold border border-rose-500/50'
+                      ? 'btn-tangerine text-[#FAF3E1] shadow-md font-bold border border-[#FF6D1F]/50'
                       : 'bg-white/5 hover:bg-white/15 text-white/70 hover:text-white border border-white/10'
                   }`}
                   title={`${srv.name} (${srv.quality || '1080p'})`}
@@ -1767,10 +1793,10 @@ export default function VideoPlayer({
 
       {/* Precision Sync & Audio Drawer */}
       {showSettings && (
-        <div className="card p-4 !bg-black border border-white/10 space-y-4">
+        <div className="card p-4 !bg-[#222222] border border-white/10 space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <span className="text-xs font-bold text-white/90 uppercase tracking-wider flex items-center gap-1.5">
-              <Sliders className="h-4 w-4 text-rose-400" /> Precision Sync &amp; Audio Controls
+            <span className="text-xs font-bold text-[#FAF3E1] uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="h-4 w-4 text-[#FF8E42]" /> Precision Sync &amp; Audio Controls
             </span>
             <button onClick={() => setShowSettings(false)} className="text-xs opacity-60 hover:opacity-100">✕ Close</button>
           </div>
@@ -1779,8 +1805,8 @@ export default function VideoPlayer({
             {/* Playback Speed (Synced) */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-white/80">
-                <span className="font-semibold flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-rose-400" /> Shared Speed</span>
-                <span className="font-mono text-rose-300">{sharedSpeed}x</span>
+                <span className="font-semibold flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-[#FF8E42]" /> Shared Speed</span>
+                <span className="font-mono text-[#FAF3E1]">{sharedSpeed}x</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {SPEEDS.map((s) => (
@@ -1790,7 +1816,7 @@ export default function VideoPlayer({
                     onClick={() => changeSharedSpeed(s)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
                       sharedSpeed === s
-                        ? 'bg-rose-600 text-white shadow-md'
+                        ? 'btn-tangerine text-white shadow-md'
                         : 'bg-white/10 text-white/70 hover:bg-white/20'
                     }`}
                   >
@@ -1832,7 +1858,7 @@ export default function VideoPlayer({
                   step="0.05"
                   value={syncOffset}
                   onChange={(e) => setSyncOffset(+e.target.value)}
-                  className="w-full accent-rose-500 cursor-pointer"
+                  className="w-full accent-[#FF6D1F] cursor-pointer"
                 />
                 <button
                   type="button"
@@ -1888,7 +1914,7 @@ export default function VideoPlayer({
             <div className="flex items-center justify-between py-2 border-t border-white/10 mt-1">
               <div className="min-w-0 pr-2">
                 <p className="text-xs font-semibold text-white flex items-center gap-1.5">
-                  <Mic className="h-3.5 w-3.5 text-rose-400" /> Smart Voice Ducking
+                  <Mic className="h-3.5 w-3.5 text-[#FF8E42]" /> Smart Voice Ducking
                 </p>
                 <p className="text-[10px] text-white/50">Auto-slows video (0.82x) and lowers movie volume when anyone speaks</p>
               </div>
@@ -1896,7 +1922,7 @@ export default function VideoPlayer({
                 type="button"
                 onClick={() => setSmartDuckingEnabled((prev) => !prev)}
                 className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition shrink-0 ${
-                  smartDuckingEnabled ? 'bg-rose-600 text-white' : 'bg-white/10 text-white/50'
+                  smartDuckingEnabled ? 'btn-tangerine text-white shadow-md' : 'bg-white/10 text-white/50'
                 }`}
               >
                 {smartDuckingEnabled ? 'Enabled' : 'Disabled'}
@@ -1907,13 +1933,13 @@ export default function VideoPlayer({
       )}
 
       {uploading && (
-        <div className="card flex items-center justify-between gap-3 p-3 !bg-black border border-white/20 text-xs text-white">
+        <div className="card flex items-center justify-between gap-3 p-3 !bg-[#222222] border border-white/20 text-xs text-white">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#FF6D1F] shrink-0" />
             <span className="truncate">Sharing <b>{uploading.name}</b> with partner&apos;s phone ({uploading.progress}%)…</span>
           </div>
           <div className="h-2 w-28 bg-white/15 rounded-full overflow-hidden shrink-0">
-            <div className="h-full bg-rose-600 transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
+            <div className="h-full bg-gradient-to-r from-[#FF6D1F] to-[#FF8E42] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
           </div>
         </div>
       )}
@@ -1927,8 +1953,8 @@ export default function VideoPlayer({
 
       <form onSubmit={load} className="flex flex-col gap-2">
         {resolvingStatus && (
-          <div className="flex items-center gap-2 text-xs text-rose-300 font-medium py-1.5 px-3 rounded-xl bg-rose-500/15 border border-rose-500/30">
-            <Sparkles className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-[#FAF3E1] font-medium py-1.5 px-3 rounded-xl bg-[#FF6D1F]/15 border border-[#FF6D1F]/30">
+            <Sparkles className="h-3.5 w-3.5 text-[#FF8E42] shrink-0" />
             <span>{resolvingStatus}</span>
           </div>
         )}
@@ -1947,7 +1973,7 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/25 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover:border-pink-400 hover:text-pink-300 backdrop-blur-md"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/25 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover:border-[#FF6D1F]/60 hover:text-[#FAF3E1] backdrop-blur-md"
               title="Paste link from clipboard and play immediately"
             >
               <span>📋</span>
@@ -1968,27 +1994,27 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={enqueue}
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             title="Add this link to the Up next list"
           >
-            <ListPlus className="h-4 w-4 text-pink-400 shrink-0" />
+            <ListPlus className="h-4 w-4 text-[#FF8E42] shrink-0" />
             <span>Add to queue</span>
           </button>
 
           <label
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             title="Play a movie file from your own device"
           >
-            <FolderOpen className="h-4 w-4 text-rose-400 shrink-0" />
+            <FolderOpen className="h-4 w-4 text-[#FF8E42] shrink-0" />
             <span>My file</span>
             <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
           </label>
 
           <label
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             title="Add .srt or .vtt subtitles"
           >
-            <Captions className="h-4 w-4 text-purple-400 shrink-0" />
+            <Captions className="h-4 w-4 text-[#FF8E42] shrink-0" />
             <span>Subtitles</span>
             <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
           </label>
@@ -2007,7 +2033,7 @@ export default function VideoPlayer({
 
           {audioTracks.length > 1 && (
             <div className="flex items-center gap-1.5 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white shadow-md backdrop-blur-md" title="Audio track / language">
-              <Volume2 className="h-4 w-4 text-rose-400 shrink-0" />
+              <Volume2 className="h-4 w-4 text-[#FF8E42] shrink-0" />
               <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-semibold">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
               </select>
@@ -2018,9 +2044,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={stopShare}
-              className="px-3 py-2 rounded-xl bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/60 text-white font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-[#FF6D1F]/30 hover:bg-[#FF6D1F]/50 border border-[#FF6D1F]/60 text-white font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
             >
-              <MonitorOff className="h-4 w-4 text-rose-400 shrink-0" />
+              <MonitorOff className="h-4 w-4 text-[#FF8E42] shrink-0" />
               <span>Stop sharing</span>
             </button>
           ) : (
@@ -2040,10 +2066,10 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-pink-400/60 text-white hover:text-pink-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#FF6D1F]/60 text-white hover:text-[#FAF3E1] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 text-rose-400 shrink-0" /> : <Maximize2 className="h-4 w-4 text-rose-400 shrink-0" />}
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-[#FF8E42] shrink-0" /> : <Maximize2 className="h-4 w-4 text-[#FF8E42] shrink-0" />}
               <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}
@@ -2052,7 +2078,7 @@ export default function VideoPlayer({
             value={force}
             onChange={(e) => setForce(e.target.value)}
             aria-label="Link type"
-            className="px-3 py-2 rounded-xl border border-white/25 bg-black/60 text-white text-xs font-semibold shadow-md backdrop-blur-md outline-none focus:border-pink-500 transition cursor-pointer"
+            className="px-3 py-2 rounded-xl border border-white/25 bg-[#222222] text-white text-xs font-semibold shadow-md backdrop-blur-md outline-none focus:border-[#FF6D1F] transition cursor-pointer"
             title="Link type (Auto detects it for you)"
           >
             {TYPES.map((t) => <option key={t} value={t} className="text-black bg-white">{t === 'auto' ? 'Type: Auto' : t.toUpperCase()}</option>)}
