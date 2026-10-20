@@ -195,7 +195,7 @@ export default function MovieNightExtras({
   const readyCount = readyCheck?.readyUsers?.length || 0;
 
   return (
-    <div className="card p-3 sm:p-4 text-white overflow-hidden !bg-black border border-white/10">
+    <div className="card p-3 sm:p-4 text-pink-100 overflow-hidden !bg-[#222222] border border-pink-500/20 rounded-2xl">
       {/* Top Tabs */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-2.5 mb-3 overflow-x-auto no-scrollbar">
         <button
@@ -294,7 +294,7 @@ export default function MovieNightExtras({
         <div className="space-y-3">
           {/* Currently Playing Card */}
           {currentMedia && currentMedia.type !== 'none' && (
-            <div className="rounded-xl border border-rose-500/40 !bg-black p-3 flex gap-3 items-center">
+            <div className="rounded-xl border border-pink-500/40 !bg-[#1a1a1d] p-3 flex gap-3 items-center">
               {currentMedia.poster ? (
                 <img src={currentMedia.poster} alt="" className="h-14 w-10 rounded-md object-cover border border-white/20 shrink-0" />
               ) : (
@@ -418,7 +418,7 @@ export default function MovieNightExtras({
                   </div>
 
                   {/* Voting Buttons */}
-                  <div className="flex items-center gap-0.5 bg-black/40 rounded-lg px-1.5 py-0.5 border border-white/10 shrink-0">
+                  <div className="flex items-center gap-0.5 bg-[#1a1a1a]/60 rounded-lg px-1.5 py-0.5 border border-pink-500/20 shrink-0">
                     <button
                       type="button"
                       onClick={() => socket.emit('queue:vote', { id: item.id, dir: 'up' })}
@@ -737,7 +737,7 @@ export default function MovieNightExtras({
 
                   <div className="grid gap-2 sm:grid-cols-2">
                     {Object.entries(entry.ratings || {}).map(([uid, r]) => (
-                      <div key={uid} className="rounded-lg bg-black/30 p-2 text-xs border border-white/5">
+                      <div key={uid} className="rounded-lg bg-[#1a1a1a]/60 p-2 text-xs border border-pink-500/20">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-white/80">{r.name}</span>
                           <span className="text-amber-400">{'★'.repeat(r.stars)}</span>
@@ -763,7 +763,7 @@ export default function MovieNightExtras({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
           <form
             onSubmit={handleAddWatchlist}
-            className="card w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-black"
+            className="card w-full max-w-md p-5 sm:p-6 space-y-4 border border-pink-500/25 !bg-[#222222] rounded-3xl shadow-2xl shadow-pink-500/10 text-pink-100"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">
@@ -834,7 +834,7 @@ export default function MovieNightExtras({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSubmitReview}
-            className="card w-full max-w-md p-5 space-y-3.5 border border-white/15 !bg-black"
+            className="card w-full max-w-md p-5 sm:p-6 space-y-4 border border-pink-500/25 !bg-[#222222] rounded-3xl shadow-2xl shadow-pink-500/10 text-pink-100"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">

@@ -246,18 +246,18 @@ export function Tile({
   return (
     <div
       onDoubleClick={disableFullscreen ? undefined : toggleFullscreen}
-      className={`group relative overflow-hidden rounded-2xl bg-[#080612] transition-all duration-300 shrink-0 ${
+      className={`group relative overflow-hidden rounded-2xl bg-[#222222] transition-all duration-300 shrink-0 ${
         className || 'w-full h-full aspect-video'
       } ${
         isSpeaking
           ? 'ring-2 ring-pink-500 shadow-[0_0_25px_rgba(236,72,153,0.35)] scale-[1.01]'
-          : 'ring-1 border border-white/10 ring-transparent shadow-md'
+          : 'ring-1 border border-pink-500/20 ring-transparent shadow-md'
       }`}
       title={disableFullscreen ? name : isPartner ? 'Double click or tap expand for full screen' : name}
     >
       {/* Voice Only Mode */}
       {voiceOnly ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#140b22] to-[#070512] p-3 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#222222] to-[#1a1a1a] p-3 text-center">
           <div className={`relative mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-tr from-pink-600/30 to-purple-600/30 border border-pink-500/40 text-pink-300 transition-transform ${isSpeaking ? 'scale-110 shadow-lg shadow-pink-500/40 ring-2 ring-pink-400' : ''}`}>
             <Mic className="h-6 w-6" />
           </div>
@@ -265,13 +265,13 @@ export function Tile({
           <span className="text-[10px] text-pink-300/80">Voice-Only Mode</span>
         </div>
       ) : isCamOff ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#120a1f] to-[#070512] p-3 text-center z-10 select-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#222222] to-[#1a1a1a] p-3 text-center z-10 select-none">
           {/* Avatar with initials & glowing ring */}
           <div className="relative mb-2">
-            <div className={`h-11 w-11 sm:h-13 sm:w-13 rounded-2xl bg-gradient-to-tr from-purple-700 via-pink-600 to-rose-500 flex items-center justify-center font-display font-extrabold text-white text-base sm:text-lg shadow-xl ${isSpeaking ? 'ring-2 ring-pink-400 animate-pulse' : 'border border-white/20'}`}>
+            <div className={`h-11 w-11 sm:h-13 sm:w-13 rounded-2xl bg-gradient-to-tr from-purple-700 via-pink-600 to-rose-500 flex items-center justify-center font-display font-extrabold text-white text-base sm:text-lg shadow-xl ${isSpeaking ? 'ring-2 ring-pink-400 animate-pulse' : 'border border-pink-500/25'}`}>
               {initial}
             </div>
-            <div className="absolute -bottom-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-black/90 border border-rose-500/60 flex items-center justify-center text-rose-400 shadow">
+            <div className="absolute -bottom-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-[#222222]/90 border border-rose-500/60 flex items-center justify-center text-rose-400 shadow">
               <VideoOff className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
             </div>
           </div>
@@ -282,7 +282,7 @@ export function Tile({
         <>
           {/* Waiting/Connecting placeholder when stream is absent */}
           {(!stream || !hasVideoTrack) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#070510] p-3 text-center z-10 select-none">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#222222] p-3 text-center z-10 select-none">
               <div className="relative mb-2 grid h-10 w-10 place-items-center rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-300 animate-pulse">
                 <Video className="h-5 w-5" />
               </div>
@@ -305,7 +305,7 @@ export function Tile({
       )}
 
       {/* User Name Tag Overlay */}
-      <div className="absolute bottom-2 left-2 rounded-xl bg-black/75 border border-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md flex items-center gap-1.5 z-20 shadow-md pointer-events-none">
+      <div className="absolute bottom-2 left-2 rounded-xl bg-[#222222]/85 border border-pink-500/25 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md flex items-center gap-1.5 z-20 shadow-md pointer-events-none">
         <span className="truncate max-w-[90px] sm:max-w-[120px]">{name}</span>
         {isSpeaking ? (
           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
@@ -328,7 +328,7 @@ export function Tile({
           type="button"
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit full screen' : 'Full screen partner video'}
-          className="absolute right-2 top-2 rounded-xl bg-black/70 hover:bg-black p-1.5 text-white/80 hover:text-white border border-white/10 backdrop-blur-md transition hover:scale-110 z-20 cursor-pointer shadow-md"
+          className="absolute right-2 top-2 rounded-xl bg-[#222222]/85 hover:bg-[#222222] p-1.5 text-white/80 hover:text-white border border-pink-500/25 backdrop-blur-md transition hover:scale-110 z-20 cursor-pointer shadow-md"
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
@@ -961,7 +961,7 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="hidden lg:flex fixed bottom-24 left-5 z-40 items-center gap-2 rounded-full border border-pink-500/40 bg-black/90 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-pink-200 transition hover:border-pink-400 hover:text-white shadow-2xl cursor-pointer"
+          className="hidden lg:flex fixed bottom-24 left-5 z-40 items-center gap-2 rounded-full border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-pink-200 transition hover:border-pink-400 hover:text-white shadow-2xl cursor-pointer"
           title="Show video call window"
         >
           <Video className="h-3.5 w-3.5 text-rose-400" />
@@ -969,7 +969,7 @@ export default function CouplesOverlay({
           {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
         </button>
       ) : (
-        <div ref={box} className={`hidden lg:block fixed bottom-20 left-5 z-40 rounded-2xl border border-pink-500/30 bg-[#070512]/95 backdrop-blur-xl p-2.5 transition-all shadow-2xl ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+        <div ref={box} className={`hidden lg:block fixed bottom-20 left-5 z-40 rounded-2xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-xl p-2.5 transition-all shadow-2xl ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
           <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />

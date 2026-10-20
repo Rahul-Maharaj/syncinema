@@ -97,7 +97,7 @@ export default function ChatPanel({
 
   return (
     <div
-      className="card vault flex flex-col p-2.5 sm:p-4 border border-white/10 !bg-black h-full flex-1 min-h-0 rounded-2xl overflow-hidden"
+      className="card vault flex flex-col p-2.5 sm:p-4 border border-pink-500/20 !bg-[#222222]/95 shadow-xl shadow-black/40 h-full flex-1 min-h-0 rounded-2xl overflow-hidden"
     >
       {/* Header: User Presence & Roster */}
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2">

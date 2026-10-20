@@ -86,7 +86,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
       {/* 2. FLOATING MOBILE / TABLET BOTTOM BANNER VARIANT */}
       {variant === 'banner' && !dismissedBanner && (
         <div suppressHydrationWarning className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-4 sm:max-w-md z-40 animate-in fade-in slide-in-from-bottom duration-500">
-          <div className="relative flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-[#1C1C1F]/95 border border-pink-500/40 shadow-[0_10px_35px_rgba(236,72,153,0.25)] backdrop-blur-2xl">
+          <div className="relative flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-[#222222]/95 border border-pink-500/40 shadow-[0_10px_35px_rgba(236,72,153,0.25)] backdrop-blur-2xl">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-pink-500 to-rose-500 p-0.5 shadow-lg shadow-pink-500/30 shrink-0 flex items-center justify-center">
                 <img src="/logo.png" alt="SyncCinema" className="h-8 w-8 object-contain rounded-lg" />
@@ -127,7 +127,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
       {/* 3. STEP-BY-STEP INSTALL GUIDE MODAL FOR ALL PHONES & TABLETS */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="relative w-full max-w-sm rounded-3xl bg-[#1C1C1F] border border-pink-500/40 p-5 shadow-[0_20px_60px_rgba(236,72,153,0.3)] text-pink-100 space-y-4">
+          <div className="relative w-full max-w-sm rounded-3xl bg-[#222222] border border-pink-500/40 p-5 shadow-[0_20px_60px_rgba(236,72,153,0.3)] text-pink-100 space-y-4">
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
 
             {/* Platform Instructions */}
             {deviceType === 'ios' ? (
-              <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-pink-500/20 text-xs">
+              <div className="space-y-3 bg-[#1a1a1a]/70 rounded-2xl p-4 border border-pink-500/20 text-xs">
                 <p className="font-semibold text-pink-400 flex items-center gap-1.5">
                   <span>🍎</span> Install on iPhone / iPad (Safari):
                 </p>
@@ -167,7 +167,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
                 </ol>
               </div>
             ) : (
-              <div className="space-y-3 bg-black/40 rounded-2xl p-4 border border-pink-500/20 text-xs">
+              <div className="space-y-3 bg-[#1a1a1a]/70 rounded-2xl p-4 border border-pink-500/20 text-xs">
                 <p className="font-semibold text-pink-400 flex items-center gap-1.5">
                   <span>🤖</span> Install on Android (Chrome / Samsung):
                 </p>

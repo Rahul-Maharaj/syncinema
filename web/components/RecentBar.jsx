@@ -84,23 +84,23 @@ export default function RecentBar({
   });
 
   return (
-    <div className={`card p-3.5 sm:p-4 text-white overflow-hidden !bg-black border border-white/10 ${className}`}>
+    <div className={`card p-3.5 sm:p-4 text-pink-100 overflow-hidden !bg-[#222222] border border-pink-500/20 rounded-2xl ${className}`}>
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3 mb-3">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-cyan-600 text-white border border-white/10">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white shadow-md shadow-pink-500/20">
             <History className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-display text-sm sm:text-base font-semibold text-white">
+              <h3 className="font-display text-sm sm:text-base font-semibold text-pink-100">
                 Recent Plays Bar
               </h3>
-              <span className="text-[10px] bg-cyan-500/20 text-cyan-300 font-mono px-2 py-0.5 rounded-full border border-cyan-500/30">
+              <span className="text-[10px] bg-pink-500/20 text-pink-300 font-mono px-2 py-0.5 rounded-full border border-pink-500/30">
                 {history.length}
               </span>
             </div>
-            <p className="text-[11px] text-white/50">
+            <p className="text-[11px] text-pink-300/60">
               Quickly rewatch or queue videos played on this device
             </p>
           </div>
@@ -128,17 +128,17 @@ export default function RecentBar({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search recent videos…"
-            className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-cyan-400 transition"
+            className="w-full bg-[#1a1a1a]/70 border border-pink-500/20 rounded-xl pl-9 pr-3 py-1.5 text-xs text-pink-100 placeholder-pink-300/40 focus:outline-none focus:border-pink-500 transition"
           />
         </div>
       )}
 
       {/* List */}
       {history.length === 0 ? (
-        <div className="py-10 text-center text-white/50 space-y-2">
-          <History className="h-9 w-9 mx-auto opacity-30 text-cyan-400" />
-          <p className="text-xs">Your Recent Bar is empty.</p>
-          <p className="text-[11px] text-white/40">
+        <div className="py-10 text-center text-pink-300/50 space-y-2">
+          <History className="h-9 w-9 mx-auto opacity-30 text-pink-400" />
+          <p className="text-xs text-pink-200">Your Recent Bar is empty.</p>
+          <p className="text-[11px] text-pink-300/40">
             Videos and streams you play will appear here for 1-tap replaying.
           </p>
         </div>
@@ -166,7 +166,7 @@ export default function RecentBar({
                   className={`grid h-8 w-8 place-items-center rounded-lg shrink-0 ${
                     isAdult
                       ? 'bg-rose-500/20 text-rose-300'
-                      : 'bg-cyan-500/20 text-cyan-300'
+                      : 'bg-pink-500/20 text-pink-300'
                   }`}
                 >
                   {isAdult ? (
@@ -199,7 +199,7 @@ export default function RecentBar({
                     className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition ${
                       isAdult
                         ? 'bg-rose-500/30 hover:bg-rose-500/50 text-rose-200'
-                        : 'bg-cyan-500/25 hover:bg-cyan-500/45 text-cyan-200'
+                        : 'bg-pink-500/25 hover:bg-pink-500/45 text-pink-200'
                     }`}
                     title="Play now for everyone"
                   >

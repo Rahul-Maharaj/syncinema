@@ -86,6 +86,18 @@ export default function SynCinemaPlatform() {
   useEffect(() => {
     try {
       generatePasscode();
+      if (typeof window !== 'undefined') {
+        const sp = new URLSearchParams(window.location.search);
+        const j = sp.get('join') || sp.get('r') || sp.get('room');
+        const p = sp.get('p') || sp.get('pass');
+        if (j) {
+          setJoinCode(j);
+          setActiveTab('join');
+        }
+        if (p) {
+          setJoinPass(p);
+        }
+      }
     } catch {}
   }, []);
 
@@ -160,24 +172,32 @@ export default function SynCinemaPlatform() {
     let c = slug(joinCode);
     let p = joinPass.trim();
 
-    // Check if user pasted a hybrid invite link (?inv=... or #pass=...)
+    // Check if user pasted a small dynamic link, short link, or invite URL
     try {
       const raw = joinCode.trim();
-      if (raw.includes('inv=') || raw.includes('#pass=') || raw.includes('/room/')) {
+      if (raw.includes('/j/')) {
+        const parts = raw.split('/j/');
+        const code = parts[parts.length - 1].split('?')[0].split('#')[0].trim();
+        if (code) {
+          router.push(`/j/${encodeURIComponent(code)}`);
+          return;
+        }
+      }
+      if (raw.includes('inv=') || raw.includes('#pass=') || raw.includes('?p=') || raw.includes('?pass=') || raw.includes('/room/')) {
         const urlObj = new URL(raw.startsWith('http') ? raw : 'https://' + raw);
         const invTicket = urlObj.searchParams.get('inv');
+        const queryPass = urlObj.searchParams.get('p') || urlObj.searchParams.get('pass');
         const hashParams = new URLSearchParams(urlObj.hash.replace(/^#/, ''));
-        const hashPass = hashParams.get('pass');
-        const roomSlug = slug(urlObj.pathname);
+        const hashPass = hashParams.get('pass') || hashParams.get('p');
+        const roomSlug = slug(urlObj.pathname.replace(/^\/room\//, ''));
         if (roomSlug) {
           c = roomSlug;
           if (invTicket) {
             const parsed = parseHybridInvite(invTicket, roomSlug);
             if (parsed?.pass && !p) p = parsed.pass;
           }
-          if (hashPass && !p) {
-            p = hashPass;
-          }
+          if (queryPass && !p) p = queryPass;
+          if (hashPass && !p) p = hashPass;
         }
       }
     } catch {}

@@ -106,7 +106,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
   }, [activeTab, selectedMood]);
 
   return (
-    <div className="card vault p-4 sm:p-5 space-y-4 !bg-black border border-white/10 rounded-2xl">
+    <div className="card vault p-4 sm:p-5 space-y-4 !bg-[#222222] border border-pink-500/20 rounded-2xl text-pink-100">
       {/* Header with Title and Mode Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1 overflow-x-auto no-scrollbar">
+        <div className="flex rounded-xl bg-[#1a1a1a]/70 p-1 border border-pink-500/20 gap-1 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab('summary')}
@@ -184,7 +184,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 text-white/85 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-[#1a1a1a]/70 border border-pink-500/20 text-pink-100/90 leading-relaxed">
                 <span className="font-semibold text-white block mb-1">Spoiler-Free Overview:</span>
                 {summaryData.synopsis}
               </div>
@@ -253,9 +253,9 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
           </div>
 
           {explainResult && (
-            <div className="p-3.5 rounded-xl bg-black/40 border border-rose-500/30 space-y-2 text-white/90">
-              <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-                <span className="font-semibold text-rose-400 capitalize">{explainResult.topic}</span>
+            <div className="p-3.5 rounded-xl bg-[#1a1a1a]/70 border border-pink-500/30 space-y-2 text-pink-100">
+              <div className="flex items-center justify-between border-b border-pink-500/15 pb-1.5">
+                <span className="font-semibold text-pink-400 capitalize">{explainResult.topic}</span>
                 <span className="text-[10px] text-emerald-400 font-medium">Safe • No Spoilers</span>
               </div>
               <p className="leading-relaxed">{explainResult.explanation}</p>
@@ -267,7 +267,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
       {/* Tab 3: Date Intermission Prompts */}
       {activeTab === 'prompts' && (
         <div className="space-y-3.5 rise text-xs">
-          <div className="p-4 rounded-xl !bg-black border border-white/15 text-center space-y-3">
+          <div className="p-4 rounded-xl !bg-[#1a1a1d] border border-pink-500/20 text-center space-y-3">
             <div className="inline-flex items-center justify-center p-2 rounded-full bg-rose-500/20 text-rose-300 mb-1">
               <MessageSquareHeart className="h-5 w-5" />
             </div>
@@ -327,7 +327,7 @@ export default function AiWatchAssistant({ socket, currentMedia, onPlayMedia, on
             {recommendations.map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-black/40 border border-white/10 hover:border-rose-500/40 transition group"
+                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#1a1a1a]/70 border border-pink-500/20 hover:border-pink-500/40 transition group"
               >
                 <div className="min-w-0 flex-1">
                   <h5 className="font-semibold text-white text-xs sm:text-sm group-hover:text-rose-400 transition truncate">

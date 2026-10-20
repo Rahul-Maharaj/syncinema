@@ -1320,7 +1320,7 @@ export default function VideoPlayer({
             isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
         >
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/10 text-[11px] text-white/90 shadow-lg">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#222222]/90 backdrop-blur-md border border-pink-500/20 text-[11px] text-white/90 shadow-lg">
             <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#EC4899]'}`} />
             <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
             {syncOffset !== 0 && (
@@ -1570,7 +1570,7 @@ export default function VideoPlayer({
                 setAutoplayBlocked(false);
               }
             }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer p-4 text-center transition"
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#222222]/85 backdrop-blur-sm cursor-pointer p-4 text-center transition"
           >
             <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-tr from-[#EC4899] to-[#F472B6] shadow-[0_0_30px_rgba(255,109,31,0.6)] animate-pulse">
               <Play className="h-8 w-8 fill-[#FCE7F3] text-[#FCE7F3] ml-1" />

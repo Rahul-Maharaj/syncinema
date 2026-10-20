@@ -44,7 +44,7 @@ ui.on('error', (err, req, res) => {
     res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('Starting SyncCinema UI…');
   }
 });
-const isApi = (u = '') => /^\/(socket\.io|peerjs|api|health)(\/|\?|$)/.test(u);
+const isApi = (u = '') => /^\/(socket\.io|peerjs|api|health|j)(\/|\?|$)/.test(u);
 // real client IP for security & rate limiting
 // Cloudflare passes cf-connecting-ip; reverse proxies prepend original client to x-forwarded-for (first entry)
 const stamp = (req) => {

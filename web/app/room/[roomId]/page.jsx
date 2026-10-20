@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
-import { getHybridInviteUrl, parseHybridInvite } from '@/lib/invite';
+import { getHybridInviteUrl, getSmallInviteUrl, fetchDynamicShortInvite, parseHybridInvite } from '@/lib/invite';
 import VideoPlayer from '@/components/VideoPlayer';
 import CouplesOverlay, { Tile } from '@/components/CouplesOverlay';
 import CallErrorBoundary from '@/components/CallErrorBoundary';
@@ -86,11 +86,11 @@ export const ROOM_THEMES = {
     name: 'Cyberpunk Neon',
     tag: 'Electric Auditorium • Cyan & Magenta',
     icon: '⚡',
-    bgClass: 'bg-[#060719]',
-    navBg: 'bg-[#070822]/90 border-cyan-500/20',
-    asideBg: 'bg-[#070822]/90',
-    tabBg: 'bg-[#060719]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#060719] via-[#080824]/40 to-[#060719]/70',
+    bgClass: 'bg-[#222222]',
+    navBg: 'bg-[#222222]/95 border-pink-500/20',
+    asideBg: 'bg-[#222222]/95 border-pink-500/20',
+    tabBg: 'bg-[#222222]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/80',
     ambientGlow: 'bg-cyan-500/15',
     borderColor: 'border-cyan-500/25',
     cardBorder: 'border-cyan-500/35',
@@ -98,7 +98,7 @@ export const ROOM_THEMES = {
     accentText: 'text-cyan-400',
     accentBg: 'bg-cyan-500',
     themeBtnClass: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25',
-    swatches: ['#060719', '#06b6d4', '#d946ef'],
+    swatches: ['#222222', '#06b6d4', '#d946ef'],
     showWallpaperDefault: false,
   },
   velvet: {
@@ -106,11 +106,11 @@ export const ROOM_THEMES = {
     name: 'Velvet Lounge',
     tag: 'Warm Candlelight • Amber & Crimson',
     icon: '🕯️',
-    bgClass: 'bg-[#0c0705]',
-    navBg: 'bg-[#140b08]/90 border-amber-500/20',
-    asideBg: 'bg-[#140b08]/90',
-    tabBg: 'bg-[#0c0705]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#0c0705] via-[#1a0e0a]/40 to-[#0c0705]/70',
+    bgClass: 'bg-[#222222]',
+    navBg: 'bg-[#222222]/95 border-pink-500/20',
+    asideBg: 'bg-[#222222]/95 border-pink-500/20',
+    tabBg: 'bg-[#222222]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/80',
     ambientGlow: 'bg-amber-500/15',
     borderColor: 'border-amber-500/25',
     cardBorder: 'border-amber-500/35',
@@ -118,7 +118,7 @@ export const ROOM_THEMES = {
     accentText: 'text-amber-400',
     accentBg: 'bg-amber-500',
     themeBtnClass: 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25',
-    swatches: ['#0c0705', '#f59e0b', '#dc2626'],
+    swatches: ['#222222', '#f59e0b', '#dc2626'],
     showWallpaperDefault: false,
   },
   aurora: {
@@ -126,11 +126,11 @@ export const ROOM_THEMES = {
     name: 'Emerald Aurora',
     tag: 'Starlight Cinema • Mint & Forest Teal',
     icon: '✨',
-    bgClass: 'bg-[#040d0a]',
-    navBg: 'bg-[#05140f]/90 border-emerald-500/20',
-    asideBg: 'bg-[#05140f]/90',
-    tabBg: 'bg-[#040d0a]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#040d0a] via-[#061812]/40 to-[#040d0a]/70',
+    bgClass: 'bg-[#222222]',
+    navBg: 'bg-[#222222]/95 border-pink-500/20',
+    asideBg: 'bg-[#222222]/95 border-pink-500/20',
+    tabBg: 'bg-[#222222]/95',
+    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/80',
     ambientGlow: 'bg-emerald-500/15',
     borderColor: 'border-emerald-500/25',
     cardBorder: 'border-emerald-500/35',
@@ -138,7 +138,7 @@ export const ROOM_THEMES = {
     accentText: 'text-emerald-400',
     accentBg: 'bg-emerald-500',
     themeBtnClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25',
-    swatches: ['#040d0a', '#10b981', '#06b6d4'],
+    swatches: ['#222222', '#10b981', '#06b6d4'],
     showWallpaperDefault: false,
   },
   obsidian: {
@@ -146,19 +146,19 @@ export const ROOM_THEMES = {
     name: 'Pure Obsidian',
     tag: 'OLED Zero Glare • Minimalist Silver',
     icon: '🌑',
-    bgClass: 'bg-[#000000]',
-    navBg: 'bg-black/95 border-white/10',
-    asideBg: 'bg-black/95',
-    tabBg: 'bg-black/95',
-    overlayGradient: 'bg-black/95',
+    bgClass: 'bg-[#222222]',
+    navBg: 'bg-[#222222]/95 border-pink-500/20',
+    asideBg: 'bg-[#222222]/95 border-pink-500/20',
+    tabBg: 'bg-[#222222]/95',
+    overlayGradient: 'bg-[#222222]/95',
     ambientGlow: 'bg-transparent',
     borderColor: 'border-white/10',
-    cardBorder: 'border-white/15',
+    cardBorder: 'border-pink-500/25',
     accentGradient: 'from-zinc-600 via-zinc-400 to-white',
     accentText: 'text-slate-200',
     accentBg: 'bg-white',
     themeBtnClass: 'bg-white/10 border-white/15 text-white hover:bg-white/15',
-    swatches: ['#000000', '#71717a', '#ffffff'],
+    swatches: ['#222222', '#71717a', '#ffffff'],
     showWallpaperDefault: false,
   },
 };
@@ -250,7 +250,7 @@ function MobileCallTabDeck({
           {otherUsers.map((partner) => (
             <div
               key={partner?.id || Math.random()}
-              className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black border border-white/15 shadow-xl group"
+              className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#222222] border border-pink-500/25 shadow-xl group"
             >
               <Tile
                 stream={callMedia?.remote?.[partner?.id]}
@@ -267,7 +267,7 @@ function MobileCallTabDeck({
                   type="button"
                   onClick={() => handleKickUser?.(partner.id, partner.name)}
                   title={`Kick ${partner.name}`}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-pink-600 text-pink-100 hover:text-white transition shadow z-20 cursor-pointer"
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#222222]/90 hover:bg-pink-600 text-pink-100 hover:text-white border border-pink-500/30 transition shadow z-20 cursor-pointer"
                 >
                   <UserX className="h-3.5 w-3.5" />
                 </button>
@@ -276,7 +276,7 @@ function MobileCallTabDeck({
           ))}
         </div>
       ) : (
-        <div className="aspect-video w-full rounded-2xl border border-dashed border-pink-500/30 bg-black/40 flex flex-col items-center justify-center p-4 text-center space-y-2">
+        <div className="aspect-video w-full rounded-2xl border border-dashed border-pink-500/30 bg-[#1a1a1a]/60 flex flex-col items-center justify-center p-4 text-center space-y-2">
           <div className="h-10 w-10 rounded-full bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-400">
             <Heart className="h-5 w-5 animate-pulse text-pink-400" />
           </div>
@@ -295,11 +295,11 @@ function MobileCallTabDeck({
       )}
 
       {/* Local User Preview & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-black/60 border border-pink-500/20 shadow-lg">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-[#222222]/95 border border-pink-500/20 shadow-lg">
         {/* Local Pip */}
         {!isGhost ? (
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <div className="h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden bg-black border border-white/15 shrink-0 shadow-md">
+            <div className="h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden bg-[#222222] border border-pink-500/25 shrink-0 shadow-md">
               <Tile
                 stream={callMedia?.mine}
                 name="You"
@@ -657,9 +657,9 @@ export default function Room() {
         if (parsed?.key) setKey(parsed.key);
       }
 
-      // Legacy fallback params
-      const p = searchParams.get('pass') || hashParams.get('pass');
-      const k = searchParams.get('key') || hashParams.get('key');
+      // Small dynamic & legacy invite params
+      const p = searchParams.get('p') || searchParams.get('pass') || hashParams.get('p') || hashParams.get('pass');
+      const k = searchParams.get('k') || searchParams.get('key') || hashParams.get('k') || hashParams.get('key');
       const v = searchParams.get('video') || hashParams.get('video');
       const createFlag = searchParams.get('create') || hashParams.get('create');
       const maxParam = searchParams.get('max') || hashParams.get('max');
@@ -867,8 +867,14 @@ export default function Room() {
 
   const copy = async () => {
     const rp = sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || '';
-    const sk = getKey();
-    const inviteUrl = getHybridInviteUrl(typeof window !== 'undefined' ? window.location.origin : '', roomId, rp, sk);
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    let inviteUrl = getSmallInviteUrl(origin, roomId, rp);
+
+    // Dynamic short link (/j/<code>)
+    try {
+      const dyn = await fetchDynamicShortInvite(roomId, rp, getKey());
+      if (dyn?.shortUrl) inviteUrl = dyn.shortUrl;
+    } catch {}
 
     // 1. Try native Web Share on mobile (WhatsApp, Telegram, SMS, etc.)
     if (typeof navigator !== 'undefined' && navigator.share && /android|iphone|ipad|mobile/i.test(navigator.userAgent)) {
@@ -908,7 +914,7 @@ export default function Room() {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    say('Invite link copied! Share with your partner 💌✨');
+    say('Small invite link copied! Share with your partner 💌✨');
   };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
   const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: dimming background lights' : 'Cinema mode off'); };
@@ -1045,7 +1051,7 @@ export default function Room() {
 
       {/* 👻 Stealth Aurelia Ghost Monitor Banner */}
       {isGhost && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-black border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#222222]/95 border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
           <span className="text-base">👻</span>
           <span>Aurelia Stealth Monitor Active (Invisible to Host &amp; Members)</span>
         </div>
@@ -1095,7 +1101,7 @@ export default function Room() {
         {/* Right: Consolidated Action Controls */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* View Modes Switcher (Theater, Duo Date, Party Grid, Focus) */}
-          <div className="hidden xl:flex items-center gap-0.5 bg-slate-900/90 border border-slate-800 p-0.5 rounded-xl">
+          <div className="hidden xl:flex items-center gap-0.5 bg-[#222222]/95 border border-pink-500/20 p-0.5 rounded-xl">
             {[
               { id: 'theater', label: 'Theater', icon: <MonitorPlay className="h-3 w-3" /> },
               { id: 'duo', label: 'Duo Date', icon: <Heart className="h-3 w-3" /> },
@@ -1244,22 +1250,22 @@ export default function Room() {
       {/* Centered, Modern Room Controls & Settings Modal (No clipping, no overlapping) */}
       {showMenu && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="card w-full max-w-lg p-5 sm:p-6 space-y-5 rounded-3xl bg-[#0b0c20]/95 border border-purple-500/30 shadow-2xl rise text-slate-100 my-auto">
+          <div className="card w-full max-w-lg p-5 sm:p-6 space-y-5 rounded-3xl bg-[#222222] border border-pink-500/25 shadow-2xl shadow-pink-500/10 rise text-pink-100 my-auto">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
                   <Sliders className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-base sm:text-lg text-white">Room Controls &amp; Settings</h3>
-                  <p className="text-[11px] text-slate-400">Manage security, capacity, sync mode &amp; viewing options</p>
+                  <h3 className="font-display font-bold text-base sm:text-lg text-pink-100">Room Controls &amp; Settings</h3>
+                  <p className="text-[11px] text-pink-300/70">Manage security, capacity, sync mode &amp; viewing options</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowMenu(false)}
-                className="h-8 w-8 rounded-full bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+                className="h-8 w-8 rounded-full bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 hover:text-white flex items-center justify-center transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1267,16 +1273,16 @@ export default function Room() {
 
             {/* Quick Status Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block font-medium">Room ID:</span>
-                <span className="font-mono font-bold text-purple-300 truncate block">{roomId}</span>
+              <div className="p-2.5 rounded-2xl bg-[#1a1a1d] border border-pink-500/20">
+                <span className="text-[10px] text-pink-300/60 block font-medium">Room ID:</span>
+                <span className="font-mono font-bold text-pink-300 truncate block">{roomId}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80">
-                <span className="text-[10px] text-slate-400 block font-medium">Capacity:</span>
+              <div className="p-2.5 rounded-2xl bg-[#1a1a1d] border border-pink-500/20">
+                <span className="text-[10px] text-pink-300/60 block font-medium">Capacity:</span>
                 <span className="font-bold text-emerald-400 block">{users.length} / {maxSeats} Members</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-slate-900/60 border border-slate-800/80 col-span-2 sm:col-span-1">
-                <span className="text-[10px] text-slate-400 block font-medium">Sync Mode:</span>
+              <div className="p-2.5 rounded-2xl bg-[#1a1a1d] border border-pink-500/20 col-span-2 sm:col-span-1">
+                <span className="text-[10px] text-pink-300/60 block font-medium">Sync Mode:</span>
                 <span className="font-bold text-pink-400 block">{lock ? '🔒 Host Sync' : '🔓 Free Sync'}</span>
               </div>
             </div>
@@ -1292,14 +1298,14 @@ export default function Room() {
                   setShowPassModal(true);
                   setShowMenu(false);
                 }}
-                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/40 text-left flex items-start gap-2.5 transition group"
+                className="p-3 rounded-2xl bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group cursor-pointer"
               >
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition">
+                <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-105 transition">
                   <Lock className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">Room Password</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">View or edit passcode</div>
+                  <div className="font-bold text-pink-100">Room Password</div>
+                  <div className="text-[10px] text-pink-300/60 mt-0.5">View or edit passcode</div>
                 </div>
               </button>
 
@@ -1310,14 +1316,14 @@ export default function Room() {
                   setShowThemeModal(true);
                   setShowMenu(false);
                 }}
-                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group"
+                className="p-3 rounded-2xl bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group cursor-pointer"
               >
                 <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-105 transition">
                   <Palette className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">Ambiance &amp; Themes</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Switch room colors &amp; vibe</div>
+                  <div className="font-bold text-pink-100">Ambiance &amp; Themes</div>
+                  <div className="text-[10px] text-pink-300/60 mt-0.5">Switch room colors &amp; vibe</div>
                 </div>
               </button>
 
@@ -1330,24 +1336,24 @@ export default function Room() {
                     setShowCapacityModal(true);
                     setShowMenu(false);
                   }}
-                  className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-purple-400/40 text-left flex items-start gap-2.5 transition group"
+                  className="p-3 rounded-2xl bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group cursor-pointer"
                 >
-                  <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:scale-105 transition">
+                  <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-105 transition">
                     <Users className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-white">Room Capacity</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">Expand up to 30 seats</div>
+                    <div className="font-bold text-pink-100">Room Capacity</div>
+                    <div className="text-[10px] text-pink-300/60 mt-0.5">Expand up to 30 seats</div>
                   </div>
                 </button>
               ) : (
-                <div className="p-3 rounded-2xl bg-slate-900/30 border border-slate-800/50 text-left flex items-start gap-2.5 opacity-60">
-                  <div className="p-2 rounded-xl bg-slate-800 text-slate-400">
+                <div className="p-3 rounded-2xl bg-[#1a1a1d]/40 border border-pink-500/10 text-left flex items-start gap-2.5 opacity-60">
+                  <div className="p-2 rounded-xl bg-[#1a1a1d] text-pink-300/40">
                     <Users className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-300">Room Capacity</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">{maxSeats} seats (Host only)</div>
+                    <div className="font-bold text-pink-200/50">Room Capacity</div>
+                    <div className="text-[10px] text-pink-300/40 mt-0.5">{maxSeats} seats (Host only)</div>
                   </div>
                 </div>
               )}
@@ -1361,16 +1367,16 @@ export default function Room() {
                       if (res?.ok) setEntryLocked(res.entryLocked);
                     });
                   }}
-                  className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group ${
-                    entryLocked ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700'
+                  className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group cursor-pointer ${
+                    entryLocked ? 'bg-pink-500/15 border-pink-500/40 text-pink-200' : 'bg-[#1a1a1d] hover:bg-[#252528] border-pink-500/20 hover:border-pink-500/40'
                   }`}
                 >
-                  <div className={`p-2 rounded-xl border ${entryLocked ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                  <div className={`p-2 rounded-xl border ${entryLocked ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : 'bg-[#1a1a1d] text-pink-300 border-pink-500/20'}`}>
                     {entryLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                   </div>
                   <div>
-                    <div className="font-bold text-white">{entryLocked ? 'Entry Locked' : 'Entry Open'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{entryLocked ? 'Click to allow joins' : 'Click to lock joins'}</div>
+                    <div className="font-bold text-pink-100">{entryLocked ? 'Entry Locked' : 'Entry Open'}</div>
+                    <div className="text-[10px] text-pink-300/60 mt-0.5">{entryLocked ? 'Click to allow joins' : 'Click to lock joins'}</div>
                   </div>
                 </button>
               )}
@@ -1380,14 +1386,14 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => socket.emit('lock', !lock)}
-                  className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-left flex items-start gap-2.5 transition group"
+                  className="p-3 rounded-2xl bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group cursor-pointer"
                 >
-                  <div className={`p-2 rounded-xl border ${lock ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
+                  <div className={`p-2 rounded-xl border ${lock ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
                     {lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                   </div>
                   <div>
-                    <div className="font-bold text-white">{lock ? 'Host-Only Control' : 'Everyone Control'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">Toggle seek &amp; pause lock</div>
+                    <div className="font-bold text-pink-100">{lock ? 'Host-Only Control' : 'Everyone Control'}</div>
+                    <div className="text-[10px] text-pink-300/60 mt-0.5">Toggle seek &amp; pause lock</div>
                   </div>
                 </button>
               )}
@@ -1399,14 +1405,14 @@ export default function Room() {
                   setShowHandoff(true);
                   setShowMenu(false);
                 }}
-                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-rose-400/40 text-left flex items-start gap-2.5 transition group"
+                className="p-3 rounded-2xl bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group cursor-pointer"
               >
-                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 group-hover:scale-105 transition">
+                <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-105 transition">
                   <Smartphone className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">QR Phone Handoff</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Scan to move to phone</div>
+                  <div className="font-bold text-pink-100">QR Phone Handoff</div>
+                  <div className="text-[10px] text-pink-300/60 mt-0.5">Scan to move to phone</div>
                 </div>
               </button>
 
@@ -1414,16 +1420,16 @@ export default function Room() {
               <button
                 type="button"
                 onClick={cycleSleep}
-                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group ${
-                  sleep ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300' : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700'
+                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group cursor-pointer ${
+                  sleep ? 'bg-pink-500/15 border-pink-500/40 text-pink-200' : 'bg-[#1a1a1d] hover:bg-[#252528] border-pink-500/20 hover:border-pink-500/40'
                 }`}
               >
-                <div className={`p-2 rounded-xl border ${sleep ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                <div className={`p-2 rounded-xl border ${sleep ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : 'bg-[#1a1a1d] text-pink-300 border-pink-500/20'}`}>
                   <Moon className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">{sleep ? `Sleep in ${sleep}m` : 'Sleep Timer'}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Auto-pause movie timer</div>
+                  <div className="font-bold text-pink-100">{sleep ? `Sleep in ${sleep}m` : 'Sleep Timer'}</div>
+                  <div className="text-[10px] text-pink-300/60 mt-0.5">Auto-pause movie timer</div>
                 </div>
               </button>
 
@@ -1434,13 +1440,13 @@ export default function Room() {
                   playerRef.current?.toggleFullscreen?.();
                   setShowMenu(false);
                 }}
-                className="p-3 rounded-2xl bg-gradient-to-r from-pink-600/15 via-rose-600/15 to-purple-600/15 hover:from-pink-600/25 hover:to-purple-600/25 border border-pink-500/30 hover:border-pink-400 text-left flex items-start gap-2.5 transition group"
+                className="p-3 rounded-2xl bg-gradient-to-r from-pink-600/15 to-rose-600/15 hover:from-pink-600/25 hover:to-rose-600/25 border border-pink-500/30 hover:border-pink-400 text-left flex items-start gap-2.5 transition group cursor-pointer"
               >
                 <div className="p-2 rounded-xl bg-pink-500/20 text-pink-300 border border-pink-500/30 group-hover:scale-105 transition">
                   <Maximize2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">Full Screen Cinema</div>
+                  <div className="font-bold text-pink-100">Full Screen Cinema</div>
                   <div className="text-[10px] text-pink-300/80 mt-0.5">Theater with movable video call</div>
                 </div>
               </button>
@@ -1449,14 +1455,14 @@ export default function Room() {
               <button
                 type="button"
                 onClick={toggleCinema}
-                className="p-3 rounded-2xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-amber-400/40 text-left flex items-start gap-2.5 transition group"
+                className="p-3 rounded-2xl bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40 text-left flex items-start gap-2.5 transition group cursor-pointer"
               >
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition">
+                <div className="p-2 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-105 transition">
                   <Film className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-white">Cinema Lights</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Dim background lights</div>
+                  <div className="font-bold text-pink-100">Cinema Lights</div>
+                  <div className="text-[10px] text-pink-300/60 mt-0.5">Dim background lights</div>
                 </div>
               </button>
 
@@ -1464,16 +1470,16 @@ export default function Room() {
               <button
                 type="button"
                 onClick={toggleHide}
-                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group ${
-                  hidden ? 'bg-rose-500/15 border-rose-500/40 text-rose-300' : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 hover:border-slate-700'
+                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition group cursor-pointer ${
+                  hidden ? 'bg-pink-500/15 border-pink-500/40 text-pink-200' : 'bg-[#1a1a1d] hover:bg-[#252528] border-pink-500/20 hover:border-pink-500/40'
                 }`}
               >
-                <div className={`p-2 rounded-xl border ${hidden ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                <div className={`p-2 rounded-xl border ${hidden ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : 'bg-[#1a1a1d] text-pink-300 border-pink-500/20'}`}>
                   {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </div>
                 <div>
-                  <div className="font-bold text-white">{hidden ? 'Screen Hidden' : 'Hide Screen'}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Quick boss-key toggle</div>
+                  <div className="font-bold text-pink-100">{hidden ? 'Screen Hidden' : 'Hide Screen'}</div>
+                  <div className="text-[10px] text-pink-300/60 mt-0.5">Quick boss-key toggle</div>
                 </div>
               </button>
             </div>
@@ -1530,22 +1536,22 @@ export default function Room() {
           {/* Main Cinema Auditorium (Left / Center) */}
           <section className="flex-1 flex flex-col min-w-0 space-y-3">
             {users.length < maxSeats && (
-              <div className="flex items-center justify-between gap-2 px-3 py-1.5 border border-white/10 bg-black/70 rounded-2xl w-full text-xs shadow-sm backdrop-blur-md">
+              <div className="flex items-center justify-between gap-2 px-3.5 py-2 border border-pink-500/20 bg-[#1a1a1d] rounded-2xl w-full text-xs shadow-sm backdrop-blur-md">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Users className="h-4 w-4 text-rose-400 shrink-0" />
-                  <span className="text-white text-xs font-medium truncate">
+                  <Users className="h-4 w-4 text-pink-400 shrink-0" />
+                  <span className="text-pink-100 text-xs font-medium truncate">
                     {users.length === 1 ? 'Waiting for partner to join…' : `Watch Party Active (${users.length}/${maxSeats})`}
                   </span>
                 </div>
-                <button onClick={copy} className="btn !py-1 !px-3 text-xs shrink-0 font-semibold flex items-center gap-1.5">
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                <button onClick={copy} className="btn-pink !py-1.5 !px-3.5 text-xs shrink-0 font-semibold flex items-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer active:scale-95">
+                  {copied ? <Check className="h-3.5 w-3.5 text-white" /> : <Copy className="h-3.5 w-3.5" />}
                   <span>{copied ? 'Copied Link' : 'Invite Friends'}</span>
                 </button>
               </div>
             )}
 
             {/* Video Player Container */}
-            <div className={`w-full rounded-2xl overflow-hidden shadow-2xl bg-black border ${theme.borderColor} transition-colors duration-500`}>
+            <div className={`w-full rounded-2xl overflow-hidden shadow-2xl bg-[#222222] border ${theme.borderColor} transition-colors duration-500`}>
               <VideoPlayer
                 socket={socket}
                 me={me}
@@ -1586,11 +1592,11 @@ export default function Room() {
                     key={rx.emoji}
                     type="button"
                     onClick={() => triggerReaction(rx.emoji)}
-                    className="px-2.5 py-1 rounded-xl bg-slate-900/80 hover:bg-purple-600/25 border border-slate-800 hover:border-purple-500/40 text-sm sm:text-xs text-white transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1 rounded-xl bg-[#222222]/90 hover:bg-pink-600/25 border border-pink-500/20 hover:border-pink-500/40 text-sm sm:text-xs text-pink-100 transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1 shadow-sm"
                     title={`Send ${rx.label} reaction to room`}
                   >
                     <span>{rx.emoji}</span>
-                    <span className="text-[10px] hidden sm:inline text-slate-300 font-medium">{rx.label}</span>
+                    <span className="text-[10px] hidden sm:inline text-pink-200/80 font-medium">{rx.label}</span>
                   </button>
                 ))}
               </div>
@@ -1682,19 +1688,19 @@ export default function Room() {
                   </div>
                   <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-60 overflow-y-auto">
                     {!isGhost && (
-                      <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md">
+                      <div className="relative aspect-video rounded-xl overflow-hidden bg-[#222222] border border-pink-500/20 shadow-md">
                         <Tile stream={callMedia?.mine} name="You" isPartner={false} voiceOnly={callMedia?.voiceOnly} isSpeaking={callMedia?.localTalking} isCamOff={!callCam} isMicMuted={!callMic} className="w-full h-full aspect-video" />
                       </div>
                     )}
                     {users.filter(u => u.id !== me).map((u) => (
-                      <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-black border border-slate-800 shadow-md group">
+                      <div key={u.id} className="relative aspect-video rounded-xl overflow-hidden bg-[#222222] border border-pink-500/20 shadow-md group">
                         <Tile stream={callMedia?.remote?.[u.id]} name={u.name} isPartner={true} voiceOnly={callMedia?.voiceOnly} isSpeaking={!!callMedia?.remoteTalking?.[u.id]} isCamOff={!!callMedia?.remoteCamOff?.[u.id]} isMicMuted={!!callMedia?.remoteMicMuted?.[u.id]} className="w-full h-full aspect-video" />
                         {me === hostId && (
                           <button
                             type="button"
                             onClick={() => handleKickUser(u.id, u.name)}
                             title={`Kick ${u.name} from room`}
-                            className="absolute top-1 right-1 p-1 rounded bg-black/80 hover:bg-rose-600 text-rose-300 hover:text-white transition opacity-0 group-hover:opacity-100 cursor-pointer shadow z-10"
+                            className="absolute top-1 right-1 p-1 rounded bg-[#222222]/90 hover:bg-pink-600 text-pink-200 hover:text-white border border-pink-500/30 transition opacity-0 group-hover:opacity-100 cursor-pointer shadow z-10"
                           >
                             <UserX className="h-3 w-3" />
                           </button>
@@ -1884,7 +1890,7 @@ export default function Room() {
                     {users.filter(u => u.id !== me).length > 0 ? (
                       <div className={`grid gap-2.5 ${users.filter(u => u.id !== me).length === 1 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
                         {users.filter(u => u.id !== me).map((partner) => (
-                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black border border-purple-500/40 shadow-inner group">
+                          <div key={partner.id} className="relative aspect-video w-full overflow-hidden rounded-xl bg-[#222222] border border-pink-500/25 shadow-inner group">
                             <Tile
                               stream={callMedia?.remote?.[partner?.id]}
                               name={partner?.name}
@@ -1900,7 +1906,7 @@ export default function Room() {
                                 type="button"
                                 onClick={() => handleKickUser(partner.id, partner.name)}
                                 title={`Kick ${partner.name}`}
-                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 hover:bg-rose-600 text-rose-300 hover:text-white transition shadow z-20 cursor-pointer"
+                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#222222]/90 hover:bg-pink-600 text-pink-200 hover:text-white border border-pink-500/30 transition shadow z-20 cursor-pointer"
                               >
                                 <UserX className="h-3.5 w-3.5" />
                               </button>
@@ -1909,10 +1915,10 @@ export default function Room() {
                         ))}
                       </div>
                     ) : (
-                      <div className="aspect-video rounded-xl border border-dashed border-slate-800 flex flex-col items-center justify-center p-3 text-center space-y-1.5 bg-black/40">
-                        <Heart className="h-6 w-6 text-rose-500/40 animate-pulse" />
-                        <p className="text-[11px] font-semibold text-slate-300">Waiting for your partner to join…</p>
-                        <button onClick={copy} className="btn !py-1 !px-2.5 text-[11px] bg-rose-600">
+                      <div className="aspect-video rounded-xl border border-dashed border-pink-500/30 flex flex-col items-center justify-center p-3 text-center space-y-1.5 bg-[#1a1a1a]/60">
+                        <Heart className="h-6 w-6 text-pink-400 animate-pulse" />
+                        <p className="text-[11px] font-semibold text-pink-200">Waiting for your partner to join…</p>
+                        <button onClick={copy} className="btn-pink !py-1 !px-2.5 text-[11px]">
                           Copy Invite 💌
                         </button>
                       </div>
@@ -1920,9 +1926,9 @@ export default function Room() {
 
                     {/* Local User Preview Pip / Ghost Indicator */}
                     {!isGhost ? (
-                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[#222222]/90 border border-pink-500/20">
                         <div className="flex items-center gap-2">
-                          <div className="h-8 w-12 rounded-lg overflow-hidden bg-black border border-white/10 shrink-0">
+                          <div className="h-8 w-12 rounded-lg overflow-hidden bg-[#222222] border border-pink-500/25 shrink-0">
                             <Tile
                               stream={callMedia?.mine}
                               name="You"
@@ -2057,6 +2063,7 @@ export default function Room() {
         isOpen={showHandoff}
         onClose={() => setShowHandoff(false)}
         roomId={roomId}
+        roomPass={sessionStorage.getItem('rp_' + roomId) || (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') || ''}
         onPlayUrl={(u) => socket.emit('media:set', { media: { type: 'auto', src: u } })}
         say={say}
       />
@@ -2064,22 +2071,22 @@ export default function Room() {
       {/* Host Room Capacity Modal */}
       {showCapacityModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4">
-          <div className="card w-full max-w-md p-6 space-y-4 border border-white/15 !bg-black rounded-2xl shadow-2xl rise">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-display font-bold text-base text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-rose-400" />
+          <div className="card w-full max-w-md p-6 space-y-4 border border-pink-500/25 !bg-[#222222] rounded-3xl shadow-2xl shadow-pink-500/10 rise text-pink-100">
+            <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
+              <h3 className="font-display font-bold text-base text-pink-100 flex items-center gap-2">
+                <Users className="h-5 w-5 text-pink-400" />
                 <span>Room Capacity Settings</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowCapacityModal(false)}
-                className="text-white/60 hover:text-white p-1"
+                className="text-pink-300/60 hover:text-white p-1 rounded-lg hover:bg-white/5 transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <p className="text-xs text-white/70">
+            <p className="text-xs text-pink-200/70">
               Select maximum members allowed in this room (Host can expand anytime up to 30 members).
             </p>
 
@@ -2100,23 +2107,23 @@ export default function Room() {
                   key={opt.count}
                   type="button"
                   onClick={() => setCapacityDraft(opt.count)}
-                  className={`rounded-xl p-2 text-center border transition-all ${
+                  className={`rounded-2xl p-2.5 text-center border transition-all cursor-pointer ${
                     capacityDraft === opt.count
-                      ? 'bg-rose-600 border-rose-500 text-white shadow-lg font-bold'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white'
+                      ? 'bg-gradient-to-r from-pink-600 to-rose-600 border-pink-400 text-white shadow-lg shadow-pink-500/30 font-bold scale-[1.02]'
+                      : 'bg-[#1a1a1d] border-pink-500/15 text-pink-200/70 hover:border-pink-500/35 hover:text-white'
                   }`}
                 >
                   <span className="block text-xs font-bold">{opt.label}</span>
-                  <span className="block text-[10px] text-white/50">{opt.sub}</span>
+                  <span className="block text-[10px] text-pink-300/50">{opt.sub}</span>
                 </button>
               ))}
             </div>
 
             {/* Stepper / Slider */}
             <div className="space-y-1.5 pt-2">
-              <div className="flex justify-between text-xs text-white/70">
+              <div className="flex justify-between text-xs text-pink-200/70">
                 <span>Custom Member Limit:</span>
-                <span className="font-bold font-mono text-rose-400">{capacityDraft} Members</span>
+                <span className="font-bold font-mono text-pink-400">{capacityDraft} Members</span>
               </div>
               <input
                 type="range"
@@ -2124,7 +2131,7 @@ export default function Room() {
                 max="30"
                 value={capacityDraft}
                 onChange={(e) => setCapacityDraft(parseInt(e.target.value, 10))}
-                className="w-full accent-rose-500 h-2 bg-white/10 rounded-lg cursor-pointer"
+                className="w-full accent-pink-500 h-2 bg-pink-500/20 rounded-lg cursor-pointer"
               />
             </div>
 
@@ -2142,14 +2149,14 @@ export default function Room() {
                     }
                   });
                 }}
-                className="btn flex-1 !py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-rose-600 to-rose-700"
+                className="btn-pink flex-1 !py-2.5 text-xs font-bold rounded-xl shadow-lg shadow-pink-500/30 cursor-pointer active:scale-95"
               >
                 Apply Capacity ({capacityDraft} Members)
               </button>
               <button
                 type="button"
                 onClick={() => setShowCapacityModal(false)}
-                className="ghost !py-2.5 px-4 text-xs rounded-xl border border-white/10"
+                className="ghost !py-2.5 px-4 text-xs rounded-xl border border-pink-500/20 text-pink-200 hover:text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -2160,20 +2167,20 @@ export default function Room() {
 
       {/* Room Password Modal */}
       {showPassModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="card w-full max-w-sm p-6 space-y-4 border border-white/15 !bg-black">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">
-                <Lock className="h-4 w-4 text-amber-400" /> Room Password
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4">
+          <div className="card w-full max-w-sm p-6 space-y-4 border border-pink-500/25 !bg-[#222222] rounded-3xl shadow-2xl shadow-pink-500/10 text-pink-100">
+            <div className="flex items-center justify-between border-b border-pink-500/15 pb-2">
+              <h3 className="font-display font-semibold text-base text-pink-100 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-pink-400" /> Room Password
               </h3>
-              <button type="button" onClick={() => setShowPassModal(false)} className="text-white/60 hover:text-white">
+              <button type="button" onClick={() => setShowPassModal(false)} className="text-pink-300/60 hover:text-white p-1 rounded-lg hover:bg-white/5 transition cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-white/70 font-medium block mb-1">
+                <label className="text-xs text-pink-200/70 font-medium block mb-1">
                   {me === hostId ? 'Room Password (Host Control)' : 'Room Password'}
                 </label>
                 <div className="relative">
@@ -2185,13 +2192,13 @@ export default function Room() {
                     placeholder="Room password"
                     minLength={4}
                     maxLength={64}
-                    className="field !pr-20 text-center font-mono text-base"
+                    className="field !pr-20 text-center font-mono text-base !bg-[#1a1a1d] border border-pink-500/25 text-pink-100 rounded-xl"
                   />
                   <div className="absolute right-2 top-2 flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => setPassVisible(!passVisible)}
-                      className="p-1 text-white/60 hover:text-white"
+                      className="p-1 text-pink-300/70 hover:text-white cursor-pointer"
                       title={passVisible ? 'Hide' : 'Show'}
                     >
                       {passVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -2204,14 +2211,14 @@ export default function Room() {
                           say('Room password copied 📋');
                         }
                       }}
-                      className="p-1 text-white/60 hover:text-white"
+                      className="p-1 text-pink-300/70 hover:text-white cursor-pointer"
                       title="Copy password"
                     >
                       <Copy className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <p className="text-[11px] text-white/50 mt-1">
+                <p className="text-[11px] text-pink-300/50 mt-1">
                   {me === hostId
                     ? 'As the room host, you can edit this password at any time.'
                     : 'Share this password only with your partner.'}
@@ -2219,7 +2226,7 @@ export default function Room() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setShowPassModal(false)} className="ghost !py-2 text-xs">
+                <button type="button" onClick={() => setShowPassModal(false)} className="ghost !py-2 text-xs rounded-xl border border-pink-500/20 text-pink-200 hover:text-white cursor-pointer">
                   Close
                 </button>
                 {me === hostId && (
@@ -2242,7 +2249,7 @@ export default function Room() {
                         }
                       });
                     }}
-                    className="btn !py-2 text-xs"
+                    className="btn-pink !py-2 text-xs rounded-xl shadow-md shadow-pink-500/30 cursor-pointer"
                   >
                     Save New Password
                   </button>
@@ -2253,20 +2260,18 @@ export default function Room() {
         </div>
       )}
 
-
-
       {/* Room Ambiance & Color Themes Modal */}
       {showThemeModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="w-full max-w-xl p-5 sm:p-6 space-y-5 rounded-3xl bg-black/85 border border-white/20 backdrop-blur-2xl shadow-2xl rise text-slate-100 my-auto text-left">
+          <div className="w-full max-w-xl p-5 sm:p-6 space-y-5 rounded-3xl bg-[#222222]/95 border border-pink-500/25 backdrop-blur-2xl shadow-2xl shadow-pink-500/10 rise text-pink-100 my-auto text-left">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-pink-600 via-rose-500 to-pink-400 flex items-center justify-center shadow-lg shadow-pink-500/30">
                   <Palette className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                  <h3 className="font-display font-bold text-base sm:text-lg text-pink-100 flex items-center gap-2">
                     Room Color Themes &amp; Ambiance
                   </h3>
                   <p className="text-[11px] text-pink-300">Transform the auditorium lighting &amp; vibe</p>
@@ -2293,7 +2298,7 @@ export default function Room() {
                     className={`p-3.5 rounded-2xl border text-left transition relative cursor-pointer flex flex-col justify-between gap-3 ${
                       isActive
                         ? `bg-white/10 ${th.cardBorder} ring-2 ring-pink-500/50 shadow-xl shadow-pink-950/40`
-                        : 'bg-black/50 border-white/10 hover:border-white/25 hover:bg-white/5'
+                        : 'bg-[#1a1a1a]/70 border-pink-500/20 hover:border-pink-500/40 hover:bg-white/5'
                     }`}
                   >
                     <div className="flex items-start justify-between w-full">
@@ -2404,7 +2409,7 @@ export default function Room() {
 
       {/* Toast notifications */}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-16 sm:bottom-6 z-50 flex justify-center px-4">
-        {toast && <div key={toast.n} className="toast rounded-full bg-black/85 px-4 py-2 text-xs sm:text-sm text-white shadow-2xl backdrop-blur-md border border-white/10">{toast.m}</div>}
+        {toast && <div key={toast.n} className="toast rounded-full bg-[#222222]/95 px-4 py-2 text-xs sm:text-sm text-pink-100 shadow-2xl backdrop-blur-md border border-pink-500/30">{toast.m}</div>}
       </div>
     </div>
   );

@@ -478,42 +478,42 @@ export default function CinemaPlugins({
   const isPlayingAnySound = Object.values(activeTracks).some(Boolean);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
-      <div className="card w-full max-w-xl p-4 sm:p-6 space-y-4 border border-purple-500/30 !bg-[#0b0c20]/95 rounded-3xl shadow-2xl rise text-slate-100 my-auto">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+      <div className="card w-full max-w-xl p-4 sm:p-6 space-y-4 border border-pink-500/25 !bg-[#222222]/95 rounded-3xl shadow-2xl shadow-pink-500/10 rise text-pink-100 my-auto">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+              <h3 className="font-display font-bold text-base sm:text-lg text-pink-100 flex items-center gap-2">
                 Cinema Plugins Deck
               </h3>
-              <p className="text-[11px] text-slate-400">Atmosphere, keepsakes, break timers &amp; prompts</p>
+              <p className="text-[11px] text-pink-300/70">Atmosphere, keepsakes, break timers &amp; prompts</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-full bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition"
+            className="h-8 w-8 rounded-full bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 hover:text-white flex items-center justify-center transition cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Tab Pills */}
-        <div className="grid grid-cols-4 gap-1 sm:gap-1.5 p-1 rounded-2xl bg-[#070814] border border-slate-800/80">
+        <div className="grid grid-cols-4 gap-1 sm:gap-1.5 p-1 rounded-2xl bg-[#1a1a1d] border border-pink-500/20">
           <button
             type="button"
             onClick={() => setActiveTab('soundscapes')}
             className={`py-2 px-1 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition ${
               activeTab === 'soundscapes'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-300/60 hover:text-white hover:bg-pink-500/10'
             }`}
           >
-            <Music className="h-3.5 w-3.5 text-purple-300" />
+            <Music className="h-3.5 w-3.5 text-pink-300" />
             <span>Sounds</span>
             {isPlayingAnySound && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse hidden sm:inline" />}
           </button>
@@ -523,8 +523,8 @@ export default function CinemaPlugins({
             onClick={() => setActiveTab('keepsake')}
             className={`py-2 px-1 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition ${
               activeTab === 'keepsake'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-300/60 hover:text-white hover:bg-pink-500/10'
             }`}
           >
             <Camera className="h-3.5 w-3.5 text-pink-300" />
@@ -536,13 +536,13 @@ export default function CinemaPlugins({
             onClick={() => setActiveTab('intermission')}
             className={`py-2 px-1 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition ${
               activeTab === 'intermission'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-300/60 hover:text-white hover:bg-pink-500/10'
             }`}
           >
-            <Timer className="h-3.5 w-3.5 text-amber-300" />
+            <Timer className="h-3.5 w-3.5 text-pink-300" />
             <span>Break</span>
-            {timer?.running && <span className="text-[9px] bg-amber-500 text-black px-1 rounded-full font-bold">LIVE</span>}
+            {timer?.running && <span className="text-[9px] bg-pink-500 text-white px-1 rounded-full font-bold">LIVE</span>}
           </button>
 
           <button
@@ -550,11 +550,11 @@ export default function CinemaPlugins({
             onClick={() => setActiveTab('prompts')}
             className={`py-2 px-1 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 transition ${
               activeTab === 'prompts'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-300/60 hover:text-white hover:bg-pink-500/10'
             }`}
           >
-            <HelpCircle className="h-3.5 w-3.5 text-cyan-300" />
+            <HelpCircle className="h-3.5 w-3.5 text-pink-300" />
             <span>Trivia</span>
           </button>
         </div>
@@ -562,12 +562,12 @@ export default function CinemaPlugins({
         {/* TAB 1: Soundscapes & Lofi Atmosphere */}
         {activeTab === 'soundscapes' && (
           <div className="space-y-4 rise">
-            <div className="flex items-center justify-between text-xs text-slate-300 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+            <div className="flex items-center justify-between text-xs text-pink-200 bg-[#1a1a1d] p-3 rounded-2xl border border-pink-500/20">
               <div className="flex items-center gap-2">
-                <Volume2 className="h-4 w-4 text-purple-400" />
+                <Volume2 className="h-4 w-4 text-pink-400" />
                 <span className="font-semibold">Master Atmosphere Volume</span>
               </div>
-              <span className="font-mono text-purple-300 font-bold">{soundVolume}%</span>
+              <span className="font-mono text-pink-300 font-bold">{soundVolume}%</span>
             </div>
 
             <input
@@ -576,7 +576,7 @@ export default function CinemaPlugins({
               max="100"
               value={soundVolume}
               onChange={(e) => handleVolumeChange(parseInt(e.target.value, 10))}
-              className="w-full accent-purple-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+              className="w-full accent-pink-500 h-2 bg-pink-500/20 rounded-lg cursor-pointer"
             />
 
             <div className="grid grid-cols-2 gap-2.5">
@@ -836,10 +836,10 @@ export default function CinemaPlugins({
               <button
                 type="button"
                 onClick={sharePromptToChat}
-                className="ghost !py-2.5 px-4 text-xs rounded-xl border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 text-slate-200"
+                className="ghost !py-2.5 px-4 text-xs rounded-xl border border-pink-500/20 hover:border-pink-500/40 flex items-center gap-1.5 text-pink-100"
                 title="Send this question to room chat"
               >
-                <MessageSquare className="h-3.5 w-3.5 text-cyan-400" />
+                <MessageSquare className="h-3.5 w-3.5 text-pink-400" />
                 <span>Send to Chat</span>
               </button>
             </div>

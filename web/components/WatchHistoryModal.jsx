@@ -1,12 +1,23 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { History, QrCode, Play, Trash2, X, ExternalLink, Smartphone, Copy, Check, Lock } from 'lucide-react';
+import QRCode from 'qrcode';
+import { History, QrCode, Play, Trash2, X, Smartphone, Copy, Check, Lock, Share2 } from 'lucide-react';
 import { isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
+import { getSmallInviteUrl } from '@/lib/invite';
 
-export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, say }) {
+export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = '', onPlayUrl, say }) {
   const [history, setHistory] = useState([]);
   const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState('handoff'); // 'handoff' | 'history'
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [handoffUrl, setHandoffUrl] = useState('');
+
+  // Extract pass if not explicitly passed as prop
+  const activePass =
+    roomPass ||
+    (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('rp_' + roomId) : '') ||
+    (typeof localStorage !== 'undefined' ? localStorage.getItem('rp_' + roomId) : '') ||
+    '';
 
   useEffect(() => {
     try {
@@ -17,66 +28,125 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
     }
   }, [isOpen]);
 
+  // Generate crisp, 100% offline QR Code when modal opens
+  useEffect(() => {
+    if (!isOpen || !roomId) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const targetUrl = getSmallInviteUrl(origin, roomId, activePass);
+    setHandoffUrl(targetUrl);
+
+    QRCode.toDataURL(targetUrl, {
+      width: 280,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#1e1b2e',
+        light: '#ffffff',
+      },
+    })
+      .then((url) => setQrDataUrl(url))
+      .catch((err) => {
+        console.warn('QR Code generation failed:', err);
+      });
+  }, [isOpen, roomId, activePass]);
+
   if (!isOpen) return null;
 
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(currentUrl)}`;
+  const copyUrl = async () => {
+    const textToCopy = handoffUrl || (typeof window !== 'undefined' ? window.location.href : '');
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      say?.('Room link copied! 📋');
+    } catch {
+      say?.('Could not copy link');
+    }
+  };
 
-  const copyUrl = () => {
-    navigator.clipboard.writeText(currentUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-    say?.('Room link copied!');
+  const shareHandoff = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `SyncCinema Room: ${roomId}`,
+          text: `🍿 Continue watching in private room "${roomId}"!\n${activePass ? `Password: ${activePass}\n` : ''}`,
+          url: handoffUrl,
+        });
+        say?.('Room shared successfully! 💌');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+    copyUrl();
   };
 
   const clearHistory = () => {
     if (confirm('Clear your local watch history?')) {
       localStorage.hist = '[]';
       setHistory([]);
-      say?.('Watch history cleared');
+      say?.('Watch history cleared 🧹');
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
-      <div className="card vault w-full max-w-md space-y-4 p-5 !bg-black border border-white/15 rounded-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4 backdrop-blur-md">
+      <div className="card vault w-full max-w-md space-y-4 p-5 sm:p-6 bg-[#222222] border border-pink-500/25 rounded-3xl shadow-2xl shadow-pink-500/10 text-pink-100">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-rose-600 text-white">
-              {tab === 'handoff' ? <QrCode className="h-4 w-4" /> : <History className="h-4 w-4" />}
+        <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white shadow-lg shadow-pink-500/30">
+              {tab === 'handoff' ? <QrCode className="h-5 w-5" /> : <History className="h-5 w-5" />}
             </div>
             <div>
-              <h3 className="font-display text-sm sm:text-base font-semibold text-white">
-                {tab === 'handoff' ? 'Cross-Device Handoff' : 'Watch History'}
+              <h3 className="font-display text-sm sm:text-base font-bold text-pink-100">
+                {tab === 'handoff' ? 'QR Phone Handoff' : 'Watch History'}
               </h3>
-              <p className="text-[11px] text-white/60">
-                {tab === 'handoff' ? 'Scan to continue watching on your phone' : 'Recently played videos'}
+              <p className="text-[11px] text-pink-300/70">
+                {tab === 'handoff' ? 'Scan to seamlessly continue on your phone or tablet' : 'Recently played videos'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-pink-300/60 hover:text-white hover:bg-pink-500/10 transition cursor-pointer"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Segmented Switcher */}
-        <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1">
+        <div className="flex rounded-2xl bg-[#1a1a1a] p-1 border border-pink-500/20 gap-1">
           <button
             type="button"
             onClick={() => setTab('handoff')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-              tab === 'handoff' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
+            className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              tab === 'handoff'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-300/70 hover:text-pink-100'
             }`}
           >
             <Smartphone className="h-3.5 w-3.5" />
-            <span>Mobile Handoff</span>
+            <span>Phone Handoff</span>
           </button>
           <button
             type="button"
             onClick={() => setTab('history')}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
-              tab === 'history' ? 'bg-rose-600 text-white shadow' : 'text-white/70 hover:text-white'
+            className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              tab === 'history'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                : 'text-pink-300/70 hover:text-pink-100'
             }`}
           >
             <History className="h-3.5 w-3.5" />
@@ -86,29 +156,56 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
 
         {/* Tab 1: QR Code Mobile Handoff */}
         {tab === 'handoff' && (
-          <div className="space-y-4 text-center text-xs rise">
-            <div className="relative mx-auto w-48 h-48 p-2.5 rounded-2xl bg-white shadow-2xl flex items-center justify-center">
-              <img
-                src={qrUrl}
-                alt="Room QR Code"
-                className="w-full h-full object-contain"
-                loading="eager"
-              />
+          <div className="space-y-4 text-center text-xs rise pt-1">
+            <div className="relative mx-auto w-52 h-52 p-3 rounded-2xl bg-white shadow-2xl shadow-pink-500/15 flex items-center justify-center border border-pink-200">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="Room Handoff QR Code"
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-800 gap-2">
+                  <div className="h-6 w-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-[11px] font-semibold text-slate-600">Generating QR…</span>
+                </div>
+              )}
             </div>
-            <div className="space-y-1 text-white/80">
-              <p className="font-semibold text-white text-sm">Scan with your Phone Camera</p>
-              <p className="text-[11px] text-white/60">
-                Instantly connects to Room <b className="text-rose-400 font-mono">{roomId}</b> with secret passkey attached.
+
+            <div className="space-y-1 px-2">
+              <p className="font-bold text-pink-100 text-sm">Scan with your Phone Camera</p>
+              <p className="text-[11px] text-pink-200/80">
+                Instantly opens room <span className="text-pink-400 font-mono font-bold">{roomId}</span> with password pre-loaded.
               </p>
+              {activePass && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-1 rounded-full bg-[#1a1a1a] border border-pink-500/25 text-[11px] text-pink-200">
+                  <Lock className="h-3 w-3 text-pink-400" />
+                  <span>Password:</span>
+                  <span className="font-mono font-bold text-pink-300">{activePass}</span>
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={copyUrl}
-              className="btn !py-2 !px-4 text-xs w-full flex items-center justify-center gap-1.5"
-            >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              <span>{copied ? 'Copied link to clipboard' : 'Copy Full Invite Link'}</span>
-            </button>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={copyUrl}
+                className="btn-pink flex-1 !py-2.5 !px-3 text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer active:scale-95"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                <span>{copied ? 'Copied Link!' : 'Copy Link'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={shareHandoff}
+                className="btn-pink !bg-pink-700/80 hover:!bg-pink-600 !py-2.5 !px-3 text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border border-pink-400/30"
+                title="Share link to mobile or WhatsApp"
+              >
+                <Share2 className="h-4 w-4 text-white" />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -116,20 +213,20 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
         {tab === 'history' && (
           <div className="space-y-3 text-xs rise">
             {history.length === 0 ? (
-              <div className="py-8 text-center text-white/50">
-                <History className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p>No history yet. Videos you play will appear here.</p>
+              <div className="py-10 text-center text-pink-300/50">
+                <History className="h-8 w-8 mx-auto mb-2 opacity-40 text-pink-400" />
+                <p className="text-pink-200/70">No history yet. Videos you play will appear here.</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                 {history.map((url, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-black/40 border border-white/10 hover:border-white/20 transition group"
+                    className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#1a1a1a] border border-pink-500/20 hover:border-pink-500/40 transition group"
                   >
-                    <span className="truncate text-white/85 text-xs font-mono flex-1 text-left flex items-center gap-1.5">
-                      {isAdultMedia(url) && <Lock className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
-                      <span className={isAdultMedia(url) ? 'text-rose-300 font-sans font-semibold' : ''}>
+                    <span className="truncate text-pink-100 text-xs font-mono flex-1 text-left flex items-center gap-1.5">
+                      {isAdultMedia(url) && <Lock className="h-3.5 w-3.5 text-pink-400 shrink-0" />}
+                      <span className={isAdultMedia(url) ? 'text-pink-300 font-sans font-semibold' : ''}>
                         {sanitizeDisplayTitle(url)}
                       </span>
                     </span>
@@ -139,7 +236,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
                         onPlayUrl?.(url);
                         onClose();
                       }}
-                      className="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 transition shrink-0"
+                      className="p-1.5 rounded-lg bg-pink-500/20 hover:bg-pink-500/40 text-pink-200 transition shrink-0 cursor-pointer"
                       title="Play this again"
                     >
                       <Play className="h-3.5 w-3.5 fill-current" />
@@ -149,11 +246,11 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, onPlayUrl, 
               </div>
             )}
             {history.length > 0 && (
-              <div className="flex justify-end pt-2 border-t border-white/10">
+              <div className="flex justify-end pt-2 border-t border-pink-500/15">
                 <button
                   type="button"
                   onClick={clearHistory}
-                  className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1"
+                  className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 cursor-pointer transition"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Clear History
                 </button>

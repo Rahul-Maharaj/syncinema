@@ -1,7 +1,45 @@
-// Production-Grade Hybrid Room Invite System
-// Encrypts/obfuscates room credentials into URL-safe opaque tickets
-// so passwords and vault keys are protected across all devices, mobile chat previews,
-// messaging apps (WhatsApp, Telegram, Discord, SMS), and cross-network sessions.
+// Production-Grade Small Dynamic Room Invite System
+// Generates compact, clean, dynamic links that never wrap or break in WhatsApp,
+// Telegram, Instagram, SMS, or mobile in-app webviews.
+
+export function getSmallInviteUrl(origin, roomId, pass) {
+  const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
+  const cleanRoom = encodeURIComponent(String(roomId || '').trim());
+  if (!cleanRoom) return base;
+  if (!pass) {
+    return `${base}/room/${cleanRoom}`;
+  }
+  return `${base}/room/${cleanRoom}?p=${encodeURIComponent(String(pass).trim())}`;
+}
+
+export async function fetchDynamicShortInvite(roomId, pass, key) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const fallback = getSmallInviteUrl(origin, roomId, pass);
+
+  try {
+    const res = await fetch('/api/invite/shorten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId, pass, key }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.shortUrl) {
+        return {
+          code: data.code,
+          shortUrl: data.shortUrl,
+          directUrl: data.directUrl || fallback,
+        };
+      }
+    }
+  } catch {}
+
+  return {
+    code: '',
+    shortUrl: fallback,
+    directUrl: fallback,
+  };
+}
 
 export function createHybridInvite(roomId, pass, key) {
   if (!roomId) return '';
@@ -41,7 +79,6 @@ export function parseHybridInvite(ticket, expectedRoomId) {
       ? atob(b64)
       : Buffer.from(b64, 'base64').toString('binary');
 
-    // Test with both lowercased salt and exact salt for 100% compatibility
     const cleanExpected = String(expectedRoomId).trim();
     const candidateSalts = [
       'sc_vault_' + cleanExpected.toLowerCase(),
@@ -69,17 +106,7 @@ export function parseHybridInvite(ticket, expectedRoomId) {
   return null;
 }
 
-// Generate the production hybrid invite URL
-// Dual-layer protection:
-// 1. Opaque encrypted ?inv= ticket (safe for URL previews)
-// 2. Client-only #pass= hash fragment (100% immune to proxy/carrier drops, never sent over HTTP network)
+// Generate compact, small invite URL (default for all sharing)
 export function getHybridInviteUrl(origin, roomId, pass, key) {
-  const base = origin || (typeof window !== 'undefined' ? window.location.origin : '');
-  const cleanRoom = encodeURIComponent(String(roomId).trim());
-  if (!pass && !key) {
-    return `${base}/room/${cleanRoom}`;
-  }
-  const ticket = createHybridInvite(roomId, pass, key);
-  const hashPart = pass ? `#pass=${encodeURIComponent(pass)}` : '';
-  return `${base}/room/${cleanRoom}?inv=${ticket}${hashPart}`;
+  return getSmallInviteUrl(origin, roomId, pass);
 }

@@ -280,6 +280,68 @@ const sanitizeMaxUsers = (v) => {
 };
 
 app.post('/api/rooms', (_, res) => res.json({ roomId: crypto.randomBytes(4).toString('hex') }));
+
+// Dynamic Short Invite System (/j/:code)
+const shortInvites = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, item] of shortInvites.entries()) {
+    if (now - item.at > 48 * 60 * 60 * 1000) shortInvites.delete(code);
+  }
+}, 600000).unref();
+
+app.post('/api/invite/shorten', express.json(), (req, res) => {
+  const { roomId, pass = '', key = '' } = req.body || {};
+  if (!roomId) return res.status(400).json({ error: 'Room ID required' });
+  const cleanRoom = String(roomId).trim();
+  const cleanPass = String(pass).trim();
+
+  let foundCode = null;
+  for (const [c, item] of shortInvites.entries()) {
+    if (item.roomId.toLowerCase() === cleanRoom.toLowerCase() && item.pass === cleanPass) {
+      foundCode = c;
+      break;
+    }
+  }
+
+  const code = foundCode || crypto.randomBytes(3).toString('hex');
+  shortInvites.set(code, {
+    roomId: cleanRoom,
+    pass: cleanPass,
+    key: String(key || ''),
+    at: Date.now(),
+  });
+
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || (req.headers.host?.includes('localhost') ? 'http' : 'https');
+  const host = req.headers['host'] || 'www.syncinema.site';
+  const baseUrl = `${proto}://${host}`;
+
+  res.json({
+    ok: true,
+    code,
+    shortUrl: `${baseUrl}/j/${code}`,
+    directUrl: `${baseUrl}/room/${encodeURIComponent(cleanRoom)}${cleanPass ? `?p=${encodeURIComponent(cleanPass)}` : ''}`,
+  });
+});
+
+app.get('/api/invite/resolve/:code', (req, res) => {
+  const code = String(req.params.code || '').trim().toLowerCase();
+  const item = shortInvites.get(code);
+  if (item) {
+    return res.json({ ok: true, ...item });
+  }
+  return res.status(404).json({ error: 'Short invite not found or expired' });
+});
+
+app.get('/j/:code', (req, res) => {
+  const code = String(req.params.code || '').trim().toLowerCase();
+  const item = shortInvites.get(code);
+  if (item) {
+    const dest = `/room/${encodeURIComponent(item.roomId)}${item.pass ? `?p=${encodeURIComponent(item.pass)}` : ''}${item.key ? `&k=${encodeURIComponent(item.key)}` : ''}`;
+    return res.redirect(302, dest);
+  }
+  return res.redirect(302, `/?join=${encodeURIComponent(code)}`);
+});
 app.get('/api/rooms', adminGate, (req, res) => {
   const activeRooms = [];
   for (const [id, r] of rooms.entries()) {

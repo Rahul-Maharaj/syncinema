@@ -148,7 +148,7 @@ export default function IntimacyMode({
   };
 
   return (
-    <div className="card p-3.5 sm:p-4 text-white overflow-hidden !bg-black border border-white/10">
+    <div className="card p-3.5 sm:p-4 text-pink-100 overflow-hidden !bg-[#222222] border border-pink-500/20 rounded-2xl">
       {/* Top Tabs */}
       <div className="flex items-center gap-1.5 border-b border-white/10 pb-2 mb-3 overflow-x-auto no-scrollbar">
         <button
@@ -294,7 +294,7 @@ export default function IntimacyMode({
           </div>
 
           {/* Preview Box */}
-          <div className="rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-white/80 whitespace-pre-line font-mono break-all">
+          <div className="rounded-xl border border-pink-500/20 bg-[#1a1a1a]/60 p-3 text-xs text-pink-100/90 whitespace-pre-line font-mono break-all">
             {getInviteText()}
           </div>
 
@@ -360,8 +360,8 @@ export default function IntimacyMode({
 
       {/* FULL-SCREEN LOCK OVERLAY */}
       {isLocked && (
-        <div className="fixed inset-0 z-[999] grid place-items-center bg-black backdrop-blur-2xl p-6 text-white text-center">
-          <div className="card w-full max-w-sm p-8 space-y-5 border border-white/15 !bg-black">
+        <div className="fixed inset-0 z-[999] grid place-items-center bg-[#222222]/95 backdrop-blur-2xl p-6 text-pink-100 text-center">
+          <div className="card w-full max-w-sm p-8 space-y-5 border border-pink-500/25 !bg-[#222222] rounded-3xl shadow-2xl shadow-pink-500/10">
             <div className="h-16 w-16 mx-auto rounded-full bg-rose-600/20 border border-rose-500/40 grid place-items-center">
               <Lock className="h-7 w-7 text-rose-400" />
             </div>
@@ -408,7 +408,7 @@ export default function IntimacyMode({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-sm p-4">
           <form
             onSubmit={handleSetPin}
-            className="card w-full max-w-sm p-6 space-y-4 border border-white/15 !bg-black"
+            className="card w-full max-w-sm p-6 space-y-4 border border-pink-500/25 !bg-[#222222] rounded-3xl shadow-2xl shadow-pink-500/10 text-pink-100"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <h3 className="font-display font-semibold text-base text-white flex items-center gap-2">

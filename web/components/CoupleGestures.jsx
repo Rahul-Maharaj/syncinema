@@ -235,8 +235,8 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
         </div>
       )}
 
-      {/* Couple Gestures Toolbar styled in Black Hole & Romantic Pink */}
-      <div className="card-blackhole my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-[#1C1C1F]/90 border border-pink-500/20 shadow-lg">
+      {/* Couple Gestures Toolbar styled in #222222 & Romantic Pink */}
+      <div className="card-blackhole my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-[#222222]/95 border border-pink-500/20 shadow-lg">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-500/20 text-pink-100 border border-pink-500/30">
             <Heart3D size={20} />
@@ -335,7 +335,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
 
             {/* Whisper Dropdown Menu */}
             {showWhispers && (
-              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-pink-500/30 bg-[#1C1C1F] p-3 z-50 text-pink-100 shadow-2xl backdrop-blur-xl">
+              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-pink-500/30 bg-[#222222]/95 p-3 z-50 text-pink-100 shadow-2xl backdrop-blur-xl">
                 <div className="flex items-center justify-between pb-2 border-b border-pink-500/20 mb-2">
                   <span className="text-xs font-semibold text-pink-400 flex items-center gap-1.5">
                     <Heart className="h-3.5 w-3.5 fill-current text-pink-400" />
@@ -373,7 +373,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
                     value={customWhisper}
                     onChange={(e) => setCustomWhisper(e.target.value)}
                     placeholder="Write a custom whisper…"
-                    className="flex-1 py-1.5 px-3 text-xs bg-[#0D0D10] border border-pink-500/25 rounded-xl text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500"
+                    className="flex-1 py-1.5 px-3 text-xs bg-[#1a1a1a] border border-pink-500/25 rounded-xl text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500"
                     maxLength={100}
                   />
                   <button type="submit" className="btn-pink py-1 px-3 text-xs rounded-xl font-bold text-white shrink-0 shadow-md shadow-pink-500/30">

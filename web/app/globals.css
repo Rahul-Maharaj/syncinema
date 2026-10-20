@@ -11,8 +11,8 @@
   --color-pink-deep: #DB2777;
   --color-rose-hot: #E11D48;
   --color-blackhole: #222222;
-  --color-blackhole-dark: #121214;
-  --color-blackhole-card: #1C1C1F;
+  --color-blackhole-dark: #1a1a1a;
+  --color-blackhole-card: #222222;
 }
 
 /* Brand SynCinema Typography: Cozy Romantic Pink Ambiance */
@@ -130,7 +130,7 @@ html, body {
   /* Form Input Field */
   .field {
     @apply w-full rounded-xl border px-3.5 py-2.5 text-sm text-pink-100 placeholder-pink-300/40 outline-none transition-all duration-200;
-    background: rgba(18, 18, 20, 0.85) !important;
+    background: #222222 !important;
     border-color: rgba(244, 114, 182, 0.2) !important;
   }
   .field:focus {
@@ -141,7 +141,7 @@ html, body {
   /* Frosted Glass Panels */
   .glass {
     @apply rounded-3xl border text-pink-100 backdrop-blur-2xl;
-    background: rgba(26, 26, 30, 0.8) !important;
+    background: #222222 !important;
     border-color: rgba(244, 114, 182, 0.2) !important;
   }
   .glass-btn {
@@ -149,9 +149,9 @@ html, body {
     border-color: rgba(244, 114, 182, 0.25) !important;
   }
   .field-d {
-    @apply w-full rounded-xl border border-white/15 px-3.5 py-2.5 text-sm text-linen placeholder-linen/40 outline-none transition-all duration-200;
-    background: rgba(18, 18, 20, 0.85) !important;
-    border-color: rgba(250, 243, 225, 0.15) !important;
+    @apply w-full rounded-xl border border-white/15 px-3.5 py-2.5 text-sm text-pink-100 placeholder-pink-300/40 outline-none transition-all duration-200;
+    background: #222222 !important;
+    border-color: rgba(244, 114, 182, 0.2) !important;
   }
 }
 
@@ -172,7 +172,7 @@ html, body {
 
 /* MicroKit UI Inspired Shimmer Hover Badge */
 .shimmer-badge {
-  background: linear-gradient(90deg, rgba(255, 109, 31, 0.15) 0%, rgba(250, 243, 225, 0.25) 50%, rgba(255, 109, 31, 0.15) 100%);
+  background: linear-gradient(90deg, rgba(236, 72, 153, 0.15) 0%, rgba(252, 231, 243, 0.25) 50%, rgba(236, 72, 153, 0.15) 100%);
   background-size: 200% 100%;
   animation: shimmer 3s infinite;
 }
@@ -193,7 +193,7 @@ html, body {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 109, 31, 0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%);
   filter: blur(8px);
   z-index: -1;
   opacity: 0;
@@ -211,7 +211,7 @@ html, body {
 /* Cinema mode */
 .cinema header, .cinema aside { opacity: .12; transition: opacity .6s; }
 .cinema header:hover, .cinema aside:hover { opacity: 1; }
-.cinema body, body.cinema { background: #070709 !important; }
+.cinema body, body.cinema { background: #222222 !important; }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
