@@ -38,6 +38,8 @@ export default function VideoPlayer({
   isGhost = false,
 }) {
   const [media, setMedia] = useState(initial.media);
+  const mediaRef = useRef(media);
+  mediaRef.current = media;
   const [url, setUrl] = useState(''), [force, setForce] = useState('auto');
   const [local, setLocal] = useState(null), [error, setError] = useState('');
   const [audioTracks, setAudioTracks] = useState([]), [curAudio, setCurAudio] = useState(0);
@@ -770,8 +772,15 @@ export default function VideoPlayer({
     playerRef.current = {
       pause: () => { api.current.pause(); send('PAUSE'); setPlaybackSpeed(1.0); },
       time: () => api.current.time(),
+      getCurrentTime: () => api.current.time(),
       seek: (t) => { api.current.seek(t); send('SEEK'); },
       toggleFullscreen,
+      getVideoElement: () => (stream ? shareEl.current : vref.current),
+      getShareElement: () => shareEl.current,
+      getMedia: () => mediaRef.current,
+      getYoutubeId: () => (mediaRef.current?.src ? ytId(mediaRef.current.src) : null),
+      isPlaying: () => playing.current,
+      isScreenSharing: () => Boolean(stream),
     };
 
     return () => {
@@ -1466,6 +1475,7 @@ export default function VideoPlayer({
           autoPlay
           playsInline
           muted={screenBy === me}
+          crossOrigin="anonymous"
           className={`absolute inset-0 h-full w-full bg-[#222222] object-contain will-change-transform ${stream ? '' : 'hidden'}`}
           style={{ transform: 'translateZ(0)' }}
         />
@@ -1490,6 +1500,7 @@ export default function VideoPlayer({
           ref={vref}
           controls
           playsInline
+          crossOrigin="anonymous"
           preload="auto"
           onError={(e) => {
             console.warn('HTML5 Video error, invoking auto-healing engine:', e);

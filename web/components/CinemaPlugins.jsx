@@ -228,6 +228,25 @@ class SoundscapeAudioEngine {
       });
     } catch {}
   }
+
+  playShutterClick() {
+    if (!this.ctx) this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1400, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+      g.gain.setValueAtTime(0.2, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      osc.connect(g);
+      g.connect(this.masterGain || this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch {}
+  }
 }
 
 // Global engine instance so sound keeps playing seamlessly
@@ -259,6 +278,51 @@ const PROMPT_DECK = [
   { id: 15, category: 'hot-takes', tag: '🍿 Unpopular Opinion', q: 'What is your most controversial or unpopular opinion about this movie genre?' },
 ];
 
+// Helper to draw an image or video with "object-fit: cover", center cropping and optional mirroring
+function drawCoverMedia(ctx, source, dx, dy, dw, dh, options = {}) {
+  if (!source) return false;
+  const sw = source.videoWidth || source.naturalWidth || source.width;
+  const sh = source.videoHeight || source.naturalHeight || source.height;
+  if (!sw || !sh) return false;
+
+  const srcAspect = sw / sh;
+  const dstAspect = dw / dh;
+
+  let sx, sy, sWidth, sHeight;
+  if (srcAspect > dstAspect) {
+    sHeight = sh;
+    sWidth = sh * dstAspect;
+    sx = (sw - sWidth) / 2;
+    sy = 0;
+  } else {
+    sWidth = sw;
+    sHeight = sw / dstAspect;
+    sx = 0;
+    sy = (sh - sHeight) / 2;
+  }
+
+  try {
+    ctx.save();
+    if (options.clipRadius && typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(dx, dy, dw, dh, options.clipRadius);
+      ctx.clip();
+    }
+    if (options.flipHorizontal) {
+      ctx.translate(dx + dw, dy);
+      ctx.scale(-1, 1);
+      ctx.drawImage(source, sx, sy, sWidth, sHeight, 0, 0, dw, dh);
+    } else {
+      ctx.drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dw, dh);
+    }
+    ctx.restore();
+    return true;
+  } catch (err) {
+    console.warn('drawCoverMedia canvas draw error:', err);
+    return false;
+  }
+}
+
 export default function CinemaPlugins({
   isOpen,
   onClose,
@@ -283,14 +347,19 @@ export default function CinemaPlugins({
     space: false,
   });
 
-  // Keepsake state - Couples Polaroid with Movie & Video Call
+  // Keepsake state - Couples Polaroid with Real Movie & Live Video Call Webcams
   const canvasRef = useRef(null);
+  const localCamVideoRef = useRef(null);
+  const partnerCamVideoRef = useRef(null);
+  const ytThumbRef = useRef(null);
   const [caption, setCaption] = useState('Under the stars, lost in the cinema magic together ✨');
   const [polaroidLayout, setPolaroidLayout] = useState('split'); // 'split' | 'couch' | 'pip'
   const [selectedStickers, setSelectedStickers] = useState(['heart', 'popcorn', 'sparkles']);
   const [activeFilter, setActiveFilter] = useState('rose'); // 'rose' | 'warm' | 'noir' | 'none'
   const [copiedLink, setCopiedLink] = useState(false);
   const [snapshotNonce, setSnapshotNonce] = useState(0);
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [liveViewfinder, setLiveViewfinder] = useState(false);
 
   // Preloaded background / fallback images for instant canvas draw
   const imagesRef = useRef({
@@ -309,6 +378,56 @@ export default function CinemaPlugins({
     img2.src = '/feature-couple.jpg';
     img2.onload = () => { imagesRef.current.couple = img2; if (activeTab === 'keepsake') drawPolaroid(); };
   }, [activeTab]);
+
+  // Keep offscreen webcam video elements continuously fed with active WebRTC streams
+  useEffect(() => {
+    const el = localCamVideoRef.current;
+    if (el && callMedia?.mine) {
+      if (el.srcObject !== callMedia.mine) {
+        el.srcObject = callMedia.mine;
+        el.play().catch(() => {});
+      }
+    }
+  }, [callMedia?.mine]);
+
+  useEffect(() => {
+    const el = partnerCamVideoRef.current;
+    const partner = users.find((u) => u.id !== me);
+    const partnerStream = partner ? callMedia?.remote?.[partner.id] : Object.values(callMedia?.remote || {})[0];
+    if (el && partnerStream) {
+      if (el.srcObject !== partnerStream) {
+        el.srcObject = partnerStream;
+        el.play().catch(() => {});
+      }
+    }
+  }, [callMedia?.remote, users, me]);
+
+  // Load YouTube high-res thumbnail if current media is YouTube
+  useEffect(() => {
+    let ytIdStr = null;
+    if (currentMedia?.src) {
+      const match = currentMedia.src.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/i);
+      if (match) ytIdStr = match[1];
+    }
+    if (ytIdStr) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = `https://img.youtube.com/vi/${ytIdStr}/hqdefault.jpg`;
+      img.onload = () => {
+        ytThumbRef.current = img;
+        if (activeTab === 'keepsake') drawPolaroid();
+      };
+    }
+  }, [currentMedia?.src, activeTab]);
+
+  // Optional live viewfinder interval (updates frame 2x/sec if live viewfinder is toggled on)
+  useEffect(() => {
+    if (!liveViewfinder || activeTab !== 'keepsake' || !isOpen) return;
+    const interval = setInterval(() => {
+      drawPolaroid();
+    }, 500);
+    return () => clearInterval(interval);
+  }, [liveViewfinder, activeTab, isOpen, polaroidLayout, selectedStickers, activeFilter, caption]);
 
   // Romantic caption presets
   const CAPTION_PRESETS = [
@@ -376,8 +495,17 @@ export default function CinemaPlugins({
     say?.('Intermission ended.');
   };
 
-  // Draw Couples Polaroid with Movie & Video Call Images
-  const drawPolaroid = () => {
+  const snapLiveFrame = () => {
+    const engine = getAudioEngine();
+    if (engine) engine.playShutterClick();
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), 250);
+    setSnapshotNonce((n) => n + 1);
+    say?.('📸 Snapped fresh real movie & couple selfie frame!');
+  };
+
+  // Draw Couples Polaroid with Real Movie & Live Video Call Webcams
+  const drawPolaroid = (opts = {}) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -410,101 +538,130 @@ export default function CinemaPlugins({
     ctx.clip();
 
     // Dark backdrop inside photo
-    ctx.fillStyle = '#111019';
+    ctx.fillStyle = '#0f0e17';
     ctx.fillRect(px, py, pw, ph);
 
-    // Find main video player element on the page
-    let videoEl = null;
+    // 1. Locate real movie video element
+    let movieVideoEl = null;
     try {
       if (playerRef?.current?.getVideoElement) {
-        videoEl = playerRef.current.getVideoElement();
+        movieVideoEl = playerRef.current.getVideoElement();
       }
-      if (!videoEl && typeof document !== 'undefined') {
-        const vids = Array.from(document.querySelectorAll('video'));
-        // Find player video (typically has dimensions or inside player container)
-        videoEl = vids.find((v) => v.videoWidth > 400 || v.classList.contains('object-contain')) || vids[0];
+      if (!movieVideoEl && typeof document !== 'undefined') {
+        const vids = Array.from(document.querySelectorAll('video')).filter(
+          (v) => v !== localCamVideoRef.current && v !== partnerCamVideoRef.current
+        );
+        movieVideoEl = vids.find((v) => v.videoWidth > 400 || v.classList.contains('object-contain')) || vids[0];
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Video element query failed:', e);
+    }
 
-    // Find couple video call elements
-    let myCamEl = null;
-    let partnerCamEl = null;
-    try {
-      if (typeof document !== 'undefined') {
-        const vids = Array.from(document.querySelectorAll('video'));
-        const callVids = vids.filter((v) => v !== videoEl);
-        if (callVids.length > 0) myCamEl = callVids[0];
-        if (callVids.length > 1) partnerCamEl = callVids[1];
+    const hasRealMovieVideo = Boolean(
+      !opts?.safeFallback &&
+      movieVideoEl &&
+      movieVideoEl.readyState >= 2 &&
+      movieVideoEl.videoWidth > 0
+    );
+
+    // 2. Locate real live webcam streams
+    const getCamSource = (isPartner) => {
+      const offscreenEl = isPartner ? partnerCamVideoRef.current : localCamVideoRef.current;
+      if (offscreenEl && offscreenEl.readyState >= 2 && offscreenEl.videoWidth > 0) {
+        return offscreenEl;
       }
-    } catch {}
+      if (typeof document !== 'undefined') {
+        const camVids = Array.from(document.querySelectorAll('video')).filter(
+          (v) => v !== movieVideoEl && v !== localCamVideoRef.current && v !== partnerCamVideoRef.current && v.readyState >= 2 && v.videoWidth > 0
+        );
+        if (isPartner && camVids.length > 1) return camVids[1];
+        if (!isPartner && camVids.length > 0) return camVids[0];
+      }
+      return null;
+    };
+
+    const partner = users.find((u) => u.id !== me);
+    const myCamSource = getCamSource(false);
+    const partnerCamSource = getCamSource(true);
+    const myCamActive = Boolean(myCamSource && callMedia?.cam !== false);
+    const partnerCamActive = Boolean(partnerCamSource && !callMedia?.remoteCamOff?.[partner?.id]);
 
     const myName = users.find((u) => u.id === me)?.name || 'You';
-    const otherUsers = users.filter((u) => u.id !== me);
-    const partnerName = otherUsers[0]?.name || 'My Partner';
+    const partnerName = partner?.name || 'Partner';
 
-    // LAYOUT 1: SPLIT (Movie on Top + Couple Video Call on Bottom)
+    let movieTimeSec = 0;
+    try {
+      movieTimeSec = playerRef?.current?.getCurrentTime?.() || (movieVideoEl ? movieVideoEl.currentTime : 0) || 0;
+    } catch {}
+    const fmtTime = (s) => {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${m < 10 ? '0' : ''}${m}:${sec < 10 ? '0' : ''}${sec}`;
+    };
+    const timecodeStr = fmtTime(movieTimeSec);
+    const movieTitle = currentMedia?.title || 'Private Cinema Premiere';
+
+    // LAYOUT 1: SPLIT (Real Movie on Top + Real Live Video Call on Bottom)
     if (polaroidLayout === 'split') {
       const movieH = 320;
       const callH = ph - movieH;
 
-      // Draw Movie in Top Half
+      // Draw real movie in top half
       let movieDrawn = false;
-      if (videoEl && videoEl.readyState >= 2) {
-        try {
-          ctx.drawImage(videoEl, px, py, pw, movieH);
-          movieDrawn = true;
-        } catch {}
+      if (hasRealMovieVideo) {
+        movieDrawn = drawCoverMedia(ctx, movieVideoEl, px, py, pw, movieH);
+      }
+      if (!movieDrawn && ytThumbRef.current && ytThumbRef.current.complete) {
+        movieDrawn = drawCoverMedia(ctx, ytThumbRef.current, px, py, pw, movieH);
+      }
+      if (!movieDrawn && imagesRef.current.couch && imagesRef.current.couch.complete) {
+        movieDrawn = drawCoverMedia(ctx, imagesRef.current.couch, px, py, pw, movieH);
       }
       if (!movieDrawn) {
-        if (imagesRef.current.couple && imagesRef.current.couple.complete) {
-          ctx.drawImage(imagesRef.current.couple, px, py, pw, movieH);
-        } else {
-          const mgrad = ctx.createLinearGradient(px, py, px + pw, py + movieH);
-          mgrad.addColorStop(0, '#1e1b4b');
-          mgrad.addColorStop(1, '#0f172a');
-          ctx.fillStyle = mgrad;
-          ctx.fillRect(px, py, pw, movieH);
-        }
+        const mgrad = ctx.createLinearGradient(px, py, px + pw, py + movieH);
+        mgrad.addColorStop(0, '#1e1b4b');
+        mgrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = mgrad;
+        ctx.fillRect(px, py, pw, movieH);
       }
 
-      // Cinema Screen Ambient Glow & Vignette
+      // Cinema Ambient Glow & Vignette
       const movieVignette = ctx.createLinearGradient(px, py, px, py + movieH);
-      movieVignette.addColorStop(0, 'rgba(0,0,0,0.6)');
-      movieVignette.addColorStop(0.5, 'rgba(0,0,0,0)');
-      movieVignette.addColorStop(1, 'rgba(0,0,0,0.75)');
+      movieVignette.addColorStop(0, 'rgba(0,0,0,0.65)');
+      movieVignette.addColorStop(0.5, 'rgba(0,0,0,0.1)');
+      movieVignette.addColorStop(1, 'rgba(0,0,0,0.85)');
       ctx.fillStyle = movieVignette;
       ctx.fillRect(px, py, pw, movieH);
 
-      // Movie Title Pill on Top
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+      // Now Playing Glass HUD Top-Left
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
       ctx.beginPath();
-      ctx.roundRect(px + 16, py + 16, 260, 30, 15);
+      ctx.roundRect(px + 14, py + 14, 270, 32, 16);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.45)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.fillStyle = '#fce7f3';
       ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'left';
-      const mTitle = currentMedia?.title || 'Private Cinema Night';
-      ctx.fillText(`🎬 ${mTitle.slice(0, 26)}${mTitle.length > 26 ? '…' : ''}`, px + 28, py + 36);
+      ctx.fillText(`🎬 ${movieTitle.slice(0, 24)}${movieTitle.length > 24 ? '…' : ''}`, px + 26, py + 34);
 
-      // Live 4K / Sync badge
+      // Real Timecode & Sync Badge Top-Right
       ctx.fillStyle = 'rgba(236, 72, 153, 0.9)';
       ctx.beginPath();
-      ctx.roundRect(px + pw - 90, py + 16, 74, 24, 12);
+      ctx.roundRect(px + pw - 120, py + 14, 106, 26, 13);
       ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('0ms SYNC', px + pw - 53, py + 32);
+      ctx.fillText(`▶ ${timecodeStr} • SYNC`, px + pw - 67, py + 31);
 
       // Divider between Movie and Calls
-      ctx.fillStyle = '#222222';
+      ctx.fillStyle = '#18181b';
       ctx.fillRect(px, py + movieH, pw, callH);
 
-      ctx.strokeStyle = 'rgba(236, 72, 153, 0.3)';
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.35)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(px, py + movieH);
@@ -516,21 +673,20 @@ export default function CinemaPlugins({
       const callTileH = callH - 24;
       const callTileY = py + movieH + 12;
 
-      // Tile 1: Left (You)
+      // Tile 1: Left (You) - REAL LIVE WEBCAM (Mirrored)
       const t1x = px + 8;
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(t1x, callTileY, callTileW, callTileH, 16);
-      ctx.clip();
-
       let t1Drawn = false;
-      if (myCamEl && myCamEl.readyState >= 2) {
-        try {
-          ctx.drawImage(myCamEl, t1x, callTileY, callTileW, callTileH);
-          t1Drawn = true;
-        } catch {}
+      if (myCamActive) {
+        t1Drawn = drawCoverMedia(ctx, myCamSource, t1x, callTileY, callTileW, callTileH, {
+          flipHorizontal: true,
+          clipRadius: 16
+        });
       }
       if (!t1Drawn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(t1x, callTileY, callTileW, callTileH, 16);
+        ctx.clip();
         const cGrad1 = ctx.createLinearGradient(t1x, callTileY, t1x + callTileW, callTileY + callTileH);
         cGrad1.addColorStop(0, '#3b0764');
         cGrad1.addColorStop(1, '#1e1b4b');
@@ -539,47 +695,45 @@ export default function CinemaPlugins({
 
         ctx.fillStyle = '#ec4899';
         ctx.beginPath();
-        ctx.arc(t1x + callTileW / 2, callTileY + callTileH / 2 - 12, 34, 0, Math.PI * 2);
+        ctx.arc(t1x + callTileW / 2, callTileY + callTileH / 2 - 10, 32, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px sans-serif';
+        ctx.font = 'bold 22px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(myName.charAt(0).toUpperCase() || 'U', t1x + callTileW / 2, callTileY + callTileH / 2 - 4);
+        ctx.fillText(myName.charAt(0).toUpperCase() || 'U', t1x + callTileW / 2, callTileY + callTileH / 2 - 2);
+        ctx.restore();
       }
 
-      // Name Tag Overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.beginPath();
-      ctx.roundRect(t1x + 8, callTileY + callTileH - 28, 100, 20, 10);
-      ctx.fill();
-      ctx.fillStyle = '#fce7f3';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`🎙️ ${myName.slice(0, 10)}`, t1x + 16, callTileY + callTileH - 14);
-      ctx.restore();
-
-      // Border for Tile 1
-      ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.7)';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.roundRect(t1x, callTileY, callTileW, callTileH, 16);
       ctx.stroke();
 
-      // Tile 2: Right (Partner)
-      const t2x = px + pw - callTileW - 8;
-      ctx.save();
+      // Name Tag Overlay (You)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
       ctx.beginPath();
-      ctx.roundRect(t2x, callTileY, callTileW, callTileH, 16);
-      ctx.clip();
+      ctx.roundRect(t1x + 8, callTileY + callTileH - 28, 110, 22, 11);
+      ctx.fill();
+      ctx.fillStyle = '#fce7f3';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`🎙️ ${myName.slice(0, 10)} (You)`, t1x + 16, callTileY + callTileH - 13);
 
+      // Tile 2: Right (Partner) - REAL LIVE WEBCAM
+      const t2x = px + pw - callTileW - 8;
       let t2Drawn = false;
-      if (partnerCamEl && partnerCamEl.readyState >= 2) {
-        try {
-          ctx.drawImage(partnerCamEl, t2x, callTileY, callTileW, callTileH);
-          t2Drawn = true;
-        } catch {}
+      if (partnerCamActive) {
+        t2Drawn = drawCoverMedia(ctx, partnerCamSource, t2x, callTileY, callTileW, callTileH, {
+          flipHorizontal: false,
+          clipRadius: 16
+        });
       }
       if (!t2Drawn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(t2x, callTileY, callTileW, callTileH, 16);
+        ctx.clip();
         const cGrad2 = ctx.createLinearGradient(t2x, callTileY, t2x + callTileW, callTileY + callTileH);
         cGrad2.addColorStop(0, '#581c87');
         cGrad2.addColorStop(1, '#831843');
@@ -588,33 +742,32 @@ export default function CinemaPlugins({
 
         ctx.fillStyle = '#f43f5e';
         ctx.beginPath();
-        ctx.arc(t2x + callTileW / 2, callTileY + callTileH / 2 - 12, 34, 0, Math.PI * 2);
+        ctx.arc(t2x + callTileW / 2, callTileY + callTileH / 2 - 10, 32, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px sans-serif';
+        ctx.font = 'bold 22px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(partnerName.charAt(0).toUpperCase() || 'P', t2x + callTileW / 2, callTileY + callTileH / 2 - 4);
+        ctx.fillText(partnerName.charAt(0).toUpperCase() || 'P', t2x + callTileW / 2, callTileY + callTileH / 2 - 2);
+        ctx.restore();
       }
 
-      // Name Tag Overlay Partner
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.beginPath();
-      ctx.roundRect(t2x + 8, callTileY + callTileH - 28, 100, 20, 10);
-      ctx.fill();
-      ctx.fillStyle = '#fce7f3';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(`🎙️ ${partnerName.slice(0, 10)}`, t2x + 16, callTileY + callTileH - 14);
-      ctx.restore();
-
-      // Border for Tile 2
-      ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.7)';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.roundRect(t2x, callTileY, callTileW, callTileH, 16);
       ctx.stroke();
 
-      // Center Heart Connector Badge between the two video calls
+      // Name Tag Overlay (Partner)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(t2x + 8, callTileY + callTileH - 28, 110, 22, 11);
+      ctx.fill();
+      ctx.fillStyle = '#fce7f3';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`🎙️ ${partnerName.slice(0, 10)}`, t2x + 16, callTileY + callTileH - 13);
+
+      // Center Heart Connector Badge between the two real video calls
       const heartBadgeX = px + pw / 2;
       const heartBadgeY = callTileY + callTileH / 2;
       ctx.fillStyle = 'rgba(236, 72, 153, 0.95)';
@@ -628,101 +781,138 @@ export default function CinemaPlugins({
       ctx.textAlign = 'center';
       ctx.fillText('💖', heartBadgeX, heartBadgeY + 6);
     }
-    // LAYOUT 2: COUCH (Romantic Couple Cinema Scene Artwork + Cam Insets)
+    // LAYOUT 2: COUCH (VIP Living Room Theater Artwork + Real Movie Screen + Inset Live Cams)
     else if (polaroidLayout === 'couch') {
       let couchDrawn = false;
       if (imagesRef.current.couch && imagesRef.current.couch.complete) {
-        ctx.drawImage(imagesRef.current.couch, px, py, pw, ph);
-        couchDrawn = true;
+        couchDrawn = drawCoverMedia(ctx, imagesRef.current.couch, px, py, pw, ph);
       }
       if (!couchDrawn) {
         const cGrad = ctx.createLinearGradient(px, py, px + pw, py + ph);
-        cGrad.addColorStop(0, '#1e1b4b');
-        cGrad.addColorStop(0.5, '#4c0519');
-        cGrad.addColorStop(1, '#020617');
+        cGrad.addColorStop(0, '#181024');
+        cGrad.addColorStop(0.5, '#2e0819');
+        cGrad.addColorStop(1, '#090812');
         ctx.fillStyle = cGrad;
         ctx.fillRect(px, py, pw, ph);
       }
 
-      // Title & Date Header on top
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      // Real Playing Movie Screen on Theater Wall
+      const screenX = px + 28;
+      const screenY = py + 72;
+      const screenW = pw - 56;
+      const screenH = 270;
+
+      let screenDrawn = false;
+      if (hasRealMovieVideo) {
+        screenDrawn = drawCoverMedia(ctx, movieVideoEl, screenX, screenY, screenW, screenH, { clipRadius: 14 });
+      }
+      if (!screenDrawn && ytThumbRef.current && ytThumbRef.current.complete) {
+        screenDrawn = drawCoverMedia(ctx, ytThumbRef.current, screenX, screenY, screenW, screenH, { clipRadius: 14 });
+      }
+      if (!screenDrawn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(screenX, screenY, screenW, screenH, 14);
+        ctx.clip();
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(screenX, screenY, screenW, screenH);
+        ctx.restore();
+      }
+
+      // Neon Cinema Border
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.85)';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.roundRect(px + 20, py + 20, pw - 40, 50, 16);
+      ctx.roundRect(screenX, screenY, screenW, screenH, 14);
+      ctx.stroke();
+
+      // Title & Date Header on top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(px + 18, py + 14, pw - 36, 46, 14);
       ctx.fill();
       ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px sans-serif';
+      ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`🍿 ${currentMedia?.title || 'Romantic Cinema Date Night'}`, px + pw / 2, py + 42);
+      ctx.fillText(`🍿 ${movieTitle}`, px + pw / 2, py + 34);
       ctx.font = '11px sans-serif';
       ctx.fillStyle = '#f472b6';
-      ctx.fillText(`${myName} & ${partnerName} • Synced Stream`, px + pw / 2, py + 60);
+      ctx.fillText(`${myName} & ${partnerName} • Playing at ${timecodeStr}`, px + pw / 2, py + 50);
 
-      // Inset Duo Cam Floating Badges on bottom corners
-      const pipW = 120;
-      const pipH = 85;
+      // Inset Floating Live Cam Badges on bottom corners
+      const pipW = 124;
+      const pipH = 92;
       const pipY = py + ph - pipH - 16;
 
-      // Left Pip (You)
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(px + 16, pipY, pipW, pipH, 12);
-      ctx.clip();
-      ctx.fillStyle = '#222222';
-      ctx.fillRect(px + 16, pipY, pipW, pipH);
-      if (myCamEl && myCamEl.readyState >= 2) {
-        try { ctx.drawImage(myCamEl, px + 16, pipY, pipW, pipH); } catch {}
-      } else {
-        ctx.fillStyle = '#ec4899';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(myName.slice(0, 6), px + 16 + pipW / 2, pipY + pipH / 2 + 7);
+      // Left Pip (You) - REAL LIVE WEBCAM (Mirrored)
+      const p1x = px + 16;
+      let p1Drawn = false;
+      if (myCamActive) {
+        p1Drawn = drawCoverMedia(ctx, myCamSource, p1x, pipY, pipW, pipH, { flipHorizontal: true, clipRadius: 14 });
       }
-      ctx.restore();
+      if (!p1Drawn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(p1x, pipY, pipW, pipH, 14);
+        ctx.clip();
+        ctx.fillStyle = '#3b0764';
+        ctx.fillRect(p1x, pipY, pipW, pipH);
+        ctx.fillStyle = '#ec4899';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(myName.slice(0, 8), p1x + pipW / 2, pipY + pipH / 2 + 6);
+        ctx.restore();
+      }
       ctx.strokeStyle = '#ec4899';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.roundRect(px + 16, pipY, pipW, pipH, 12);
+      ctx.roundRect(p1x, pipY, pipW, pipH, 14);
       ctx.stroke();
 
-      // Right Pip (Partner)
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(px + pw - pipW - 16, pipY, pipW, pipH, 12);
-      ctx.clip();
-      ctx.fillStyle = '#222222';
-      ctx.fillRect(px + pw - pipW - 16, pipY, pipW, pipH);
-      if (partnerCamEl && partnerCamEl.readyState >= 2) {
-        try { ctx.drawImage(partnerCamEl, px + pw - pipW - 16, pipY, pipW, pipH); } catch {}
-      } else {
-        ctx.fillStyle = '#f43f5e';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(partnerName.slice(0, 6), px + pw - pipW - 16 + pipW / 2, pipY + pipH / 2 + 7);
+      // Right Pip (Partner) - REAL LIVE WEBCAM
+      const p2x = px + pw - pipW - 16;
+      let p2Drawn = false;
+      if (partnerCamActive) {
+        p2Drawn = drawCoverMedia(ctx, partnerCamSource, p2x, pipY, pipW, pipH, { flipHorizontal: false, clipRadius: 14 });
       }
-      ctx.restore();
+      if (!p2Drawn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(p2x, pipY, pipW, pipH, 14);
+        ctx.clip();
+        ctx.fillStyle = '#4c0519';
+        ctx.fillRect(p2x, pipY, pipW, pipH);
+        ctx.fillStyle = '#f43f5e';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(partnerName.slice(0, 8), p2x + pipW / 2, pipY + pipH / 2 + 6);
+        ctx.restore();
+      }
       ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.roundRect(px + pw - pipW - 16, pipY, pipW, pipH, 12);
+      ctx.roundRect(p2x, pipY, pipW, pipH, 14);
       ctx.stroke();
     }
-    // LAYOUT 3: PIP (Duo Video Call Primary + Movie PiP Inset)
+    // LAYOUT 3: PIP (Duo Live Video Call Primary + Real Movie PiP Inset)
     else {
       const halfW = pw / 2;
 
-      // Left: You
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(px, py, halfW, ph);
-      ctx.clip();
-      ctx.fillStyle = '#1e1b4b';
-      ctx.fillRect(px, py, halfW, ph);
-      if (myCamEl && myCamEl.readyState >= 2) {
-        try { ctx.drawImage(myCamEl, px, py, halfW, ph); } catch {}
-      } else {
+      // Left: You - REAL LIVE WEBCAM (Mirrored)
+      let leftDrawn = false;
+      if (myCamActive) {
+        leftDrawn = drawCoverMedia(ctx, myCamSource, px, py, halfW, ph, { flipHorizontal: true });
+      }
+      if (!leftDrawn) {
+        const cGrad1 = ctx.createLinearGradient(px, py, px + halfW, py + ph);
+        cGrad1.addColorStop(0, '#1e1b4b');
+        cGrad1.addColorStop(1, '#3b0764');
+        ctx.fillStyle = cGrad1;
+        ctx.fillRect(px, py, halfW, ph);
         ctx.fillStyle = '#ec4899';
         ctx.beginPath();
         ctx.arc(px + halfW / 2, py + ph / 2 - 20, 48, 0, Math.PI * 2);
@@ -730,20 +920,20 @@ export default function CinemaPlugins({
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 36px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(myName.charAt(0) || 'U', px + halfW / 2, py + ph / 2 - 8);
+        ctx.fillText(myName.charAt(0).toUpperCase() || 'U', px + halfW / 2, py + ph / 2 - 8);
       }
-      ctx.restore();
 
-      // Right: Partner
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(px + halfW, py, halfW, ph);
-      ctx.clip();
-      ctx.fillStyle = '#4c0519';
-      ctx.fillRect(px + halfW, py, halfW, ph);
-      if (partnerCamEl && partnerCamEl.readyState >= 2) {
-        try { ctx.drawImage(partnerCamEl, px + halfW, py, halfW, ph); } catch {}
-      } else {
+      // Right: Partner - REAL LIVE WEBCAM
+      let rightDrawn = false;
+      if (partnerCamActive) {
+        rightDrawn = drawCoverMedia(ctx, partnerCamSource, px + halfW, py, halfW, ph, { flipHorizontal: false });
+      }
+      if (!rightDrawn) {
+        const cGrad2 = ctx.createLinearGradient(px + halfW, py, px + pw, py + ph);
+        cGrad2.addColorStop(0, '#4c0519');
+        cGrad2.addColorStop(1, '#831843');
+        ctx.fillStyle = cGrad2;
+        ctx.fillRect(px + halfW, py, halfW, ph);
         ctx.fillStyle = '#f43f5e';
         ctx.beginPath();
         ctx.arc(px + halfW + halfW / 2, py + ph / 2 - 20, 48, 0, Math.PI * 2);
@@ -751,42 +941,58 @@ export default function CinemaPlugins({
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 36px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(partnerName.charAt(0) || 'P', px + halfW + halfW / 2, py + ph / 2 - 8);
+        ctx.fillText(partnerName.charAt(0).toUpperCase() || 'P', px + halfW + halfW / 2, py + ph / 2 - 8);
       }
-      ctx.restore();
 
       // Center Divider Line
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(px + halfW, py);
       ctx.lineTo(px + halfW, py + ph);
       ctx.stroke();
 
-      // Movie Screen PiP Inset (Top Right)
-      const pipW = 200;
-      const pipH = 120;
+      // Top-Right Inset: REAL PLAYING MOVIE PiP
+      const pipW = 210;
+      const pipH = 128;
       const pipX = px + pw - pipW - 14;
       const pipY = py + 14;
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(pipX, pipY, pipW, pipH, 14);
-      ctx.clip();
-      if (videoEl && videoEl.readyState >= 2) {
-        try { ctx.drawImage(videoEl, pipX, pipY, pipW, pipH); } catch {}
-      } else if (imagesRef.current.couple && imagesRef.current.couple.complete) {
-        ctx.drawImage(imagesRef.current.couple, pipX, pipY, pipW, pipH);
-      } else {
+      let pipMovieDrawn = false;
+      if (hasRealMovieVideo) {
+        pipMovieDrawn = drawCoverMedia(ctx, movieVideoEl, pipX, pipY, pipW, pipH, { clipRadius: 14 });
+      }
+      if (!pipMovieDrawn && ytThumbRef.current && ytThumbRef.current.complete) {
+        pipMovieDrawn = drawCoverMedia(ctx, ytThumbRef.current, pipX, pipY, pipW, pipH, { clipRadius: 14 });
+      }
+      if (!pipMovieDrawn && imagesRef.current.couch && imagesRef.current.couch.complete) {
+        pipMovieDrawn = drawCoverMedia(ctx, imagesRef.current.couch, pipX, pipY, pipW, pipH, { clipRadius: 14 });
+      }
+      if (!pipMovieDrawn) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(pipX, pipY, pipW, pipH, 14);
+        ctx.clip();
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(pipX, pipY, pipW, pipH);
+        ctx.restore();
       }
-      ctx.restore();
+
+      // PiP Screen Border & Badge
       ctx.strokeStyle = '#ec4899';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.roundRect(pipX, pipY, pipW, pipH, 14);
       ctx.stroke();
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+      ctx.beginPath();
+      ctx.roundRect(pipX + 8, pipY + pipH - 24, pipW - 16, 18, 9);
+      ctx.fill();
+      ctx.fillStyle = '#fce7f3';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🎬 ${movieTitle.slice(0, 18)} • ${timecodeStr}`, pipX + pipW / 2, pipY + pipH - 12);
     }
 
     // Restore context after photo drawing
@@ -852,25 +1058,43 @@ export default function CinemaPlugins({
     // Bottom Watermark
     ctx.fillStyle = '#a8a29e';
     ctx.font = '10px sans-serif';
-    ctx.fillText(`Private Room Date Memory • Zero-Leak P2P Cryptographic Capture`, width / 2, height - 45);
+    ctx.fillText(`Private Room Date Memory • Zero-Leak WebRTC Cryptographic Capture`, width / 2, height - 45);
   };
 
   useEffect(() => {
     if (activeTab === 'keepsake') {
       drawPolaroid();
     }
-  }, [activeTab, caption, polaroidLayout, selectedStickers, activeFilter, snapshotNonce, currentMedia, users]);
+  }, [activeTab, caption, polaroidLayout, selectedStickers, activeFilter, snapshotNonce, currentMedia, users, callMedia]);
 
-  // Download Polaroid as PNG
+  // Download Polaroid as PNG (with tainted canvas auto-recovery protection)
   const downloadPolaroid = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dataUrl = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `syncinema-keepsake-${Date.now()}.png`;
-    a.click();
-    say?.('Polaroid Keepsake downloaded! 📸');
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `syncinema-keepsake-${Date.now()}.png`;
+      a.click();
+      say?.('Polaroid Keepsake downloaded! 📸');
+    } catch (err) {
+      console.warn('Canvas export tainted by cross-origin video, retrying with safe composite:', err);
+      // Redraw canvas with safe graphic composite and download
+      drawPolaroid({ safeFallback: true });
+      setTimeout(() => {
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `syncinema-keepsake-${Date.now()}.png`;
+          a.click();
+          say?.('Polaroid Keepsake downloaded! 📸');
+        } catch (e2) {
+          say?.('Could not download due to browser cross-origin media isolation.');
+        }
+      }, 60);
+    }
   };
 
   // Share Polaroid to Chat
@@ -905,6 +1129,21 @@ export default function CinemaPlugins({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+      {/* Offscreen active WebRTC decoders for instant live polaroid pixel capture */}
+      <video
+        ref={localCamVideoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{ position: 'fixed', top: -9999, left: -9999, width: 320, height: 240, opacity: 0, pointerEvents: 'none' }}
+      />
+      <video
+        ref={partnerCamVideoRef}
+        autoPlay
+        playsInline
+        muted
+        style={{ position: 'fixed', top: -9999, left: -9999, width: 320, height: 240, opacity: 0, pointerEvents: 'none' }}
+      />
       <div className="card w-full max-w-xl p-4 sm:p-6 space-y-4 border border-pink-500/25 !bg-[#222222]/95 rounded-3xl shadow-2xl shadow-pink-500/10 rise text-pink-100 my-auto">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
@@ -1118,24 +1357,50 @@ export default function CinemaPlugins({
           <div className="space-y-4 rise">
             {/* Live Canvas View */}
             <div className="flex flex-col items-center justify-center gap-2">
-              <div className="relative group p-1.5 rounded-3xl bg-[#111019] border border-pink-500/30 shadow-2xl shadow-pink-500/10">
+              <div className="relative group p-1.5 rounded-3xl bg-[#111019] border border-pink-500/30 shadow-2xl shadow-pink-500/10 overflow-hidden">
                 <canvas
                   ref={canvasRef}
                   className="w-full max-w-[280px] sm:max-w-[320px] rounded-2xl aspect-[4/5] object-contain bg-white shadow-xl"
                 />
+
+                {/* Camera Shutter Flash effect */}
+                {isFlashing && (
+                  <div className="absolute inset-0 bg-white/95 rounded-2xl pointer-events-none transition-opacity duration-300 animate-pulse z-20" />
+                )}
+
+                {/* Snap Real Frame button with authentic shutter action */}
                 <button
                   type="button"
-                  onClick={() => setSnapshotNonce((n) => n + 1)}
-                  className="absolute bottom-4 right-4 p-2.5 rounded-full bg-pink-600/90 hover:bg-pink-500 text-white shadow-lg backdrop-blur-md transition active:scale-90 flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                  onClick={snapLiveFrame}
+                  className="absolute bottom-4 right-4 py-2 px-3 rounded-full btn-pink text-white shadow-xl backdrop-blur-md transition active:scale-90 flex items-center gap-1.5 text-xs font-bold cursor-pointer z-10"
                   title="Snap fresh frame from movie and video call"
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  <span>Snap Fresh Frame</span>
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Snap Real Frame 📸</span>
                 </button>
               </div>
-              <p className="text-[11px] text-pink-300/70 text-center">
-                📸 Captures active movie screen &amp; your video call selfies into a high-res souvenir
-              </p>
+
+              {/* Status pill & Live Viewfinder Toggle */}
+              <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-pink-300/80 pt-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 flex items-center gap-1.5">
+                  <span className={`h-2 w-2 rounded-full ${callMedia?.cam !== false ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
+                  <span>Real Video &amp; Webcams Blended</span>
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setLiveViewfinder((v) => !v)}
+                  className={`px-2.5 py-0.5 rounded-full border text-[10px] font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                    liveViewfinder
+                      ? 'bg-rose-500/30 border-rose-400 text-rose-200'
+                      : 'bg-[#1a1a1d] border-pink-500/20 text-pink-300/60 hover:text-white'
+                  }`}
+                  title="Continuously stream live webcam and movie frames into polaroid preview"
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${liveViewfinder ? 'bg-rose-400 animate-ping' : 'bg-zinc-500'}`} />
+                  <span>{liveViewfinder ? 'Live Viewfinder: ON' : 'Live Viewfinder: Off'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Polaroid Layout Selector */}
