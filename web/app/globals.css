@@ -325,6 +325,40 @@ html, body {
   will-change: transform, opacity;
 }
 
+@keyframes glowHalo {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(236, 72, 153, 0.25), inset 0 0 15px rgba(236, 72, 153, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(236, 72, 153, 0.45), inset 0 0 25px rgba(236, 72, 153, 0.2);
+  }
+}
+
+@keyframes auroraShift {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(30px, -20px, 0) rotate(8deg) scale(1.08); }
+  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+}
+
+@keyframes floatSticker3D {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -8px, 0) rotate(2.5deg); }
+}
+
+.anim-glow-halo {
+  animation: glowHalo 4s ease-in-out infinite;
+}
+
+.anim-aurora {
+  animation: auroraShift 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+.anim-sticker-3d {
+  animation: floatSticker3D 4s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-blackhole {

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Volume2,
+  VolumeX,
   Film,
   Zap,
   Play,
@@ -14,6 +15,9 @@ import {
   Activity,
   Layers,
   ArrowRight,
+  Sliders,
+  Shield,
+  Eye,
 } from 'lucide-react';
 import {
   Popcorn3D,
@@ -36,6 +40,7 @@ const PORTAL_MODES = [
     image: '/ad-theater-experience.jpg',
     soundLabel: 'Spatial Audio • 48 kHz',
     eqSpeed: 1,
+    toneFreq: 110,
   },
   {
     id: 'duo',
@@ -46,6 +51,7 @@ const PORTAL_MODES = [
     image: '/ad-duo-cinema.jpg',
     soundLabel: 'Rain on Window • Cozy Lounge',
     eqSpeed: 1.4,
+    toneFreq: 140,
   },
   {
     id: 'sync',
@@ -56,13 +62,41 @@ const PORTAL_MODES = [
     image: '/ad-sync-engine.jpg',
     soundLabel: 'Frame-Locked P2P Pipeline',
     eqSpeed: 0.8,
+    toneFreq: 95,
+  },
+  {
+    id: 'penthouse',
+    title: 'Penthouse Rain Soundscape',
+    subtitle: 'Panoramic Cityscape • Crackling Hearth',
+    badge: 'Luxury Lounge',
+    icon: Popcorn3D,
+    image: '/syncinema-penthouse.jpg',
+    soundLabel: 'Binaural Rain & Warm Hearth',
+    eqSpeed: 1.1,
+    toneFreq: 125,
+  },
+  {
+    id: 'vault',
+    title: 'Zero-Log Cryptographic Vault',
+    badge: 'Anti-Hijack',
+    icon: Shield3D,
+    image: '/syncinema-privacy-vault.jpg',
+    subtitle: 'PBKDF2 Keys • No Server Tracking',
+    soundLabel: 'Encrypted Peer Channels',
+    eqSpeed: 0.9,
+    toneFreq: 85,
   },
 ];
 
 export default function HolographicStreamPortal({ onStartRoom }) {
   const [activeMode, setActiveMode] = useState('cinema');
   const [isPlaying, setIsPlaying] = useState(true);
+  const [visualizerType, setVisualizerType] = useState('bars'); // 'bars' | 'wave' | 'orbit'
   const [seconds, setSeconds] = useState(3842);
+  const [soundActive, setSoundActive] = useState(false);
+
+  const audioCtxRef = useRef(null);
+  const oscRef = useRef(null);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -75,6 +109,36 @@ export default function HolographicStreamPortal({ onStartRoom }) {
   const currentMode = PORTAL_MODES.find((m) => m.id === activeMode) || PORTAL_MODES[0];
   const IconComponent = currentMode.icon;
 
+  // Web Audio Tone Synthesizer for cozy soundscape experience
+  useEffect(() => {
+    if (soundActive && typeof window !== 'undefined') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(currentMode.toneFreq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.035, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        audioCtxRef.current = ctx;
+        oscRef.current = osc;
+      } catch {}
+    } else {
+      if (audioCtxRef.current) {
+        try { audioCtxRef.current.close(); } catch {}
+        audioCtxRef.current = null;
+      }
+    }
+    return () => {
+      if (audioCtxRef.current) {
+        try { audioCtxRef.current.close(); } catch {}
+      }
+    };
+  }, [soundActive, activeMode]);
+
   const formatTime = (totalSec) => {
     const hrs = Math.floor(totalSec / 3600);
     const mins = Math.floor((totalSec % 3600) / 60);
@@ -84,23 +148,23 @@ export default function HolographicStreamPortal({ onStartRoom }) {
   };
 
   return (
-    <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 space-y-8">
+    <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-14 space-y-8">
       {/* Section Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-100 text-[11px] font-extrabold uppercase tracking-widest backdrop-blur-md shadow-md">
           <SparkleStar3D size={18} />
-          <span>Interactive Cinema Visualizer</span>
+          <span>Cinematic Stream Portal</span>
         </div>
         <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-pink-100 tracking-tight">
-          Holographic Stream Portal &amp; Audio Visualizer
+          Holographic Portal &amp; Audio Visualizer Studio
         </h3>
         <p className="text-xs sm:text-sm text-pink-200/80 font-medium">
-          Experience how SynCinema blends synchronized 4K video, real-time duo audio waveforms, and floating video calls into one unified stage.
+          Explore our real-time 4K auditorium perspectives, ambient penthouse rain soundscapes, and multi-mode audio frequency visualizers.
         </p>
       </div>
 
       {/* Mode Switcher Buttons */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
         {PORTAL_MODES.map((mode) => {
           const ModeIcon = mode.icon;
           const isActive = activeMode === mode.id;
@@ -109,13 +173,13 @@ export default function HolographicStreamPortal({ onStartRoom }) {
               key={mode.id}
               type="button"
               onClick={() => setActiveMode(mode.id)}
-              className={`py-2.5 px-4 rounded-2xl text-xs font-bold border transition flex items-center gap-2.5 cursor-pointer shadow-md ${
+              className={`py-2 px-3.5 sm:px-4 rounded-2xl text-xs font-bold border transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-md ${
                 isActive
-                  ? 'btn-pink text-white border-pink-400 shadow-pink-500/30 scale-105'
+                  ? 'btn-pink text-white border-pink-400 shadow-pink-500/30 scale-105 ring-2 ring-pink-500/40'
                   : 'bg-[#1A1A1D] border-pink-500/20 text-pink-200/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <ModeIcon size={20} />
+              <ModeIcon size={18} />
               <span>{mode.title}</span>
             </button>
           );
@@ -131,7 +195,7 @@ export default function HolographicStreamPortal({ onStartRoom }) {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-500/20 pb-4 relative z-10">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 flex items-center justify-center text-white shadow-lg shadow-pink-500/30">
-              <IconComponent size={26} />
+              <IconComponent size={24} />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -148,15 +212,29 @@ export default function HolographicStreamPortal({ onStartRoom }) {
             </div>
           </div>
 
-          {/* Interactive Play/Pause Simulator Control */}
-          <div className="flex items-center gap-2">
+          {/* Interactive Play/Pause & Soundscape Controls */}
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
-              className="py-1.5 px-3.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-100 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+              className="py-1.5 px-3 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-100 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
             >
               {isPlaying ? <Pause className="h-3.5 w-3.5 fill-pink-200" /> : <Play className="h-3.5 w-3.5 fill-pink-200" />}
-              <span>{isPlaying ? 'Pause Simulator' : 'Play Simulator'}</span>
+              <span>{isPlaying ? 'Pause' : 'Play'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSoundActive(!soundActive)}
+              className={`py-1.5 px-3 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                soundActive
+                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
+                  : 'bg-[#1A1A1D] border-pink-500/20 text-pink-300/70 hover:text-white'
+              }`}
+              title="Listen to synthesized ambient cinema soundscape"
+            >
+              {soundActive ? <Volume2 className="h-3.5 w-3.5 text-emerald-400" /> : <VolumeX className="h-3.5 w-3.5" />}
+              <span>{soundActive ? 'Soundscape ON' : 'Soundscape OFF'}</span>
             </button>
 
             <span className="text-xs font-mono font-bold text-pink-300 px-3 py-1.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20">
@@ -176,12 +254,12 @@ export default function HolographicStreamPortal({ onStartRoom }) {
 
           {/* Holographic Top Status HUD */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-xs pointer-events-none">
-            <div className="flex items-center gap-2 bg-[#222222]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-pink-500/30 text-pink-100 font-bold shadow-md">
+            <div className="flex items-center gap-2 bg-[#222222]/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-pink-500/30 text-pink-100 font-bold shadow-md">
               <span className={`h-2 w-2 rounded-full ${isPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
               <span>{isPlaying ? '0ms P2P Stream Active' : 'Held in Buffer Sync'}</span>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 bg-[#222222]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-pink-500/30 text-pink-200 font-mono text-[11px] shadow-md">
+            <div className="hidden sm:flex items-center gap-2 bg-[#222222]/85 backdrop-blur-md px-3 py-1.5 rounded-full border border-pink-500/30 text-pink-200 font-mono text-[11px] shadow-md">
               <Activity className="h-3.5 w-3.5 text-pink-400" />
               <span>Lossless WebRTC Audio</span>
             </div>
@@ -219,8 +297,8 @@ export default function HolographicStreamPortal({ onStartRoom }) {
           </div>
         </div>
 
-        {/* 24-Bar Live Audio Spectrum Visualizer Ribbon */}
-        <div className="p-3 sm:p-4 rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/25 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* 28-BAR LIVE AUDIO SPECTRUM VISUALIZER RIBBON */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/25 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Volume2 className="h-4 w-4 text-pink-400 shrink-0" />
             <div>
@@ -233,9 +311,9 @@ export default function HolographicStreamPortal({ onStartRoom }) {
             </div>
           </div>
 
-          {/* 24 Dynamic Audio Frequency Bars */}
-          <div className="flex items-end gap-1 h-6">
-            {[45, 85, 60, 95, 35, 75, 100, 50, 80, 40, 90, 65, 70, 95, 45, 80, 60, 35, 85, 75, 90, 50, 65, 40].map(
+          {/* 28 Dynamic Audio Frequency Bars */}
+          <div className="flex items-end gap-1 h-7">
+            {[45, 85, 60, 95, 35, 75, 100, 50, 80, 40, 90, 65, 70, 95, 45, 80, 60, 35, 85, 75, 90, 50, 65, 40, 80, 55, 90, 70].map(
               (h, i) => (
                 <span
                   key={i}
@@ -246,8 +324,8 @@ export default function HolographicStreamPortal({ onStartRoom }) {
                   }`}
                   style={{
                     height: isPlaying ? undefined : '5px',
-                    animationDelay: `${(i % 6) * 0.12}s`,
-                    animationDuration: `${1.2 / currentMode.eqSpeed}s`,
+                    animationDelay: `${(i % 7) * 0.1}s`,
+                    animationDuration: `${1.1 / currentMode.eqSpeed}s`,
                   }}
                 />
               )
@@ -267,7 +345,7 @@ export default function HolographicStreamPortal({ onStartRoom }) {
               if (typeof onStartRoom === 'function') onStartRoom();
               else window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="btn-pink py-2.5 px-5 rounded-2xl text-xs font-extrabold text-white shadow-xl shadow-pink-500/30 flex items-center gap-2 cursor-pointer"
+            className="btn-pink py-2.5 px-5 rounded-2xl text-xs font-extrabold text-white shadow-xl shadow-pink-500/30 flex items-center gap-2 cursor-pointer active:scale-95"
           >
             <span>Launch Private Cinema</span>
             <ArrowRight className="h-4 w-4" />
