@@ -6,7 +6,8 @@ import {
   Square, Ban, Trash2, RefreshCw, Eye, EyeOff, Search, AlertTriangle,
   CheckCircle, Video, Flame, Clock, Key, ArrowRight, ExternalLink, LogOut,
   Copy, Radio, Sparkles, X, MapPin, Globe, Compass, Navigation, Activity, Wifi,
-  Volume2, VolumeX, Maximize2, Heart, Camera, Mic, MicOff, VideoOff, ChevronDown, ChevronUp
+  Volume2, VolumeX, Maximize2, Heart, Camera, Mic, MicOff, VideoOff, ChevronDown, ChevronUp,
+  Smartphone, Monitor, Tablet, Laptop, Info, Cpu, HardDrive, SmartphoneNfc, Server
 } from 'lucide-react';
 import { serverUrl, getSocket } from '@/lib/socket';
 import { ytId, vimeoId, toEmbed, toStreamProxyUrl, sanitizeDisplayTitle } from '@/lib/media';
@@ -18,6 +19,36 @@ const fmt = (s) => {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+};
+
+// Render appropriate hardware device icon
+const renderDeviceIcon = (device = {}) => {
+  if (device.isMobile) {
+    return <Smartphone className="h-4 w-4 text-pink-400" />;
+  }
+  if (device.isTablet) {
+    return <Tablet className="h-4 w-4 text-purple-400" />;
+  }
+  if (device.os === 'macOS' || (device.brand === 'Apple' && device.type === 'desktop')) {
+    return <Laptop className="h-4 w-4 text-sky-400" />;
+  }
+  if (device.isDesktop) {
+    return <Monitor className="h-4 w-4 text-cyan-400" />;
+  }
+  return <Smartphone className="h-4 w-4 text-slate-400" />;
+};
+
+// Formatter for relative timestamps
+const fmtTimeAgo = (ts) => {
+  if (!ts) return 'just now';
+  const sec = Math.floor((Date.now() - Number(ts)) / 1000);
+  if (sec < 5) return 'just now';
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  return `${Math.floor(hr / 24)}d ago`;
 };
 
 // Haversine distance calculator between two coordinates (km)
@@ -874,6 +905,17 @@ export default function AdminPage() {
   // Manual block video URL input
   const [manualBlockUrl, setManualBlockUrl] = useState('');
 
+  // Live Visitors & Hardware Device Telemetry State
+  const [visitorsData, setVisitorsData] = useState({
+    summary: { totalRecorded: 0, totalUnique: 0, onlineNow: 0, mobileCount: 0, desktopCount: 0, tabletCount: 0 },
+    online: [],
+    recent: [],
+    breakdown: { os: {}, browsers: {}, countries: {} },
+  });
+  const [visitorDeviceFilter, setVisitorDeviceFilter] = useState('all'); // 'all' | 'online' | 'mobile' | 'desktop' | 'tablet'
+  const [visitorSearch, setVisitorSearch] = useState('');
+  const [selectedVisitorModal, setSelectedVisitorModal] = useState(null);
+
   const say = (msg, type = 'success') => {
     setToast({ msg, type, n: Date.now() });
     clearTimeout(toastTimer.current);
@@ -980,6 +1022,9 @@ export default function AdminPage() {
           rooms: Array.isArray(json.rooms) ? json.rooms : [],
           blocked: json.blocked || { users: [], ips: [], rooms: [], videos: [] },
         });
+        if (json.visitors) {
+          setVisitorsData(json.visitors);
+        }
       } else if (res.status === 401) {
         setAuthed(false);
         sessionStorage.removeItem('sc_admin_key');
@@ -988,6 +1033,30 @@ export default function AdminPage() {
       // offline / quiet
     }
   }, [adminKey]);
+
+  // Admin ban visitor IP from Live Visitors telemetry
+  const handleBlockVisitorIp = async (ip, reason = 'Blocked by administrator from Live Visitors panel') => {
+    if (!ip) return;
+    if (!confirm(`Are you sure you want to BLOCK IP "${ip}"?\n\nThis will terminate and sever all active connections from this IP address.`)) return;
+    try {
+      const res = await fetch(serverUrl() + '/api/admin/visitors/block', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+        body: JSON.stringify({ ip, reason }),
+      });
+      if (res.ok) {
+        say(`IP ${ip} blocked and live sessions severed`);
+        fetchOverview();
+      } else {
+        say('Failed to block IP', 'error');
+      }
+    } catch {
+      say('Network error blocking IP', 'error');
+    }
+  };
 
   // Auto-refresh interval
   useEffect(() => {
@@ -1257,6 +1326,29 @@ export default function AdminPage() {
     );
   });
 
+  // Filtered live website visitors
+  const filteredVisitors = (visitorsData?.recent || []).filter((v) => {
+    if (visitorDeviceFilter === 'online' && !v.online) return false;
+    if (visitorDeviceFilter === 'mobile' && !v.device?.isMobile) return false;
+    if (visitorDeviceFilter === 'desktop' && !v.device?.isDesktop) return false;
+    if (visitorDeviceFilter === 'tablet' && !v.device?.isTablet) return false;
+    if (!visitorSearch.trim()) return true;
+    const q = visitorSearch.toLowerCase();
+    return (
+      (v.ip && v.ip.toLowerCase().includes(q)) ||
+      (v.device?.model && v.device.model.toLowerCase().includes(q)) ||
+      (v.device?.brand && v.device.brand.toLowerCase().includes(q)) ||
+      (v.device?.os && v.device.os.toLowerCase().includes(q)) ||
+      (v.device?.browser && v.device.browser.toLowerCase().includes(q)) ||
+      (v.geo?.city && v.geo.city.toLowerCase().includes(q)) ||
+      (v.geo?.country && v.geo.country.toLowerCase().includes(q)) ||
+      (v.geo?.isp && v.geo.isp.toLowerCase().includes(q)) ||
+      (v.nickname && v.nickname.toLowerCase().includes(q)) ||
+      (v.currentRoom && v.currentRoom.toLowerCase().includes(q)) ||
+      (v.currentPath && v.currentPath.toLowerCase().includes(q))
+    );
+  });
+
 
 
   // ------------------ LOGIN SCREEN (SOFT BLACK GRADIENT) ------------------
@@ -1392,7 +1484,7 @@ export default function AdminPage() {
       {/* Main Content */}
       <main className="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 space-y-6">
         {/* Metric Cards Row */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7 sm:gap-4">
           <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl">
             <div className="flex items-center justify-between text-xs text-white/60">
               <span>Active Couches</span>
@@ -1419,6 +1511,24 @@ export default function AdminPage() {
                 <span>live radar</span>
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
               </span>
+            </div>
+          </div>
+
+          <div
+            onClick={() => setActiveTab('visitors')}
+            className="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 backdrop-blur-xl cursor-pointer hover:border-cyan-500/60 transition group"
+            title="Click to view live visitors and their hardware devices"
+          >
+            <div className="flex items-center justify-between text-xs text-cyan-300">
+              <span className="group-hover:text-cyan-200">Live Devices</span>
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
+                <Smartphone className="h-4 w-4 text-cyan-400 group-hover:scale-110 transition" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white">{visitorsData?.summary?.onlineNow || 0}</span>
+              <span className="text-[11px] text-cyan-400">online ({visitorsData?.summary?.totalUnique || 0} unique)</span>
             </div>
           </div>
 
@@ -1487,6 +1597,24 @@ export default function AdminPage() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab('visitors')}
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer shrink-0 ${
+                activeTab === 'visitors'
+                  ? 'bg-cyan-600 text-white shadow-md'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <Smartphone className="h-3.5 w-3.5 text-cyan-300" />
+              <span>📱 Live Visitors &amp; Devices ({visitorsData?.summary?.onlineNow || 0} Live &bull; {visitorsData?.recent?.length || 0} Logged)</span>
+              {(visitorsData?.summary?.onlineNow || 0) > 0 && (
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('videocalls')}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 font-medium transition cursor-pointer shrink-0 ${
                 activeTab === 'videocalls'
@@ -1541,12 +1669,23 @@ export default function AdminPage() {
             </button>
           </div>
 
-          {(activeTab === 'rooms' || activeTab === 'locations' || activeTab === 'videocalls') && (
+          {(activeTab === 'rooms' || activeTab === 'locations' || activeTab === 'videocalls' || activeTab === 'visitors') && (
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
               <input
                 type="text"
-                value={search}
+                value={activeTab === 'visitors' ? visitorSearch : search}
+                onChange={(e) => activeTab === 'visitors' ? setVisitorSearch(e.target.value) : setSearch(e.target.value)}
+                placeholder={
+                  activeTab === 'visitors'
+                    ? 'Search device, IP, model, city, path…'
+                    : activeTab === 'locations'
+                    ? 'Search city, country, IP, user…'
+                    : activeTab === 'videocalls'
+                    ? 'Search caller, room ID, IP…'
+                    : 'Search room ID, media, or user…'
+                }
+                className="w-full rounded-xl bg-white/5 border border-white/10 pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:border-cyan-500 focus:outline-none transition"
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={
                   activeTab === 'locations'
@@ -2656,6 +2795,394 @@ export default function AdminPage() {
             </form>
           </div>
         )}
+
+        {/* ================= TAB: LIVE VISITORS & DEVICES TELEMETRY ================= */}
+        {activeTab === 'visitors' && (
+          <div className="space-y-6">
+            {/* Top Command Bar & Device Type Filter Pills */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-cyan-500/20 bg-black/50 p-4 backdrop-blur-xl">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <Smartphone className="h-5 w-5 text-cyan-400" />
+                    <span>Real-Time Visitor &amp; Device Surveillance</span>
+                  </h2>
+                  <span className="rounded-full bg-cyan-500/20 border border-cyan-500/40 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+                    REAL HARDWARE TELEMETRY
+                  </span>
+                </div>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Live detection of visitor devices (iPhones, Androids, Windows PCs, Macs, iPads), display resolutions, real IPs, and visited routes.
+                </p>
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs bg-white/5 p-1 rounded-xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setVisitorDeviceFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+                    visitorDeviceFilter === 'all'
+                      ? 'bg-cyan-600 text-white shadow'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  All ({visitorsData?.recent?.length || 0})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitorDeviceFilter('online')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                    visitorDeviceFilter === 'online'
+                      ? 'bg-emerald-600 text-white shadow'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Online ({visitorsData?.summary?.onlineNow || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitorDeviceFilter('mobile')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
+                    visitorDeviceFilter === 'mobile'
+                      ? 'bg-pink-600 text-white shadow'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Smartphone className="h-3 w-3" />
+                  <span>Mobile ({visitorsData?.summary?.mobileCount || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitorDeviceFilter('desktop')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
+                    visitorDeviceFilter === 'desktop'
+                      ? 'bg-blue-600 text-white shadow'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Monitor className="h-3 w-3" />
+                  <span>Desktop ({visitorsData?.summary?.desktopCount || 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVisitorDeviceFilter('tablet')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
+                    visitorDeviceFilter === 'tablet'
+                      ? 'bg-purple-600 text-white shadow'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  <Tablet className="h-3 w-3" />
+                  <span>Tablet ({visitorsData?.summary?.tabletCount || 0})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Hardware & Geography Breakdown Bento */}
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+              {/* OS / Platform Breakdown */}
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl space-y-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-white/80">
+                  <span className="flex items-center gap-1.5">
+                    <Cpu className="h-4 w-4 text-pink-400" />
+                    <span>Operating Systems</span>
+                  </span>
+                  <span className="text-[11px] text-white/50">{Object.keys(visitorsData?.breakdown?.os || {}).length} detected</span>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  {Object.entries(visitorsData?.breakdown?.os || {}).length === 0 ? (
+                    <p className="text-white/40 text-xs italic py-2">Collecting OS telemetry…</p>
+                  ) : (
+                    Object.entries(visitorsData?.breakdown?.os || {})
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 5)
+                      .map(([os, count]) => {
+                        const total = visitorsData?.recent?.length || 1;
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                          <div key={os} className="space-y-1">
+                            <div className="flex justify-between text-[11px]">
+                              <span className="text-white/90 font-medium">{os}</span>
+                              <span className="text-white/60 font-mono">{count} ({pct}%)</span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              {/* Web Browser Breakdown */}
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl space-y-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-white/80">
+                  <span className="flex items-center gap-1.5">
+                    <Globe className="h-4 w-4 text-cyan-400" />
+                    <span>Web Browsers</span>
+                  </span>
+                  <span className="text-[11px] text-white/50">{Object.keys(visitorsData?.breakdown?.browsers || {}).length} detected</span>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  {Object.entries(visitorsData?.breakdown?.browsers || {})
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([browser, count]) => {
+                      const total = visitorsData?.recent?.length || 1;
+                      const pct = Math.round((count / total) * 100);
+                      return (
+                        <div key={browser} className="space-y-1">
+                          <div className="flex justify-between text-[11px]">
+                            <span className="text-white/90 font-medium">{browser}</span>
+                            <span className="text-white/60 font-mono">{count} ({pct}%)</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Country Breakdown */}
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl space-y-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-white/80">
+                  <span className="flex items-center gap-1.5">
+                    <Navigation className="h-4 w-4 text-emerald-400" />
+                    <span>Origin Countries</span>
+                  </span>
+                  <span className="text-[11px] text-white/50">{Object.keys(visitorsData?.breakdown?.countries || {}).length} countries</span>
+                </div>
+                <div className="space-y-1.5 text-xs">
+                  {Object.entries(visitorsData?.breakdown?.countries || {}).length === 0 ? (
+                    <p className="text-white/40 text-xs italic py-2">Collecting geo telemetry…</p>
+                  ) : (
+                    Object.entries(visitorsData?.breakdown?.countries || {})
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 5)
+                      .map(([country, count]) => {
+                        const total = visitorsData?.recent?.length || 1;
+                        const pct = Math.round((count / total) * 100);
+                        return (
+                          <div key={country} className="space-y-1">
+                            <div className="flex justify-between text-[11px]">
+                              <span className="text-white/90 font-medium">{country}</span>
+                              <span className="text-white/60 font-mono">{count} ({pct}%)</span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Visitors List Grid */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span>Logged Visitors</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-mono text-cyan-300">
+                    {filteredVisitors.length} of {visitorsData?.recent?.length || 0}
+                  </span>
+                </h3>
+                <span className="text-xs text-white/40">Auto-updating every 3s via heartbeat</span>
+              </div>
+
+              {filteredVisitors.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center backdrop-blur-xl space-y-3">
+                  <Smartphone className="mx-auto h-10 w-10 text-white/30" />
+                  <h3 className="text-base font-semibold text-white">No visitors found</h3>
+                  <p className="text-xs text-white/50 max-w-sm mx-auto">
+                    {visitorSearch ? 'No recorded visitors match your search query.' : 'Waiting for incoming website visitors...'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredVisitors.map((v, idx) => {
+                    const dev = v.device || {};
+                    const geo = v.geo || {};
+                    const isLive = v.online;
+
+                    return (
+                      <div
+                        key={v.cid || v.ip + idx}
+                        className={`rounded-2xl border p-4 backdrop-blur-2xl transition space-y-3 flex flex-col justify-between ${
+                          isLive
+                            ? 'border-emerald-500/30 bg-[#071311]/60 hover:border-emerald-500/50 shadow-lg shadow-emerald-950/20'
+                            : 'border-white/10 bg-black/50 hover:border-white/20'
+                        }`}
+                      >
+                        {/* Top: Device Icon & Live Status */}
+                        <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/5 border border-white/10 shrink-0">
+                              {renderDeviceIcon(dev)}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs sm:text-sm font-bold text-white truncate">
+                                {dev.model || (dev.brand ? `${dev.brand} Device` : (dev.os || 'Desktop PC'))}
+                              </h4>
+                              <p className="text-[11px] text-white/60 truncate font-mono">
+                                {dev.os} {dev.osVersion ? `v${dev.osVersion}` : ''} &bull; {dev.browser} {dev.browserVersion ? `v${dev.browserVersion}` : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Online Status Badge */}
+                          <div className="shrink-0 text-right">
+                            {isLive ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                <span>ONLINE</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] font-medium text-white/50">
+                                Seen {fmtTimeAgo(v.lastSeen)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Specs Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          <div className="rounded-xl bg-white/5 p-2 border border-white/5 space-y-0.5">
+                            <span className="text-[10px] text-white/40 uppercase font-bold block">Display Screen</span>
+                            <span className="font-mono text-cyan-300 font-semibold truncate block">
+                              {dev.screen || 'Detecting'}
+                            </span>
+                          </div>
+
+                          <div className="rounded-xl bg-white/5 p-2 border border-white/5 space-y-0.5">
+                            <span className="text-[10px] text-white/40 uppercase font-bold block">Hardware Class</span>
+                            <span className="text-white/90 font-medium capitalize truncate block flex items-center gap-1">
+                              {dev.type || 'desktop'} {dev.dpr ? `(${dev.dpr}x DPR)` : ''}
+                            </span>
+                          </div>
+
+                          <div className="rounded-xl bg-white/5 p-2 border border-white/5 space-y-0.5">
+                            <span className="text-[10px] text-white/40 uppercase font-bold block">IP Address</span>
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-emerald-300 font-bold truncate block">
+                                {v.ip || '127.0.0.1'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(v.ip);
+                                  say(`IP ${v.ip} copied`);
+                                }}
+                                className="text-white/40 hover:text-white p-0.5 transition cursor-pointer"
+                                title="Copy IP"
+                              >
+                                <Copy className="h-2.5 w-2.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl bg-white/5 p-2 border border-white/5 space-y-0.5">
+                            <span className="text-[10px] text-white/40 uppercase font-bold block">Location</span>
+                            <span className="text-white/90 font-medium truncate block flex items-center gap-1">
+                              <span>{geo.flag || '📍'}</span>
+                              <span>{geo.city ? `${geo.city}, ${geo.countryCode || geo.country}` : (geo.country || 'Local/Cloud')}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Current Location on Website / Room */}
+                        <div className="rounded-xl bg-black/40 p-2 border border-white/10 text-[11px] space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-white/50 text-[10px] uppercase font-bold">Current Page &bull; Activity</span>
+                            <span className="font-mono text-[10px] text-white/50">{v.hits || 1} hits</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-pink-300 truncate font-semibold">
+                              {v.currentPath || '/'}
+                            </span>
+                            {v.currentRoom ? (
+                              <span className="rounded bg-purple-500/20 border border-purple-500/40 text-purple-200 px-1.5 py-0.5 text-[10px] font-bold shrink-0">
+                                In Room: {v.currentRoom} {v.nickname ? `(${v.nickname})` : ''}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-white/40 shrink-0">Browsing site</span>
+                            )}
+                          </div>
+                          {geo.isp && (
+                            <p className="text-[10px] text-white/40 truncate font-mono pt-1 border-t border-white/5">
+                              ISP: {geo.isp} {geo.org && geo.org !== geo.isp ? `(${geo.org})` : ''}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Actions Toolbar */}
+                        <div className="flex items-center gap-1.5 pt-1 border-t border-white/10">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVisitorModal(v)}
+                            className="flex-1 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 py-1.5 text-[11px] font-medium text-white/90 transition flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Info className="h-3 w-3 text-cyan-400" />
+                            <span>Inspect</span>
+                          </button>
+
+                          {geo.lat && geo.lon && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMapModal({
+                                  open: true,
+                                  roomId: v.currentRoom || 'Browsing Website',
+                                  user: {
+                                    name: v.nickname || dev.model || v.ip,
+                                    cid: v.cid,
+                                    ip: v.ip,
+                                    geo: v.geo,
+                                    isHost: false,
+                                  },
+                                });
+                              }}
+                              className="rounded-xl bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 px-2.5 py-1.5 text-[11px] font-medium text-pink-300 transition flex items-center gap-1 cursor-pointer"
+                              title="Pinpoint on satellite map"
+                            >
+                              <MapPin className="h-3 w-3 text-pink-400" />
+                              <span className="hidden sm:inline">Map</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleBlockVisitorIp(v.ip)}
+                            className="rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 px-2.5 py-1.5 text-[11px] font-medium text-rose-300 transition flex items-center gap-1 cursor-pointer"
+                            title="Block this visitor IP immediately"
+                          >
+                            <Ban className="h-3 w-3 text-rose-400" />
+                            <span>Ban</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Override Stream Modal */}
@@ -2997,6 +3524,201 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setMapModal({ open: false, user: null, roomId: '' })}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔍 Visitor Hardware & Telemetry Diagnostic Modal */}
+      {selectedVisitorModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-3xl border border-cyan-500/30 bg-[#090b14] p-5 sm:p-6 shadow-2xl space-y-4 text-left relative overflow-hidden">
+            {/* Top Bar */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-xl shadow-md">
+                  {renderDeviceIcon(selectedVisitorModal.device)}
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base sm:text-lg flex items-center gap-2">
+                    <span>{selectedVisitorModal.device?.model || selectedVisitorModal.device?.brand || 'Hardware Fingerprint'}</span>
+                    {selectedVisitorModal.online && (
+                      <span className="text-[10px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                        LIVE
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-cyan-300 font-medium font-mono">
+                    IP: <span className="text-white font-bold">{selectedVisitorModal.ip}</span> &bull; CID: <span className="text-slate-400">{selectedVisitorModal.cid}</span>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedVisitorModal(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Diagnostics Bento */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Operating System</span>
+                <span className="font-bold text-white block truncate">
+                  {selectedVisitorModal.device?.os} {selectedVisitorModal.device?.osVersion || ''}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Browser</span>
+                <span className="font-bold text-white block truncate">
+                  {selectedVisitorModal.device?.browser} {selectedVisitorModal.device?.browserVersion || ''}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Screen Resolution</span>
+                <span className="font-mono font-bold text-cyan-300 block truncate">
+                  {selectedVisitorModal.device?.screen || 'Detecting'}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold">Pixel Ratio (DPR)</span>
+                <span className="font-mono font-bold text-purple-300 block truncate">
+                  {selectedVisitorModal.device?.dpr ? `${selectedVisitorModal.device.dpr}x HiDPI` : '1x'}
+                </span>
+              </div>
+            </div>
+
+            {/* Location & ISP Details */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-2 text-xs">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Network &amp; Geolocation</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                <div>
+                  <span className="text-white/50 block">Country &amp; Region:</span>
+                  <span className="text-white font-medium">
+                    {selectedVisitorModal.geo?.flag} {selectedVisitorModal.geo?.city}, {selectedVisitorModal.geo?.regionName || selectedVisitorModal.geo?.region}, {selectedVisitorModal.geo?.country}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-white/50 block">Internet Service Provider (ISP):</span>
+                  <span className="text-white font-medium">
+                    {selectedVisitorModal.geo?.isp || 'Standard Carrier'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-white/50 block">Timezone:</span>
+                  <span className="text-cyan-300 font-mono">
+                    {selectedVisitorModal.geo?.timezone || 'Local'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-white/50 block">Coordinates (Lat / Lon):</span>
+                  <span className="text-emerald-300 font-mono">
+                    {selectedVisitorModal.geo?.lat ? `${Number(selectedVisitorModal.geo.lat).toFixed(4)}, ${Number(selectedVisitorModal.geo.lon).toFixed(4)}` : 'Local Network'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Session History & Navigation Path */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-2 text-xs">
+              <span className="text-[10px] text-slate-400 uppercase font-bold block">Session Telemetry</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                <div>
+                  <span className="text-white/50 block">First Seen:</span>
+                  <span className="text-white font-mono">{new Date(selectedVisitorModal.firstSeen).toLocaleTimeString()} ({fmtTimeAgo(selectedVisitorModal.firstSeen)})</span>
+                </div>
+                <div>
+                  <span className="text-white/50 block">Last Active:</span>
+                  <span className="text-white font-mono">{new Date(selectedVisitorModal.lastSeen).toLocaleTimeString()} ({fmtTimeAgo(selectedVisitorModal.lastSeen)})</span>
+                </div>
+                <div>
+                  <span className="text-white/50 block">Total Page Hits:</span>
+                  <span className="text-white font-mono">{selectedVisitorModal.hits || 1} hits</span>
+                </div>
+                <div className="sm:col-span-2">
+                  <span className="text-white/50 block">Current Page / Route:</span>
+                  <span className="text-pink-300 font-mono font-semibold">{selectedVisitorModal.currentPath || '/'}</span>
+                </div>
+                <div>
+                  <span className="text-white/50 block">Referrer:</span>
+                  <span className="text-white/70 font-mono truncate block">{selectedVisitorModal.referrer || 'Direct Visit'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Raw User Agent Monospace Card */}
+            <div className="rounded-2xl bg-black/60 border border-white/10 p-3 text-xs space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase">
+                <span>Raw User Agent Header</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedVisitorModal.device?.rawUa || '');
+                    say('User Agent copied');
+                  }}
+                  className="text-cyan-400 hover:text-cyan-300 transition cursor-pointer flex items-center gap-1"
+                >
+                  <Copy className="h-3 w-3" />
+                  <span>Copy</span>
+                </button>
+              </div>
+              <p className="font-mono text-[10px] text-slate-300 break-all bg-white/5 p-2 rounded-xl leading-relaxed">
+                {selectedVisitorModal.device?.rawUa || 'N/A'}
+              </p>
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-2">
+                {selectedVisitorModal.geo?.lat && selectedVisitorModal.geo?.lon && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = selectedVisitorModal;
+                      setSelectedVisitorModal(null);
+                      setMapModal({
+                        open: true,
+                        roomId: v.currentRoom || 'Browsing Website',
+                        user: {
+                          name: v.nickname || v.device?.model || v.ip,
+                          cid: v.cid,
+                          ip: v.ip,
+                          geo: v.geo,
+                          isHost: false,
+                        },
+                      });
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 font-semibold text-xs border border-pink-500/40 transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span>View on OpenStreetMap</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleBlockVisitorIp(selectedVisitorModal.ip);
+                    setSelectedVisitorModal(null);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-semibold text-xs border border-rose-500/40 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Ban className="h-3.5 w-3.5" />
+                  <span>Ban This IP</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedVisitorModal(null)}
                 className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition cursor-pointer"
               >
                 Close

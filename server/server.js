@@ -13,7 +13,7 @@ const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 const { resolveUniversalMedia } = require('./universalExtractor');
-const { recordVisit, pingSession, endSession, getVisitorStats } = require('./visitorTracker');
+const { recordVisit, pingSession, setVisitorRoom, endSession, getVisitorStats, getAdminVisitorsData } = require('./visitorTracker');
 const { botShieldMiddleware, isBotRequest } = require('./botShield');
 
 // Auto-load .env if present in root or server directory
@@ -498,10 +498,18 @@ app.get('/api/stats/visitors', (req, res) => {
   const clientId = req.query.cid || '';
   const record = req.query.record === '1' || req.query.record === 'true';
 
+  const clientMeta = {
+    screen: (req.query.sw && req.query.sh)
+      ? { width: Number(req.query.sw), height: Number(req.query.sh), dpr: Number(req.query.dpr || 1) }
+      : null,
+    path: req.query.path || '/',
+    ref: req.query.ref || '',
+  };
+
   if (record) {
-    recordVisit(ip, clientId, ua);
+    recordVisit(ip, clientId, ua, clientMeta);
   } else {
-    pingSession(ip, clientId);
+    pingSession(ip, clientId, clientMeta);
   }
 
   let activeRoomsCount = 0;
@@ -1549,12 +1557,17 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
 
   roomList.sort((a, b) => b.createdAt - a.createdAt);
 
+  const visitorsData = getAdminVisitorsData();
+
   res.json({
     ok: true,
     stats: {
       totalRooms: roomList.length,
       totalConnectedUsers,
       activePlayingCount,
+      liveVisitorsCount: visitorsData.summary.liveOnline,
+      totalUniqueVisitors: visitorsData.summary.totalUnique,
+      todayUniqueVisitors: visitorsData.summary.todayUnique,
       totalOttLogins: globalOttLogins.length,
       activeOttLogins: globalOttLogins.filter(l => l.active).length,
       blockedUsersCount: blockedUsers.size,
@@ -1567,6 +1580,7 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       },
     },
     rooms: roomList,
+    visitors: visitorsData,
     ottLogins: globalOttLogins,
     blocked: {
       users: [...blockedUsers.entries()].map(([cid, v]) => ({ cid, ...v })),
@@ -1575,6 +1589,26 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       videos: [...blockedVideos],
     },
   });
+});
+
+// Dedicated 100% Genuine Real Visitors & Device Telemetry API for Admin
+app.get('/api/admin/visitors', adminGate, (req, res) => {
+  res.json({ ok: true, ...getAdminVisitorsData() });
+});
+
+// Admin 1-Click Visitor Ban
+app.post('/api/admin/visitors/block', adminGate, (req, res) => {
+  const { ip, reason = 'Blocked by administrator from visitor surveillance' } = req.body || {};
+  if (!ip) return res.status(400).json({ error: 'IP required' });
+  const normIp = String(ip).trim().replace(/^::ffff:/, '');
+  blockedIps.add(normIp);
+  for (const s of io.sockets.sockets.values()) {
+    if (ipOf(s.handshake) === normIp) {
+      s.emit('err', 'banned_from_room');
+      s.disconnect(true);
+    }
+  }
+  res.json({ ok: true, message: `Visitor IP ${normIp} blocked and severed successfully.` });
 });
 
 app.post('/api/admin/ott/disconnect', adminGate, (req, res) => {
@@ -1754,7 +1788,7 @@ io.on('connection', (socket) => {
   socket.on('stats:ping', (data) => {
     const cid = data?.cid || socket.clientCid;
     if (data?.cid) socket.clientCid = data.cid;
-    pingSession(ip, cid);
+    pingSession(ip, cid, data || {});
     let activeRoomsCount = 0;
     for (const r of rooms.values()) {
       if (r.users && r.users.size > 0) activeRoomsCount++;
@@ -1909,6 +1943,7 @@ io.on('connection', (socket) => {
     }
     room.users.set(cid, user);
     if (!room.hostId || !room.users.has(room.hostId)) room.hostId = cid;
+    setVisitorRoom(ip, cid, rid, user.name);
     socket.join(rid);
 
     // AUTO-LOCK: When room capacity is reached, automatically lock entry
@@ -2585,6 +2620,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     endSession(ip, socket.clientCid);
+    setVisitorRoom(ip, socket.clientCid, null, null);
     if (socket.isGhost) return; // 👻 Ghost admin disconnects silently without touching room users
     if (!joined() || user.sid !== socket.id) return;  // a newer socket already took over
     const [r, u, id] = [room, user, rid];

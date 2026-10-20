@@ -41,13 +41,44 @@ export default function VisitorCounter() {
       }
     };
 
+    const getClientMetaParams = () => {
+      try {
+        const sw = window.screen?.width || 0;
+        const sh = window.screen?.height || 0;
+        const dpr = window.devicePixelRatio || 1;
+        const path = window.location?.pathname || '/';
+        const ref = document.referrer || '';
+        return `&sw=${sw}&sh=${sh}&dpr=${dpr}&path=${encodeURIComponent(path)}&ref=${encodeURIComponent(ref)}`;
+      } catch {
+        return '';
+      }
+    };
+
+    const getClientMetaData = () => {
+      try {
+        return {
+          cid: clientId,
+          path: window.location?.pathname || '/',
+          ref: document.referrer || '',
+          screen: {
+            width: window.screen?.width || 0,
+            height: window.screen?.height || 0,
+            dpr: window.devicePixelRatio || 1,
+          },
+        };
+      } catch {
+        return { cid: clientId };
+      }
+    };
+
     // 1. Fetch genuine real stats from verified endpoint (strictly human-only)
     const fetchRealStats = async (record = false) => {
       if (!isRealHumanBrowser()) return;
       try {
         const hp = getHumanProofToken();
+        const metaParams = getClientMetaParams();
         const res = await fetch(
-          `${base}/api/stats/visitors?record=${record ? '1' : '0'}&cid=${encodeURIComponent(clientId)}&hp=${encodeURIComponent(hp)}`
+          `${base}/api/stats/visitors?record=${record ? '1' : '0'}&cid=${encodeURIComponent(clientId)}&hp=${encodeURIComponent(hp)}${metaParams}`
         );
         if (res.ok) {
           const data = await res.json();
@@ -62,14 +93,14 @@ export default function VisitorCounter() {
     // 2. Real-time WebSocket synchronization
     if (socket) {
       socket.on('stats:visitors', applyStats);
-      socket.emit('stats:ping', { cid: clientId });
+      socket.emit('stats:ping', getClientMetaData());
     }
 
     // 3. Heartbeat every 25 seconds to keep genuine session active (skips when tab is hidden to save server capacity)
     const timer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       if (socket && socket.connected) {
-        socket.emit('stats:ping', { cid: clientId });
+        socket.emit('stats:ping', getClientMetaData());
       } else {
         fetchRealStats(false);
       }
