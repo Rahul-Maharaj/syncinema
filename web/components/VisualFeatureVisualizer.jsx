@@ -37,6 +37,7 @@ import {
   Ticket3D,
   SparkleStar3D,
 } from '@/components/Icons3D';
+import BrandedImage from '@/components/BrandedImage';
 
 const VISUAL_SCENARIOS = [
   {
@@ -383,14 +384,15 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
                 </div>
               </div>
 
-              {/* Virtual Screen Viewport */}
+              {/* Virtual Screen Viewport with SynCinema Logo in Right Top Corner */}
               <div className="relative rounded-2xl overflow-hidden aspect-video bg-black/80 border border-pink-500/30 shadow-inner flex items-center justify-center">
-                <img
-                  src="/ad-duo-cinema.jpg"
-                  alt="Device 1 Viewport"
-                  className="w-full h-full object-cover opacity-85 group-hover:scale-102 transition-transform duration-500"
+                <BrandedImage
+                  src="/syncinema-bedroom-date.jpg"
+                  alt="Device 1 Viewport - Cozy Bedroom Date"
+                  className="w-full h-full"
+                  imgClassName="w-full h-full object-cover opacity-85 group-hover:scale-102 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
                 {/* In-Screen PiP Webcam Tile */}
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-2 p-1.5 px-2.5 rounded-xl bg-black/85 backdrop-blur-md border border-pink-500/40 text-[10px] font-bold text-pink-200 shadow-md">
@@ -510,14 +512,15 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
                 </div>
               </div>
 
-              {/* Virtual Screen Viewport */}
+              {/* Virtual Screen Viewport with SynCinema Logo in Right Top Corner */}
               <div className="relative rounded-2xl overflow-hidden aspect-video bg-black/80 border border-pink-500/30 shadow-inner flex items-center justify-center">
-                <img
-                  src="/ad-theater-experience.jpg"
-                  alt="Device 2 Viewport"
-                  className="w-full h-full object-cover opacity-85 group-hover:scale-102 transition-transform duration-500"
+                <BrandedImage
+                  src="/syncinema-cyber-lounge.jpg"
+                  alt="Device 2 Viewport - Cyber Cinema Lounge"
+                  className="w-full h-full"
+                  imgClassName="w-full h-full object-cover opacity-85 group-hover:scale-102 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
                 {/* In-Screen PiP Webcam Tile */}
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-2 p-1.5 px-2.5 rounded-xl bg-black/85 backdrop-blur-md border border-rose-500/40 text-[10px] font-bold text-rose-200 shadow-md">

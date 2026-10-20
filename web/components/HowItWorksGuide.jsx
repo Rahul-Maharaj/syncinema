@@ -21,6 +21,7 @@ import {
   Layers,
   Volume2
 } from 'lucide-react';
+import BrandedImage from '@/components/BrandedImage';
 
 const STEPS = [
   {
@@ -29,7 +30,7 @@ const STEPS = [
     title: 'Create Room & Set Passcode',
     subtitle: '100% Private, Zero Sign-Up Required',
     badge: 'Security Vault',
-    image: '/ad-privacy-vault.jpg',
+    image: '/syncinema-privacy-vault.jpg',
     description:
       'Start by creating your private cinema auditorium. SynCinema is built on zero-knowledge architecture—no accounts, no emails, and no passwords stored in plaintext.',
     keyPoints: [
@@ -58,7 +59,7 @@ const STEPS = [
     title: 'Universal Media & Local Streaming',
     subtitle: 'YouTube, Direct MP4s, HLS & Local Laptop Files',
     badge: 'Universal Engine',
-    image: '/ad-universal-media.jpg',
+    image: '/syncinema-portal.jpg',
     description:
       'Play virtually any video format on the web or from your personal computer with crisp high-definition 1080p and 4K playback support.',
     keyPoints: [
@@ -71,15 +72,15 @@ const STEPS = [
         desc: 'Stream directly from any CDN, cloud drive, or direct URL. Full support for adaptive bitrate HLS (m3u8) streams.',
       },
       {
-        title: 'P2P Local File Playback',
-        desc: 'Want to watch a downloaded movie? Select any video file from your laptop or phone. SynCinema streams it peer-to-peer to your partner without uploading to any server.',
+        title: 'P2P Local File Playback (0s Wait)',
+        desc: 'Want to watch a downloaded movie? Select any video file from your laptop or phone. SynCinema streams it peer-to-peer to your partner without waiting for slow upload.',
       },
       {
         title: 'Queue & Continuous Playlist',
         desc: 'Queue up your favorite movie trailers, anime episodes, or music videos. The room automatically transitions to the next item when one finishes.',
       },
     ],
-    proTip: 'Local file playback requires zero cloud storage. Your file streams directly device-to-device through encrypted WebRTC data channels.',
+    proTip: 'Local file playback starts in 0.01s on your device with high-performance concurrent stream piping to your partner.',
   },
   {
     id: 'sync',
@@ -87,7 +88,7 @@ const STEPS = [
     title: '0ms Lockstep Sync Engine',
     subtitle: 'Microsecond Clock Alignment Across All Devices',
     badge: 'Zero Drift',
-    image: '/ad-sync-engine.jpg',
+    image: '/syncinema-global-sync.jpg',
     description:
       'Never count "3, 2, 1, play" over the phone again. SynCinema\'s proprietary lockstep engine keeps video timelines synchronized down to the exact millisecond.',
     keyPoints: [
@@ -96,8 +97,8 @@ const STEPS = [
         desc: 'When anyone taps play, pause, or scrubs the seekbar, all participants\' screens mirror the exact frame instantaneously.',
       },
       {
-        title: 'Smart Drift Compensation',
-        desc: 'If someone experiences a temporary WiFi dip, the sync engine smoothly nudges their playback speed to snap back into lockstep without jarring stutters.',
+        title: 'Smart Buffer-Free Drift Compensation',
+        desc: 'If someone experiences a temporary WiFi dip, the sync engine smoothly nudges playback speed by +/-3% to glide back into lockstep without buffer stalls.',
       },
       {
         title: 'Host Control Lock',
@@ -116,7 +117,7 @@ const STEPS = [
     title: 'Duo Cam, Voice & Luxury Ambiance',
     subtitle: 'See Each Other\'s Smiles & Set the Mood',
     badge: 'Couples & Squads',
-    image: '/ad-duo-cinema.jpg',
+    image: '/syncinema-bedroom-date.jpg',
     description:
       'Experience true cinema intimacy. Watch side-by-side with your partner, hear crystal-clear reactions, and customize ambient auditorium lighting.',
     keyPoints: [
@@ -221,10 +222,11 @@ export default function HowItWorksGuide({ onStartRoom }) {
           {/* Left Visual Column */}
           <div className="lg:col-span-5 relative group">
             <div className="relative aspect-video sm:aspect-square lg:aspect-video rounded-2xl overflow-hidden border border-pink-500/20 shadow-2xl">
-              <img
+              <BrandedImage
                 src={cur.image}
                 alt={cur.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                className="w-full h-full"
+                imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 

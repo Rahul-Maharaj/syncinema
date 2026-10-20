@@ -541,18 +541,18 @@ export default function VideoPlayer({
     // If element is already buffering or seeking, let it finish loading first
     if (v && (v.seeking || v.readyState < 2)) return;
 
-    // 1. Rock-Solid Deadband (<= 0.5s):
+    // 1. Rock-Solid Deadband (<= 0.4s):
     // Inaudible difference. Zero rate shift, zero seeking. Keeps both phones rock-solid in sync.
-    if (absDrift <= 0.5) {
+    if (absDrift <= 0.4) {
       setSyncStatus('in_sync');
       driftHistory.current = [];
       if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       return;
     }
 
-    // 2. Soft Sync (0.5s to 2.2s) while playing:
-    // Gently glide back into sync using imperceptible +/- 4% speed micro-adjustment. NO hard pauses or seeking!
-    if (absDrift <= 2.2 && shouldPlay) {
+    // 2. Buffer-Free Glide Sync (0.4s to 3.5s) while playing:
+    // Gently glide back into sync using imperceptible +/- 3.5% speed micro-adjustment. NO hard pauses or seeking!
+    if (absDrift <= 3.5 && shouldPlay) {
       setSyncStatus('syncing');
       driftHistory.current.push(drift);
       if (driftHistory.current.length > 2) driftHistory.current.shift();
@@ -560,27 +560,27 @@ export default function VideoPlayer({
 
       if (!voiceActive) {
         if (avg < 0) {
-          setPlaybackSpeed(sharedSpeed * 1.04); // Behind: catch up smoothly
+          setPlaybackSpeed(sharedSpeed * 1.035); // Behind: catch up smoothly without buffer stall
         } else {
-          setPlaybackSpeed(sharedSpeed * 0.96); // Ahead: wait smoothly
+          setPlaybackSpeed(sharedSpeed * 0.965); // Ahead: wait smoothly without buffer stall
         }
       }
       clearTimeout(rateTimer.current);
       rateTimer.current = setTimeout(() => {
         if (!voiceActive) setPlaybackSpeed(sharedSpeed);
         setSyncStatus('in_sync');
-      }, 1500);
+      }, 1600);
       return;
     }
 
-    // 3. Hard Sync (> 2.2s): user skip, track change, or major network lag
-    if (absDrift > 2.2) {
+    // 3. Fast Seek (> 3.5s): only if large gap, user skipped, or track changed
+    if (absDrift > 3.5) {
       setSyncStatus('syncing');
       lastProgrammaticSeek.current = Date.now();
       if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       a.seek(compensatedTarget);
       driftHistory.current = [];
-      setTimeout(() => setSyncStatus('in_sync'), 600);
+      setTimeout(() => setSyncStatus('in_sync'), 400);
     }
   });
 
@@ -694,12 +694,23 @@ export default function VideoPlayer({
     const onWait = () => {
       clearTimeout(waitTimer);
       waitTimer = setTimeout(() => {
+        // Buffer-Free Check: Only declare buffering if video genuinely lacks forward buffer!
+        try {
+          if (v && v.buffered && v.buffered.length > 0) {
+            const forwardBuffer = v.buffered.end(v.buffered.length - 1) - v.currentTime;
+            if (forwardBuffer > 0.8 && v.readyState >= 2) {
+              // Video already has ample buffer forward; transient micro-pause will self-resolve without interrupting room!
+              return;
+            }
+          }
+        } catch {}
+
         socket.emit('player:buffering', { buffering: true, time: v.currentTime });
         setBufferHold((prev) => {
           if (prev?.active && !prev.isLocal) return prev;
           return { active: true, name: 'You', isLocal: true, time: v.currentTime };
         });
-      }, 450);
+      }, 850);
     };
     const onResume = () => {
       clearTimeout(waitTimer);

@@ -19,6 +19,7 @@ import {
   Ticket3D,
   SparkleStar3D,
 } from '@/components/Icons3D';
+import BrandedImage from '@/components/BrandedImage';
 
 export default function FeatureAdsShowcase({ onStartRoom }) {
   const [zoomImage, setZoomImage] = useState(null);
@@ -42,10 +43,10 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       badge: 'Watch Party Mode',
       badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Clapper3D,
-      title: 'Virtual Cinema & Shared Queue',
+      title: 'Neon Cyber Lounge Watch Party',
       tagline: 'From cozy date nights for 2 up to 30 friends.',
-      image: '/ad-theater-experience.jpg',
-      imageAlt: 'VIP Virtual Cinema Auditorium Artwork',
+      image: '/syncinema-cyber-lounge.jpg',
+      imageAlt: 'Futuristic Cyber Cinema Lounge with Friends Artwork',
       description:
         'Host private watch parties with a collaborative Up Next video queue, synchronized intermission timers, live emoji streams, and audience seat capacity controls.',
       specs: ['2 to 30 Member Seats', 'Collaborative Queue', 'Intermission Timer', 'Timestamp Reactions'],
@@ -55,35 +56,48 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       badge: 'Proprietary 0ms Drift',
       badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: SyncBolt3D,
-      title: 'Sub-Second Precision Clock Sync',
-      tagline: 'Never count down "3, 2, 1, Play" ever again.',
-      image: '/ad-sync-engine.jpg',
-      imageAlt: 'Multi-Device 0ms Lockstep Sync Engine Artwork',
+      title: 'Global 0ms Satellite Clock Sync',
+      tagline: 'Sub-millisecond frame lock across continents.',
+      image: '/syncinema-global-sync.jpg',
+      imageAlt: 'Global Earth Quantum Sync Laser Map Artwork',
       description:
         'Our server-side clock algorithm continuously monitors playback position across all viewers and applies micro-rate corrections, guaranteeing exact frame-locked synchronization.',
       specs: ['Frame-Locked Accuracy', 'Auto Buffer Drift Fix', 'Multi-Audio & Subtitles', 'Pause/Seek Synced'],
+    },
+    {
+      id: 'bedroom-cinema',
+      badge: 'Cozy Lovers Date',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
+      icon3D: Heart3D,
+      title: 'Cozy Bedroom Anime & Movie Date',
+      tagline: 'Fairy lights, warm blankets, and shared laughs.',
+      image: '/syncinema-bedroom-date.jpg',
+      imageAlt: 'Cozy Bedroom Movie Date with Fairy Lights Artwork',
+      description:
+        'Late-night movie intimacy made perfect. Video call tiles float seamlessly over the movie with gesture hugs, voice audio ducking, and romantic soft pink ambient lighting.',
+      specs: ['Romantic Ambiance', 'Zero Distractions', 'Smart Voice Ducking', '1-Tap Heart Bursts'],
     },
     {
       id: 'universal-streaming',
       badge: 'Play Anything',
       badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Ticket3D,
-      title: 'Universal Media & Screen Share',
+      title: 'Holographic Stream Portal & Local Play',
       tagline: 'Paste any video link or play directly from your disk.',
-      image: '/ad-universal-media.jpg',
+      image: '/syncinema-portal.jpg',
       imageAlt: 'Holographic Streaming Media Portal Artwork',
       description:
-        'Supports YouTube, direct MP4/HLS streams, local computer files without uploading to external servers, and instant browser screen sharing in crisp 1080p and 4K.',
-      specs: ['YouTube Integration', 'Direct MP4 & HLS Links', 'Local File Sync', '1-Click Screen Share'],
+        'Supports YouTube, direct MP4/HLS streams, local computer files without waiting for upload, and instant browser screen sharing in crisp 1080p and 4K.',
+      specs: ['YouTube Integration', 'Direct MP4 & HLS Links', 'Local File 0s Wait', '1-Click Screen Share'],
     },
     {
       id: 'strict-security',
       badge: 'Hacker-Proof Privacy',
       badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Shield3D,
-      title: 'Zero Logins & Bcrypt Passcodes',
+      title: 'Zero Logins & Cryptographic Vault',
       tagline: 'Strictly confidential. No accounts or trackers.',
-      image: '/ad-privacy-vault.jpg',
+      image: '/syncinema-privacy-vault.jpg',
       imageAlt: 'Cryptographic Privacy Vault Artwork',
       description:
         'SynCinema never asks for email, passwords, or personal logins. Every room is locked with bcrypt passcodes and automatically locks its doors when capacity is reached.',
@@ -94,13 +108,26 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
       badge: 'Luxury Atmosphere',
       badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
       icon3D: Popcorn3D,
-      title: '4 Cinema Palettes & Soundscapes',
+      title: 'Penthouse Rain Window & Fireplace',
       tagline: 'Cozy vibes: rain on window, crackling fireplace.',
-      image: '/ad-luxury-soundscape.jpg',
+      image: '/syncinema-penthouse.jpg',
       imageAlt: 'Luxury Penthouse Night Rain & Fireplace Soundscape Artwork',
       description:
         'Immerse your room in Electric Tangerine & Black Hole, Cyberpunk Neon, Velvet Lounge, or Emerald Aurora. Turn on background ambient rain or fireplace sounds for the ultimate date night.',
       specs: ['Curated Color Themes', 'Fireplace & Rain Audio', 'Synchronized Ambiance', 'OLED Zero Glare'],
+    },
+    {
+      id: 'polaroid-memories',
+      badge: 'Memory Polaroids',
+      badgeColor: 'bg-pink-500/20 text-pink-100 border-pink-500/40',
+      icon3D: SparkleStar3D,
+      title: 'Couples Polaroid Cinema Scrapbook',
+      tagline: 'Save moments, movie frames, and video call smiles.',
+      image: '/syncinema-polaroids.jpg',
+      imageAlt: 'Couples Polaroid Scrapbook & Movie Frames Artwork',
+      description:
+        'Capture romantic moments together during movies. Snap synchronized screenshots with your webcam reaction tiles embedded, saving a keepsake polaroid of your virtual dates.',
+      specs: ['Live Snapshots', 'Webcam Reaction Frames', 'Private Date Vault', 'Instant Export'],
     },
   ];
 
@@ -142,24 +169,25 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
                 </div>
               </div>
 
-              {/* Room Screenshot Preview Box */}
+              {/* Room Screenshot Preview Box with SynCinema Logo in Right Top Corner */}
               <div
                 onClick={() => setZoomImage({ src: card.image, title: card.title })}
                 className="relative rounded-2xl overflow-hidden border border-pink-500/20 bg-[#1a1a1a] h-36 sm:h-40 group/img cursor-pointer shadow-inner"
               >
-                <img
+                <BrandedImage
                   src={card.image}
                   alt={card.imageAlt}
-                  className="w-full h-full object-cover object-top transition duration-500 group-hover/img:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#222222]/90 via-black/20 to-transparent opacity-85 group-hover/img:opacity-60 transition" />
-                
-                {/* Expand Pill */}
-                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-pink-500/30 text-[10px] font-bold text-pink-100 opacity-90 group-hover/img:opacity-100 transition shadow-md">
-                  <Maximize2 className="h-3 w-3 text-pink-400" />
-                  <span>Zoom Screenshot</span>
-                </div>
+                  className="w-full h-full"
+                  imgClassName="w-full h-full object-cover object-top transition duration-500 group-hover/img:scale-105"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#222222]/90 via-black/20 to-transparent opacity-85 group-hover/img:opacity-60 transition pointer-events-none" />
+                  
+                  {/* Expand Pill */}
+                  <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-pink-500/30 text-[10px] font-bold text-pink-100 opacity-90 group-hover/img:opacity-100 transition shadow-md">
+                    <Maximize2 className="h-3 w-3 text-pink-400" />
+                    <span>Zoom</span>
+                  </div>
+                </BrandedImage>
               </div>
 
               {/* Text Information */}
@@ -246,11 +274,12 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
               </button>
             </div>
 
-            <div className="rounded-2xl overflow-hidden border border-pink-500/20 max-h-[75vh] flex items-center justify-center bg-black shadow-inner">
-              <img
+            <div className="rounded-2xl overflow-hidden border border-pink-500/20 max-h-[75vh] flex items-center justify-center bg-black shadow-inner relative">
+              <BrandedImage
                 src={zoomImage.src}
                 alt="Enlarged Room Preview"
-                className="max-h-[72vh] w-auto object-contain rounded-xl"
+                className="max-h-[72vh] w-auto rounded-xl flex items-center justify-center"
+                imgClassName="max-h-[72vh] w-auto object-contain rounded-xl"
               />
             </div>
           </div>

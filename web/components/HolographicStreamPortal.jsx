@@ -29,6 +29,7 @@ import {
   Ticket3D,
   SparkleStar3D,
 } from '@/components/Icons3D';
+import BrandedImage from '@/components/BrandedImage';
 
 const PORTAL_MODES = [
   {
@@ -54,12 +55,34 @@ const PORTAL_MODES = [
     toneFreq: 140,
   },
   {
+    id: 'bedroom',
+    title: 'Late-Night Bedroom Date',
+    subtitle: 'Anime & Blockbusters • Fairy Lights',
+    badge: 'Cozy Intimacy',
+    icon: Heart3D,
+    image: '/syncinema-bedroom-date.jpg',
+    soundLabel: 'Intimate Date • Voice Ducking',
+    eqSpeed: 1.2,
+    toneFreq: 135,
+  },
+  {
+    id: 'cyber',
+    title: 'Neon Cyber Lounge Party',
+    subtitle: 'Squad Watch Party • Curved Giant Screen',
+    badge: 'Squad Cinema',
+    icon: Clapper3D,
+    image: '/syncinema-cyber-lounge.jpg',
+    soundLabel: 'High-Energy Atmos • 30 Seats',
+    eqSpeed: 1.3,
+    toneFreq: 115,
+  },
+  {
     id: 'sync',
     title: '0ms Clock-Locked Engine',
-    subtitle: 'Sub-Millisecond Micro Rate Calibration',
+    subtitle: 'Global Sub-Millisecond Calibration',
     badge: '0ms Drift',
     icon: SyncBolt3D,
-    image: '/ad-sync-engine.jpg',
+    image: '/syncinema-global-sync.jpg',
     soundLabel: 'Frame-Locked P2P Pipeline',
     eqSpeed: 0.8,
     toneFreq: 95,
@@ -85,6 +108,17 @@ const PORTAL_MODES = [
     soundLabel: 'Encrypted Peer Channels',
     eqSpeed: 0.9,
     toneFreq: 85,
+  },
+  {
+    id: 'polaroids',
+    title: 'Couples Memory Polaroids',
+    subtitle: 'Keepsake Snapshots • Shared Memories',
+    badge: 'Cinema Album',
+    icon: SparkleStar3D,
+    image: '/syncinema-polaroids.jpg',
+    soundLabel: 'Romantic Keepsake Audio',
+    eqSpeed: 1.0,
+    toneFreq: 130,
   },
 ];
 
@@ -243,14 +277,15 @@ export default function HolographicStreamPortal({ onStartRoom }) {
           </div>
         </div>
 
-        {/* Centerpiece: Holographic Cinema Screen with Dynamic Overlay */}
+        {/* Centerpiece: Holographic Cinema Screen with SynCinema Watermark in Right Top Corner */}
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-pink-500/30 bg-[#161619] aspect-video max-h-[440px] w-full shadow-2xl group">
-          <img
+          <BrandedImage
             src={currentMode.image}
             alt={currentMode.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
+            className="w-full h-full"
+            imgClassName="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#222222] via-transparent to-black/40 opacity-90" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#222222] via-transparent to-black/40 opacity-90 pointer-events-none" />
 
           {/* Holographic Top Status HUD */}
           <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-xs pointer-events-none">

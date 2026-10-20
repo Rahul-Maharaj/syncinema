@@ -6,6 +6,7 @@ import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
 import HolographicStreamPortal from '@/components/HolographicStreamPortal';
+import AudioVisualizerSuite from '@/components/AudioVisualizerSuite';
 import VisualFeatureVisualizer from '@/components/VisualFeatureVisualizer';
 import HowItWorksGuide from '@/components/HowItWorksGuide';
 import CinemaPlatformMetrics from '@/components/CinemaPlatformMetrics';
@@ -1035,6 +1036,14 @@ export default function SynCinemaPlatform() {
 
       {/* DYNAMIC HOLOGRAPHIC STREAM PORTAL & AUDIO SPECTRUM VISUALIZER */}
       <HolographicStreamPortal
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
+
+      {/* MULTI-MODE ACOUSTIC RADAR & FREQUENCY VISUALIZER SUITE */}
+      <AudioVisualizerSuite
         onStartRoom={() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setActiveTab('create');

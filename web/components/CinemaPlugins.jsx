@@ -1037,6 +1037,30 @@ export default function CinemaPlugins({
       ctx.fillText('🎬', px + pw / 2 - 12, py + 26);
     }
 
+    // Official SynCinema Branded Logo in Right Top Corner of the Polaroid
+    const logoX = px + pw - 130;
+    const logoY = py + 14;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(logoX, logoY, 116, 28, 14);
+    } else {
+      ctx.rect(logoX, logoY, 116, 28);
+    }
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.65)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('🎬 Syn', logoX + 12, logoY + 19);
+    ctx.fillStyle = '#f472b6';
+    ctx.fillText('Cinema', logoX + 54, logoY + 19);
+    ctx.restore();
+
     // 2. POLAROID CAPTION AREA (Bottom)
     ctx.textAlign = 'center';
     ctx.fillStyle = '#1c1917';
