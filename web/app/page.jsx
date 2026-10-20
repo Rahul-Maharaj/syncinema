@@ -6,6 +6,9 @@ import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
 import HowItWorksGuide from '@/components/HowItWorksGuide';
+import CinemaPlatformMetrics from '@/components/CinemaPlatformMetrics';
+import FeatureComparison from '@/components/FeatureComparison';
+import CinemaFaq from '@/components/CinemaFaq';
 import VisitorCounter from '@/components/VisitorCounter';
 import InstallPrompt from '@/components/InstallPrompt';
 import { parseHybridInvite } from '@/lib/invite';
@@ -98,6 +101,28 @@ export default function SynCinemaPlatform() {
     }, 2800);
     return () => clearInterval(timer);
   }, []);
+
+  // Interactive Telemetry Simulator state
+  const [simPlaying, setSimPlaying] = useState(true);
+  const [simSeconds, setSimSeconds] = useState(2535.2);
+  const [simFrame, setSimFrame] = useState(76056);
+
+  useEffect(() => {
+    if (!simPlaying) return;
+    const timer = setInterval(() => {
+      setSimSeconds((s) => s + 0.1);
+      setSimFrame((f) => f + 3);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [simPlaying]);
+
+  const formatSimTime = (totalSec) => {
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = (totalSec % 60).toFixed(3);
+    const pad = (n) => (n < 10 ? '0' + n : n);
+    return `${pad(hrs)}:${pad(mins)}:${parseFloat(secs) < 10 ? '0' : ''}${secs}`;
+  };
 
   // Create Room State (Strictly Password Protected)
   const [roomName, setRoomName] = useState('');
@@ -276,8 +301,11 @@ export default function SynCinemaPlatform() {
       {/* Cinematic Vignette Overlay in Solid Black Hole HEX #222222 */}
       <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/35 pointer-events-none" />
 
-      {/* Soft Ambient Romantic Pink Glow */}
+      {/* Soft Ambient Romantic Pink Glow & Floating Cinema Bokeh Orbs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-pink-500/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed top-1/4 left-1/4 w-[480px] h-[300px] bg-pink-600/15 rounded-full blur-[130px] pointer-events-none anim-bokeh" />
+      <div className="fixed top-1/2 right-1/4 w-[450px] h-[350px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none anim-bokeh" style={{ animationDelay: '-4s' }} />
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[250px] bg-pink-500/10 rounded-full blur-[150px] pointer-events-none anim-bokeh" style={{ animationDelay: '-2s' }} />
 
       {/* Transparent Floating Header */}
       <header className="relative z-20 px-4 sm:px-8 py-4 sm:py-5 bg-transparent border-none flex items-center justify-between gap-4">
@@ -357,19 +385,35 @@ export default function SynCinemaPlatform() {
 
             {/* MOTION GRAPHICS DUAL-DEVICE SYNC TELEMETRY SIMULATOR (ZERO LAG, GPU-ACCELERATED) */}
             <div className="rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-4 sm:p-5 shadow-[0_15px_40px_rgba(236,72,153,0.18)] space-y-3.5 overflow-hidden relative">
-              {/* Simulator Header */}
+              {/* Simulator Header with Interactive Sync Controls */}
               <div className="flex items-center justify-between border-b border-pink-500/20 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className={`h-2.5 w-2.5 rounded-full ${simPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
                   <span className="text-xs font-black tracking-wider text-pink-100 uppercase flex items-center gap-1.5">
                     <Activity className="h-3.5 w-3.5 text-pink-400" />
                     <span>Live Lockstep Sync Telemetry</span>
                   </span>
                 </div>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-emerald-400" />
-                  <span>0.00ms Drift Lock</span>
-                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSimPlaying(!simPlaying)}
+                    className={`text-[10px] px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                      simPlaying
+                        ? 'bg-pink-500/20 text-pink-200 border-pink-500/40 hover:bg-pink-500/30'
+                        : 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 hover:bg-emerald-500/30'
+                    }`}
+                    title="Click to test live synchronized play / pause in real-time"
+                  >
+                    <span>{simPlaying ? '⏸ Pause Sync' : '▶ Play Sync'}</span>
+                  </button>
+
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 hidden sm:flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-emerald-400" />
+                    <span>0.00ms Drift Lock</span>
+                  </span>
+                </div>
               </div>
 
               {/* Visual Dual-Device Interactive Stage */}
@@ -381,17 +425,20 @@ export default function SynCinemaPlatform() {
                       <Smartphone className="h-3 w-3 text-pink-400" />
                       <span>Phone (London)</span>
                     </span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                   </div>
                   <div className="h-14 rounded-xl bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-3 relative overflow-hidden">
                     <Film className="h-5 w-5 text-pink-400 shrink-0" />
                     <div className="text-right">
-                      <p className="text-[11px] font-mono font-bold text-pink-100">00:42:15.200</p>
-                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #76,056</p>
+                      <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
+                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
                     </div>
                     {/* Animated Playhead Track */}
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
-                      <div className="h-full bg-pink-500 w-3/5" />
+                      <div
+                        className="h-full bg-pink-500 transition-all duration-100"
+                        style={{ width: `${((simSeconds % 60) / 60) * 100}%` }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -401,7 +448,7 @@ export default function SynCinemaPlatform() {
                   <div className="h-7 w-px bg-pink-500/30 relative overflow-hidden">
                     <div className="absolute inset-x-0 h-3 bg-pink-400 anim-sync-laser" />
                   </div>
-                  <div className="p-1.5 rounded-full bg-pink-600/30 border border-pink-500/50 anim-heartbeat shrink-0">
+                  <div className={`p-1.5 rounded-full bg-pink-600/30 border border-pink-500/50 shrink-0 ${simPlaying ? 'anim-heartbeat' : ''}`}>
                     <Zap className="h-3.5 w-3.5 text-pink-300" />
                   </div>
                   <div className="h-7 w-px bg-pink-500/30 relative overflow-hidden">
@@ -416,19 +463,48 @@ export default function SynCinemaPlatform() {
                       <Laptop className="h-3 w-3 text-pink-400" />
                       <span>Laptop (New York)</span>
                     </span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                   </div>
                   <div className="h-14 rounded-xl bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-3 relative overflow-hidden">
                     <Film className="h-5 w-5 text-pink-400 shrink-0" />
                     <div className="text-right">
-                      <p className="text-[11px] font-mono font-bold text-pink-100">00:42:15.200</p>
-                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #76,056</p>
+                      <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
+                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
                     </div>
                     {/* Animated Playhead Track */}
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
-                      <div className="h-full bg-pink-500 w-3/5" />
+                      <div
+                        className="h-full bg-pink-500 transition-all duration-100"
+                        style={{ width: `${((simSeconds % 60) / 60) * 100}%` }}
+                      />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* STEREO WEBRTC AUDIO SPECTRUM EQUALIZER GRAPHIC */}
+              <div className="rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/20 p-2.5 px-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="h-3.5 w-3.5 text-pink-400 shrink-0" />
+                  <span className="text-[10px] font-mono font-semibold text-pink-200">
+                    Dual Stereo Audio Phase: {simPlaying ? 'Synced 48kHz' : 'Paused (0 Drift)'}
+                  </span>
+                </div>
+
+                {/* 18-Bar Dynamic Spectrum Graphic */}
+                <div className="flex items-end gap-1 h-5 shrink-0">
+                  {[45, 80, 60, 95, 30, 75, 100, 50, 85, 40, 90, 70, 65, 95, 45, 80, 55, 35].map((h, i) => (
+                    <span
+                      key={i}
+                      className={`w-1 rounded-full transition-all duration-150 ${
+                        simPlaying ? 'bg-gradient-to-t from-pink-600 to-rose-400 anim-eq-bar' : 'bg-pink-500/30 h-1.5'
+                      }`}
+                      style={{
+                        height: simPlaying ? undefined : '4px',
+                        animationDelay: `${(i % 5) * 0.15}s`,
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -928,6 +1004,9 @@ export default function SynCinemaPlatform() {
         </div>
       </main>
 
+      {/* LIVE SAAS PLATFORM METRICS & CRYPTOGRAPHIC TRUST RIBBON */}
+      <CinemaPlatformMetrics />
+
       {/* STEP-BY-STEP DETAILED HOW IT WORKS GUIDE */}
       <HowItWorksGuide
         onStartRoom={() => {
@@ -943,6 +1022,17 @@ export default function SynCinemaPlatform() {
           setActiveTab('create');
         }}
       />
+
+      {/* INTERACTIVE COMPARISON MATRIX (SynCinema vs Old Platforms) */}
+      <FeatureComparison
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
+
+      {/* FREQUENTLY ASKED QUESTIONS ACCORDION */}
+      <CinemaFaq />
 
       {/* REAL LIVE VISITORS & COMMUNITY ACTIVITY COUNTER */}
       <VisitorCounter />
