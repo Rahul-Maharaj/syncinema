@@ -30,6 +30,7 @@ import {
   SparkleStar3D,
 } from '@/components/Icons3D';
 import BrandedImage from '@/components/BrandedImage';
+import { loveInstrumental } from '@/lib/loveInstrumental';
 
 const PORTAL_MODES = [
   {
@@ -129,9 +130,7 @@ export default function HolographicStreamPortal({ onStartRoom }) {
   const [seconds, setSeconds] = useState(3842);
   const [soundActive, setSoundActive] = useState(false);
 
-  const audioCtxRef = useRef(null);
-  const oscRef = useRef(null);
-
+  // Dynamic timer loop
   useEffect(() => {
     if (!isPlaying) return;
     const timer = setInterval(() => {
@@ -143,35 +142,18 @@ export default function HolographicStreamPortal({ onStartRoom }) {
   const currentMode = PORTAL_MODES.find((m) => m.id === activeMode) || PORTAL_MODES[0];
   const IconComponent = currentMode.icon;
 
-  // Web Audio Tone Synthesizer for cozy soundscape experience
+  // English Love Instrumental Synthesizer for cozy romantic soundscape
   useEffect(() => {
-    if (soundActive && typeof window !== 'undefined') {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(currentMode.toneFreq, ctx.currentTime);
-        gain.gain.setValueAtTime(0.035, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        audioCtxRef.current = ctx;
-        oscRef.current = osc;
-      } catch {}
+    if (soundActive) {
+      loveInstrumental.setVolume(0.5);
+      loveInstrumental.start();
     } else {
-      if (audioCtxRef.current) {
-        try { audioCtxRef.current.close(); } catch {}
-        audioCtxRef.current = null;
-      }
+      loveInstrumental.stop();
     }
     return () => {
-      if (audioCtxRef.current) {
-        try { audioCtxRef.current.close(); } catch {}
-      }
+      loveInstrumental.stop();
     };
-  }, [soundActive, activeMode]);
+  }, [soundActive]);
 
   const formatTime = (totalSec) => {
     const hrs = Math.floor(totalSec / 3600);
@@ -265,10 +247,10 @@ export default function HolographicStreamPortal({ onStartRoom }) {
                   ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
                   : 'bg-[#1A1A1D] border-pink-500/20 text-pink-300/70 hover:text-white'
               }`}
-              title="Listen to synthesized ambient cinema soundscape"
+              title="Listen to English love instrumental tune"
             >
               {soundActive ? <Volume2 className="h-3.5 w-3.5 text-emerald-400" /> : <VolumeX className="h-3.5 w-3.5" />}
-              <span>{soundActive ? 'Soundscape ON' : 'Soundscape OFF'}</span>
+              <span>{soundActive ? 'English Love Tune ON' : 'English Love Tune OFF'}</span>
             </button>
 
             <span className="text-xs font-mono font-bold text-pink-300 px-3 py-1.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20">

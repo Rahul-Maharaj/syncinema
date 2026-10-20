@@ -25,6 +25,7 @@ import {
   Ticket3D,
   SparkleStar3D,
 } from '@/components/Icons3D';
+import { loveInstrumental } from '@/lib/loveInstrumental';
 
 const VISUALIZER_MODES = [
   {
@@ -64,10 +65,6 @@ export default function AudioVisualizerSuite({ inRoom = false, onStartRoom }) {
   const [gainLevel, setGainLevel] = useState(100);
   const [pulseTick, setPulseTick] = useState(0);
 
-  const audioCtxRef = useRef(null);
-  const oscRef = useRef(null);
-  const gainNodeRef = useRef(null);
-
   // Dynamic animation loop for smooth 60fps wave changes
   useEffect(() => {
     if (!isPlaying) return;
@@ -77,49 +74,25 @@ export default function AudioVisualizerSuite({ inRoom = false, onStartRoom }) {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // Web Audio Synthesizer for Interactive Soundscape
+  // English Love Instrumental Synthesizer for Interactive Soundscape
   useEffect(() => {
-    if (soundEnabled && typeof window !== 'undefined') {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(130, ctx.currentTime);
-        gain.gain.setValueAtTime((gainLevel / 100) * 0.04, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        audioCtxRef.current = ctx;
-        oscRef.current = osc;
-        gainNodeRef.current = gain;
-      } catch {}
+    if (soundEnabled) {
+      loveInstrumental.setVolume(gainLevel / 100);
+      loveInstrumental.start();
     } else {
-      if (audioCtxRef.current) {
-        try { audioCtxRef.current.close(); } catch {}
-        audioCtxRef.current = null;
-      }
+      loveInstrumental.stop();
     }
     return () => {
-      if (audioCtxRef.current) {
-        try { audioCtxRef.current.close(); } catch {}
-      }
+      loveInstrumental.stop();
     };
   }, [soundEnabled]);
 
   // Adjust volume on gainLevel change
   useEffect(() => {
-    if (gainNodeRef.current && audioCtxRef.current) {
-      try {
-        gainNodeRef.current.gain.setTargetAtTime(
-          (gainLevel / 100) * 0.04,
-          audioCtxRef.current.currentTime,
-          0.1
-        );
-      } catch {}
+    if (soundEnabled) {
+      loveInstrumental.setVolume(gainLevel / 100);
     }
-  }, [gainLevel]);
+  }, [gainLevel, soundEnabled]);
 
   return (
     <div
@@ -170,10 +143,10 @@ export default function AudioVisualizerSuite({ inRoom = false, onStartRoom }) {
                 ? 'bg-emerald-500/20 border-emerald-400 text-emerald-200'
                 : 'bg-[#1A1A1D] border-pink-500/20 text-pink-300/70 hover:text-white'
             }`}
-            title="Toggle synthesized cinema acoustic tone"
+            title="Toggle English love instrumental tune"
           >
             {soundEnabled ? <Volume2 className="h-3.5 w-3.5 text-emerald-400" /> : <VolumeX className="h-3.5 w-3.5" />}
-            <span>{soundEnabled ? 'Acoustic Sound ON' : 'Acoustic Sound OFF'}</span>
+            <span>{soundEnabled ? 'English Love Tune ON' : 'English Love Tune OFF'}</span>
           </button>
         </div>
       </div>
