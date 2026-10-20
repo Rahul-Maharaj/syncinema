@@ -131,7 +131,7 @@ export default function VisitorCounter() {
       aria-label="Real-Time Verified Community Statistics"
       className="relative z-10 w-full max-w-5xl mx-auto px-4 py-8 select-none"
     >
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#222222]/95 via-[#1E1424]/90 to-[#140D1A]/95 border border-pink-500/30 p-5 sm:p-7 backdrop-blur-2xl shadow-[0_10px_40px_rgba(236,72,153,0.15)]">
+      <div className="relative overflow-hidden rounded-3xl bg-[#222222]/95 border border-pink-500/30 p-5 sm:p-7 backdrop-blur-2xl shadow-[0_10px_40px_rgba(236,72,153,0.15)]">
         {/* Ambient Top Glow Line */}
         <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-pink-500/60 to-transparent" />
 
@@ -158,7 +158,7 @@ export default function VisitorCounter() {
           {/* Right Real Counters Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full md:w-auto">
             {/* Real Live Online Now */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-pink-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#1a1a1a]/90 border border-pink-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
               <div className="flex items-center justify-center gap-1.5 text-pink-400 mb-1">
                 <Radio className="h-3.5 w-3.5 animate-pulse" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">Online Now</span>
@@ -170,7 +170,7 @@ export default function VisitorCounter() {
             </div>
 
             {/* Real All-Time Unique Visitors */}
-            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-pink-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-[#1a1a1a]/90 border border-pink-500/30 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
               <div className="flex items-center justify-center gap-1.5 text-pink-400 mb-1">
                 <Users className="h-3.5 w-3.5" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">All-Time</span>
@@ -182,7 +182,7 @@ export default function VisitorCounter() {
             </div>
 
             {/* Real Today's Unique Visitors */}
-            <div className="col-span-2 sm:col-span-1 p-3 sm:p-3.5 rounded-2xl bg-[#0D0D10]/80 border border-white/10 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
+            <div className="col-span-2 sm:col-span-1 p-3 sm:p-3.5 rounded-2xl bg-[#1a1a1a]/90 border border-pink-500/20 backdrop-blur-md flex flex-col justify-center text-center shadow-lg transition-all">
               <div className="flex items-center justify-center gap-1.5 text-pink-300 mb-1">
                 <Film className="h-3.5 w-3.5" />
                 <span className="text-[10px] uppercase font-bold tracking-wider">Today</span>

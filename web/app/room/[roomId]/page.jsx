@@ -2405,6 +2405,8 @@ export default function Room() {
         say={say}
         defaultTab={pluginsTab}
         onTriggerReaction={triggerReaction}
+        callMedia={callMedia}
+        playerRef={playerRef}
       />
 
       {/* Toast notifications */}

@@ -270,7 +270,9 @@ export default function CinemaPlugins({
   timer,
   say,
   defaultTab = 'soundscapes',
-  onTriggerReaction
+  onTriggerReaction,
+  callMedia,
+  playerRef
 }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [soundVolume, setSoundVolume] = useState(60);
@@ -281,10 +283,41 @@ export default function CinemaPlugins({
     space: false,
   });
 
-  // Keepsake state
+  // Keepsake state - Couples Polaroid with Movie & Video Call
   const canvasRef = useRef(null);
   const [caption, setCaption] = useState('Under the stars, lost in the cinema magic together ✨');
+  const [polaroidLayout, setPolaroidLayout] = useState('split'); // 'split' | 'couch' | 'pip'
+  const [selectedStickers, setSelectedStickers] = useState(['heart', 'popcorn', 'sparkles']);
+  const [activeFilter, setActiveFilter] = useState('rose'); // 'rose' | 'warm' | 'noir' | 'none'
   const [copiedLink, setCopiedLink] = useState(false);
+  const [snapshotNonce, setSnapshotNonce] = useState(0);
+
+  // Preloaded background / fallback images for instant canvas draw
+  const imagesRef = useRef({
+    couch: null,
+    couple: null,
+    logo: null,
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const img1 = new Image();
+    img1.src = '/ad-duo-cinema.jpg';
+    img1.onload = () => { imagesRef.current.couch = img1; if (activeTab === 'keepsake') drawPolaroid(); };
+
+    const img2 = new Image();
+    img2.src = '/feature-couple.jpg';
+    img2.onload = () => { imagesRef.current.couple = img2; if (activeTab === 'keepsake') drawPolaroid(); };
+  }, [activeTab]);
+
+  // Romantic caption presets
+  const CAPTION_PRESETS = [
+    'Under the stars, lost in cinema magic together ✨',
+    'Miles apart, but our hearts are on the same screen 💖',
+    'Our cozy late-night movie date 🍿🌙',
+    'Popcorn, cozy blanket & the best company 🥰',
+    'Every scene is better when watching with you 🎬',
+  ];
 
   // Prompts state
   const [promptIndex, setPromptIndex] = useState(0);
@@ -343,7 +376,7 @@ export default function CinemaPlugins({
     say?.('Intermission ended.');
   };
 
-  // Draw Polaroid Keepsake onto HTML5 Canvas
+  // Draw Couples Polaroid with Movie & Video Call Images
   const drawPolaroid = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -351,89 +384,482 @@ export default function CinemaPlugins({
     if (!ctx) return;
 
     const width = 640;
-    const height = 760;
+    const height = 780;
     canvas.width = width;
     canvas.height = height;
 
-    // Vintage paper background
-    ctx.fillStyle = '#fbfbfa';
+    // 1. Vintage Polaroid Paper Surface
+    ctx.fillStyle = '#fcfbf8';
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle paper edge shadow
-    ctx.strokeStyle = '#e2e2dd';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(2, 2, width - 4, height - 4);
+    // Subtle paper grain & warm border shadow
+    ctx.strokeStyle = '#e6e4dc';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(3, 3, width - 6, height - 6);
 
     // Photo Area
-    const photoX = 40;
-    const photoY = 40;
-    const photoW = 560;
-    const photoH = 500;
+    const px = 36;
+    const py = 36;
+    const pw = 568;
+    const ph = 530;
 
-    // Dark Cinema Gradient Inside Photo
-    const grad = ctx.createLinearGradient(photoX, photoY, photoX + photoW, photoY + photoH);
-    grad.addColorStop(0, '#0f172a');
-    grad.addColorStop(0.5, '#1e1b4b');
-    grad.addColorStop(1, '#020617');
-    ctx.fillStyle = grad;
-    ctx.fillRect(photoX, photoY, photoW, photoH);
+    // Save context for photo clipping
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(px, py, pw, ph);
+    ctx.clip();
 
-    // Decorative Stars / Sparkles
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    for (let i = 0; i < 40; i++) {
-      const rx = photoX + (Math.sin(i * 123) * 0.5 + 0.5) * photoW;
-      const ry = photoY + (Math.cos(i * 456) * 0.5 + 0.5) * photoH;
-      const rad = 1 + (i % 3);
+    // Dark backdrop inside photo
+    ctx.fillStyle = '#111019';
+    ctx.fillRect(px, py, pw, ph);
+
+    // Find main video player element on the page
+    let videoEl = null;
+    try {
+      if (playerRef?.current?.getVideoElement) {
+        videoEl = playerRef.current.getVideoElement();
+      }
+      if (!videoEl && typeof document !== 'undefined') {
+        const vids = Array.from(document.querySelectorAll('video'));
+        // Find player video (typically has dimensions or inside player container)
+        videoEl = vids.find((v) => v.videoWidth > 400 || v.classList.contains('object-contain')) || vids[0];
+      }
+    } catch {}
+
+    // Find couple video call elements
+    let myCamEl = null;
+    let partnerCamEl = null;
+    try {
+      if (typeof document !== 'undefined') {
+        const vids = Array.from(document.querySelectorAll('video'));
+        const callVids = vids.filter((v) => v !== videoEl);
+        if (callVids.length > 0) myCamEl = callVids[0];
+        if (callVids.length > 1) partnerCamEl = callVids[1];
+      }
+    } catch {}
+
+    const myName = users.find((u) => u.id === me)?.name || 'You';
+    const otherUsers = users.filter((u) => u.id !== me);
+    const partnerName = otherUsers[0]?.name || 'My Partner';
+
+    // LAYOUT 1: SPLIT (Movie on Top + Couple Video Call on Bottom)
+    if (polaroidLayout === 'split') {
+      const movieH = 320;
+      const callH = ph - movieH;
+
+      // Draw Movie in Top Half
+      let movieDrawn = false;
+      if (videoEl && videoEl.readyState >= 2) {
+        try {
+          ctx.drawImage(videoEl, px, py, pw, movieH);
+          movieDrawn = true;
+        } catch {}
+      }
+      if (!movieDrawn) {
+        if (imagesRef.current.couple && imagesRef.current.couple.complete) {
+          ctx.drawImage(imagesRef.current.couple, px, py, pw, movieH);
+        } else {
+          const mgrad = ctx.createLinearGradient(px, py, px + pw, py + movieH);
+          mgrad.addColorStop(0, '#1e1b4b');
+          mgrad.addColorStop(1, '#0f172a');
+          ctx.fillStyle = mgrad;
+          ctx.fillRect(px, py, pw, movieH);
+        }
+      }
+
+      // Cinema Screen Ambient Glow & Vignette
+      const movieVignette = ctx.createLinearGradient(px, py, px, py + movieH);
+      movieVignette.addColorStop(0, 'rgba(0,0,0,0.6)');
+      movieVignette.addColorStop(0.5, 'rgba(0,0,0,0)');
+      movieVignette.addColorStop(1, 'rgba(0,0,0,0.75)');
+      ctx.fillStyle = movieVignette;
+      ctx.fillRect(px, py, pw, movieH);
+
+      // Movie Title Pill on Top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
       ctx.beginPath();
-      ctx.arc(rx, ry, rad, 0, Math.PI * 2);
+      ctx.roundRect(px + 16, py + 16, 260, 30, 15);
       ctx.fill();
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fce7f3';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'left';
+      const mTitle = currentMedia?.title || 'Private Cinema Night';
+      ctx.fillText(`🎬 ${mTitle.slice(0, 26)}${mTitle.length > 26 ? '…' : ''}`, px + 28, py + 36);
+
+      // Live 4K / Sync badge
+      ctx.fillStyle = 'rgba(236, 72, 153, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(px + pw - 90, py + 16, 74, 24, 12);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('0ms SYNC', px + pw - 53, py + 32);
+
+      // Divider between Movie and Calls
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(px, py + movieH, pw, callH);
+
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px, py + movieH);
+      ctx.lineTo(px + pw, py + movieH);
+      ctx.stroke();
+
+      // Lower Section: COUPLES VIDEO CALL (2 Side-by-Side Webcam Tiles)
+      const callTileW = (pw - 24) / 2;
+      const callTileH = callH - 24;
+      const callTileY = py + movieH + 12;
+
+      // Tile 1: Left (You)
+      const t1x = px + 8;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(t1x, callTileY, callTileW, callTileH, 16);
+      ctx.clip();
+
+      let t1Drawn = false;
+      if (myCamEl && myCamEl.readyState >= 2) {
+        try {
+          ctx.drawImage(myCamEl, t1x, callTileY, callTileW, callTileH);
+          t1Drawn = true;
+        } catch {}
+      }
+      if (!t1Drawn) {
+        const cGrad1 = ctx.createLinearGradient(t1x, callTileY, t1x + callTileW, callTileY + callTileH);
+        cGrad1.addColorStop(0, '#3b0764');
+        cGrad1.addColorStop(1, '#1e1b4b');
+        ctx.fillStyle = cGrad1;
+        ctx.fillRect(t1x, callTileY, callTileW, callTileH);
+
+        ctx.fillStyle = '#ec4899';
+        ctx.beginPath();
+        ctx.arc(t1x + callTileW / 2, callTileY + callTileH / 2 - 12, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(myName.charAt(0).toUpperCase() || 'U', t1x + callTileW / 2, callTileY + callTileH / 2 - 4);
+      }
+
+      // Name Tag Overlay
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.beginPath();
+      ctx.roundRect(t1x + 8, callTileY + callTileH - 28, 100, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = '#fce7f3';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`🎙️ ${myName.slice(0, 10)}`, t1x + 16, callTileY + callTileH - 14);
+      ctx.restore();
+
+      // Border for Tile 1
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(t1x, callTileY, callTileW, callTileH, 16);
+      ctx.stroke();
+
+      // Tile 2: Right (Partner)
+      const t2x = px + pw - callTileW - 8;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(t2x, callTileY, callTileW, callTileH, 16);
+      ctx.clip();
+
+      let t2Drawn = false;
+      if (partnerCamEl && partnerCamEl.readyState >= 2) {
+        try {
+          ctx.drawImage(partnerCamEl, t2x, callTileY, callTileW, callTileH);
+          t2Drawn = true;
+        } catch {}
+      }
+      if (!t2Drawn) {
+        const cGrad2 = ctx.createLinearGradient(t2x, callTileY, t2x + callTileW, callTileY + callTileH);
+        cGrad2.addColorStop(0, '#581c87');
+        cGrad2.addColorStop(1, '#831843');
+        ctx.fillStyle = cGrad2;
+        ctx.fillRect(t2x, callTileY, callTileW, callTileH);
+
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(t2x + callTileW / 2, callTileY + callTileH / 2 - 12, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(partnerName.charAt(0).toUpperCase() || 'P', t2x + callTileW / 2, callTileY + callTileH / 2 - 4);
+      }
+
+      // Name Tag Overlay Partner
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.beginPath();
+      ctx.roundRect(t2x + 8, callTileY + callTileH - 28, 100, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = '#fce7f3';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`🎙️ ${partnerName.slice(0, 10)}`, t2x + 16, callTileY + callTileH - 14);
+      ctx.restore();
+
+      // Border for Tile 2
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(t2x, callTileY, callTileW, callTileH, 16);
+      ctx.stroke();
+
+      // Center Heart Connector Badge between the two video calls
+      const heartBadgeX = px + pw / 2;
+      const heartBadgeY = callTileY + callTileH / 2;
+      ctx.fillStyle = 'rgba(236, 72, 153, 0.95)';
+      ctx.beginPath();
+      ctx.arc(heartBadgeX, heartBadgeY, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('💖', heartBadgeX, heartBadgeY + 6);
+    }
+    // LAYOUT 2: COUCH (Romantic Couple Cinema Scene Artwork + Cam Insets)
+    else if (polaroidLayout === 'couch') {
+      let couchDrawn = false;
+      if (imagesRef.current.couch && imagesRef.current.couch.complete) {
+        ctx.drawImage(imagesRef.current.couch, px, py, pw, ph);
+        couchDrawn = true;
+      }
+      if (!couchDrawn) {
+        const cGrad = ctx.createLinearGradient(px, py, px + pw, py + ph);
+        cGrad.addColorStop(0, '#1e1b4b');
+        cGrad.addColorStop(0.5, '#4c0519');
+        cGrad.addColorStop(1, '#020617');
+        ctx.fillStyle = cGrad;
+        ctx.fillRect(px, py, pw, ph);
+      }
+
+      // Title & Date Header on top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.beginPath();
+      ctx.roundRect(px + 20, py + 20, pw - 40, 50, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🍿 ${currentMedia?.title || 'Romantic Cinema Date Night'}`, px + pw / 2, py + 42);
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = '#f472b6';
+      ctx.fillText(`${myName} & ${partnerName} • Synced Stream`, px + pw / 2, py + 60);
+
+      // Inset Duo Cam Floating Badges on bottom corners
+      const pipW = 120;
+      const pipH = 85;
+      const pipY = py + ph - pipH - 16;
+
+      // Left Pip (You)
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(px + 16, pipY, pipW, pipH, 12);
+      ctx.clip();
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(px + 16, pipY, pipW, pipH);
+      if (myCamEl && myCamEl.readyState >= 2) {
+        try { ctx.drawImage(myCamEl, px + 16, pipY, pipW, pipH); } catch {}
+      } else {
+        ctx.fillStyle = '#ec4899';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(myName.slice(0, 6), px + 16 + pipW / 2, pipY + pipH / 2 + 7);
+      }
+      ctx.restore();
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(px + 16, pipY, pipW, pipH, 12);
+      ctx.stroke();
+
+      // Right Pip (Partner)
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(px + pw - pipW - 16, pipY, pipW, pipH, 12);
+      ctx.clip();
+      ctx.fillStyle = '#222222';
+      ctx.fillRect(px + pw - pipW - 16, pipY, pipW, pipH);
+      if (partnerCamEl && partnerCamEl.readyState >= 2) {
+        try { ctx.drawImage(partnerCamEl, px + pw - pipW - 16, pipY, pipW, pipH); } catch {}
+      } else {
+        ctx.fillStyle = '#f43f5e';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(partnerName.slice(0, 6), px + pw - pipW - 16 + pipW / 2, pipY + pipH / 2 + 7);
+      }
+      ctx.restore();
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(px + pw - pipW - 16, pipY, pipW, pipH, 12);
+      ctx.stroke();
+    }
+    // LAYOUT 3: PIP (Duo Video Call Primary + Movie PiP Inset)
+    else {
+      const halfW = pw / 2;
+
+      // Left: You
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(px, py, halfW, ph);
+      ctx.clip();
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(px, py, halfW, ph);
+      if (myCamEl && myCamEl.readyState >= 2) {
+        try { ctx.drawImage(myCamEl, px, py, halfW, ph); } catch {}
+      } else {
+        ctx.fillStyle = '#ec4899';
+        ctx.beginPath();
+        ctx.arc(px + halfW / 2, py + ph / 2 - 20, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(myName.charAt(0) || 'U', px + halfW / 2, py + ph / 2 - 8);
+      }
+      ctx.restore();
+
+      // Right: Partner
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(px + halfW, py, halfW, ph);
+      ctx.clip();
+      ctx.fillStyle = '#4c0519';
+      ctx.fillRect(px + halfW, py, halfW, ph);
+      if (partnerCamEl && partnerCamEl.readyState >= 2) {
+        try { ctx.drawImage(partnerCamEl, px + halfW, py, halfW, ph); } catch {}
+      } else {
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(px + halfW + halfW / 2, py + ph / 2 - 20, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(partnerName.charAt(0) || 'P', px + halfW + halfW / 2, py + ph / 2 - 8);
+      }
+      ctx.restore();
+
+      // Center Divider Line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(px + halfW, py);
+      ctx.lineTo(px + halfW, py + ph);
+      ctx.stroke();
+
+      // Movie Screen PiP Inset (Top Right)
+      const pipW = 200;
+      const pipH = 120;
+      const pipX = px + pw - pipW - 14;
+      const pipY = py + 14;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(pipX, pipY, pipW, pipH, 14);
+      ctx.clip();
+      if (videoEl && videoEl.readyState >= 2) {
+        try { ctx.drawImage(videoEl, pipX, pipY, pipW, pipH); } catch {}
+      } else if (imagesRef.current.couple && imagesRef.current.couple.complete) {
+        ctx.drawImage(imagesRef.current.couple, pipX, pipY, pipW, pipH);
+      } else {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(pipX, pipY, pipW, pipH);
+      }
+      ctx.restore();
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(pipX, pipY, pipW, pipH, 14);
+      ctx.stroke();
     }
 
-    // Top Brand Pill
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.beginPath();
-    ctx.roundRect(photoX + 20, photoY + 20, 200, 32, 16);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText('✦ SYNCCINEMA KEEPSAKE', photoX + 36, photoY + 41);
+    // Restore context after photo drawing
+    ctx.restore();
 
-    // Center Movie Title
-    const titleText = currentMedia?.title || 'Cozy Watch Night';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 28px sans-serif';
+    // Photo Aperture Border (Slight inner bezel)
+    ctx.strokeStyle = '#dcd8cf';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px, py, pw, ph);
+
+    // Filter Overlay on Photo
+    if (activeFilter === 'rose') {
+      ctx.fillStyle = 'rgba(236, 72, 153, 0.08)';
+      ctx.fillRect(px, py, pw, ph);
+    } else if (activeFilter === 'warm') {
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.12)';
+      ctx.fillRect(px, py, pw, ph);
+    } else if (activeFilter === 'noir') {
+      ctx.fillStyle = 'rgba(20, 20, 25, 0.35)';
+      ctx.fillRect(px, py, pw, ph);
+    }
+
+    // Decorative Floating 3D Stickers on Polaroid Frame
+    if (selectedStickers.includes('heart')) {
+      ctx.font = '28px sans-serif';
+      ctx.fillText('💖', px + pw - 30, py + ph - 20);
+    }
+    if (selectedStickers.includes('popcorn')) {
+      ctx.font = '28px sans-serif';
+      ctx.fillText('🍿', px + 12, py + ph - 20);
+    }
+    if (selectedStickers.includes('sparkles')) {
+      ctx.font = '24px sans-serif';
+      ctx.fillText('✨', px + pw - 24, py + 26);
+    }
+    if (selectedStickers.includes('cheers')) {
+      ctx.font = '24px sans-serif';
+      ctx.fillText('🥂', px + 12, py + 26);
+    }
+    if (selectedStickers.includes('clapper')) {
+      ctx.font = '24px sans-serif';
+      ctx.fillText('🎬', px + pw / 2 - 12, py + 26);
+    }
+
+    // 2. POLAROID CAPTION AREA (Bottom)
     ctx.textAlign = 'center';
-    ctx.fillText(titleText.length > 28 ? titleText.slice(0, 28) + '…' : titleText, width / 2, photoY + 240);
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'italic 700 20px "Dancing Script", cursive, Georgia, serif';
+    ctx.fillText(`“${caption}”`, width / 2, height - 140);
 
-    // Subtitle / Date
+    // Watchers Signatures
+    ctx.fillStyle = '#ec4899';
+    ctx.font = 'bold 14px "Outfit", sans-serif';
+    ctx.fillText(`With Love: ${myName} & ${partnerName} 💕`, width / 2, height - 105);
+
+    // Date & Time Stamp + Holographic Keepsake Seal
     const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    ctx.fillStyle = '#f43f5e';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.fillText(`🍿 MOVIE NIGHT • ${dateStr}`, width / 2, photoY + 275);
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    ctx.fillStyle = '#78716c';
+    ctx.font = '600 11px sans-serif';
+    ctx.fillText(`SyncCinema Couples Keepsake • ${dateStr} • ${timeStr}`, width / 2, height - 75);
 
-    // Names of Watchers
-    const names = users.map((u) => u.name).join(' & ') || 'Couples Stream';
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(`Watching together: ${names}`, width / 2, photoY + 310);
-
-    // Polaroid Bottom Caption Section
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#1e293b';
-    ctx.font = 'italic 20px Georgia, serif';
-    ctx.fillText(`“${caption}”`, width / 2, height - 130);
-
-    // Timestamp & Watermark
-    ctx.fillStyle = '#64748b';
-    ctx.font = '12px sans-serif';
-    ctx.fillText(`SyncCinema • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, width / 2, height - 70);
+    // Bottom Watermark
+    ctx.fillStyle = '#a8a29e';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(`Private Room Date Memory • Zero-Leak P2P Cryptographic Capture`, width / 2, height - 45);
   };
 
   useEffect(() => {
     if (activeTab === 'keepsake') {
       drawPolaroid();
     }
-  }, [activeTab, caption, currentMedia, users]);
+  }, [activeTab, caption, polaroidLayout, selectedStickers, activeFilter, snapshotNonce, currentMedia, users]);
 
   // Download Polaroid as PNG
   const downloadPolaroid = () => {
@@ -687,49 +1113,173 @@ export default function CinemaPlugins({
           </div>
         )}
 
-        {/* TAB 2: Polaroid Keepsake Booth */}
+        {/* TAB 2: Couples Polaroid Keepsake Booth (Movie & Video Call Live Blend) */}
         {activeTab === 'keepsake' && (
           <div className="space-y-4 rise">
-            <div className="flex justify-center">
-              <canvas
-                ref={canvasRef}
-                className="w-full max-w-[280px] sm:max-w-[320px] rounded-2xl shadow-2xl border border-white/20 aspect-[4/5] object-contain bg-white"
-              />
+            {/* Live Canvas View */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <div className="relative group p-1.5 rounded-3xl bg-[#111019] border border-pink-500/30 shadow-2xl shadow-pink-500/10">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full max-w-[280px] sm:max-w-[320px] rounded-2xl aspect-[4/5] object-contain bg-white shadow-xl"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSnapshotNonce((n) => n + 1)}
+                  className="absolute bottom-4 right-4 p-2.5 rounded-full bg-pink-600/90 hover:bg-pink-500 text-white shadow-lg backdrop-blur-md transition active:scale-90 flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                  title="Snap fresh frame from movie and video call"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Snap Fresh Frame</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-pink-300/70 text-center">
+                📸 Captures active movie screen &amp; your video call selfies into a high-res souvenir
+              </p>
             </div>
 
+            {/* Polaroid Layout Selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                <span>Custom Date Caption:</span>
-                <span className="text-[10px] text-slate-400">Printed on Polaroid</span>
+              <label className="text-xs font-bold text-pink-200 flex items-center justify-between">
+                <span>Polaroid Layout:</span>
+                <span className="text-[10px] text-pink-300/60">Choose composition style</span>
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'split', label: 'Movie & Duo Cam', icon: '🎬' },
+                  { id: 'couch', label: 'Couch Ambiance', icon: '🛋️' },
+                  { id: 'pip', label: 'Duo Cam & PiP', icon: '📱' },
+                ].map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => setPolaroidLayout(l.id)}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      polaroidLayout === l.id
+                        ? 'btn-pink text-white border-pink-400 shadow-md shadow-pink-500/30'
+                        : 'bg-[#1a1a1d] border-pink-500/20 text-pink-200/70 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span>{l.icon}</span>
+                    <span className="truncate">{l.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Decorative Stickers */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-pink-200 flex items-center justify-between">
+                <span>Sticker Decorations:</span>
+                <span className="text-[10px] text-pink-300/60">Tap to toggle stickers</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { id: 'heart', label: '💖 Heart' },
+                  { id: 'popcorn', label: '🍿 Popcorn' },
+                  { id: 'sparkles', label: '✨ Sparkles' },
+                  { id: 'cheers', label: '🥂 Cheers' },
+                  { id: 'clapper', label: '🎬 Clapper' },
+                ].map((s) => {
+                  const isChecked = selectedStickers.includes(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedStickers((prev) =>
+                          isChecked ? prev.filter((x) => x !== s.id) : [...prev, s.id]
+                        );
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center gap-1 ${
+                        isChecked
+                          ? 'bg-pink-500/30 border-pink-400 text-pink-100 shadow-sm'
+                          : 'bg-[#1a1a1d] border-pink-500/20 text-pink-300/50 hover:text-pink-100'
+                      }`}
+                    >
+                      <span>{s.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Vintage Filter Modes */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-pink-200 flex items-center justify-between">
+                <span>Film Color Tone:</span>
+                <span className="text-[10px] text-pink-300/60">Atmosphere grading</span>
+              </label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { id: 'rose', label: '🌸 Rose Pastel' },
+                  { id: 'warm', label: '🕯️ Cozy Warm' },
+                  { id: 'noir', label: '🎞️ Noir B&W' },
+                  { id: 'none', label: '⚡ Natural' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setActiveFilter(f.id)}
+                    className={`py-1.5 px-1 rounded-xl text-[11px] font-semibold border transition text-center cursor-pointer truncate ${
+                      activeFilter === f.id
+                        ? 'bg-pink-500/25 border-pink-400 text-pink-100 shadow-sm font-bold'
+                        : 'bg-[#1a1a1d] border-pink-500/20 text-pink-300/60 hover:text-white'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Caption & Presets */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-pink-200 flex items-center justify-between">
+                <span>Romantic Date Caption:</span>
+                <span className="text-[10px] text-pink-300/60">Printed in vintage script</span>
               </label>
               <input
                 type="text"
                 value={caption}
-                maxLength={60}
+                maxLength={70}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="e.g. Best movie night ever 🍿💖"
-                className="field text-xs !py-2 text-white bg-slate-900 border-slate-800 rounded-xl"
+                placeholder="Write your custom romantic note…"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#1a1a1a] border border-pink-500/25 text-xs text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 font-serif italic shadow-inner"
               />
+              <div className="flex flex-wrap gap-1 pt-1">
+                {CAPTION_PRESETS.map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCaption(p)}
+                    className="text-[10px] px-2 py-0.5 rounded-lg bg-[#1a1a1d] hover:bg-pink-500/20 border border-pink-500/15 text-pink-200/80 hover:text-white transition cursor-pointer truncate max-w-[260px]"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex gap-2 pt-1">
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
               <button
                 type="button"
                 onClick={downloadPolaroid}
-                className="btn flex-1 !py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 bg-gradient-to-r from-pink-600 to-rose-600"
+                className="btn-pink flex-1 !py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-pink-500/30 cursor-pointer active:scale-95"
               >
                 <Download className="h-4 w-4" />
-                <span>Save Keepsake (PNG)</span>
+                <span>Save Polaroid (PNG)</span>
               </button>
 
               <button
                 type="button"
                 onClick={postKeepsakeToChat}
-                className="ghost !py-2.5 px-3.5 text-xs rounded-xl border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 text-slate-200"
-                title="Post to room chat"
+                className="ghost !py-2.5 px-4 text-xs font-bold rounded-xl border border-pink-500/30 hover:border-pink-500/60 flex items-center gap-1.5 text-pink-100 hover:text-white cursor-pointer transition active:scale-95"
+                title="Broadcast keepsake to room chat"
               >
-                <MessageSquare className="h-4 w-4 text-purple-400" />
-                <span className="hidden sm:inline">Post in Chat</span>
+                <MessageSquare className="h-4 w-4 text-pink-400" />
+                <span className="hidden sm:inline">Share in Chat</span>
               </button>
             </div>
           </div>

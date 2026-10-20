@@ -20,6 +20,20 @@ import {
   Copy,
   Check,
   Sparkles,
+  Zap,
+  ShieldCheck,
+  Film,
+  Heart,
+  Smartphone,
+  Laptop,
+  Radio,
+  Activity,
+  Volume2,
+  Camera,
+  Layers,
+  CheckCircle2,
+  ShieldAlert,
+  Clock,
 } from 'lucide-react';
 import {
   Popcorn3D,
@@ -64,6 +78,26 @@ export default function SynCinemaPlatform() {
 
   // Active Tab: 'create' | 'join'
   const [activeTab, setActiveTab] = useState('create');
+
+  // Detailed Info Section Tab: 'security' | 'media' | 'intimacy'
+  const [infoTab, setInfoTab] = useState('security');
+
+  // Kinetic Rotating Audience Ticker
+  const AUDIENCES = [
+    'Long-Distance Couples 💕',
+    'Late-Night Movie Dates 🍿',
+    'Virtual Cinema Watch Parties 🎬',
+    'Anime & YouTube Marathons ✨',
+    'Best Friends Anywhere 🥂',
+  ];
+  const [audienceIndex, setAudienceIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAudienceIndex((prev) => (prev + 1) % AUDIENCES.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
 
   // Create Room State (Strictly Password Protected)
   const [roomName, setRoomName] = useState('');
@@ -272,16 +306,21 @@ export default function SynCinemaPlatform() {
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* LEFT SIDE: Text, 3D Art Badges & High-Security Information Highlights */}
+          {/* LEFT SIDE: Text, 3D Art Badges, Live Sync Telemetry & Informational Deck */}
           <div className="lg:col-span-7 xl:col-span-7 order-1 lg:order-1 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
-              <SparkleStar3D size={18} />
-              <span>Virtual Cinema For Two or More</span>
+            {/* Kinetic Animated Audience Pill */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
+              <SparkleStar3D size={20} className="anim-float-slow shrink-0" />
+              <span>Virtual Cinema For</span>
+              <span className="text-pink-300 font-extrabold transition-all duration-300 min-w-[210px] text-left">
+                {AUDIENCES[audienceIndex]}
+              </span>
             </div>
 
+            {/* Kinetic Shimmer Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-pink-100 tracking-tight leading-[1.1] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
               Same Movie.{' '}
-              <span className="bg-gradient-to-r from-pink-400 via-rose-400 to-pink-200 bg-clip-text text-transparent">
+              <span className="anim-text-shimmer inline-block">
                 Different Places.
               </span>
               <br />
@@ -292,92 +331,367 @@ export default function SynCinemaPlatform() {
               Stream YouTube, movies, or direct links in sub-second synchronization with real-time video calls. Every room is strictly password protected with zero-leak peer-to-peer privacy.
             </p>
 
-            {/* Feature Badges with 3D Icons */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1 text-xs">
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/25 text-pink-100 font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400/60 transition">
-                <SyncBolt3D size={20} />
-                <span>0ms Drift Clock Sync</span>
+            {/* Floating 3D Art Stickers (Hardware-Accelerated, Zero-Lag) */}
+            <div className="relative flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1 text-xs">
+              <div className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+                <Popcorn3D size={22} />
+                <span>🍿 Crisp 1080p/4K</span>
               </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/25 text-pink-100 font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400/60 transition">
-                <Shield3D size={20} />
-                <span>100% Password Protected</span>
+              <div className="anim-heartbeat px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+                <Heart3D size={22} />
+                <span>💖 Duo Webcams</span>
               </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/25 text-pink-100 font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400/60 transition">
-                <Clapper3D size={20} />
-                <span>1080p &amp; 4K HD Playback</span>
+              <div className="anim-float-reverse px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+                <SyncBolt3D size={22} />
+                <span>⚡ 0ms Clock Drift</span>
               </div>
-              <div className="px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/25 text-pink-100 font-semibold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400/60 transition">
-                <DuoCam3D size={20} />
-                <span>Duo Cam &amp; Voice Chat</span>
+              <div className="anim-float-sway px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+                <Shield3D size={22} />
+                <span>🔒 100% P2P Vault</span>
+              </div>
+              <div className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+                <Ticket3D size={22} />
+                <span>🎟️ Ad-Free Theater</span>
               </div>
             </div>
 
-            {/* DETAILED HIGH-SECURITY & PRIVACY VAULT INFORMATION HIGHLIGHTS CARD */}
-            <div className="rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_15px_40px_rgba(236,72,153,0.15)] space-y-4 text-left mt-4">
-              <div className="flex items-center gap-3 border-b border-pink-500/20 pb-3.5">
-                <div className="p-2 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 shrink-0">
-                  <Shield3D size={26} />
+            {/* MOTION GRAPHICS DUAL-DEVICE SYNC TELEMETRY SIMULATOR (ZERO LAG, GPU-ACCELERATED) */}
+            <div className="rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-4 sm:p-5 shadow-[0_15px_40px_rgba(236,72,153,0.18)] space-y-3.5 overflow-hidden relative">
+              {/* Simulator Header */}
+              <div className="flex items-center justify-between border-b border-pink-500/20 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs font-black tracking-wider text-pink-100 uppercase flex items-center gap-1.5">
+                    <Activity className="h-3.5 w-3.5 text-pink-400" />
+                    <span>Live Lockstep Sync Telemetry</span>
+                  </span>
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-sm sm:text-base text-pink-100">
-                      High-Security Privacy Guarantee
-                    </h3>
-                    <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-500/40 font-bold">
-                      Zero-Leak
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 flex items-center gap-1">
+                  <Zap className="h-3 w-3 text-emerald-400" />
+                  <span>0.00ms Drift Lock</span>
+                </span>
+              </div>
+
+              {/* Visual Dual-Device Interactive Stage */}
+              <div className="grid grid-cols-11 items-center gap-2 py-1">
+                {/* Device 1: Phone (You) */}
+                <div className="col-span-5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 p-3 space-y-2 text-left relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
+                      <Smartphone className="h-3 w-3 text-pink-400" />
+                      <span>Phone (London)</span>
                     </span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   </div>
-                  <p className="text-xs text-pink-300 font-semibold mt-0.5">
-                    🛡️ Only You &amp; Your Invited Partner Can See &amp; Hear You
-                  </p>
+                  <div className="h-14 rounded-xl bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-3 relative overflow-hidden">
+                    <Film className="h-5 w-5 text-pink-400 shrink-0" />
+                    <div className="text-right">
+                      <p className="text-[11px] font-mono font-bold text-pink-100">00:42:15.200</p>
+                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #76,056</p>
+                    </div>
+                    {/* Animated Playhead Track */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
+                      <div className="h-full bg-pink-500 w-3/5" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Center Motion Graphics Pulse Wave Laser */}
+                <div className="col-span-1 flex flex-col items-center justify-center relative">
+                  <div className="h-7 w-px bg-pink-500/30 relative overflow-hidden">
+                    <div className="absolute inset-x-0 h-3 bg-pink-400 anim-sync-laser" />
+                  </div>
+                  <div className="p-1.5 rounded-full bg-pink-600/30 border border-pink-500/50 anim-heartbeat shrink-0">
+                    <Zap className="h-3.5 w-3.5 text-pink-300" />
+                  </div>
+                  <div className="h-7 w-px bg-pink-500/30 relative overflow-hidden">
+                    <div className="absolute inset-x-0 h-3 bg-pink-400 anim-sync-laser" />
+                  </div>
+                </div>
+
+                {/* Device 2: Laptop (Partner) */}
+                <div className="col-span-5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 p-3 space-y-2 text-left relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
+                      <Laptop className="h-3 w-3 text-pink-400" />
+                      <span>Laptop (New York)</span>
+                    </span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="h-14 rounded-xl bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-3 relative overflow-hidden">
+                    <Film className="h-5 w-5 text-pink-400 shrink-0" />
+                    <div className="text-right">
+                      <p className="text-[11px] font-mono font-bold text-pink-100">00:42:15.200</p>
+                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #76,056</p>
+                    </div>
+                    {/* Animated Playhead Track */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
+                      <div className="h-full bg-pink-500 w-3/5" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                {/* Guarantee 1 */}
-                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
-                  <div className="font-bold text-pink-100 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-pink-400" />
-                    <span>Direct Peer-to-Peer Encryption</span>
-                  </div>
-                  <p className="text-[11px] text-pink-200/80 leading-relaxed">
-                    Camera and mic feeds stream point-to-point directly between your browsers via WebRTC DTLS/SRTP. No video or voice data is ever recorded or routed to external media servers.
-                  </p>
+              {/* Real-Time Live Telemetry Metrics */}
+              <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-mono pt-1">
+                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+                  <span className="text-pink-300/60 block text-[9px]">CLOCK DRIFT</span>
+                  <span className="text-emerald-400 font-bold">0.00 ms</span>
                 </div>
-
-                {/* Guarantee 2 */}
-                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
-                  <div className="font-bold text-pink-100 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-rose-400" />
-                    <span>Hardware Sensor Killswitch</span>
-                  </div>
-                  <p className="text-[11px] text-pink-200/80 leading-relaxed">
-                    When you switch Camera or Mic off, device hardware media tracks are fully terminated in your browser—the physical green/red indicator LED on your camera shuts off completely.
-                  </p>
+                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+                  <span className="text-pink-300/60 block text-[9px]">AUDIO PHASE</span>
+                  <span className="text-pink-200 font-bold">100% Locked</span>
                 </div>
-
-                {/* Guarantee 3 */}
-                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
-                  <div className="font-bold text-pink-100 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-fuchsia-400" />
-                    <span>Zero Logins &amp; Ephemeral Keys</span>
-                  </div>
-                  <p className="text-[11px] text-pink-200/80 leading-relaxed">
-                    No email address, login accounts, or tracking cookies required. Every room is guarded by a bcrypt-hashed passcode known exclusively to you and your invited guest.
-                  </p>
+                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+                  <span className="text-pink-300/60 block text-[9px]">TRANSPORT</span>
+                  <span className="text-pink-200 font-bold">WebRTC P2P</span>
                 </div>
-
-                {/* Guarantee 4 */}
-                <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
-                  <div className="font-bold text-pink-100 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-pink-300" />
-                    <span>10-Minute Inactivity Auto-Destruct</span>
-                  </div>
-                  <p className="text-[11px] text-pink-200/80 leading-relaxed">
-                    Once all members leave or if the room remains idle for 10 minutes, the room code, chat memory, and sync session automatically self-destruct from active memory.
-                  </p>
+                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+                  <span className="text-pink-300/60 block text-[9px]">AUTO-HEAL</span>
+                  <span className="text-emerald-400 font-bold">Active 24/7</span>
                 </div>
               </div>
+            </div>
+
+            {/* DETAILED INFORMATIONAL DECK WITH 3 INTERACTIVE TABS */}
+            <div className="rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_15px_40px_rgba(236,72,153,0.15)] space-y-4 text-left mt-4">
+              {/* Tab Selector Header */}
+              <div className="grid grid-cols-3 rounded-2xl bg-[#1A1A1D] p-1 border border-pink-500/20 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setInfoTab('security')}
+                  className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    infoTab === 'security'
+                      ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                      : 'text-pink-300/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Shield3D size={16} />
+                  <span className="truncate">Privacy Vault</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInfoTab('media')}
+                  className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    infoTab === 'media'
+                      ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                      : 'text-pink-300/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Ticket3D size={16} />
+                  <span className="truncate">Universal Media</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInfoTab('intimacy')}
+                  className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    infoTab === 'intimacy'
+                      ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                      : 'text-pink-300/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Heart3D size={16} />
+                  <span className="truncate">Couples Suite</span>
+                </button>
+              </div>
+
+              {/* TAB 1 CONTENT: High Security & Privacy Vault */}
+              {infoTab === 'security' && (
+                <div className="space-y-3.5 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3 border-b border-pink-500/20 pb-3">
+                    <div className="p-2 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 shrink-0">
+                      <Shield3D size={26} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-extrabold text-sm sm:text-base text-pink-100">
+                          High-Security Privacy Guarantee
+                        </h3>
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-500/40 font-bold">
+                          Zero-Leak
+                        </span>
+                      </div>
+                      <p className="text-xs text-pink-300 font-semibold mt-0.5">
+                        🛡️ Only You &amp; Your Invited Partner Can See &amp; Hear You
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-pink-400" />
+                        <span>Direct Peer-to-Peer Encryption</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Camera and mic feeds stream point-to-point directly between your browsers via WebRTC DTLS/SRTP. No video or voice data is ever recorded or routed to external media servers.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-rose-400" />
+                        <span>Hardware Sensor Killswitch</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        When you switch Camera or Mic off, device hardware media tracks are fully terminated in your browser—the physical green/red indicator LED on your camera shuts off completely.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-fuchsia-400" />
+                        <span>Zero Logins &amp; Ephemeral Keys</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        No email address, login accounts, or tracking cookies required. Every room is guarded by a bcrypt-hashed passcode known exclusively to you and your invited guest.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-pink-300" />
+                        <span>10-Minute Inactivity Auto-Destruct</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Once all members leave or if the room remains idle for 10 minutes, the room code, chat memory, and sync session automatically self-destruct from active memory.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2 CONTENT: Universal Media Engine */}
+              {infoTab === 'media' && (
+                <div className="space-y-3.5 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3 border-b border-pink-500/20 pb-3">
+                    <div className="p-2 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 shrink-0">
+                      <Ticket3D size={26} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-extrabold text-sm sm:text-base text-pink-100">
+                          Universal Media Streaming Engine
+                        </h3>
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-500/40 font-bold">
+                          Any Format
+                        </span>
+                      </div>
+                      <p className="text-xs text-pink-300 font-semibold mt-0.5">
+                        🎥 Stream YouTube, HLS, Direct MP4s, or Local Files with Zero Buffering
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Film className="h-3.5 w-3.5 text-pink-400" />
+                        <span>YouTube Clean Playback</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Paste any YouTube video or livestream URL. SynCinema synchronizes playback states down to the exact frame across all phones, tablets, and PCs.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Radio className="h-3.5 w-3.5 text-rose-400" />
+                        <span>Direct MP4 &amp; HLS (.m3u8)</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Paste direct video links or live IPTV streams. The integrated adaptive bitrate engine dynamically adjusts quality to eliminate buffering pauses.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Laptop className="h-3.5 w-3.5 text-fuchsia-400" />
+                        <span>P2P Local File Player (0MB Upload)</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Pick any video stored on your hard drive. It streams peer-to-peer to your partner through encrypted browser data channels without uploading to any server.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Zap className="h-3.5 w-3.5 text-pink-300" />
+                        <span>Auto-Healing Video Watchdog</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        If a network blip or browser decoder hiccup pauses the video, our background watchdog auto-restores playback in under 2 seconds without refreshing.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3 CONTENT: Couples Intimacy Suite */}
+              {infoTab === 'intimacy' && (
+                <div className="space-y-3.5 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3 border-b border-pink-500/20 pb-3">
+                    <div className="p-2 rounded-xl bg-pink-500/20 text-pink-400 border border-pink-500/30 shrink-0">
+                      <Heart3D size={26} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-extrabold text-sm sm:text-base text-pink-100">
+                          Couples Intimacy &amp; Ambiance Suite
+                        </h3>
+                        <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-500/40 font-bold">
+                          Duo Vibes
+                        </span>
+                      </div>
+                      <p className="text-xs text-pink-300 font-semibold mt-0.5">
+                        💑 Feel Like You're Sitting On The Same Couch Even Miles Apart
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Heart className="h-3.5 w-3.5 text-pink-400" />
+                        <span>Touch Hugs &amp; Screen Pulses</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Tap &ldquo;Send Hug&rdquo; to pulse your partner's cinema screen with warm romantic vibrations, glowing rose lighting, and floating heart physics.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5 text-rose-400" />
+                        <span>Live Polaroid Keepsakes</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Capture authentic vintage date polaroids blending the movie scene and your video call selfies into a downloadable high-resolution photo keepsake.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Volume2 className="h-3.5 w-3.5 text-fuchsia-400" />
+                        <span>Rain &amp; Fireplace Soundscapes</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Layer cozy background ambiance behind the movie audio: soft rain on window glass, crackling warm fireplace, lofi vinyl hiss, and cosmic drones.
+                      </p>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#1A1A1D]/80 border border-pink-500/15 space-y-1">
+                      <div className="font-bold text-pink-100 flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-pink-300" />
+                        <span>Cozy Sleep Timer</span>
+                      </div>
+                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                        Watching in bed? Set a 30m, 60m, or 90m sleep timer. SynCinema gently fades out volume and pauses the movie when you both drift off to sleep.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

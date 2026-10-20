@@ -137,7 +137,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
                 <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${card.badgeColor}`}>
                   {card.badge}
                 </span>
-                <div className="shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <div className="shrink-0 anim-float-slow group-hover:scale-115 transition-transform duration-300">
                   <IconComponent size={34} />
                 </div>
               </div>
@@ -145,7 +145,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
               {/* Room Screenshot Preview Box */}
               <div
                 onClick={() => setZoomImage({ src: card.image, title: card.title })}
-                className="relative rounded-2xl overflow-hidden border border-pink-500/20 bg-[#0A0A0C] h-36 sm:h-40 group/img cursor-pointer shadow-inner"
+                className="relative rounded-2xl overflow-hidden border border-pink-500/20 bg-[#1a1a1a] h-36 sm:h-40 group/img cursor-pointer shadow-inner"
               >
                 <img
                   src={card.image}
@@ -153,7 +153,7 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
                   className="w-full h-full object-cover object-top transition duration-500 group-hover/img:scale-105"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D10]/90 via-black/20 to-transparent opacity-85 group-hover/img:opacity-60 transition" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#222222]/90 via-black/20 to-transparent opacity-85 group-hover/img:opacity-60 transition" />
                 
                 {/* Expand Pill */}
                 <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-pink-500/30 text-[10px] font-bold text-pink-100 opacity-90 group-hover/img:opacity-100 transition shadow-md">
