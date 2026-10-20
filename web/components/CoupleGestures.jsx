@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import gsap from 'gsap';
-import { Heart, Sparkles, Flame, MessageCircleHeart, Users2, Wine, Popcorn } from 'lucide-react';
+import { animate, stagger } from 'animejs';
+import { Heart, Sparkles, MessageCircleHeart } from 'lucide-react';
+import { Heart3D, Popcorn3D, SparkleStar3D } from '@/components/Icons3D';
 
 const SWEET_WHISPERS = [
   'I wish you were sitting right next to me right now 💗',
@@ -30,6 +32,47 @@ function playChime(freq = 520, type = 'sine') {
   } catch {}
 }
 
+/**
+ * MicroKit UI + anime.js Particle Physics Engine
+ * Generates spring-eased floating reactions across the viewer screen
+ */
+function spawnAnimeReaction(items, count = 10) {
+  if (typeof document === 'undefined') return;
+  const elements = [];
+
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.textContent = items[i % items.length];
+    el.className = 'fixed z-[9999] pointer-events-none select-none text-3xl sm:text-4xl';
+    el.style.left = `${15 + Math.random() * 70}%`;
+    el.style.bottom = `${8 + Math.random() * 12}%`;
+    el.style.opacity = '1';
+    document.body.appendChild(el);
+    elements.push(el);
+  }
+
+  // anime.js v4 physics animation
+  animate(elements, {
+    translateY: () => -(window.innerHeight * (0.45 + Math.random() * 0.45)),
+    translateX: () => (Math.random() - 0.5) * 180,
+    rotate: () => (Math.random() - 0.5) * 90,
+    scale: [
+      { to: 1.4, duration: 400, ease: 'outElastic(1, .5)' },
+      { to: 1.1, duration: 1000 },
+      { to: 0.6, duration: 600, ease: 'inQuad' },
+    ],
+    opacity: [
+      { to: 1, duration: 1200 },
+      { to: 0, duration: 600, ease: 'outQuad' },
+    ],
+    delay: stagger(80),
+    ease: 'outCubic',
+    onComplete: () => {
+      elements.forEach((el) => el.remove());
+    },
+  });
+}
+
 export default function CoupleGestures({ socket, me, name, users, say }) {
   const [holdingHand, setHoldingHand] = useState(false);
   const [partnerHolding, setPartnerHolding] = useState(false);
@@ -52,27 +95,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
         case 'kiss': {
           playChime(640);
           say?.(`${data.from} blew you a sweet kiss 💋`);
-          for (let i = 0; i < 12; i++) {
-            const el = document.createElement('div');
-            el.textContent = i % 2 === 0 ? '💋' : '💖';
-            el.className = 'fixed bottom-12 z-50 text-4xl sm:text-5xl pointer-events-none select-none';
-            el.style.left = 15 + Math.random() * 70 + '%';
-            document.body.append(el);
-            gsap.fromTo(
-              el,
-              { y: 0, opacity: 1, scale: 0.6, rotation: -20 + Math.random() * 40 },
-              {
-                y: -window.innerHeight * 0.7,
-                x: (Math.random() - 0.5) * 120,
-                opacity: 0,
-                scale: 1.5,
-                duration: 2.2 + Math.random(),
-                delay: i * 0.08,
-                ease: 'power1.out',
-                onComplete: () => el.remove(),
-              }
-            );
-          }
+          spawnAnimeReaction(['💋', '💖', '✨', '🥰'], 14);
           break;
         }
 
@@ -80,6 +103,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
           playChime(440);
           setHugActive(true);
           say?.(`${data.from} is giving you a warm, cozy cuddle 🫂`);
+          spawnAnimeReaction(['🫂', '💕', '🧡', '🤍'], 10);
           setTimeout(() => setHugActive(false), 3600);
           break;
         }
@@ -98,50 +122,14 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
         case 'popcorn': {
           playChime(780);
           say?.(`${data.from} fed you a warm piece of popcorn! 🍿`);
-          for (let i = 0; i < 8; i++) {
-            const el = document.createElement('div');
-            el.textContent = '🍿';
-            el.className = 'fixed bottom-16 z-50 text-3xl pointer-events-none select-none';
-            el.style.left = 30 + Math.random() * 40 + '%';
-            document.body.append(el);
-            gsap.fromTo(
-              el,
-              { y: 0, opacity: 1, scale: 0.5 },
-              {
-                y: -window.innerHeight * 0.5,
-                x: (Math.random() - 0.5) * 160,
-                rotation: Math.random() * 360,
-                opacity: 0,
-                scale: 1.3,
-                duration: 1.6 + Math.random() * 0.6,
-                delay: i * 0.09,
-                ease: 'back.out(1.4)',
-                onComplete: () => el.remove(),
-              }
-            );
-          }
+          spawnAnimeReaction(['🍿', '✨', '😋'], 12);
           break;
         }
 
         case 'cheers': {
           playChime(880);
           say?.(`Cheers to us from ${data.from}! 🥂✨`);
-          for (let i = 0; i < 6; i++) {
-            const el = document.createElement('div');
-            el.textContent = i % 2 === 0 ? '🥂' : '✨';
-            el.className = 'fixed bottom-14 z-50 text-4xl pointer-events-none select-none';
-            el.style.left = 20 + Math.random() * 60 + '%';
-            document.body.append(el);
-            gsap.to(el, {
-              y: -window.innerHeight * 0.55,
-              opacity: 0,
-              scale: 1.4,
-              duration: 2,
-              delay: i * 0.1,
-              ease: 'power2.out',
-              onComplete: () => el.remove(),
-            });
-          }
+          spawnAnimeReaction(['🥂', '✨', '🍾', '🎉'], 10);
           break;
         }
 
@@ -173,17 +161,21 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
     if (type === 'kiss') {
       playChime(640);
       say?.('You blew a kiss 💋');
+      spawnAnimeReaction(['💋', '💖', '✨'], 10);
     } else if (type === 'hug') {
       playChime(440);
       setHugActive(true);
       setTimeout(() => setHugActive(false), 3600);
       say?.('Sent a warm cuddle 🫂');
+      spawnAnimeReaction(['🫂', '💕', '🧡'], 8);
     } else if (type === 'popcorn') {
       playChime(780);
       say?.('Fed popcorn to your partner 🍿');
+      spawnAnimeReaction(['🍿', '✨'], 8);
     } else if (type === 'cheers') {
       playChime(880);
       say?.('Clinked glasses! 🥂');
+      spawnAnimeReaction(['🥂', '✨'], 8);
     }
   };
 
@@ -243,13 +235,13 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
         </div>
       )}
 
-      {/* Couple Gestures Toolbar */}
-      <div className="card my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 !bg-black border border-white/10">
+      {/* Couple Gestures Toolbar styled in Black Hole & Electric Tangerine */}
+      <div className="card-blackhole my-3 flex flex-wrap items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-[#1C1C1F]/90 border border-white/10 shadow-lg">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-rose-400">
-            <Heart className="h-4 w-4 fill-current" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF6D1F]/20 text-[#FAF3E1] border border-[#FF6D1F]/30">
+            <Heart3D size={20} />
           </div>
-          <span className="font-display text-xs sm:text-sm font-semibold tracking-wide text-white">
+          <span className="font-display text-xs sm:text-sm font-bold tracking-wide text-[#FAF3E1]">
             Couple Gestures
           </span>
         </div>
@@ -260,7 +252,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('kiss')}
             title="Blow a sweet kiss to your partner"
-            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-rose-600/20 hover:border-rose-500/40 transition active:scale-95 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">💋</span>
             <span>Kiss</span>
@@ -271,7 +263,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('hug')}
             title="Send a warm, cozy cuddle"
-            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-rose-600/20 hover:border-rose-500/40 transition active:scale-95 cursor-pointer"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">🫂</span>
             <span>Hug</span>
@@ -282,10 +274,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={toggleHoldHand}
             title={holdingHand ? 'Holding hands! Tap to release' : 'Hold hands with your partner'}
-            className={`ghost !px-2.5 !py-2 text-xs transition active:scale-95 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 cursor-pointer flex items-center gap-1 ${
               holdingHand || partnerHolding
-                ? 'bg-rose-600 text-white border-transparent font-medium'
-                : 'text-white/90 bg-white/5 hover:bg-rose-600/20'
+                ? 'btn-tangerine text-[#FAF3E1]'
+                : 'text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50'
             }`}
           >
             <span className="text-sm">🤝</span>
@@ -299,7 +291,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('popcorn')}
             title="Feed your partner popcorn"
-            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#ff9a6b]/20 hover:border-[#ff9a6b]/40 transition active:scale-95"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">🍿</span>
             <span>Popcorn</span>
@@ -310,7 +302,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={() => sendGesture('cheers')}
             title="Cheers with a glass of champagne"
-            className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-[#f59e0b]/20 hover:border-[#f59e0b]/40 transition active:scale-95"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
           >
             <span className="text-sm">🥂</span>
             <span>Cheers</span>
@@ -321,8 +313,8 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
             type="button"
             onClick={toggleCandle}
             title={candleMode ? 'Turn off candlelight' : 'Light candlelight for romantic ambience'}
-            className={`ghost !px-2.5 !py-2 text-xs transition active:scale-95 ${
-              candleMode ? 'bg-amber-500/25 border-amber-400 text-amber-200' : 'text-white/90 bg-white/5'
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 cursor-pointer flex items-center gap-1 ${
+              candleMode ? 'bg-[#FF6D1F]/30 border-[#FF6D1F] text-[#FAF3E1]' : 'text-[#FAF3E1] bg-[#222222] border border-white/10'
             }`}
           >
             <span className="text-sm">🕯️</span>
@@ -335,24 +327,24 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
               type="button"
               onClick={() => setShowWhispers(!showWhispers)}
               title="Whisper a sweet love note to your partner"
-              className="ghost !px-2.5 !py-2 text-xs text-white/90 bg-white/5 hover:bg-rose-600/20 transition active:scale-95"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#FAF3E1] bg-[#222222] border border-white/10 hover:border-[#FF6D1F]/50 hover:bg-[#FF6D1F]/20 transition active:scale-95 cursor-pointer flex items-center gap-1"
             >
-              <MessageCircleHeart className="h-3.5 w-3.5 text-rose-400" />
+              <MessageCircleHeart className="h-3.5 w-3.5 text-[#FF6D1F]" />
               <span>Whisper</span>
             </button>
 
             {/* Whisper Dropdown Menu */}
             {showWhispers && (
-              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/15 !bg-black p-3 z-50 text-white">
+              <div className="absolute right-0 bottom-full mb-2 w-72 sm:w-80 rounded-2xl border border-white/15 bg-[#1C1C1F] p-3 z-50 text-[#FAF3E1] shadow-2xl backdrop-blur-xl">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
-                  <span className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-[#FF6D1F] flex items-center gap-1.5">
                     <Heart className="h-3.5 w-3.5 fill-current" />
                     Whisper a Sweet Note
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowWhispers(false)}
-                    className="text-xs text-white/50 hover:text-white"
+                    className="text-xs text-[#F5E7C6]/60 hover:text-white"
                   >
                     ✕
                   </button>
@@ -363,7 +355,7 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
                       key={idx}
                       type="button"
                       onClick={() => sendWhisper(w)}
-                      className="w-full text-left text-xs rounded-xl p-2 bg-white/5 hover:bg-rose-600/25 text-white/90 hover:text-white transition"
+                      className="w-full text-left text-xs rounded-xl p-2 bg-[#222222] hover:bg-[#FF6D1F]/20 text-[#FAF3E1] hover:text-white transition"
                     >
                       {w}
                     </button>
@@ -381,10 +373,10 @@ export default function CoupleGestures({ socket, me, name, users, say }) {
                     value={customWhisper}
                     onChange={(e) => setCustomWhisper(e.target.value)}
                     placeholder="Write a custom whisper…"
-                    className="field !py-1 !text-xs !bg-white/10 !text-white"
+                    className="flex-1 py-1.5 px-3 text-xs bg-[#0D0D10] border border-white/10 rounded-xl text-[#FAF3E1] outline-none focus:border-[#FF6D1F]"
                     maxLength={100}
                   />
-                  <button type="submit" className="btn !py-1 !px-2.5 !text-xs shrink-0">
+                  <button type="submit" className="btn-tangerine py-1 px-3 text-xs rounded-xl font-bold shrink-0">
                     Send
                   </button>
                 </form>

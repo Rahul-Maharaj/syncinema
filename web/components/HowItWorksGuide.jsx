@@ -170,14 +170,14 @@ export default function HowItWorksGuide({ onStartRoom }) {
     <section className="relative z-10 w-full max-w-6xl mx-auto px-4 py-12 sm:py-16 text-slate-100">
       {/* Section Header */}
       <div className="text-center space-y-3 mb-10 sm:mb-12">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-bold tracking-wide uppercase shadow-lg shadow-pink-500/10">
-          <Sparkles className="h-3.5 w-3.5 text-pink-400" />
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF6D1F]/15 border border-[#FF6D1F]/30 text-[#FAF3E1] text-xs font-bold tracking-wide uppercase shadow-lg shadow-[#FF6D1F]/10">
+          <Sparkles className="h-3.5 w-3.5 text-[#FF6D1F]" />
           <span>Detailed Guide &bull; How It Works</span>
         </div>
-        <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">
-          How <span className="bg-gradient-to-r from-pink-400 via-rose-300 to-purple-400 bg-clip-text text-transparent">SynCinema</span> Works
+        <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-extrabold text-[#FAF3E1] tracking-tight drop-shadow-md">
+          How <span className="bg-gradient-to-r from-[#FF6D1F] via-[#FF8E42] to-[#FAF3E1] bg-clip-text text-transparent">SynCinema</span> Works
         </h2>
-        <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-2xl mx-auto font-medium">
+        <p className="text-xs sm:text-sm md:text-base text-[#F5E7C6]/80 max-w-2xl mx-auto font-medium">
           Step-by-step master guide to creating rooms, streaming movies, 0ms lockstep synchronization, duo video calls, and romantic cinema ambiance.
         </p>
       </div>
@@ -193,21 +193,21 @@ export default function HowItWorksGuide({ onStartRoom }) {
               onClick={() => setActiveStep(idx)}
               className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
                 isActive
-                  ? 'bg-gradient-to-br from-pink-950/70 via-purple-950/50 to-black/80 border-pink-500/60 shadow-xl shadow-pink-900/30 ring-1 ring-pink-500/40'
-                  : 'bg-black/40 border-white/10 hover:border-white/20 hover:bg-white/5 text-slate-400 hover:text-white'
+                  ? 'bg-gradient-to-br from-[#222222] via-[#2A1C16] to-[#161619] border-[#FF6D1F]/60 shadow-xl shadow-[#FF6D1F]/20 ring-1 ring-[#FF6D1F]/40'
+                  : 'bg-[#161619]/60 border-white/10 hover:border-white/20 hover:bg-white/5 text-[#F5E7C6]/60 hover:text-[#FAF3E1]'
               }`}
             >
               <div className="flex items-center justify-between w-full">
-                <span className={`text-[11px] font-mono font-bold ${isActive ? 'text-pink-400' : 'text-slate-500'}`}>
+                <span className={`text-[11px] font-mono font-bold ${isActive ? 'text-[#FF6D1F]' : 'text-slate-500'}`}>
                   STEP {st.stepNumber}
                 </span>
                 <span className={`text-[9px] px-2 py-0.5 rounded-full border font-semibold ${
-                  isActive ? 'bg-pink-500/20 text-pink-300 border-pink-500/40' : 'bg-white/5 text-slate-400 border-white/10'
+                  isActive ? 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40' : 'bg-white/5 text-[#F5E7C6]/60 border-white/10'
                 }`}>
                   {st.badge}
                 </span>
               </div>
-              <h3 className={`text-xs sm:text-sm font-bold line-clamp-1 ${isActive ? 'text-white' : 'text-slate-300'}`}>
+              <h3 className={`text-xs sm:text-sm font-bold line-clamp-1 ${isActive ? 'text-[#FAF3E1]' : 'text-[#F5E7C6]/80'}`}>
                 {st.title}
               </h3>
             </button>
@@ -216,11 +216,11 @@ export default function HowItWorksGuide({ onStartRoom }) {
       </div>
 
       {/* Active Step Showcase Card */}
-      <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-black/80 via-black/70 to-black/90 p-5 sm:p-8 backdrop-blur-2xl shadow-2xl shadow-black/80 transition-all duration-300">
+      <div className="border-beam-card rounded-3xl border border-white/10 bg-[#161619]/90 p-5 sm:p-8 backdrop-blur-2xl shadow-2xl shadow-black/80 transition-all duration-300">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
           {/* Left Visual Column */}
           <div className="lg:col-span-5 relative group">
-            <div className="relative aspect-video sm:aspect-square lg:aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl shadow-pink-950/40">
+            <div className="relative aspect-video sm:aspect-square lg:aspect-video rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
               <img
                 src={cur.image}
                 alt={cur.title}
@@ -230,17 +230,17 @@ export default function HowItWorksGuide({ onStartRoom }) {
 
               {/* Step Badge Over Image */}
               <div className="absolute top-3 left-3 flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full bg-black/80 border border-white/20 text-[10px] font-bold text-pink-300 backdrop-blur-md">
+                <span className="px-2.5 py-1 rounded-full bg-black/80 border border-white/20 text-[10px] font-bold text-[#FAF3E1] backdrop-blur-md">
                   Step {cur.stepNumber} of 04
                 </span>
               </div>
 
               {/* Bottom Image Overlay */}
               <div className="absolute bottom-3 left-3 right-3 text-left">
-                <span className="text-[10px] font-bold text-pink-400 uppercase tracking-widest block mb-0.5">
+                <span className="text-[10px] font-bold text-[#FF6D1F] uppercase tracking-widest block mb-0.5">
                   {cur.badge}
                 </span>
-                <h4 className="text-sm sm:text-base font-extrabold text-white drop-shadow-md">
+                <h4 className="text-sm sm:text-base font-extrabold text-[#FAF3E1] drop-shadow-md">
                   {cur.subtitle}
                 </h4>
               </div>
@@ -251,14 +251,14 @@ export default function HowItWorksGuide({ onStartRoom }) {
           <div className="lg:col-span-7 space-y-4 text-left">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-mono font-bold text-pink-400">Step {cur.stepNumber}</span>
+                <span className="text-xs font-mono font-bold text-[#FF6D1F]">Step {cur.stepNumber}</span>
                 <span className="h-1 w-1 rounded-full bg-slate-500" />
-                <span className="text-xs text-purple-300 font-semibold">{cur.badge}</span>
+                <span className="text-xs text-[#F5E7C6] font-semibold">{cur.badge}</span>
               </div>
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#FAF3E1] tracking-tight">
                 {cur.title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#F5E7C6]/80 mt-2 leading-relaxed">
                 {cur.description}
               </p>
             </div>
@@ -268,13 +268,13 @@ export default function HowItWorksGuide({ onStartRoom }) {
               {cur.keyPoints.map((pt, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-pink-500/30 hover:bg-white/[0.07] transition"
+                  className="p-3 rounded-2xl bg-[#0D0D10]/60 border border-white/10 hover:border-[#FF6D1F]/40 hover:bg-[#0D0D10]/80 transition"
                 >
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-pink-400 shrink-0 mt-0.5" />
+                    <CheckCircle className="h-4 w-4 text-[#FF6D1F] shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-xs font-bold text-white mb-0.5">{pt.title}</h4>
-                      <p className="text-[11px] text-slate-300 leading-snug">{pt.desc}</p>
+                      <h4 className="text-xs font-bold text-[#FAF3E1] mb-0.5">{pt.title}</h4>
+                      <p className="text-[11px] text-[#F5E7C6]/80 leading-snug">{pt.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -282,11 +282,11 @@ export default function HowItWorksGuide({ onStartRoom }) {
             </div>
 
             {/* Pro Tip Callout */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-pink-950/40 via-purple-950/30 to-black/40 border border-pink-500/30 text-xs flex items-start gap-2.5">
-              <Sparkles className="h-4 w-4 text-pink-400 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#222222] via-[#241B17] to-[#1C1C1F] border border-[#FF6D1F]/30 text-xs flex items-start gap-2.5">
+              <Sparkles className="h-4 w-4 text-[#FF6D1F] shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-pink-300">Pro Tip: </span>
-                <span className="text-slate-200">{cur.proTip}</span>
+                <span className="font-bold text-[#FF6D1F]">Pro Tip: </span>
+                <span className="text-[#FAF3E1]">{cur.proTip}</span>
               </div>
             </div>
 
@@ -299,7 +299,7 @@ export default function HowItWorksGuide({ onStartRoom }) {
                 className={`px-4 py-2 rounded-xl text-xs font-semibold border transition ${
                   activeStep === 0
                     ? 'opacity-40 cursor-not-allowed border-white/5 text-slate-500'
-                    : 'border-white/15 text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer'
+                    : 'border-white/15 text-[#F5E7C6]/80 hover:text-white hover:bg-white/10 cursor-pointer'
                 }`}
               >
                 &larr; Previous Step
@@ -309,7 +309,7 @@ export default function HowItWorksGuide({ onStartRoom }) {
                 <button
                   type="button"
                   onClick={() => setActiveStep((prev) => Math.min(STEPS.length - 1, prev + 1))}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-pink-600 to-purple-600 hover:brightness-110 text-white shadow-lg shadow-pink-600/30 flex items-center gap-1.5 transition cursor-pointer"
+                  className="btn-tangerine px-5 py-2.5 rounded-xl text-xs font-bold text-[#FAF3E1] shadow-lg flex items-center gap-1.5 transition cursor-pointer"
                 >
                   <span>Next: {STEPS[activeStep + 1].title.split(' ')[0]}</span>
                   <ChevronRight className="h-4 w-4" />
@@ -318,7 +318,7 @@ export default function HowItWorksGuide({ onStartRoom }) {
                 <button
                   type="button"
                   onClick={onStartRoom}
-                  className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 text-white shadow-lg shadow-pink-600/30 flex items-center gap-1.5 transition cursor-pointer"
+                  className="btn-tangerine px-5 py-2.5 rounded-xl text-xs font-extrabold text-[#FAF3E1] shadow-lg flex items-center gap-1.5 transition cursor-pointer"
                 >
                   <span>Create Your Room Now</span>
                   <ArrowRight className="h-4 w-4" />
@@ -367,17 +367,17 @@ export default function HowItWorksGuide({ onStartRoom }) {
       </div>
 
       {/* Bottom Start Room CTA Banner */}
-      <div className="mt-10 sm:mt-12 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-900/60 via-pink-900/40 to-black/80 border border-pink-500/30 backdrop-blur-xl text-center space-y-3 shadow-2xl">
-        <h3 className="text-lg sm:text-2xl font-extrabold text-white">
+      <div className="mt-10 sm:mt-12 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#222222] via-[#241B17] to-[#161619] border border-[#FF6D1F]/40 backdrop-blur-xl text-center space-y-3 shadow-2xl">
+        <h3 className="text-lg sm:text-2xl font-extrabold text-[#FAF3E1]">
           Ready for your synchronized cinema night?
         </h3>
-        <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto">
+        <p className="text-xs sm:text-sm text-[#F5E7C6]/85 max-w-lg mx-auto">
           Create your private room in 5 seconds. Password protected, 0ms latency sync, and completely free.
         </p>
         <button
           type="button"
           onClick={onStartRoom}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 text-white font-extrabold text-sm shadow-xl shadow-pink-600/40 hover:brightness-110 active:scale-95 transition cursor-pointer"
+          className="btn-tangerine inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-[#FAF3E1] font-extrabold text-sm shadow-xl active:scale-95 transition cursor-pointer"
         >
           <Sparkles className="h-4 w-4" />
           <span>Launch Free Room Now</span>

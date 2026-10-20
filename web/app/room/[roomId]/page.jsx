@@ -26,11 +26,41 @@ import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
 import BrandLogo from '@/components/BrandLogo';
+import {
+  Popcorn3D,
+  Clapper3D,
+  Heart3D,
+  DuoCam3D,
+  Shield3D,
+  SyncBolt3D,
+  Ticket3D,
+  SparkleStar3D,
+} from '@/components/Icons3D';
 import { detectRealLocation } from '@/lib/locationDetector';
 import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
-// Curated Cinema Color Themes (Home screen matches 'midnight')
+// Curated Cinema Color Themes (Electric Tangerine & Black Hole default)
 export const ROOM_THEMES = {
+  tangerine: {
+    id: 'tangerine',
+    name: 'Electric Tangerine & Black Hole',
+    tag: 'Sustainable Linen & Tangerine Ambiance',
+    icon: '🍊',
+    bgClass: 'bg-[#0D0D10]',
+    navBg: 'bg-[#1C1C1F]/90 border-[#FF6D1F]/30 shadow-lg shadow-[#FF6D1F]/20',
+    asideBg: 'bg-[#1C1C1F]/90 border-[#FF6D1F]/25',
+    tabBg: 'bg-[#0D0D10]/95',
+    overlayGradient: 'bg-gradient-to-b from-[#1C1C1F]/80 via-[#0D0D10]/60 to-[#050508]/90',
+    ambientGlow: 'bg-gradient-to-r from-[#FF6D1F]/30 via-[#F5E7C6]/20 to-[#FF6D1F]/30',
+    borderColor: 'border-[#FF6D1F]/30',
+    cardBorder: 'border-[#FF6D1F]/40 shadow-xl shadow-[#FF6D1F]/20',
+    accentGradient: 'from-[#FF6D1F] via-[#FF853E] to-[#E05A12]',
+    accentText: 'text-[#FAF3E1]',
+    accentBg: 'bg-[#FF6D1F]',
+    themeBtnClass: 'bg-[#FF6D1F]/20 border-[#FF6D1F]/40 text-[#FAF3E1] hover:brightness-110 shadow-md shadow-[#FF6D1F]/30',
+    swatches: ['#0D0D10', '#222222', '#FF6D1F', '#FAF3E1'],
+    showWallpaperDefault: true,
+  },
   midnight: {
     id: 'midnight',
     name: 'Soft Pink Romance',
@@ -147,26 +177,26 @@ const hello = (n) => {
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 const Gate = ({ icon, title, hint, onSubmit, cta, children }) => (
-  <main className="grid min-h-screen place-items-center px-6 bg-[#050611] relative overflow-hidden">
+  <main className="grid min-h-screen place-items-center px-6 bg-[#0D0D10] relative overflow-hidden">
     {/* Ambient Cinema Background */}
     <div 
-      className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-40 transition-opacity"
+      className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none opacity-30 transition-opacity"
       style={{ backgroundImage: `url('/home-bg.jpg')`, backgroundPosition: 'center 40%' }}
     />
-    <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#050611] via-black/50 to-black/75 pointer-events-none" />
+    <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#0D0D10] via-[#0D0D10]/80 to-[#222222]/70 pointer-events-none" />
 
-    <form onSubmit={onSubmit} className="relative z-10 w-full max-w-sm space-y-4 p-7 text-center rounded-3xl border border-white/20 bg-black/60 backdrop-blur-2xl shadow-[0_20px_70px_rgba(0,0,0,0.8)] rise">
-      <div className="relative mx-auto h-16 w-16 drop-shadow-lg">
+    <form onSubmit={onSubmit} className="border-beam-card relative z-10 w-full max-w-sm space-y-4 p-7 text-center rounded-3xl border border-white/10 bg-[#161619]/90 backdrop-blur-2xl shadow-[0_25px_80px_rgba(0,0,0,0.85)] rise">
+      <div className="relative mx-auto h-16 w-16 drop-shadow-[0_4px_16px_rgba(255,109,31,0.55)]">
         <img src="/logo.png" alt="SyncCinema Logo" className="h-full w-full object-contain" />
       </div>
-      <h1 className="font-display text-2xl font-bold text-white flex items-center justify-center gap-2">
+      <h1 className="font-display text-2xl font-bold text-[#FAF3E1] flex items-center justify-center gap-2">
         {icon}
         <span>{title}</span>
       </h1>
-      <p className="text-sm text-slate-300">{hint}</p>
+      <p className="text-sm text-[#F5E7C6]/85">{hint}</p>
       {children}
-      <button className="btn w-full !py-3 font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 shadow-lg">{cta}</button>
-      <Link href="/" className="block text-xs text-pink-400 hover:underline">Back to home</Link>
+      <button className="btn-tangerine w-full !py-3 font-bold text-[#FAF3E1] rounded-2xl shadow-lg cursor-pointer">{cta}</button>
+      <Link href="/" className="block text-xs text-[#FF6D1F] hover:underline font-medium">Back to home</Link>
     </form>
   </main>
 );
@@ -420,8 +450,8 @@ export default function Room() {
   const [pluginsTab, setPluginsTab] = useState('soundscapes');
   const [duoRightTab, setDuoRightTab] = useState('cam'); // 'cam' | 'chat'
 
-  // Room Color Themes & Ambiance State (Home Screen matches 'midnight')
-  const [currentThemeId, setCurrentThemeId] = useState('midnight');
+  // Room Color Themes & Ambiance State (Home Screen matches 'tangerine')
+  const [currentThemeId, setCurrentThemeId] = useState('tangerine');
   const [showWallpaper, setShowWallpaper] = useState(true);
   const [showThemeModal, setShowThemeModal] = useState(false);
 
@@ -431,7 +461,7 @@ export default function Room() {
       if (savedTheme && savedTheme !== 'obsidian' && ROOM_THEMES[savedTheme]) {
         setCurrentThemeId(savedTheme);
       } else {
-        setCurrentThemeId('midnight');
+        setCurrentThemeId('tangerine');
       }
       const savedWp = localStorage.getItem('sc_show_wallpaper');
       if (savedWp !== null) {
@@ -1646,11 +1676,12 @@ export default function Room() {
               <div className={`shrink-0 flex items-center border-b ${theme.borderColor} ${theme.tabBg} p-1.5 gap-1`}>
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
-                  { id: 'call', label: 'Duo Cam', icon: Video, activeDot: callCam },
-                  { id: 'gestures', label: 'Love', icon: Heart },
-                  { id: 'extras', label: 'Extras', icon: Popcorn },
+                  { id: 'call', label: 'Duo Cam', icon3d: DuoCam3D, activeDot: callCam },
+                  { id: 'gestures', label: 'Love', icon3d: Heart3D },
+                  { id: 'extras', label: 'Extras', icon3d: Popcorn3D },
                 ].map((tab) => {
                   const Icon = tab.icon;
+                  const Icon3D = tab.icon3d;
                   const active = mobileTab === tab.id;
                   return (
                     <button
@@ -1659,14 +1690,14 @@ export default function Room() {
                       onClick={() => setMobileTab(tab.id)}
                       className={`flex-1 py-2 px-1 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer relative ${
                         active
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          ? 'btn-tangerine text-[#FAF3E1] shadow-md shadow-[#FF6D1F]/30'
+                          : 'text-[#F5E7C6]/70 hover:text-[#FAF3E1] hover:bg-white/5'
                       }`}
                     >
-                      <div className="relative">
-                        <Icon className="h-4 w-4" />
+                      <div className="relative flex items-center">
+                        {Icon3D ? <Icon3D size={18} /> : <Icon className="h-4 w-4" />}
                         {tab.badge > 0 && (
-                          <span className="absolute -top-1.5 -right-2 bg-rose-600 text-white text-[9px] font-bold px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center">
+                          <span className="absolute -top-1.5 -right-2 bg-[#FF6D1F] text-white text-[9px] font-bold px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center">
                             {tab.badge > 99 ? '99+' : tab.badge}
                           </span>
                         )}
@@ -1747,11 +1778,12 @@ export default function Room() {
               <div className={`shrink-0 flex items-center border-b ${theme.borderColor} p-1.5 gap-1 ${theme.tabBg}`}>
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare },
-                  { id: 'duo', label: 'Duo Cam', icon: Heart },
-                  { id: 'extras', label: 'Extras', icon: Popcorn },
-                  { id: 'gestures', label: 'Love', icon: Sparkles },
+                  { id: 'duo', label: 'Duo Cam', icon3d: Heart3D },
+                  { id: 'extras', label: 'Extras', icon3d: Popcorn3D },
+                  { id: 'gestures', label: 'Love', icon3d: SparkleStar3D },
                 ].map((t) => {
                   const Icon = t.icon;
+                  const Icon3D = t.icon3d;
                   const active = desktopTab === t.id;
                   return (
                     <button
@@ -1760,11 +1792,11 @@ export default function Room() {
                       onClick={() => setDesktopTab(t.id)}
                       className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
                         active
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          ? 'btn-tangerine text-[#FAF3E1] shadow-md shadow-[#FF6D1F]/30'
+                          : 'text-[#F5E7C6]/70 hover:text-[#FAF3E1] hover:bg-white/5'
                       }`}
                     >
-                      <Icon className="h-3.5 w-3.5" />
+                      {Icon3D ? <Icon3D size={16} /> : <Icon className="h-3.5 w-3.5" />}
                       <span>{t.label}</span>
                     </button>
                   );

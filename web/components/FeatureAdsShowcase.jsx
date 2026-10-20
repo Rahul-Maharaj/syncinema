@@ -2,21 +2,23 @@
 
 import { useState } from 'react';
 import {
-  Film,
-  Heart,
-  ShieldCheck,
-  Zap,
-  Users,
-  Sparkles,
   Maximize2,
   Check,
   Play,
-  Volume2,
-  Lock,
   ArrowRight,
   X,
-  Tv,
+  Sparkles,
 } from 'lucide-react';
+import {
+  Popcorn3D,
+  Clapper3D,
+  Heart3D,
+  DuoCam3D,
+  Shield3D,
+  SyncBolt3D,
+  Ticket3D,
+  SparkleStar3D,
+} from '@/components/Icons3D';
 
 export default function FeatureAdsShowcase({ onStartRoom }) {
   const [zoomImage, setZoomImage] = useState(null);
@@ -25,9 +27,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'duo-cam',
       badge: 'Duo Date Night',
-      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
-      icon: Users,
-      iconColor: 'text-rose-400',
+      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      icon3D: DuoCam3D,
       title: 'Duo Video Cam & Real-Time Voice',
       tagline: 'See their reaction to every plot twist live.',
       image: '/ad-duo-cinema.jpg',
@@ -39,9 +40,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'theater-auditorium',
       badge: 'Watch Party Mode',
-      badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
-      icon: Film,
-      iconColor: 'text-purple-400',
+      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      icon3D: Clapper3D,
       title: 'Virtual Cinema & Shared Queue',
       tagline: 'From cozy date nights for 2 up to 30 friends.',
       image: '/ad-theater-experience.jpg',
@@ -53,9 +53,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'drift-sync',
       badge: 'Proprietary 0ms Drift',
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-      icon: Zap,
-      iconColor: 'text-emerald-400',
+      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      icon3D: SyncBolt3D,
       title: 'Sub-Second Precision Clock Sync',
       tagline: 'Never count down "3, 2, 1, Play" ever again.',
       image: '/ad-sync-engine.jpg',
@@ -67,9 +66,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'universal-streaming',
       badge: 'Play Anything',
-      badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
-      icon: Tv,
-      iconColor: 'text-cyan-400',
+      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      icon3D: Ticket3D,
       title: 'Universal Media & Screen Share',
       tagline: 'Paste any video link or play directly from your disk.',
       image: '/ad-universal-media.jpg',
@@ -81,9 +79,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'strict-security',
       badge: 'Hacker-Proof Privacy',
-      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-      icon: ShieldCheck,
-      iconColor: 'text-amber-400',
+      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      icon3D: Shield3D,
       title: 'Zero Logins & Bcrypt Passcodes',
       tagline: 'Strictly confidential. No accounts or trackers.',
       image: '/ad-privacy-vault.jpg',
@@ -95,16 +92,15 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     {
       id: 'soundscapes-ambiance',
       badge: 'Luxury Atmosphere',
-      badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/40',
-      icon: Sparkles,
-      iconColor: 'text-pink-400',
+      badgeColor: 'bg-[#FF6D1F]/20 text-[#FAF3E1] border-[#FF6D1F]/40',
+      icon3D: Popcorn3D,
       title: '4 Cinema Palettes & Soundscapes',
       tagline: 'Cozy vibes: rain on window, crackling fireplace.',
       image: '/ad-luxury-soundscape.jpg',
       imageAlt: 'Luxury Penthouse Night Rain & Fireplace Soundscape Artwork',
       description:
-        'Immerse your room in Soft Pink Romance, Cyberpunk Neon, Velvet Lounge, or Emerald Aurora. Turn on background ambient rain or fireplace sounds for the ultimate date night.',
-      specs: ['4 Curated Color Themes', 'Fireplace & Rain Audio', 'Synchronized Ambiance', 'OLED Zero Glare'],
+        'Immerse your room in Electric Tangerine & Black Hole, Cyberpunk Neon, Velvet Lounge, or Emerald Aurora. Turn on background ambient rain or fireplace sounds for the ultimate date night.',
+      specs: ['Curated Color Themes', 'Fireplace & Rain Audio', 'Synchronized Ambiance', 'OLED Zero Glare'],
     },
   ];
 
@@ -112,44 +108,44 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
     <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 space-y-8">
       {/* Section Header */}
       <div className="text-center space-y-2.5 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-amber-500/20 border border-pink-500/30 text-pink-300 text-[11px] font-extrabold uppercase tracking-widest backdrop-blur-md shadow-md">
-          <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FF6D1F]/15 border border-[#FF6D1F]/30 text-[#FAF3E1] text-[11px] font-extrabold uppercase tracking-widest backdrop-blur-md shadow-md">
+          <SparkleStar3D size={18} />
           <span>Real Room Previews &amp; Platform Features</span>
         </div>
-        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#FAF3E1] tracking-tight">
           How It Looks &amp; How It Works
         </h3>
-        <p className="text-xs sm:text-sm text-slate-300">
+        <p className="text-xs sm:text-sm text-[#F5E7C6]/80 font-medium">
           Compact, distraction-free rooms engineered for couples and friends to watch in true harmony.
         </p>
       </div>
 
-      {/* Compact Animated Ads Grid (Small Boxes, Rich Information, User Room Screenshots) */}
+      {/* Bento Grid with 3D Art Icons (Aceternity UI / 21st.dev style) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
         {FEATURE_ADS.map((card) => {
-          const IconComponent = card.icon;
+          const IconComponent = card.icon3D;
           return (
             <div
               key={card.id}
-              className="group rounded-3xl border border-white/15 bg-black/55 backdrop-blur-xl p-4 sm:p-5 shadow-lg hover:shadow-2xl hover:border-pink-500/50 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-3.5 relative overflow-hidden"
+              className="card-blackhole group rounded-3xl border border-white/10 bg-[#161619]/90 backdrop-blur-xl p-4 sm:p-5 shadow-lg hover:shadow-2xl hover:border-[#FF6D1F]/60 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between space-y-3.5 relative overflow-hidden"
             >
-              {/* Subtle Ambient Hover Glow */}
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl group-hover:bg-pink-500/20 transition duration-500 pointer-events-none" />
+              {/* Electric Tangerine Ambient Hover Glow */}
+              <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#FF6D1F]/10 rounded-full blur-2xl group-hover:bg-[#FF6D1F]/25 transition duration-500 pointer-events-none" />
 
-              {/* Card Top Pill & Icon */}
+              {/* Card Top Pill & 3D Art Icon */}
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${card.badgeColor}`}>
                   {card.badge}
                 </span>
-                <div className="h-8 w-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                  <IconComponent className={`h-4 w-4 ${card.iconColor}`} />
+                <div className="shrink-0 group-hover:scale-110 transition-transform duration-300">
+                  <IconComponent size={34} />
                 </div>
               </div>
 
-              {/* Real User Room Screenshot Preview Box */}
+              {/* Room Screenshot Preview Box */}
               <div
                 onClick={() => setZoomImage({ src: card.image, title: card.title })}
-                className="relative rounded-2xl overflow-hidden border border-white/15 bg-black h-36 sm:h-40 group/img cursor-pointer shadow-inner"
+                className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0C] h-36 sm:h-40 group/img cursor-pointer shadow-inner"
               >
                 <img
                   src={card.image}
@@ -157,24 +153,24 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
                   className="w-full h-full object-cover object-top transition duration-500 group-hover/img:scale-105"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-80 group-hover/img:opacity-60 transition" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D10]/90 via-black/20 to-transparent opacity-85 group-hover/img:opacity-60 transition" />
                 
                 {/* Expand Pill */}
-                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 text-[10px] font-bold text-white opacity-90 group-hover/img:opacity-100 transition shadow-md">
-                  <Maximize2 className="h-3 w-3 text-pink-400" />
+                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/20 text-[10px] font-bold text-[#FAF3E1] opacity-90 group-hover/img:opacity-100 transition shadow-md">
+                  <Maximize2 className="h-3 w-3 text-[#FF6D1F]" />
                   <span>Zoom Screenshot</span>
                 </div>
               </div>
 
               {/* Text Information */}
               <div className="space-y-1.5">
-                <h4 className="font-extrabold text-white text-base leading-snug group-hover:text-pink-200 transition">
+                <h4 className="font-extrabold text-[#FAF3E1] text-base leading-snug group-hover:text-[#FF8E42] transition">
                   {card.title}
                 </h4>
-                <p className="text-[11px] font-semibold text-pink-300/90 leading-tight">
+                <p className="text-[11px] font-semibold text-[#FF6D1F] leading-tight">
                   {card.tagline}
                 </p>
-                <p className="text-xs text-slate-300/90 leading-relaxed pt-1">
+                <p className="text-xs text-[#F5E7C6]/85 leading-relaxed pt-1">
                   {card.description}
                 </p>
               </div>
@@ -182,8 +178,8 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
               {/* Specs Micro Pills */}
               <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-white/10 text-[10px]">
                 {card.specs.map((spec, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-slate-300 truncate">
-                    <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                  <div key={i} className="flex items-center gap-1.5 text-[#F5E7C6]/90 truncate">
+                    <Check className="h-3 w-3 text-[#FF6D1F] shrink-0" />
                     <span className="truncate">{spec}</span>
                   </div>
                 ))}
@@ -193,13 +189,18 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
         })}
       </div>
 
-      {/* Bottom Quick Call To Action Banner */}
-      <div className="rounded-3xl border border-pink-500/35 bg-gradient-to-r from-purple-950/40 via-pink-950/30 to-black/60 p-5 sm:p-6 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-        <div className="space-y-1 text-center sm:text-left">
-          <h4 className="font-black text-white text-base sm:text-lg">
-            Ready for Movie Night?
-          </h4>
-          <p className="text-xs text-slate-300">
+      {/* Bottom Quick Call To Action Banner (Aceternity UI Border Beam Style) */}
+      <div className="rounded-3xl border border-[#FF6D1F]/40 bg-gradient-to-r from-[#222222]/90 via-[#1A1A1D]/90 to-[#101012]/95 p-5 sm:p-6 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-48 h-48 bg-[#FF6D1F]/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-1 text-center sm:text-left relative z-10">
+          <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <SparkleStar3D size={20} />
+            <h4 className="font-black text-[#FAF3E1] text-base sm:text-lg">
+              Ready for Movie Night?
+            </h4>
+          </div>
+          <p className="text-xs text-[#F5E7C6]/80 font-medium">
             Create your password-protected room in 5 seconds and invite your partner.
           </p>
         </div>
@@ -213,9 +214,9 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          className="shrink-0 py-3 px-6 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:brightness-110 text-white font-extrabold text-xs shadow-lg shadow-pink-600/30 transition active:scale-95 flex items-center gap-2 cursor-pointer"
+          className="btn-tangerine shrink-0 py-3 px-6 rounded-2xl text-[#FAF3E1] font-extrabold text-xs shadow-xl transition active:scale-95 flex items-center gap-2 cursor-pointer relative z-10"
         >
-          <Play className="h-4 w-4 fill-white" />
+          <Play className="h-4 w-4 fill-[#FAF3E1]" />
           <span>Launch Your Room Now</span>
           <ArrowRight className="h-4 w-4" />
         </button>
@@ -229,17 +230,17 @@ export default function FeatureAdsShowcase({ onStartRoom }) {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-4xl rounded-3xl border border-pink-500/40 bg-[#0c0716] p-4 sm:p-5 shadow-2xl space-y-3 relative"
+            className="w-full max-w-4xl rounded-3xl border border-[#FF6D1F]/40 bg-[#161619] p-4 sm:p-5 shadow-2xl space-y-3 relative"
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-              <h4 className="font-bold text-white text-sm sm:text-base flex items-center gap-2">
-                <Film className="h-4 w-4 text-pink-400" />
+              <h4 className="font-bold text-[#FAF3E1] text-sm sm:text-base flex items-center gap-2">
+                <Clapper3D size={22} />
                 <span>{zoomImage.title} • Live Room Screenshot</span>
               </h4>
               <button
                 type="button"
                 onClick={() => setZoomImage(null)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white transition"
+                className="p-1.5 rounded-xl text-[#F5E7C6]/60 hover:text-[#FAF3E1] hover:bg-white/10 transition"
               >
                 <X className="h-5 w-5" />
               </button>
