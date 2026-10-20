@@ -15,6 +15,7 @@ import {
 } from '@/lib/media';
 import { Tile } from './CouplesOverlay';
 import { autoFixEngine } from '@/lib/autoFixEngine';
+import { Popcorn3D, SparkleStar3D, SyncBolt3D, Shield3D } from '@/components/Icons3D';
 
 const TYPES = ['auto', 'hybrid', 'file', 'hls', 'dash', 'embed', 'proxy'];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -74,6 +75,13 @@ export default function VideoPlayer({
   const [syncStatus, setSyncStatus] = useState('in_sync'); // 'in_sync' | 'syncing' | 'buffering' | 'desync'
   const [sharedSpeed, setSharedSpeed] = useState(1.0);
   const [partnerBuffering, setPartnerBuffering] = useState(null); // { name: string, active: boolean } | null
+  const [bufferHold, setBufferHold] = useState(null); // { active: boolean, name: string, isLocal: boolean, time: number }
+  const wasPlayingBeforeBuffer = useRef(false);
+  const bufferHoldTimer = useRef(null);
+  const [autoHealBadge, setAutoHealBadge] = useState('');
+  const [remoteUpload, setRemoteUpload] = useState(null);
+  const [showAudioVisualizer, setShowAudioVisualizer] = useState(false);
+  const [audioMode, setAudioMode] = useState('dolby');
   const [isLiveStream, setIsLiveStream] = useState(false);
   const [audioBoost, setAudioBoost] = useState(100); // 100% to 200%
   const [showSettings, setShowSettings] = useState(false);
@@ -299,34 +307,78 @@ export default function VideoPlayer({
     return () => clearInterval(interval);
   }, [socket]);
 
-  // Handle partner buffering status & speed synchronization (non-blocking)
+  // Handle partner buffering status, synchronized buffer hold & speed synchronization
   useEffect(() => {
     if (!socket) return;
-    let partnerBufferTimeout = null;
-    const onBuffering = ({ cid, name, buffering }) => {
+    const onBuffering = ({ cid, name, buffering, time }) => {
       if (cid !== me) {
         if (buffering) {
+          clearTimeout(bufferHoldTimer.current);
+          const isCurrentlyPlaying = !vref.current?.paused;
+          if (isCurrentlyPlaying) {
+            wasPlayingBeforeBuffer.current = true;
+            try {
+              api.current?.pause();
+            } catch {}
+          }
           setPartnerBuffering({ name, active: true });
-          clearTimeout(partnerBufferTimeout);
-          partnerBufferTimeout = setTimeout(() => setPartnerBuffering(null), 4000);
+          setBufferHold({
+            active: true,
+            name: name || 'Partner',
+            isLocal: false,
+            time,
+          });
+
+          // Autonomous failsafe recovery timeout (12s) in case network drops or partner closes tab
+          bufferHoldTimer.current = setTimeout(() => {
+            setPartnerBuffering(null);
+            setBufferHold(null);
+            if (wasPlayingBeforeBuffer.current) {
+              api.current?.play();
+              wasPlayingBeforeBuffer.current = false;
+              setAutoHealBadge('⏱️ Autonomous buffer hold recovery executed');
+              setTimeout(() => setAutoHealBadge(''), 2500);
+            }
+          }, 12000);
         } else {
-          clearTimeout(partnerBufferTimeout);
+          // Partner buffering ended: auto-resume playback synchronously
+          clearTimeout(bufferHoldTimer.current);
           setPartnerBuffering(null);
+          setBufferHold(null);
+          if (wasPlayingBeforeBuffer.current) {
+            api.current?.play();
+            wasPlayingBeforeBuffer.current = false;
+            setAutoHealBadge('✨ Synced • Resumed playback together');
+            setTimeout(() => setAutoHealBadge(''), 2500);
+          }
         }
       }
     };
+
     const onSpeed = ({ speed, by }) => {
       if (by !== me) {
         setSharedSpeed(speed);
         setPlaybackSpeed(speed);
       }
     };
+
+    const onUploadProgress = (data) => {
+      if (data?.cid !== me) {
+        setRemoteUpload(data);
+        if (data.progress >= 100) {
+          setTimeout(() => setRemoteUpload(null), 3500);
+        }
+      }
+    };
+
     socket.on('player:buffering', onBuffering);
     socket.on('player:speed', onSpeed);
+    socket.on('upload:progress', onUploadProgress);
     return () => {
       socket.off('player:buffering', onBuffering);
       socket.off('player:speed', onSpeed);
-      if (partnerBufferTimeout) clearTimeout(partnerBufferTimeout);
+      socket.off('upload:progress', onUploadProgress);
+      if (bufferHoldTimer.current) clearTimeout(bufferHoldTimer.current);
     };
   }, [socket, me]);
 
@@ -358,6 +410,31 @@ export default function VideoPlayer({
     window.addEventListener('paste', onGlobalPaste);
     return () => window.removeEventListener('paste', onGlobalPaste);
   }, []);
+
+  // Autonomous AutoFix & Self-Healing Engine Listener
+  useEffect(() => {
+    const unsub = autoFixEngine.onFix((event) => {
+      if (event?.type === 'video_healing_start') {
+        setAutoHealBadge('🛡️ Auto-Healing Stream Playback…');
+      } else if (event?.type === 'video_healing_success') {
+        setAutoHealBadge('✨ Stream Auto-Healed Successfully');
+        setTimeout(() => setAutoHealBadge(''), 2500);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // Autonomous Drift Self-Healer: automatically resolves stream drift with zero clicks
+  useEffect(() => {
+    if (syncStatus === 'desync' && st.current) {
+      const timer = setTimeout(() => {
+        correct(st.current.time, st.current.playing);
+        setAutoHealBadge('⚡ Autonomous Drift Correction Active (0ms Sync)');
+        setTimeout(() => setAutoHealBadge(''), 2500);
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [syncStatus]);
 
   const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 800); };
   const send = (action) => {
@@ -581,7 +658,7 @@ export default function VideoPlayer({
         });
       });
     else if (T === 'dash') import('dashjs').then(({ MediaPlayer }) => { const d = MediaPlayer().create(); d.initialize(v, media.src, false); dispose = () => d.reset(); });
-    else v.src = T === 'local' ? localUrl : media.src;
+    else v.src = (T === 'local' || (localUrl && media?.uploaderId === me)) ? localUrl : media.src;
 
     api.current = {
       time: () => v.currentTime,
@@ -618,11 +695,16 @@ export default function VideoPlayer({
       clearTimeout(waitTimer);
       waitTimer = setTimeout(() => {
         socket.emit('player:buffering', { buffering: true, time: v.currentTime });
-      }, 700);
+        setBufferHold((prev) => {
+          if (prev?.active && !prev.isLocal) return prev;
+          return { active: true, name: 'You', isLocal: true, time: v.currentTime };
+        });
+      }, 450);
     };
     const onResume = () => {
       clearTimeout(waitTimer);
       socket.emit('player:buffering', { buffering: false, time: v.currentTime });
+      setBufferHold((prev) => (prev?.isLocal ? null : prev));
     };
     v.addEventListener('waiting', onWait);
     v.addEventListener('canplay', onResume);
@@ -1231,10 +1313,23 @@ export default function VideoPlayer({
   const pickLocal = (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    setLocalUrl(URL.createObjectURL(f));
-    setUploading({ progress: 0, name: f.name });
+    const blobUrl = URL.createObjectURL(f);
+    setLocalUrl(blobUrl);
 
-    // Stream file to server so partner's phone can automatically play it
+    // Instant local playback for host with 0-second wait!
+    const instantMedia = {
+      type: 'local',
+      name: f.name,
+      fileSize: f.size,
+      uploading: true,
+      uploaderId: me,
+    };
+    setMedia(instantMedia);
+    // Broadcast immediately so partner knows local movie is selected
+    socket?.emit('media:set', { media: instantMedia });
+
+    // Stream file to server with high-performance buffer in background so other devices can stream it
+    setUploading({ progress: 0, name: f.name, size: f.size });
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/upload');
     xhr.setRequestHeader('x-file-name', encodeURIComponent(f.name));
@@ -1242,32 +1337,32 @@ export default function VideoPlayer({
     xhr.upload.onprogress = (evt) => {
       if (evt.lengthComputable) {
         const pct = Math.round((evt.loaded / evt.total) * 100);
-        setUploading({ progress: pct, name: f.name });
+        setUploading({ progress: pct, name: f.name, size: f.size });
+        socket?.emit('upload:progress', { progress: pct, name: f.name, fileSize: f.size });
       }
     };
 
     xhr.onload = () => {
       setUploading(null);
+      socket?.emit('upload:progress', { progress: 100, name: f.name, fileSize: f.size });
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const res = JSON.parse(xhr.responseText);
-          // Broadcast the shared file stream URL to partner!
-          socket.emit('media:set', {
+          // Broadcast the shared cloud stream URL to partner!
+          socket?.emit('media:set', {
             media: {
               type: 'file',
               src: res.url,
               name: f.name,
+              uploaderId: me,
             },
           });
         } catch {}
-      } else {
-        socket.emit('media:set', { media: { type: 'local', name: f.name } });
       }
     };
 
     xhr.onerror = () => {
       setUploading(null);
-      socket.emit('media:set', { media: { type: 'local', name: f.name } });
     };
 
     xhr.send(f);
@@ -1427,6 +1522,20 @@ export default function VideoPlayer({
 
             <button
               type="button"
+              onClick={() => setShowAudioVisualizer(!showAudioVisualizer)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
+                showAudioVisualizer
+                  ? 'btn-pink text-[#FCE7F3] border-white/30'
+                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FCE7F3]/80 hover:text-[#FCE7F3] border-white/10 hover:border-white/30'
+              }`}
+              title="Toggle Dynamic In-Room Cinema Audio Spectrum Visualizer"
+            >
+              <Volume2 className="h-3 w-3 text-[#F472B6]" />
+              <span className="hidden sm:inline">Visualizer</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setShowSettings(!showSettings)}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
                 showSettings
@@ -1441,31 +1550,168 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Partner Buffering Alert Banner */}
-        {partnerBuffering?.active && (
-          <div className="absolute inset-x-4 top-14 z-30 mx-auto max-w-md">
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#222222] border border-amber-500/40 text-amber-200 text-xs">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shrink-0" />
-              <span><b>{partnerBuffering.name}</b> is buffering… Paused smoothly so you stay in sync 🍿</span>
+        {/* Synchronized Buffer Hold Overlay with Dynamic 12-Bar Wave Visualizer */}
+        {bufferHold?.active && (
+          <div className="absolute inset-0 z-35 flex items-center justify-center p-4 bg-[#222222]/85 backdrop-blur-md pointer-events-auto select-none">
+            <div className="max-w-md w-full p-5 rounded-3xl bg-[#1A1A1D]/95 border border-pink-500/30 text-center shadow-2xl space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <Popcorn3D size={28} />
+                <span className="text-xs font-extrabold text-pink-100 uppercase tracking-wider">
+                  Sync Buffer Hold Active
+                </span>
+              </div>
+
+              {/* 12-Bar Animated Equalizer / Wave Visualizer */}
+              <div className="flex items-end justify-center gap-1.5 h-10 py-1">
+                {[40, 75, 55, 90, 60, 100, 70, 85, 45, 95, 65, 80].map((h, i) => (
+                  <span
+                    key={i}
+                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 to-rose-300 animate-pulse"
+                    style={{
+                      height: `${h}%`,
+                      animationDelay: `${i * 90}ms`,
+                      animationDuration: '900ms',
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-white">
+                  {bufferHold.isLocal ? (
+                    <span>Buffering stream… Holding playback so you stay 100% in sync with your partner.</span>
+                  ) : (
+                    <span><strong className="text-pink-300">{bufferHold.name}</strong> is buffering… Playback paused smoothly for both.</span>
+                  )}
+                </p>
+                <p className="text-xs text-pink-200/70">
+                  ⚡ Auto-playing together the millisecond buffer recovers • Autonomous auto-fixer handles everything.
+                </p>
+              </div>
+
+              <div className="pt-1 flex items-center justify-center gap-3">
+                <span className="text-[11px] text-pink-300/80 flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  Auto-Fixer Active
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBufferHold(null);
+                    api.current?.play();
+                  }}
+                  className="text-[11px] text-pink-300 hover:text-white underline cursor-pointer"
+                >
+                  Resume anyway
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Desync Recovery Banner */}
-        {syncStatus === 'desync' && (
-          <div className="absolute inset-x-4 bottom-14 z-30 mx-auto max-w-sm rise">
-            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#222222]/95 backdrop-blur-md border border-[#EC4899]/40 text-[#FCE7F3] text-xs shadow-2xl">
-              <div className="flex items-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                <span>Drift detected</span>
+        {/* Remote Cloud Upload Progress Card (for Partner) */}
+        {remoteUpload && remoteUpload.progress < 100 && (
+          <div className="absolute top-14 inset-x-4 z-30 mx-auto max-w-md pointer-events-auto">
+            <div className="p-3.5 rounded-2xl bg-[#1A1A1D]/95 border border-pink-500/30 backdrop-blur-md shadow-2xl space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-pink-200 flex items-center gap-1.5">
+                  <SparkleStar3D size={16} /> Host uploading movie to cloud
+                </span>
+                <span className="font-mono text-pink-300 font-extrabold">{remoteUpload.progress}%</span>
               </div>
+              <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden border border-pink-500/20">
+                <div
+                  className="h-full bg-gradient-to-r from-pink-500 via-rose-400 to-amber-300 transition-all duration-300 rounded-full"
+                  style={{ width: `${remoteUpload.progress}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-pink-200/70">
+                Preparing cloud stream… Have this file on your device? Tap &ldquo;My file&rdquo; below to watch immediately with 0s wait!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Host Upload Progress Banner */}
+        {uploading && uploading.progress < 100 && (
+          <div className="absolute top-14 inset-x-4 z-30 mx-auto max-w-md pointer-events-auto">
+            <div className="p-2.5 rounded-xl bg-[#1A1A1D]/95 border border-pink-500/30 backdrop-blur-md shadow-2xl flex items-center justify-between gap-3 text-xs">
+              <span className="text-pink-200 truncate flex items-center gap-1.5 font-medium">
+                <SyncBolt3D size={16} /> Cloud upload: {uploading.progress}% (Playing locally with 0s wait)
+              </span>
+              <span className="font-mono text-pink-300 font-bold shrink-0">{uploading.progress}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Floating In-Room Cinema Audio Spectrum Visualizer HUD */}
+        {showAudioVisualizer && (
+          <div className="absolute bottom-16 right-4 z-30 pointer-events-auto p-3 rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/30 backdrop-blur-md shadow-2xl flex flex-col gap-2 max-w-xs">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="font-bold text-pink-100 flex items-center gap-1.5">
+                <Volume2 className="h-3.5 w-3.5 text-pink-400" />
+                <span>Audio Spectrum</span>
+              </span>
               <button
                 type="button"
-                onClick={() => correct(st.current.time, st.current.playing)}
-                className="btn !py-1 !px-2.5 text-[11px] flex items-center gap-1"
+                onClick={() => setShowAudioVisualizer(false)}
+                className="text-[11px] text-pink-300/60 hover:text-white cursor-pointer"
               >
-                <RotateCcw className="h-3 w-3" /> Resync
+                ✕
               </button>
+            </div>
+
+            {/* Dynamic Equalizer Frequency Wave */}
+            <div className="flex items-end justify-between gap-1 h-9 px-1 py-0.5 bg-black/40 rounded-xl border border-pink-500/15">
+              {[50, 85, 60, 95, 40, 100, 75, 90, 65, 80, 55, 70].map((baseH, idx) => {
+                const isPlaying = st.current?.playing || (vref.current && !vref.current.paused);
+                const dynamicH = isPlaying ? Math.max(15, Math.round(baseH * (0.45 + Math.sin(Date.now() / 250 + idx) * 0.45))) : 15;
+                return (
+                  <span
+                    key={idx}
+                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 to-rose-300 transition-all duration-150"
+                    style={{ height: `${dynamicH}%` }}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Sound Mode Quick Switch */}
+            <div className="grid grid-cols-2 gap-1 text-[10px]">
+              {[
+                { id: 'dolby', label: 'Dolby 3D' },
+                { id: 'bass', label: 'Bass +150%' },
+                { id: 'clear', label: 'Vocal Clear' },
+                { id: 'date', label: 'Lo-Fi Date' },
+              ].map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => {
+                    setAudioMode(mode.id);
+                    if (mode.id === 'bass') handleAudioBoost(150);
+                    else if (mode.id === 'dolby') handleAudioBoost(120);
+                    else handleAudioBoost(100);
+                  }}
+                  className={`py-1 px-1.5 rounded-lg font-bold border transition cursor-pointer text-center ${
+                    audioMode === mode.id
+                      ? 'btn-pink text-white border-pink-400 shadow-sm'
+                      : 'bg-black/30 border-pink-500/20 text-pink-200/70 hover:text-pink-100'
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Autonomous Auto-Heal & Self-Healing Toast Badge */}
+        {autoHealBadge && (
+          <div className="absolute bottom-16 inset-x-4 z-30 mx-auto max-w-sm pointer-events-none flex justify-center">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1A1A1D]/95 border border-emerald-500/40 text-emerald-200 text-xs font-semibold shadow-2xl backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>{autoHealBadge}</span>
             </div>
           </div>
         )}

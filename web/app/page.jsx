@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
+import HolographicStreamPortal from '@/components/HolographicStreamPortal';
 import HowItWorksGuide from '@/components/HowItWorksGuide';
 import CinemaPlatformMetrics from '@/components/CinemaPlatformMetrics';
 import FeatureComparison from '@/components/FeatureComparison';
@@ -1017,6 +1018,14 @@ export default function SynCinemaPlatform() {
 
       {/* COMPACT BENTO ADS SHOWCASE WITH REAL 3D ICONS */}
       <FeatureAdsShowcase
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
+
+      {/* DYNAMIC HOLOGRAPHIC STREAM PORTAL & AUDIO SPECTRUM VISUALIZER */}
+      <HolographicStreamPortal
         onStartRoom={() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setActiveTab('create');

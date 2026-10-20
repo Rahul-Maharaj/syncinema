@@ -670,7 +670,8 @@ app.post('/api/upload', (req, res) => {
   const fileId = `${crypto.randomUUID()}${cleanExt}`;
   const filePath = path.join(UPLOADS_DIR, fileId);
 
-  const fileStream = fs.createWriteStream(filePath);
+  // High-performance write stream with 4MB chunk buffer for ultra-fast disk writes
+  const fileStream = fs.createWriteStream(filePath, { highWaterMark: 1024 * 1024 * 4 });
   req.pipe(fileStream);
 
   fileStream.on('finish', () => {
@@ -714,7 +715,7 @@ app.get('/api/uploads/:fileId', (req, res) => {
     const start = parseInt(parts[0], 10);
     const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
     const chunksize = end - start + 1;
-    const file = fs.createReadStream(filePath, { start, end });
+    const file = fs.createReadStream(filePath, { start, end, highWaterMark: 1024 * 1024 * 2 });
     res.writeHead(206, {
       'Content-Range': `bytes ${start}-${end}/${fileSize}`,
       'Content-Length': chunksize,
@@ -722,7 +723,7 @@ app.get('/api/uploads/:fileId', (req, res) => {
     file.pipe(res);
   } else {
     res.writeHead(200, { 'Content-Length': fileSize });
-    fs.createReadStream(filePath).pipe(res);
+    fs.createReadStream(filePath, { highWaterMark: 1024 * 1024 * 2 }).pipe(res);
   }
 });
 
@@ -2683,6 +2684,17 @@ io.on('connection', (socket) => {
   socket.on('player:buffering', ({ buffering, time } = {}) => {
     if (!joined()) return;
     socket.to(rid).emit('player:buffering', { cid: user.cid, name: user.name, buffering: !!buffering, time: num(time) });
+  });
+
+  // Live Cloud Upload Progress Broadcast for Shared Local Files
+  socket.on('upload:progress', ({ progress, name, fileSize } = {}) => {
+    if (!joined()) return;
+    socket.to(rid).emit('upload:progress', {
+      cid: user.cid,
+      name: String(name || '').slice(0, 200),
+      progress: Math.min(100, Math.max(0, Number(progress) || 0)),
+      fileSize: Number(fileSize) || 0,
+    });
   });
 
   // Host Handover
