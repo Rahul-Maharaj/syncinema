@@ -10,7 +10,7 @@ import React from 'react';
 // 1. 3D Popcorn Bucket (Cinema & Extras)
 export function Popcorn3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_16px_rgba(255,109,31,0.35)]">
         <defs>
           <linearGradient id="popTub" x1="20" y1="35" x2="80" y2="92" gradientUnits="userSpaceOnUse">
@@ -57,14 +57,14 @@ export function Popcorn3D({ className = 'w-10 h-10', size = 40 }) {
         <circle cx="50" cy="66" r="10" fill="#222222" stroke="#FAF3E1" strokeWidth="1.2" />
         <path d="M47 61 L55 66 L47 71 Z" fill="#FF6D1F" />
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 2. 3D Clapperboard & Film Reel (Cinema & Movies)
 export function Clapper3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_16px_rgba(255,109,31,0.35)]">
         <defs>
           <linearGradient id="clapBody" x1="15" y1="35" x2="85" y2="88" gradientUnits="userSpaceOnUse">
@@ -100,14 +100,14 @@ export function Clapper3D({ className = 'w-10 h-10', size = 40 }) {
         <circle cx="50" cy="68" r="10" fill="rgba(255, 109, 31, 0.2)" />
         <path d="M47 63 L55 68 L47 73 Z" fill="#FF6D1F" />
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 3. 3D Heart (Duo Date Night & Love)
 export function Heart3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_20px_rgba(255,109,31,0.5)]">
         <defs>
           <radialGradient id="heartGlow" cx="35%" cy="30%" r="70%">
@@ -141,14 +141,14 @@ export function Heart3D({ className = 'w-10 h-10', size = 40 }) {
           opacity="0.3"
         />
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 4. 3D Duo Camera (WebRTC Live Call)
 export function DuoCam3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_16px_rgba(255,109,31,0.35)]">
         <defs>
           <linearGradient id="camBody" x1="12" y1="28" x2="68" y2="82" gradientUnits="userSpaceOnUse">
@@ -188,14 +188,14 @@ export function DuoCam3D({ className = 'w-10 h-10', size = 40 }) {
           <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
         </circle>
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 5. 3D Cryptographic Shield (Vault & Security)
 export function Shield3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_18px_rgba(255,109,31,0.4)]">
         <defs>
           <linearGradient id="shieldGrad" x1="20" y1="15" x2="80" y2="90" gradientUnits="userSpaceOnUse">
@@ -231,14 +231,14 @@ export function Shield3D({ className = 'w-10 h-10', size = 40 }) {
         <path d="M45 47 V42 C45 39 47 37 50 37 C53 37 55 39 55 42 V47" stroke="#FAF3E1" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         <circle cx="50" cy="53" r="1.5" fill="#FAF3E1" />
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 6. 3D Sub-second Synchronizer Bolt
 export function SyncBolt3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_20px_rgba(255,109,31,0.55)]">
         <defs>
           <linearGradient id="boltGrad" x1="30" y1="10" x2="70" y2="90" gradientUnits="userSpaceOnUse">
@@ -260,14 +260,14 @@ export function SyncBolt3D({ className = 'w-10 h-10', size = 40 }) {
         {/* Specular highlights along edge */}
         <path d="M54 14 L30 50 L47 50 L40 82" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.6" strokeLinecap="round" />
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 7. 3D VIP Cinema Ticket
 export function Ticket3D({ className = 'w-10 h-10', size = 40 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_8px_16px_rgba(255,109,31,0.35)]">
         <defs>
           <linearGradient id="ticketGrad" x1="15" y1="25" x2="85" y2="75" gradientUnits="userSpaceOnUse">
@@ -297,14 +297,14 @@ export function Ticket3D({ className = 'w-10 h-10', size = 40 }) {
           <polygon points="72,42 74,47 79,47 75,50 77,55 72,52 67,55 69,50 65,47 70,47" fill="#FAF3E1" />
         </g>
       </svg>
-    </div>
+    </span>
   );
 }
 
 // 8. 3D Sparkle Star (Luxury and Polish)
 export function SparkleStar3D({ className = 'w-6 h-6', size = 24 }) {
   return (
-    <div className={`icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
+    <span className={`inline-flex icon-3d-wrap shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_0_10px_rgba(255,109,31,0.6)]">
         <path
           d="M20 2 C20 12 28 20 38 20 C28 20 20 28 20 38 C20 28 12 20 2 20 C12 20 20 12 20 2 Z"
@@ -318,6 +318,6 @@ export function SparkleStar3D({ className = 'w-6 h-6', size = 24 }) {
           </linearGradient>
         </defs>
       </svg>
-    </div>
+    </span>
   );
 }

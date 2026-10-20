@@ -450,6 +450,9 @@ export default function SynCinemaPlatform() {
                         placeholder="Enter room password (min 4 characters)"
                         minLength={4}
                         maxLength={64}
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-form-type="other"
                         required
                         className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-sm text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono"
                       />
@@ -462,10 +465,10 @@ export default function SynCinemaPlatform() {
                         {showRoomPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    <p className="text-[11px] text-pink-300/80 flex items-center gap-1.5">
+                    <div className="text-[11px] text-pink-300/80 flex items-center gap-1.5">
                       <Shield3D size={14} />
                       <span>No one can enter this room without this password.</span>
-                    </p>
+                    </div>
                   </div>
 
                   {/* Room Capacity */}
@@ -544,6 +547,9 @@ export default function SynCinemaPlatform() {
                         placeholder="Enter password set by the host"
                         minLength={4}
                         maxLength={64}
+                        autoComplete="current-password"
+                        data-lpignore="true"
+                        data-form-type="other"
                         required
                         className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-sm text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono"
                       />
@@ -555,10 +561,10 @@ export default function SynCinemaPlatform() {
                         {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    <p className="text-[11px] text-pink-200/80 flex items-center gap-1.5">
+                    <div className="text-[11px] text-pink-200/80 flex items-center gap-1.5">
                       <Shield3D size={14} />
                       <span>Password is required. No one can enter without it.</span>
-                    </p>
+                    </div>
                   </div>
 
                   {joinError && (

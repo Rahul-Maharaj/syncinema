@@ -1,7 +1,6 @@
 // SyncCinema Production PWA Service Worker (Mobile & Tablet Fast Launcher)
-const CACHE_NAME = 'syncinema-v2';
+const CACHE_NAME = 'syncinema-v3';
 const PRECACHE_ASSETS = [
-  '/',
   '/favicon.ico',
   '/logo.png',
   '/icon-192.png',
@@ -38,10 +37,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first for HTML pages, stale-while-revalidate for static assets
+  // Always network-first for navigation HTML to prevent Next.js hydration mismatches
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request) || caches.match('/'))
+      fetch(event.request).catch(() => caches.match('/favicon.ico'))
     );
     return;
   }

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Download, Smartphone, Check, X, Share2, PlusSquare, Sparkles, ExternalLink } from 'lucide-react';
 
 export default function InstallPrompt({ className = '', variant = 'button' }) {
+  const [mounted, setMounted] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -10,6 +11,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
   const [dismissedBanner, setDismissedBanner] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Check if already in standalone (installed) mode
     if (
       typeof window !== 'undefined' &&
@@ -50,7 +52,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
     };
   }, []);
 
-  if (installed) return null;
+  if (!mounted || installed) return null;
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {

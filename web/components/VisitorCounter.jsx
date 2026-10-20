@@ -172,7 +172,7 @@ export default function VisitorCounter() {
           </div>
           <div className="flex items-center gap-2 font-semibold text-pink-100">
             <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-pulse" />
-            <span>{stats.activeRooms} Private Theaters Active</span>
+            <span suppressHydrationWarning>{stats.activeRooms} Private Theaters Active</span>
           </div>
         </div>
       </div>
