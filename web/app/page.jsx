@@ -730,7 +730,7 @@ export default function SynCinemaPlatform() {
 
       {/* Main Hero: SIDE-BY-SIDE (Left: Text & High-Security Highlights, Right: Create Room Box) */}
       <main className="relative z-10 flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-7">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-start">
           
           {/* LEFT SIDE: Text, 3D Art Badges, Live Sync Telemetry & Informational Deck */}
           <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-1 space-y-3.5 sm:space-y-4 text-center lg:text-left">
@@ -1062,31 +1062,31 @@ export default function SynCinemaPlatform() {
 
           {/* RIGHT SIDE: HIGHLIGHTED VIRTUAL CINEMA CONSOLE */}
           <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-xl mx-auto lg:mx-0 relative">
-            {/* VIBRANT EYE-CATCHING CALLOUT BANNER: CREATE ROOM BOX IS HERE */}
-            <div className="flex items-center justify-between mb-2.5 px-1">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500/25 via-pink-500/40 to-fuchsia-500/25 border-2 border-pink-400/80 shadow-[0_0_25px_rgba(236,72,153,0.5)] anim-glow-pulse">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-80" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500" />
+            {/* VIBRANT HIGH-TECH EYE-CATCHING CALLOUT BANNER */}
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-pink-600/35 via-pink-500/50 to-fuchsia-600/35 border-2 border-pink-300 shadow-[0_0_30px_rgba(236,72,153,0.65)] anim-glow-pulse">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-300 opacity-90" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-pink-400 shadow-[0_0_10px_#f472b6]" />
                 </span>
-                <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-pink-100 flex items-center gap-1.5">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white flex items-center gap-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                   <span>🍿</span>
                   <span>CREATE ROOM BOX IS HERE</span>
-                  <span className="hidden sm:inline text-pink-300 text-[11px] font-bold">• 1-TAP SETUP</span>
+                  <span className="text-pink-200 text-[11px] font-bold">• 1-TAP SETUP</span>
                 </span>
               </div>
-              <div className="hidden sm:flex items-center gap-1 text-xs font-black text-pink-300 animate-bounce">
-                <span>👇</span>
-                <span className="text-pink-200 font-extrabold">Start Cinema Here</span>
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-black text-pink-200 animate-bounce bg-pink-500/25 px-3 py-1 rounded-full border border-pink-400/50 shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+                <span className="text-sm">👇</span>
+                <span className="text-white font-extrabold">Start Cinema Here</span>
               </div>
             </div>
 
-            {/* Glowing Accent Ambient Halo behind box */}
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-pink-600/30 via-fuchsia-600/30 to-pink-500/30 rounded-3xl blur-xl opacity-75 pointer-events-none -z-10" />
+            {/* Glowing Ambient Neon Halo behind box */}
+            <div className="absolute -inset-2 bg-gradient-to-r from-pink-600/40 via-fuchsia-600/40 to-pink-500/40 rounded-[32px] blur-2xl opacity-90 pointer-events-none -z-10 animate-pulse" />
 
-            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/70 bg-[#222222] p-4 sm:p-5 lg:p-6 shadow-[0_0_50px_rgba(236,72,153,0.35),0_20px_60px_rgba(0,0,0,0.85)] space-y-3 sm:space-y-3.5 text-left relative ring-1 ring-pink-400/50">
-              {/* Subtle top specular accent line */}
-              <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-pink-400/60 to-transparent pointer-events-none" />
+            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/80 bg-gradient-to-b from-[#141419] via-[#0f0f14] to-[#09090c] p-4 sm:p-5 lg:p-6 shadow-[0_0_80px_rgba(236,72,153,0.45),0_30px_90px_rgba(0,0,0,0.95)] space-y-3 sm:space-y-3.5 text-left relative ring-2 ring-pink-400/60 backdrop-blur-2xl">
+              {/* Ultra-bright top specular accent light */}
+              <div className="absolute top-0 inset-x-6 h-[2px] bg-gradient-to-r from-transparent via-pink-300 via-fuchsia-300 to-transparent shadow-[0_0_15px_#f472b6] pointer-events-none" />
 
               {/* CONSOLE HEADER & HIGH-LEVEL TELEMETRY */}
               <div className="flex items-center justify-between border-b border-pink-500/20 pb-2.5">
@@ -1108,20 +1108,20 @@ export default function SynCinemaPlatform() {
                     </p>
                   </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#1A1A1D] border border-pink-500/20 text-[11px] font-mono text-pink-300/90 font-bold">
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#1c1c28] border border-pink-400/40 text-[11px] font-mono text-pink-200 font-extrabold shadow-md">
                   <Lock className="h-3 w-3 text-pink-400" />
                   <span>AES-GCM-256</span>
                 </div>
               </div>
 
               {/* Segmented Pill Selector (Create Room / Join Room) */}
-              <div className="grid grid-cols-2 rounded-xl bg-[#1A1A1D] p-1.5 border border-pink-500/25 gap-1.5">
+              <div className="grid grid-cols-2 rounded-2xl bg-[#121218] p-1.5 border-2 border-pink-500/40 gap-1.5 shadow-inner">
                 <button
                   type="button"
                   onClick={() => setActiveTab('create')}
                   className={`py-2 px-3 rounded-lg font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                     activeTab === 'create'
-                      ? 'btn-pink text-white shadow-lg shadow-pink-500/40'
+                      ? 'btn-pink text-white shadow-[0_0_25px_rgba(236,72,153,0.7)] ring-2 ring-pink-300/80 scale-[1.01]'
                       : 'text-pink-300/70 hover:text-pink-100 hover:bg-white/5'
                   }`}
                 >
@@ -1166,7 +1166,7 @@ export default function SynCinemaPlatform() {
                             setRoomName(preset.name + '-' + Math.floor(100 + Math.random() * 900));
                             setMaxSeats(preset.seats);
                           }}
-                          className="py-1.5 px-2 rounded-xl bg-[#1A1A1D] border border-pink-500/20 hover:border-pink-400 hover:bg-pink-500/10 text-pink-200 text-xs font-bold transition flex flex-col items-center justify-center cursor-pointer shadow-sm text-center"
+                          className="py-2 px-2 rounded-xl bg-[#1a1a24] border border-pink-500/30 hover:border-pink-300 hover:bg-pink-500/20 text-pink-200 text-xs font-bold transition flex flex-col items-center justify-center cursor-pointer shadow-md text-center hover:scale-102"
                         >
                           <span className="text-pink-100 font-extrabold text-[11px] leading-tight">{preset.label}</span>
                           <span className="text-[9px] text-pink-300/60 font-medium">{preset.desc}</span>
@@ -1194,7 +1194,7 @@ export default function SynCinemaPlatform() {
                       value={roomName}
                       onChange={(e) => setRoomName(sanitizeInput(e.target.value))}
                       placeholder="e.g. Midnight-Cinema or Cosy-Date-Night"
-                      className="w-full px-3.5 py-2 sm:py-2.5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 text-sm sm:text-base text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans font-semibold"
+                      className="w-full px-3.5 py-2.5 sm:py-3 rounded-xl bg-[#13131a] border-2 border-pink-500/35 text-sm sm:text-base text-white placeholder-pink-300/40 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-500/30 transition shadow-inner font-sans font-semibold"
                     />
                   </div>
 
@@ -1238,7 +1238,7 @@ export default function SynCinemaPlatform() {
                         data-lpignore="true"
                         data-form-type="other"
                         required
-                        className="w-full px-3.5 py-2 sm:py-2.5 pr-10 rounded-xl bg-[#1A1A1D] border border-pink-500/25 text-sm sm:text-base text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono font-semibold"
+                        className="w-full px-3.5 py-2.5 sm:py-3 pr-10 rounded-xl bg-[#13131a] border-2 border-pink-500/35 text-sm sm:text-base text-white placeholder-pink-300/40 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-500/30 transition shadow-inner font-mono font-semibold"
                       />
                       <button
                         type="button"
@@ -1294,7 +1294,7 @@ export default function SynCinemaPlatform() {
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-3 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-[0_0_35px_rgba(236,72,153,0.55)] flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer tracking-wide hover:shadow-[0_0_50px_rgba(236,72,153,0.8)] border border-pink-300/40"
+                    className="btn-pink w-full py-3.5 sm:py-4 rounded-2xl text-white font-black text-base sm:text-lg shadow-[0_0_45px_rgba(236,72,153,0.65)] flex items-center justify-center gap-3 transition active:scale-98 cursor-pointer tracking-wide hover:shadow-[0_0_65px_rgba(236,72,153,0.95)] hover:scale-[1.01] border-2 border-pink-300/60"
                   >
                     <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span>Create &amp; Enter Protected Cinema Room 🔒</span>
