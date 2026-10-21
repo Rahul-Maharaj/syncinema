@@ -2213,13 +2213,26 @@ export default function VideoPlayer({
       )}
 
       {uploading && (
-        <div className="card flex items-center justify-between gap-3 p-3 !bg-[#222222] border border-white/20 text-xs text-white">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#EC4899] shrink-0" />
-            <span className="truncate">Sharing <b>{uploading.name}</b> with partner&apos;s phone ({uploading.progress}%)…</span>
+        <div className="card flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 !bg-[#222222] border border-pink-500/40 text-xs text-white shadow-xl rounded-2xl">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <div className="truncate text-left">
+              <span className="font-bold text-pink-100 block truncate">
+                ⚡ Fast Cloud Stream: <b>{uploading.name}</b>
+              </span>
+              <span className="text-[11px] text-pink-300/80 font-mono">
+                {uploading.speed ? `${uploading.speed} MB/s` : 'Buffering stream'} • {uploading.progress}% • {uploading.eta ? `${uploading.eta}s remaining` : 'Accelerated'}
+              </span>
+            </div>
           </div>
-          <div className="h-2 w-28 bg-white/15 rounded-full overflow-hidden shrink-0">
-            <div className="h-full bg-gradient-to-r from-[#EC4899] to-[#F472B6] transition-all duration-200" style={{ width: `${uploading.progress}%` }} />
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+            <div className="h-2.5 w-full sm:w-36 bg-white/15 rounded-full overflow-hidden shrink-0">
+              <div
+                className="h-full bg-gradient-to-r from-pink-500 via-rose-400 to-emerald-400 transition-all duration-200"
+                style={{ width: `${uploading.progress}%` }}
+              />
+            </div>
+            <span className="font-mono text-xs text-emerald-400 font-bold shrink-0">{uploading.progress}%</span>
           </div>
         </div>
       )}

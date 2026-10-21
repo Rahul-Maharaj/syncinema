@@ -19,6 +19,12 @@ module.exports = {
   reactStrictMode: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.devtool = false;
+    }
+    return config;
+  },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },

@@ -454,6 +454,41 @@ html, body {
   animation-play-state: paused;
 }
 
+/* --- Anti-Lag Low-End Device Hardware Acceleration --- */
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  .anti-lag-low-spec {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    contain: layout style paint !important;
+  }
+}
+
+/* 60fps GPU Composited Laser Sync Glow */
+@keyframes laserPulseSync {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.25), inset 0 0 6px rgba(236, 72, 153, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(236, 72, 153, 0.65), inset 0 0 14px rgba(236, 72, 153, 0.35);
+  }
+}
+
+.anim-laser-sync {
+  animation: laserPulseSync 2.4s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+/* Radar Ping Wave */
+@keyframes radarPing {
+  0% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.8; }
+  100% { transform: translate3d(0, 0, 0) scale(1.6); opacity: 0; }
+}
+
+.anim-radar-ping {
+  animation: radarPing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-blackhole {
