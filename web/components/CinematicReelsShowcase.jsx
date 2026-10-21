@@ -74,6 +74,7 @@ export default function CinematicReelsShowcase({ onStartRoom }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [modalReel, setModalReel] = useState(null);
+  const [activeSrcs, setActiveSrcs] = useState({});
 
   const videoRefs = useRef([]);
   const containerRef = useRef(null);
@@ -104,6 +105,16 @@ export default function CinematicReelsShowcase({ onStartRoom }) {
 
     return () => observer.disconnect();
   }, [isPlaying]);
+
+  // Lazy video loader: Only bind reel MP4 sources for human browsers
+  useEffect(() => {
+    if (typeof window === 'undefined' || isSearchBot()) return;
+    const initial = {};
+    CINEMATIC_REELS.forEach((r) => {
+      initial[r.id] = r.src;
+    });
+    setActiveSrcs(initial);
+  }, []);
 
   const togglePlayAll = () => {
     const next = !isPlaying;
@@ -185,7 +196,7 @@ export default function CinematicReelsShowcase({ onStartRoom }) {
               <div className="relative rounded-2xl overflow-hidden aspect-[9/16] bg-black border border-pink-500/30 shadow-inner group/video">
                 <video
                   ref={(el) => (videoRefs.current[idx] = el)}
-                  src={reel.src}
+                  src={activeSrcs[reel.id] || undefined}
                   loop
                   muted={isMuted}
                   playsInline

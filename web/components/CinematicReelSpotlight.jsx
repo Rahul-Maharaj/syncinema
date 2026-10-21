@@ -17,6 +17,7 @@ import {
   Eye,
   CheckCircle2,
 } from 'lucide-react';
+import { isSearchBot } from '@/lib/antiBot';
 import {
   Popcorn3D,
   Clapper3D,
@@ -49,6 +50,7 @@ export default function CinematicReelSpotlight({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [videoSrc, setVideoSrc] = useState('');
 
   const videoRef = useRef(null);
   const containerRef = useRef(null);
@@ -77,6 +79,14 @@ export default function CinematicReelSpotlight({
 
     return () => observer.disconnect();
   }, [isPlaying]);
+
+  // Lazy video loader: Only bind MP4 source for human users when in viewport
+  useEffect(() => {
+    if (typeof window === 'undefined' || isSearchBot()) return;
+    if (isInView && !videoSrc) {
+      setVideoSrc(src);
+    }
+  }, [isInView, videoSrc, src]);
 
   const togglePlay = () => {
     const next = !isPlaying;
@@ -136,7 +146,7 @@ export default function CinematicReelSpotlight({
               <div className="relative rounded-2xl overflow-hidden aspect-[9/16] bg-black border border-pink-500/30 shadow-inner group/video">
                 <video
                   ref={videoRef}
-                  src={src}
+                  src={videoSrc || undefined}
                   loop
                   muted={isMuted}
                   playsInline
