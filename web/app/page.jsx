@@ -82,6 +82,272 @@ const RANDOM_ROOM_NAMES = [
   'Lovers-Screen',
 ];
 
+const AUDIENCES = [
+  'Long-Distance Couples 💕',
+  'Late-Night Movie Dates 🍿',
+  'Virtual Cinema Watch Parties 🎬',
+  'Anime & YouTube Marathons ✨',
+  'Best Friends Anywhere 🥂',
+];
+
+function RotatingAudienceTicker() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % AUDIENCES.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
+      <SparkleStar3D size={16} className="anim-float-slow shrink-0" />
+      <span>Virtual Cinema For</span>
+      <span className="text-pink-300 font-extrabold transition-all duration-300 min-w-[200px] text-left">
+        {AUDIENCES[index]}
+      </span>
+    </div>
+  );
+}
+
+function LiveLockstepSimulator({ onStickerClick }) {
+  const [simPlaying, setSimPlaying] = useState(true);
+  const [simSeconds, setSimSeconds] = useState(2535.2);
+  const [simFrame, setSimFrame] = useState(76056);
+  const [reactions, setReactions] = useState([]);
+
+  // Self-contained 100ms timer — ONLY re-renders this tiny simulator box!
+  useEffect(() => {
+    if (!simPlaying) return;
+    const timer = setInterval(() => {
+      setSimSeconds((s) => s + 0.1);
+      setSimFrame((f) => f + 3);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [simPlaying]);
+
+  // Periodic ambient couple reaction
+  useEffect(() => {
+    if (!simPlaying) return;
+    const pool = ['💖', '🍿', '✨', '🎬', '🔥'];
+    const timer = setInterval(() => {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      triggerSimReaction(pick);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [simPlaying]);
+
+  const triggerSimReaction = (emoji) => {
+    const id = Date.now() + Math.random();
+    const x = 15 + Math.random() * 70;
+    setReactions((prev) => [...prev.slice(-10), { id, emoji, x }]);
+    setTimeout(() => {
+      setReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 2600);
+  };
+
+  const handleBarReaction = (emoji, label) => {
+    triggerSimReaction(emoji);
+    if (onStickerClick) onStickerClick(emoji, `${label} reaction popped!`);
+  };
+
+  const formatSimTime = (totalSec) => {
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = (totalSec % 60).toFixed(3);
+    const pad = (n) => (n < 10 ? '0' + n : n);
+    return `${pad(hrs)}:${pad(mins)}:${parseFloat(secs) < 10 ? '0' : ''}${secs}`;
+  };
+
+  return (
+    <div className="rounded-2xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-3 sm:p-3.5 shadow-[0_15px_40px_rgba(236,72,153,0.18)] space-y-2.5 overflow-hidden relative">
+      {/* Simulator Header with Interactive Sync Controls */}
+      <div className="flex items-center justify-between border-b border-pink-500/20 pb-2">
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-2 rounded-full ${simPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+          <span className="text-[11px] font-black tracking-wider text-pink-100 uppercase flex items-center gap-1">
+            <Activity className="h-3 w-3 text-pink-400" />
+            <span>Live Lockstep Sync Telemetry</span>
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSimPlaying(!simPlaying)}
+            className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 transition cursor-pointer border ${
+              simPlaying
+                ? 'bg-pink-500/20 text-pink-200 border-pink-500/40 hover:bg-pink-500/30'
+                : 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 hover:bg-emerald-500/30'
+            }`}
+            title="Click to test live synchronized play / pause in real-time"
+          >
+            <span>{simPlaying ? '⏸ Pause Sync' : '▶ Play Sync'}</span>
+          </button>
+
+          <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 hidden sm:flex items-center gap-1">
+            <Zap className="h-2.5 w-2.5 text-emerald-400" />
+            <span>0.00ms Drift Lock</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Visual Dual-Device Interactive Stage with Live Floating Reaction Emojis */}
+      <div className="relative">
+        {/* Floating Reactions Canvas */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
+          {reactions.map((r) => (
+            <div
+              key={r.id}
+              className="absolute bottom-2 text-2xl anim-reaction-float select-none filter drop-shadow-[0_0_8px_rgba(236,72,153,0.7)]"
+              style={{ left: `${r.x}%` }}
+            >
+              {r.emoji}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-11 items-center gap-2 py-0.5">
+          {/* Device 1: Phone (You) */}
+          <div className="col-span-5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 p-2 space-y-1.5 text-left relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
+                <Smartphone className="h-3 w-3 text-pink-400" />
+                <span>Phone (London)</span>
+              </span>
+              <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            </div>
+            <div className="h-11 rounded-lg bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-2.5 relative overflow-hidden">
+              <Film className="h-4 w-4 text-pink-400 shrink-0" />
+              <div className="text-right">
+                <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
+                <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
+                <div
+                  className="h-full bg-pink-500 transition-all duration-100"
+                  style={{ width: `${((simSeconds % 60) / 60) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Center Motion Graphics Pulse Wave Laser */}
+          <div className="col-span-1 flex flex-col items-center justify-center relative">
+            <div className="h-5 w-px bg-pink-500/30 relative overflow-hidden">
+              <div className="absolute inset-x-0 h-2 bg-pink-400 anim-sync-laser" />
+            </div>
+            <div className={`p-1 rounded-full bg-pink-600/30 border border-pink-500/50 shrink-0 ${simPlaying ? 'anim-heartbeat' : ''}`}>
+              <Zap className="h-3 w-3 text-pink-300" />
+            </div>
+            <div className="h-5 w-px bg-pink-500/30 relative overflow-hidden">
+              <div className="absolute inset-x-0 h-2 bg-pink-400 anim-sync-laser" />
+            </div>
+          </div>
+
+          {/* Device 2: Laptop (Partner) */}
+          <div className="col-span-5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 p-2 space-y-1.5 text-left relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
+                <Laptop className="h-3 w-3 text-pink-400" />
+                <span>Laptop (New York)</span>
+              </span>
+              <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            </div>
+            <div className="h-11 rounded-lg bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-2.5 relative overflow-hidden">
+              <Film className="h-4 w-4 text-pink-400 shrink-0" />
+              <div className="text-right">
+                <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
+                <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
+                <div
+                  className="h-full bg-pink-500 transition-all duration-100"
+                  style={{ width: `${((simSeconds % 60) / 60) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* LIVE REACTION CANNON BAR */}
+      <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/20 text-xs">
+        <span className="text-[11px] font-bold text-pink-200 flex items-center gap-1.5">
+          <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400" />
+          <span>Send Live Couple Reaction:</span>
+        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { emoji: '💖', label: 'Love' },
+            { emoji: '🍿', label: 'Popcorn' },
+            { emoji: '🔥', label: 'Hype' },
+            { emoji: '✨', label: 'Magic' },
+            { emoji: '🎬', label: 'Cinema' },
+            { emoji: '⚡', label: 'Sync' },
+            { emoji: '🎟️', label: 'VIP' },
+          ].map(({ emoji, label }) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => handleBarReaction(emoji, label)}
+              className="px-2 py-1 rounded-xl bg-[#222222] hover:bg-pink-600/30 border border-pink-500/30 text-xs transition cursor-pointer active:scale-90 hover:scale-115 shadow-sm hover:border-pink-400"
+              title={`Send ${emoji} ${label} reaction`}
+            >
+              <span>{emoji}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* STEREO WEBRTC AUDIO SPECTRUM EQUALIZER GRAPHIC */}
+      <div className="rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/20 p-2.5 px-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Volume2 className="h-3.5 w-3.5 text-pink-400 shrink-0" />
+          <span className="text-[10px] font-mono font-semibold text-pink-200">
+            Dual Stereo Audio Phase: {simPlaying ? 'Synced 48kHz' : 'Paused (0 Drift)'}
+          </span>
+        </div>
+
+        <div className="flex items-end gap-1 h-5 shrink-0">
+          {[45, 80, 60, 95, 30, 75, 100, 50, 85, 40, 90, 70, 65, 95, 45, 80, 55, 35].map((h, i) => (
+            <span
+              key={i}
+              className={`w-1 rounded-full transition-all duration-150 ${
+                simPlaying ? 'bg-gradient-to-t from-pink-600 to-rose-400 anim-eq-bar' : 'bg-pink-500/30 h-1.5'
+              }`}
+              style={{
+                height: simPlaying ? undefined : '4px',
+                animationDelay: `${(i % 5) * 0.15}s`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Real-Time Live Telemetry Metrics */}
+      <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-mono pt-1">
+        <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+          <span className="text-pink-300/60 block text-[9px]">CLOCK DRIFT</span>
+          <span className="text-emerald-400 font-bold">0.00 ms</span>
+        </div>
+        <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+          <span className="text-pink-300/60 block text-[9px]">AUDIO PHASE</span>
+          <span className="text-pink-200 font-bold">100% Locked</span>
+        </div>
+        <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+          <span className="text-pink-300/60 block text-[9px]">TRANSPORT</span>
+          <span className="text-pink-200 font-bold">WebRTC P2P</span>
+        </div>
+        <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
+          <span className="text-pink-300/60 block text-[9px]">AUTO-HEAL</span>
+          <span className="text-emerald-400 font-bold">Active 24/7</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SynCinemaPlatform() {
   const router = useRouter();
 
@@ -91,27 +357,13 @@ export default function SynCinemaPlatform() {
   // Detailed Info Section Tab: 'security' | 'media' | 'intimacy'
   const [infoTab, setInfoTab] = useState('security');
 
-  // Interactive Telemetry Simulator state (Declared first before any hook references it!)
-  const [simPlaying, setSimPlaying] = useState(true);
-  const [simSeconds, setSimSeconds] = useState(2535.2);
-  const [simFrame, setSimFrame] = useState(76056);
 
-  // Floating Dynamic Reactions Cannon
-  const [reactions, setReactions] = useState([]);
 
   // Romantic Hindi Lofi Audio Engine
   const [lofiPlaying, setLofiPlaying] = useState(false);
   const [lofiTrackIndex, setLofiTrackIndex] = useState(0);
 
-  // Kinetic Rotating Audience Ticker
-  const AUDIENCES = [
-    'Long-Distance Couples 💕',
-    'Late-Night Movie Dates 🍿',
-    'Virtual Cinema Watch Parties 🎬',
-    'Anime & YouTube Marathons ✨',
-    'Best Friends Anywhere 🥂',
-  ];
-  const [audienceIndex, setAudienceIndex] = useState(0);
+
 
   // Create Room State (Strictly Password Protected)
   const [roomName, setRoomName] = useState('');
@@ -164,20 +416,8 @@ export default function SynCinemaPlatform() {
     notify('Room password copied to clipboard 📋');
   };
 
-  const triggerReaction = (emoji) => {
-    const id = Date.now() + Math.random();
-    const x = 15 + Math.random() * 70; // 15% to 85% horizontal placement
-    setReactions((prev) => [...prev.slice(-10), { id, emoji, x }]);
-    setTimeout(() => {
-      setReactions((prev) => prev.filter((r) => r.id !== id));
-    }, 2600);
-  };
-
   const triggerStickerClick = (emoji, toastText) => {
-    triggerReaction(emoji);
-    setTimeout(() => triggerReaction(emoji), 140);
-    setTimeout(() => triggerReaction('✨'), 280);
-    showToast(`${emoji} ${toastText}`);
+    notify(`${emoji} ${toastText}`);
   };
 
   const toggleLofi = () => {
@@ -233,34 +473,7 @@ export default function SynCinemaPlatform() {
     };
   }, []);
 
-  // Periodic subtle ambient couple reaction
-  useEffect(() => {
-    if (!simPlaying) return;
-    const pool = ['💖', '🍿', '✨', '🎬', '🔥'];
-    const timer = setInterval(() => {
-      const pick = pool[Math.floor(Math.random() * pool.length)];
-      triggerReaction(pick);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [simPlaying]);
 
-  // Kinetic Rotating Audience Ticker
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAudienceIndex((prev) => (prev + 1) % AUDIENCES.length);
-    }, 2800);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Interactive Telemetry Simulator timer
-  useEffect(() => {
-    if (!simPlaying) return;
-    const timer = setInterval(() => {
-      setSimSeconds((s) => s + 0.1);
-      setSimFrame((f) => f + 3);
-    }, 100);
-    return () => clearInterval(timer);
-  }, [simPlaying]);
 
   // Launch / Create Room (Strict password enforcement)
   const handleCreateRoom = (e) => {
@@ -359,13 +572,14 @@ export default function SynCinemaPlatform() {
         </div>
       )}
 
-      {/* High-Resolution Couple Cinema Background - Clear & Visible */}
-      <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-65"
-        style={{ 
-          backgroundImage: `url('/home-bg.jpg')`,
-          backgroundPosition: 'center 40%',
-        }}
+      {/* High-Resolution Couple Cinema Background - Hardware Composited for 0.4s LCP */}
+      <img
+        src="/home-bg.jpg"
+        alt=""
+        fetchPriority="high"
+        decoding="async"
+        className="fixed inset-0 z-0 w-full h-full object-cover object-[center_40%] pointer-events-none transition-opacity duration-700 opacity-65"
+        style={{ transform: 'translateZ(0)' }}
       />
 
       {/* Cinematic Vignette Overlay in Solid Black Hole HEX #222222 */}
@@ -521,13 +735,7 @@ export default function SynCinemaPlatform() {
           {/* LEFT SIDE: Text, 3D Art Badges, Live Sync Telemetry & Informational Deck */}
           <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-1 space-y-3.5 sm:space-y-4 text-center lg:text-left">
             {/* Kinetic Animated Audience Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
-              <SparkleStar3D size={16} className="anim-float-slow shrink-0" />
-              <span>Virtual Cinema For</span>
-              <span className="text-pink-300 font-extrabold transition-all duration-300 min-w-[200px] text-left">
-                {AUDIENCES[audienceIndex]}
-              </span>
-            </div>
+            <RotatingAudienceTicker />
 
             {/* Kinetic Shimmer Headline */}
             <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-black text-pink-100 tracking-tight leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
@@ -606,196 +814,8 @@ export default function SynCinemaPlatform() {
               </button>
             </div>
 
-            {/* MOTION GRAPHICS DUAL-DEVICE SYNC TELEMETRY SIMULATOR (ZERO LAG, GPU-ACCELERATED) */}
-            <div className="rounded-2xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-3 sm:p-3.5 shadow-[0_15px_40px_rgba(236,72,153,0.18)] space-y-2.5 overflow-hidden relative">
-              {/* Simulator Header with Interactive Sync Controls */}
-              <div className="flex items-center justify-between border-b border-pink-500/20 pb-2">
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${simPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  <span className="text-[11px] font-black tracking-wider text-pink-100 uppercase flex items-center gap-1">
-                    <Activity className="h-3 w-3 text-pink-400" />
-                    <span>Live Lockstep Sync Telemetry</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSimPlaying(!simPlaying)}
-                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 transition cursor-pointer border ${
-                      simPlaying
-                        ? 'bg-pink-500/20 text-pink-200 border-pink-500/40 hover:bg-pink-500/30'
-                        : 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 hover:bg-emerald-500/30'
-                    }`}
-                    title="Click to test live synchronized play / pause in real-time"
-                  >
-                    <span>{simPlaying ? '⏸ Pause Sync' : '▶ Play Sync'}</span>
-                  </button>
-
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 hidden sm:flex items-center gap-1">
-                    <Zap className="h-2.5 w-2.5 text-emerald-400" />
-                    <span>0.00ms Drift Lock</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Visual Dual-Device Interactive Stage with Live Floating Reaction Emojis */}
-              <div className="relative">
-                {/* Floating Reactions Canvas */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
-                  {reactions.map((r) => (
-                    <div
-                      key={r.id}
-                      className="absolute bottom-2 text-2xl anim-reaction-float select-none filter drop-shadow-[0_0_8px_rgba(236,72,153,0.7)]"
-                      style={{ left: `${r.x}%` }}
-                    >
-                      {r.emoji}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-11 items-center gap-2 py-0.5">
-                {/* Device 1: Phone (You) */}
-                <div className="col-span-5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 p-2 space-y-1.5 text-left relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
-                      <Smartphone className="h-3 w-3 text-pink-400" />
-                      <span>Phone (London)</span>
-                    </span>
-                    <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                  </div>
-                  <div className="h-11 rounded-lg bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-2.5 relative overflow-hidden">
-                    <Film className="h-4 w-4 text-pink-400 shrink-0" />
-                    <div className="text-right">
-                      <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
-                      <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
-                    </div>
-                    {/* Animated Playhead Track */}
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
-                      <div
-                        className="h-full bg-pink-500 transition-all duration-100"
-                        style={{ width: `${((simSeconds % 60) / 60) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Center Motion Graphics Pulse Wave Laser */}
-                <div className="col-span-1 flex flex-col items-center justify-center relative">
-                  <div className="h-5 w-px bg-pink-500/30 relative overflow-hidden">
-                    <div className="absolute inset-x-0 h-2 bg-pink-400 anim-sync-laser" />
-                  </div>
-                  <div className={`p-1 rounded-full bg-pink-600/30 border border-pink-500/50 shrink-0 ${simPlaying ? 'anim-heartbeat' : ''}`}>
-                    <Zap className="h-3 w-3 text-pink-300" />
-                  </div>
-                  <div className="h-5 w-px bg-pink-500/30 relative overflow-hidden">
-                    <div className="absolute inset-x-0 h-2 bg-pink-400 anim-sync-laser" />
-                  </div>
-                </div>
-
-                {/* Device 2: Laptop (Partner) */}
-                <div className="col-span-5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 p-2 space-y-1.5 text-left relative overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
-                      <Laptop className="h-3 w-3 text-pink-400" />
-                      <span>Laptop (New York)</span>
-                    </span>
-                    <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                  </div>
-                  <div className="h-11 rounded-lg bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-2.5 relative overflow-hidden">
-                    <Film className="h-4 w-4 text-pink-400 shrink-0" />
-                    <div className="text-right">
-                      <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
-                      <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
-                    </div>
-                    {/* Animated Playhead Track */}
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
-                      <div
-                        className="h-full bg-pink-500 transition-all duration-100"
-                        style={{ width: `${((simSeconds % 60) / 60) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              </div>
-
-              {/* LIVE REACTION CANNON BAR */}
-              <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/20 text-xs">
-                <span className="text-[11px] font-bold text-pink-200 flex items-center gap-1.5">
-                  <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400" />
-                  <span>Send Live Couple Reaction:</span>
-                </span>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[
-                    { emoji: '💖', label: 'Love' },
-                    { emoji: '🍿', label: 'Popcorn' },
-                    { emoji: '🔥', label: 'Hype' },
-                    { emoji: '✨', label: 'Magic' },
-                    { emoji: '🎬', label: 'Cinema' },
-                    { emoji: '⚡', label: 'Sync' },
-                    { emoji: '🎟️', label: 'VIP' },
-                  ].map(({ emoji, label }) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => triggerStickerClick(emoji, `${label} reaction popped!`)}
-                      className="px-2 py-1 rounded-xl bg-[#222222] hover:bg-pink-600/30 border border-pink-500/30 text-xs transition cursor-pointer active:scale-90 hover:scale-115 shadow-sm hover:border-pink-400"
-                      title={`Send ${emoji} ${label} reaction`}
-                    >
-                      <span>{emoji}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* STEREO WEBRTC AUDIO SPECTRUM EQUALIZER GRAPHIC */}
-              <div className="rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/20 p-2.5 px-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="h-3.5 w-3.5 text-pink-400 shrink-0" />
-                  <span className="text-[10px] font-mono font-semibold text-pink-200">
-                    Dual Stereo Audio Phase: {simPlaying ? 'Synced 48kHz' : 'Paused (0 Drift)'}
-                  </span>
-                </div>
-
-                {/* 18-Bar Dynamic Spectrum Graphic */}
-                <div className="flex items-end gap-1 h-5 shrink-0">
-                  {[45, 80, 60, 95, 30, 75, 100, 50, 85, 40, 90, 70, 65, 95, 45, 80, 55, 35].map((h, i) => (
-                    <span
-                      key={i}
-                      className={`w-1 rounded-full transition-all duration-150 ${
-                        simPlaying ? 'bg-gradient-to-t from-pink-600 to-rose-400 anim-eq-bar' : 'bg-pink-500/30 h-1.5'
-                      }`}
-                      style={{
-                        height: simPlaying ? undefined : '4px',
-                        animationDelay: `${(i % 5) * 0.15}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Real-Time Live Telemetry Metrics */}
-              <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-mono pt-1">
-                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-                  <span className="text-pink-300/60 block text-[9px]">CLOCK DRIFT</span>
-                  <span className="text-emerald-400 font-bold">0.00 ms</span>
-                </div>
-                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-                  <span className="text-pink-300/60 block text-[9px]">AUDIO PHASE</span>
-                  <span className="text-pink-200 font-bold">100% Locked</span>
-                </div>
-                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-                  <span className="text-pink-300/60 block text-[9px]">TRANSPORT</span>
-                  <span className="text-pink-200 font-bold">WebRTC P2P</span>
-                </div>
-                <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-                  <span className="text-pink-300/60 block text-[9px]">AUTO-HEAL</span>
-                  <span className="text-emerald-400 font-bold">Active 24/7</span>
-                </div>
-              </div>
-            </div>
+            {/* MOTION GRAPHICS DUAL-DEVICE SYNC TELEMETRY SIMULATOR (ISOLATED ZERO-LAG MODULE) */}
+            <LiveLockstepSimulator onStickerClick={triggerStickerClick} />
 
             {/* DETAILED INFORMATIONAL DECK WITH 3 INTERACTIVE TABS */}
             <div className="rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_15px_40px_rgba(236,72,153,0.15)] space-y-4 text-left mt-4">

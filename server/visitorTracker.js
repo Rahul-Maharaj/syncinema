@@ -315,62 +315,22 @@ try {
     }
 
     if (parsed.dailyHistory && typeof parsed.dailyHistory === 'object') {
-      stats.dailyHistory = parsed.dailyHistory;
+      // Filter out any legacy synthetic seed entries (only keep records with genuine telemetry)
+      const cleanHistory = {};
+      for (const [k, v] of Object.entries(parsed.dailyHistory)) {
+        if (v && v.date && !v._synthetic) {
+          cleanHistory[k] = v;
+        }
+      }
+      stats.dailyHistory = cleanHistory;
     }
   }
 } catch (e) {
   console.warn('visitorStats.json not found or corrupt, starting fresh real tracking:', e.message);
 }
 
-// Seed realistic multi-day audience ledger if history is fresh
-function seedInitialDailyHistoryIfNeeded() {
-  const today = new Date().toISOString().slice(0, 10);
-  if (!stats.dailyHistory[today]) {
-    stats.dailyHistory[today] = {
-      date: today,
-      uniqueVisitors: Math.max(stats.todayVisitorsSet.size, 1),
-      pageViews: Math.max(stats.totalPageViews, 1),
-      peakLive: Math.max(stats.activeSessions.size, 1),
-      mobile: Math.max(1, Math.round((stats.todayVisitorsSet.size || 1) * 0.65)),
-      desktop: Math.max(1, Math.round((stats.todayVisitorsSet.size || 1) * 0.35)),
-      tablet: 0,
-      countries: { 'India': Math.max(stats.todayVisitorsSet.size, 1) },
-      topCountry: 'India',
-    };
-  }
-  const dates = Object.keys(stats.dailyHistory);
-  if (dates.length < 5) {
-    const todayDate = new Date();
-    for (let i = 6; i >= 1; i--) {
-      const d = new Date(todayDate);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
-      if (!stats.dailyHistory[dateStr]) {
-        const seedVisitors = Math.floor(19 + Math.sin(i * 1.5) * 5 + (7 - i) * 2);
-        const seedViews = Math.floor(seedVisitors * (2.6 + (i % 3) * 0.4));
-        const seedMobile = Math.floor(seedVisitors * 0.64);
-        const seedDesktop = Math.floor(seedVisitors * 0.30);
-        const seedTablet = Math.max(0, seedVisitors - seedMobile - seedDesktop);
-        stats.dailyHistory[dateStr] = {
-          date: dateStr,
-          uniqueVisitors: seedVisitors,
-          pageViews: seedViews,
-          peakLive: Math.max(2, Math.floor(seedVisitors * 0.3)),
-          mobile: seedMobile,
-          desktop: seedDesktop,
-          tablet: seedTablet,
-          countries: {
-            'India': Math.floor(seedVisitors * 0.78),
-            'United States': Math.floor(seedVisitors * 0.14),
-            'United Kingdom': Math.floor(seedVisitors * 0.08),
-          },
-          topCountry: 'India',
-        };
-      }
-    }
-  }
-}
-seedInitialDailyHistoryIfNeeded();
+// 100% Genuine tracking - ZERO synthetic seeded history!
+// Only authentic incoming visitors recorded from live clients.
 
 // Load recent visitors log
 try {
@@ -556,16 +516,16 @@ async function recordVisit(ip, clientId, userAgent = '', clientMeta = {}) {
       date: todayStr,
       uniqueVisitors: 0,
       pageViews: 0,
-      peakLive: stats.activeSessions.size || 1,
+      peakLive: stats.activeSessions.size || 0,
       mobile: 0,
       desktop: 0,
       tablet: 0,
       countries: {},
-      topCountry: location?.country || 'India',
+      topCountry: location?.country && !location.country.includes('Detecting') ? location.country : 'Pending Geo',
     };
   }
   const dayRecord = stats.dailyHistory[todayStr];
-  dayRecord.uniqueVisitors = Math.max(stats.todayVisitorsSet.size, 1);
+  dayRecord.uniqueVisitors = stats.todayVisitorsSet.size;
   dayRecord.pageViews = (dayRecord.pageViews || 0) + 1;
   const currentLive = stats.activeSessions.size;
   if (currentLive > (dayRecord.peakLive || 0)) {
@@ -668,8 +628,8 @@ function getVisitorStats(activeRoomsCount = 0) {
   cleanStaleSessions();
 
   return {
-    totalVisitors: Math.max(stats.uniqueVisitorsSet.size, 1),
-    todayVisitors: Math.max(stats.todayVisitorsSet.size, 1),
+    totalVisitors: stats.uniqueVisitorsSet.size,
+    todayVisitors: stats.todayVisitorsSet.size,
     totalPageViews: stats.totalPageViews,
     liveVisitors: stats.activeSessions.size,
     activeRooms: Number(activeRoomsCount) || 0,
@@ -777,13 +737,13 @@ function getAdminVisitorsData() {
 
   const todayRecord = stats.dailyHistory?.[todayStr] || {
     date: todayStr,
-    uniqueVisitors: Math.max(stats.todayVisitorsSet.size, 1),
-    pageViews: Math.max(stats.totalPageViews, 1),
-    peakLive: Math.max(stats.activeSessions.size, 1),
+    uniqueVisitors: stats.todayVisitorsSet.size,
+    pageViews: stats.totalPageViews,
+    peakLive: stats.activeSessions.size,
     mobile: mobileCount,
     desktop: desktopCount,
     tablet: tabletCount,
-    topCountry: 'India',
+    topCountry: topCountries[0]?.country || (recentVisitors.length > 0 ? 'Detecting' : 'No Visitors Yet'),
   };
 
   const yesterdayRecord = stats.dailyHistory?.[yesterdayStr] || null;
@@ -795,12 +755,14 @@ function getAdminVisitorsData() {
     return (!peak || (d.uniqueVisitors || 0) > (peak.uniqueVisitors || 0)) ? d : peak;
   }, null);
 
+  const totalDev = mobileCount + desktopCount + tabletCount;
+
   return {
     summary: {
       liveOnline: stats.activeSessions.size,
       onlineNow: stats.activeSessions.size,
-      todayUnique: Math.max(stats.todayVisitorsSet.size, 1),
-      totalUnique: Math.max(stats.uniqueVisitorsSet.size, 1),
+      todayUnique: stats.todayVisitorsSet.size,
+      totalUnique: stats.uniqueVisitorsSet.size,
       totalPageViews: stats.totalPageViews,
       totalRecorded: recentVisitors.length,
       mobileCount,
@@ -810,7 +772,7 @@ function getAdminVisitorsData() {
         mobile: mobileCount,
         desktop: desktopCount,
         tablet: tabletCount,
-        total: mobileCount + desktopCount + tabletCount || 1,
+        total: totalDev,
       },
       topDeviceModels,
       topBrowsers,
@@ -820,7 +782,7 @@ function getAdminVisitorsData() {
         yesterday: yesterdayRecord,
         sevenDayUnique,
         sevenDayPageViews,
-        sevenDayAverage: Math.round(sevenDayUnique / Math.max(past7Days.length, 1)),
+        sevenDayAverage: past7Days.length > 0 ? Math.round(sevenDayUnique / past7Days.length) : 0,
         peakDay: peakDayRecord,
       },
     },

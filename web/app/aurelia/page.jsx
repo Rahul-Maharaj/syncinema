@@ -3222,24 +3222,24 @@ export default function AdminPage() {
                     <TrendingUp className="h-3.5 w-3.5 text-pink-400" />
                   </div>
                   <div className="text-2xl font-black text-white font-mono">
-                    {visitorsData?.summary?.dailyGrowth?.today?.uniqueVisitors || visitorsData?.summary?.todayUnique || 1}
+                    {visitorsData?.summary?.dailyGrowth?.today?.uniqueVisitors ?? visitorsData?.summary?.todayUnique ?? 0}
                   </div>
                   <div className="text-[11px] text-emerald-400 flex items-center gap-1">
-                    <span>{visitorsData?.summary?.dailyGrowth?.today?.pageViews || visitorsData?.summary?.totalPageViews || 1} views today</span>
+                    <span>{visitorsData?.summary?.dailyGrowth?.today?.pageViews ?? visitorsData?.summary?.totalPageViews ?? 0} views today</span>
                   </div>
                 </div>
 
-                {/* Yesterday's Reach */}
+                {/* Yesterday's Reach (100% Real Ledger - No synthetic estimates) */}
                 <div className="rounded-xl border border-white/10 bg-black/50 p-3.5 space-y-1 backdrop-blur-md">
                   <div className="flex items-center justify-between text-xs text-white/60">
                     <span>Yesterday Reach</span>
                     <Calendar className="h-3.5 w-3.5 text-cyan-400" />
                   </div>
                   <div className="text-2xl font-black text-white font-mono">
-                    {visitorsData?.summary?.dailyGrowth?.yesterday?.uniqueVisitors ?? Math.max(1, Math.floor((visitorsData?.summary?.todayUnique || 1) * 0.9))}
+                    {visitorsData?.summary?.dailyGrowth?.yesterday?.uniqueVisitors ?? 0}
                   </div>
                   <div className="text-[11px] text-cyan-300">
-                    {visitorsData?.summary?.dailyGrowth?.yesterday?.pageViews || Math.floor((visitorsData?.summary?.totalPageViews || 1) * 0.85)} views
+                    {visitorsData?.summary?.dailyGrowth?.yesterday?.pageViews ?? 0} views
                   </div>
                 </div>
 
@@ -3250,10 +3250,10 @@ export default function AdminPage() {
                     <Users className="h-3.5 w-3.5 text-purple-400" />
                   </div>
                   <div className="text-2xl font-black text-white font-mono">
-                    {visitorsData?.summary?.dailyGrowth?.sevenDayUnique || (visitorsData?.summary?.totalUnique || 1)}
+                    {visitorsData?.summary?.dailyGrowth?.sevenDayUnique ?? (visitorsData?.summary?.totalUnique ?? 0)}
                   </div>
                   <div className="text-[11px] text-purple-300">
-                    Avg ~{visitorsData?.summary?.dailyGrowth?.sevenDayAverage || Math.round((visitorsData?.summary?.totalUnique || 1) / 7)} / day
+                    Avg ~{visitorsData?.summary?.dailyGrowth?.sevenDayAverage ?? 0} / day
                   </div>
                 </div>
 
@@ -3264,10 +3264,10 @@ export default function AdminPage() {
                     <Flame className="h-3.5 w-3.5 text-amber-400" />
                   </div>
                   <div className="text-2xl font-black text-amber-300 font-mono">
-                    {visitorsData?.summary?.dailyGrowth?.peakDay?.uniqueVisitors || visitorsData?.summary?.todayUnique || 1}
+                    {visitorsData?.summary?.dailyGrowth?.peakDay?.uniqueVisitors ?? 0}
                   </div>
                   <div className="text-[11px] text-white/50 truncate font-mono">
-                    {visitorsData?.summary?.dailyGrowth?.peakDay?.date || 'Today'}
+                    {visitorsData?.summary?.dailyGrowth?.peakDay?.date || 'No Data Yet'}
                   </div>
                 </div>
 
@@ -3277,20 +3277,29 @@ export default function AdminPage() {
                     <span>Audience Hardware</span>
                     <Smartphone className="h-3.5 w-3.5 text-emerald-400" />
                   </div>
-                  <div className="text-sm font-bold text-white flex items-center justify-between pt-1">
-                    <span className="text-pink-400">📱 {Math.round(((visitorsData?.summary?.mobileCount || 0) / Math.max(visitorsData?.recent?.length || 1, 1)) * 100)}%</span>
-                    <span className="text-cyan-400">💻 {Math.round(((visitorsData?.summary?.desktopCount || 0) / Math.max(visitorsData?.recent?.length || 1, 1)) * 100)}%</span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden flex">
-                    <div
-                      className="h-full bg-pink-500"
-                      style={{ width: `${Math.round(((visitorsData?.summary?.mobileCount || 0) / Math.max(visitorsData?.recent?.length || 1, 1)) * 100)}%` }}
-                    />
-                    <div
-                      className="h-full bg-cyan-500"
-                      style={{ width: `${Math.round(((visitorsData?.summary?.desktopCount || 0) / Math.max(visitorsData?.recent?.length || 1, 1)) * 100)}%` }}
-                    />
-                  </div>
+                  {(() => {
+                    const totalDevs = (visitorsData?.summary?.devices?.total || (visitorsData?.summary?.mobileCount || 0) + (visitorsData?.summary?.desktopCount || 0) + (visitorsData?.summary?.tabletCount || 0)) || 0;
+                    const mPercent = totalDevs > 0 ? Math.round(((visitorsData?.summary?.mobileCount || 0) / totalDevs) * 100) : 0;
+                    const dPercent = totalDevs > 0 ? Math.round(((visitorsData?.summary?.desktopCount || 0) / totalDevs) * 100) : 0;
+                    return (
+                      <>
+                        <div className="text-sm font-bold text-white flex items-center justify-between pt-1">
+                          <span className="text-pink-400">📱 {mPercent}%</span>
+                          <span className="text-cyan-400">💻 {dPercent}%</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden flex">
+                          <div
+                            className="h-full bg-pink-500"
+                            style={{ width: `${mPercent}%` }}
+                          />
+                          <div
+                            className="h-full bg-cyan-500"
+                            style={{ width: `${dPercent}%` }}
+                          />
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -3318,16 +3327,16 @@ export default function AdminPage() {
                   const daysLimit = audienceChartRange === '7d' ? 7 : audienceChartRange === '14d' ? 14 : 30;
                   const days = (visitorsData?.dailyHistory || []).slice(0, daysLimit).slice().reverse();
                   if (days.length === 0) {
-                    return <p className="text-center py-8 text-xs text-white/40 italic">Recording first day of audience telemetry...</p>;
+                    return <p className="text-center py-8 text-xs text-white/40 italic">Recording first genuine day of audience telemetry ledger...</p>;
                   }
-                  const maxVal = Math.max(...days.map((d) => Math.max(d.uniqueVisitors || 0, d.pageViews || 0)), 10);
+                  const maxVal = Math.max(...days.map((d) => Math.max(d.uniqueVisitors || 0, d.pageViews || 0)), 1);
 
                   return (
                     <div className="pt-4 pb-2">
                       <div className="grid items-end gap-2 h-44 border-b border-white/10 pb-2" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
                         {days.map((d) => {
-                          const uHeight = Math.max(6, Math.round(((d.uniqueVisitors || 1) / maxVal) * 100));
-                          const pHeight = Math.max(6, Math.round(((d.pageViews || 1) / maxVal) * 100));
+                          const uHeight = maxVal > 0 ? Math.round(((d.uniqueVisitors || 0) / maxVal) * 100) : 0;
+                          const pHeight = maxVal > 0 ? Math.round(((d.pageViews || 0) / maxVal) * 100) : 0;
                           const isToday = d.date === new Date().toISOString().slice(0, 10);
 
                           return (
@@ -3338,8 +3347,8 @@ export default function AdminPage() {
                                   <div className="font-bold text-pink-300">{d.date} {isToday ? '(Today)' : ''}</div>
                                   <div className="text-cyan-300">👥 {d.uniqueVisitors || 0} unique visitors</div>
                                   <div className="text-pink-400">📄 {d.pageViews || 0} page views</div>
-                                  <div className="text-emerald-300">⚡ Peak Live: {d.peakLive || 1} concurrent</div>
-                                  <div className="text-white/60">🌍 Top: {d.topCountry || 'India'}</div>
+                                  <div className="text-emerald-300">⚡ Peak Live: {d.peakLive || 0} concurrent</div>
+                                  <div className="text-white/60">🌍 Top: {d.topCountry || 'No Data'}</div>
                                 </div>
                                 <div className="w-1.5 h-1.5 bg-slate-900 border-r border-b border-white/20 rotate-45 -mt-1" />
                               </div>
@@ -3404,9 +3413,9 @@ export default function AdminPage() {
                       ) : (
                         (visitorsData?.dailyHistory || []).slice(0, 14).map((d) => {
                           const isToday = d.date === new Date().toISOString().slice(0, 10);
-                          const totalDev = (d.mobile || 0) + (d.desktop || 0) + (d.tablet || 0) || 1;
-                          const mPct = Math.round(((d.mobile || 0) / totalDev) * 100);
-                          const dPct = Math.round(((d.desktop || 0) / totalDev) * 100);
+                          const totalDev = (d.mobile || 0) + (d.desktop || 0) + (d.tablet || 0);
+                          const mPct = totalDev > 0 ? Math.round(((d.mobile || 0) / totalDev) * 100) : 0;
+                          const dPct = totalDev > 0 ? Math.round(((d.desktop || 0) / totalDev) * 100) : 0;
 
                           return (
                             <tr key={d.date} className={`hover:bg-white/5 transition ${isToday ? 'bg-pink-950/20' : ''}`}>
@@ -3428,7 +3437,7 @@ export default function AdminPage() {
                               <td className="px-4 py-3 font-mono text-emerald-400">
                                 <span className="inline-flex items-center gap-1">
                                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                                  <span>{d.peakLive || 1} live</span>
+                                  <span>{d.peakLive || 0} live</span>
                                 </span>
                               </td>
                               <td className="px-4 py-3">
@@ -3446,7 +3455,7 @@ export default function AdminPage() {
                               <td className="px-4 py-3">
                                 <span className="rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] text-white/80 inline-flex items-center gap-1.5">
                                   <span>📍</span>
-                                  <span className="font-medium">{d.topCountry || 'India'}</span>
+                                  <span className="font-medium">{d.topCountry || 'No Data'}</span>
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-right">

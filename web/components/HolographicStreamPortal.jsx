@@ -129,15 +129,29 @@ export default function HolographicStreamPortal({ onStartRoom }) {
   const [visualizerType, setVisualizerType] = useState('bars'); // 'bars' | 'wave' | 'orbit'
   const [seconds, setSeconds] = useState(3842);
   const [soundActive, setSoundActive] = useState(false);
+  const containerRef = useRef(null);
+  const [isInView, setIsInView] = useState(false);
 
-  // Dynamic timer loop
   useEffect(() => {
-    if (!isPlaying) return;
+    if (typeof window === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(Boolean(entry?.isIntersecting));
+      },
+      { threshold: 0.1 }
+    );
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Dynamic timer loop ONLY when in view
+  useEffect(() => {
+    if (!isPlaying || !isInView) return;
     const timer = setInterval(() => {
       setSeconds((s) => s + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [isPlaying]);
+  }, [isPlaying, isInView]);
 
   const currentMode = PORTAL_MODES.find((m) => m.id === activeMode) || PORTAL_MODES[0];
   const IconComponent = currentMode.icon;
@@ -164,7 +178,7 @@ export default function HolographicStreamPortal({ onStartRoom }) {
   };
 
   return (
-    <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-14 space-y-8">
+    <section ref={containerRef} className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-14 space-y-8">
       {/* Section Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-100 text-[11px] font-extrabold uppercase tracking-widest backdrop-blur-md shadow-md">

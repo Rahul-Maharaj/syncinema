@@ -103,80 +103,34 @@ export default function AntiInspectShield() {
       }
     };
 
-    // 5. DEVTOOLS DETECTION VIA RESIZE & TIMING HEURISTICS (Catches DevTools opened from browser settings menu)
+    // 5. DEVTOOLS DETECTION VIA RESIZE HEURISTICS (Catches Docked DevTools opened from browser settings menu)
     let devToolsCheckTimer = null;
     const checkDevToolsOpen = () => {
-      // Vector A: Window dimension delta (Docked DevTools on bottom, right, or left)
+      // Window dimension delta (Docked DevTools on bottom, right, or left)
       const widthDelta = window.outerWidth - window.innerWidth;
       const heightDelta = window.outerHeight - window.innerHeight;
       const isDockedDevTools = widthDelta > 160 || heightDelta > 160;
 
-      // Vector B: High-precision timing delta across debugger breakpoint
-      const t0 = performance.now();
-      // eslint-disable-next-line no-debugger
-      debugger;
-      const t1 = performance.now();
-      const isPausedInDebugger = t1 - t0 > 100;
-
-      if (isDockedDevTools || isPausedInDebugger) {
+      if (isDockedDevTools) {
         triggerLockdown();
-      } else if (!isDockedDevTools && !isPausedInDebugger && lockdownRef.current) {
+      } else if (!isDockedDevTools && lockdownRef.current) {
         clearLockdown();
       }
     };
 
-    // Run DevTools detection loop every 600ms
-    devToolsCheckTimer = setInterval(checkDevToolsOpen, 600);
+    // Run passive check every 1500ms (Low overhead, zero thread pauses, smooth 60fps)
+    devToolsCheckTimer = setInterval(checkDevToolsOpen, 1500);
 
-    // 6. CONTINUOUS ANTI-DEBUGGING FREEZE LOOP (Stops code inspection inside DevTools Sources tab)
-    const antiDebugInterval = setInterval(() => {
-      try {
-        (function () {
-          return false;
-        }['constructor']('debugger')['call']());
-      } catch {}
-    }, 150);
+    window.addEventListener('contextmenu', handleContextMenu, { capture: true });
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('resize', checkDevToolsOpen);
 
-    // 7. CONSOLE GETTER TRAP (Triggers when Console tab is opened)
-    try {
-      const getterTrap = new Image();
-      Object.defineProperty(getterTrap, 'id', {
-        get: () => {
-          triggerLockdown();
-          return 'vault-shield';
-        },
-      });
-      const trapInterval = setInterval(() => {
-        try {
-          // Trigger getter only if devtools evaluates console arguments
-          originalConsole.log.call(console, '%c', getterTrap);
-          console.clear();
-        } catch {}
-      }, 2000);
-
-      window.addEventListener('contextmenu', handleContextMenu, { capture: true });
-      window.addEventListener('keydown', handleKeyDown, { capture: true });
-      window.addEventListener('resize', checkDevToolsOpen);
-
-      return () => {
-        clearInterval(devToolsCheckTimer);
-        clearInterval(antiDebugInterval);
-        clearInterval(trapInterval);
-        window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
-        window.removeEventListener('keydown', handleKeyDown, { capture: true });
-        window.removeEventListener('resize', checkDevToolsOpen);
-      };
-    } catch {
-      window.addEventListener('contextmenu', handleContextMenu, { capture: true });
-      window.addEventListener('keydown', handleKeyDown, { capture: true });
-
-      return () => {
-        clearInterval(devToolsCheckTimer);
-        clearInterval(antiDebugInterval);
-        window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
-        window.removeEventListener('keydown', handleKeyDown, { capture: true });
-      };
-    }
+    return () => {
+      clearInterval(devToolsCheckTimer);
+      window.removeEventListener('contextmenu', handleContextMenu, { capture: true });
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      window.removeEventListener('resize', checkDevToolsOpen);
+    };
   }, []);
 
   // If Browser DevTools is opened from settings menu, immediately display the tamper shield blackout

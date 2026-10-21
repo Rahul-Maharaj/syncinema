@@ -97,14 +97,29 @@ export default function AudioVisualizerSuite({ inRoom = false, onStartRoom }) {
   const [gainLevel, setGainLevel] = useState(100);
   const [pulseTick, setPulseTick] = useState(0);
 
-  // Dynamic animation loop for smooth 60fps wave changes
+  const containerRef = useRef(null);
+  const [isInView, setIsInView] = useState(false);
+
   useEffect(() => {
-    if (!isPlaying) return;
+    if (typeof window === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(Boolean(entry?.isIntersecting));
+      },
+      { threshold: 0.1 }
+    );
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Dynamic animation loop for smooth wave changes ONLY when visible in viewport
+  useEffect(() => {
+    if (!isPlaying || !isInView) return;
     const interval = setInterval(() => {
       setPulseTick((t) => (t + 1) % 720);
     }, 45);
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, isInView]);
 
   // Hindi Love Instrumental Lo-Fi Synthesizer Controller
   useEffect(() => {
@@ -131,6 +146,7 @@ export default function AudioVisualizerSuite({ inRoom = false, onStartRoom }) {
 
   return (
     <div
+      ref={containerRef}
       className={`rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-2xl p-5 sm:p-7 shadow-[0_20px_60px_rgba(236,72,153,0.18)] space-y-6 relative overflow-hidden ${
         inRoom ? 'my-3 max-w-full' : 'max-w-6xl w-full mx-auto my-12'
       }`}

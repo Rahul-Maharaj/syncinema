@@ -3,6 +3,7 @@ import { Fraunces, DM_Sans } from 'next/font/google';
 import Floaters from '@/components/Floaters';
 import AutoFixWatchdog from '@/components/AutoFixWatchdog';
 import AntiInspectShield from '@/components/AntiInspectShield';
+import RealAudienceTracker from '@/components/RealAudienceTracker';
 
 const display = Fraunces({ subsets: ['latin'], variable: '--font-display' });
 const body = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
@@ -128,6 +129,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="preload" as="image" href="/home-bg.jpg" fetchPriority="high" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script dangerouslySetInnerHTML={{ __html: pwaInit }} />
@@ -137,6 +139,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning className="bg-[#222222] text-pink-100 min-h-screen">
+        <RealAudienceTracker />
         <AntiInspectShield />
         <AutoFixWatchdog />
         <div className="relative z-10">{children}</div>

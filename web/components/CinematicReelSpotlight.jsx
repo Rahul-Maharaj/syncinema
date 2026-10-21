@@ -140,10 +140,10 @@ export default function CinematicReelSpotlight({
                   loop
                   muted={isMuted}
                   playsInline
-                  autoPlay
-                  preload="metadata"
+                  preload="none"
                   onTimeUpdate={handleTimeUpdate}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover/video:scale-102"
+                  style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                 />
 
                 {/* SynCinema Logo in Right Top Corner */}

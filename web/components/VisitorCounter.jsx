@@ -33,9 +33,9 @@ export default function VisitorCounter() {
     const applyStats = (data) => {
       if (data) {
         setStats({
-          totalVisitors: Math.max(1, Number(data.totalVisitors) || 1),
-          todayVisitors: Math.max(1, Number(data.todayVisitors) || 1),
-          liveVisitors: Math.max(1, Number(data.liveVisitors) || 1),
+          totalVisitors: Number(data.totalVisitors) || 0,
+          todayVisitors: Number(data.todayVisitors) || 0,
+          liveVisitors: Number(data.liveVisitors) || 0,
           activeRooms: Number(data.activeRooms) || 0,
         });
       }

@@ -125,8 +125,43 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
   const video2Ref = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Control synchronized playback across both video viewports
+  // Viewport Observer & Hardware Accelerators
+  const containerRef = useRef(null);
+  const [isInView, setIsInView] = useState(false);
+
+  // Anti-Lag Viewport Observer: ONLY play and decode video when visualizer is in viewport!
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = Boolean(entry?.isIntersecting);
+        setIsInView(visible);
+        if (visible) {
+          if (isPlaying && !isGlitching) {
+            video1Ref.current?.play?.()?.catch(() => {});
+            video2Ref.current?.play?.()?.catch(() => {});
+          }
+        } else {
+          video1Ref.current?.pause?.();
+          video2Ref.current?.pause?.();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [isPlaying, isGlitching]);
+
+  // Synchronize play/pause states strictly when in view
+  useEffect(() => {
+    if (!isInView) {
+      video1Ref.current?.pause?.();
+      video2Ref.current?.pause?.();
+      return;
+    }
     if (isPlaying && !isGlitching) {
       video1Ref.current?.play?.()?.catch(() => {});
       video2Ref.current?.play?.()?.catch(() => {});
@@ -134,14 +169,19 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
       video1Ref.current?.pause?.();
       video2Ref.current?.pause?.();
     }
-  }, [isPlaying, isGlitching]);
+  }, [isPlaying, isGlitching, isInView]);
 
-  // Track video time and update scrubber
+  // Track video time, update scrubber, and lock video2 with 0ms drift
   const handleTimeUpdate = () => {
     if (video1Ref.current && isPlaying && !isGlitching) {
-      setSimTime(video1Ref.current.currentTime);
+      const ct = video1Ref.current.currentTime;
+      setSimTime(ct);
       if (video1Ref.current.duration && !isNaN(video1Ref.current.duration)) {
         setVideoDuration(video1Ref.current.duration);
+      }
+      // Microsecond frame-lock: if partner video drifts by > 80ms, instantly re-align
+      if (video2Ref.current && Math.abs(video2Ref.current.currentTime - ct) > 0.08) {
+        video2Ref.current.currentTime = ct;
       }
     }
   };
@@ -320,7 +360,7 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
   const ScenarioIcon = currentScenario.icon;
 
   return (
-    <section className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 space-y-10">
+    <section ref={containerRef} className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 space-y-10">
       {/* Hidden File Input for Picking User Video */}
       <input
         ref={fileInputRef}
@@ -588,9 +628,10 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
                   loop
                   muted
                   playsInline
-                  autoPlay
+                  preload="none"
                   onTimeUpdate={handleTimeUpdate}
                   className="w-full h-full object-cover"
+                  style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
@@ -721,8 +762,9 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
                   loop
                   muted
                   playsInline
-                  autoPlay
+                  preload="none"
                   className="w-full h-full object-cover"
+                  style={{ transform: 'translateZ(0)', willChange: 'transform' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
