@@ -92,58 +92,17 @@ export default function SynCinemaPlatform() {
   // Detailed Info Section Tab: 'security' | 'media' | 'intimacy'
   const [infoTab, setInfoTab] = useState('security');
 
+  // Interactive Telemetry Simulator state (Declared first before any hook references it!)
+  const [simPlaying, setSimPlaying] = useState(true);
+  const [simSeconds, setSimSeconds] = useState(2535.2);
+  const [simFrame, setSimFrame] = useState(76056);
+
   // Floating Dynamic Reactions Cannon
   const [reactions, setReactions] = useState([]);
-  const triggerReaction = (emoji) => {
-    const id = Date.now() + Math.random();
-    const x = 15 + Math.random() * 70; // 15% to 85% horizontal placement
-    setReactions((prev) => [...prev.slice(-10), { id, emoji, x }]);
-    setTimeout(() => {
-      setReactions((prev) => prev.filter((r) => r.id !== id));
-    }, 2600);
-  };
 
   // Romantic Hindi Lofi Audio Engine
   const [lofiPlaying, setLofiPlaying] = useState(false);
   const [lofiTrackIndex, setLofiTrackIndex] = useState(0);
-
-  const currentLofiTrack = HINDI_LOFI_SONGS[lofiTrackIndex] || HINDI_LOFI_SONGS[0];
-
-  const toggleLofi = () => {
-    if (lofiPlaying) {
-      hindiLofi.pause();
-      setLofiPlaying(false);
-    } else {
-      hindiLofi.setVolume(0.45);
-      hindiLofi.playSong(currentLofiTrack.id);
-      setLofiPlaying(true);
-    }
-  };
-
-  const nextLofiTrack = () => {
-    const nextIdx = (lofiTrackIndex + 1) % HINDI_LOFI_SONGS.length;
-    setLofiTrackIndex(nextIdx);
-    if (lofiPlaying) {
-      hindiLofi.playSong(HINDI_LOFI_SONGS[nextIdx].id);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      hindiLofi.stop();
-    };
-  }, []);
-
-  // Periodic subtle ambient couple reaction
-  useEffect(() => {
-    if (!simPlaying) return;
-    const pool = ['💖', '🍿', '✨', '🎬', '🔥'];
-    const timer = setInterval(() => {
-      const pick = pool[Math.floor(Math.random() * pool.length)];
-      triggerReaction(pick);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [simPlaying]);
 
   // Kinetic Rotating Audience Ticker
   const AUDIENCES = [
@@ -154,35 +113,6 @@ export default function SynCinemaPlatform() {
     'Best Friends Anywhere 🥂',
   ];
   const [audienceIndex, setAudienceIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAudienceIndex((prev) => (prev + 1) % AUDIENCES.length);
-    }, 2800);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Interactive Telemetry Simulator state
-  const [simPlaying, setSimPlaying] = useState(true);
-  const [simSeconds, setSimSeconds] = useState(2535.2);
-  const [simFrame, setSimFrame] = useState(76056);
-
-  useEffect(() => {
-    if (!simPlaying) return;
-    const timer = setInterval(() => {
-      setSimSeconds((s) => s + 0.1);
-      setSimFrame((f) => f + 3);
-    }, 100);
-    return () => clearInterval(timer);
-  }, [simPlaying]);
-
-  const formatSimTime = (totalSec) => {
-    const hrs = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = (totalSec % 60).toFixed(3);
-    const pad = (n) => (n < 10 ? '0' + n : n);
-    return `${pad(hrs)}:${pad(mins)}:${parseFloat(secs) < 10 ? '0' : ''}${secs}`;
-  };
 
   // Create Room State (Strictly Password Protected)
   const [roomName, setRoomName] = useState('');
@@ -201,24 +131,7 @@ export default function SynCinemaPlatform() {
   // Notifications
   const [toastMessage, setToastMessage] = useState('');
 
-  // Initialize storage & auto-generate strong passcodes
-  useEffect(() => {
-    try {
-      generatePasscode();
-      if (typeof window !== 'undefined') {
-        const sp = new URLSearchParams(window.location.search);
-        const j = sp.get('join') || sp.get('r') || sp.get('room');
-        const p = sp.get('p') || sp.get('pass');
-        if (j) {
-          setJoinCode(j);
-          setActiveTab('join');
-        }
-        if (p) {
-          setJoinPass(p);
-        }
-      }
-    } catch {}
-  }, []);
+  const currentLofiTrack = HINDI_LOFI_SONGS[lofiTrackIndex] || HINDI_LOFI_SONGS[0];
 
   const notify = (msg) => {
     setToastMessage(msg);
@@ -251,6 +164,97 @@ export default function SynCinemaPlatform() {
     setTimeout(() => setCopiedPass(false), 2000);
     notify('Room password copied to clipboard 📋');
   };
+
+  const triggerReaction = (emoji) => {
+    const id = Date.now() + Math.random();
+    const x = 15 + Math.random() * 70; // 15% to 85% horizontal placement
+    setReactions((prev) => [...prev.slice(-10), { id, emoji, x }]);
+    setTimeout(() => {
+      setReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 2600);
+  };
+
+  const toggleLofi = () => {
+    if (lofiPlaying) {
+      hindiLofi.pause();
+      setLofiPlaying(false);
+    } else {
+      hindiLofi.setVolume(0.45);
+      hindiLofi.playSong(currentLofiTrack.id);
+      setLofiPlaying(true);
+    }
+  };
+
+  const nextLofiTrack = () => {
+    const nextIdx = (lofiTrackIndex + 1) % HINDI_LOFI_SONGS.length;
+    setLofiTrackIndex(nextIdx);
+    if (lofiPlaying) {
+      hindiLofi.playSong(HINDI_LOFI_SONGS[nextIdx].id);
+    }
+  };
+
+  const formatSimTime = (totalSec) => {
+    const hrs = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = (totalSec % 60).toFixed(3);
+    const pad = (n) => (n < 10 ? '0' + n : n);
+    return `${pad(hrs)}:${pad(mins)}:${parseFloat(secs) < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Initialize storage & auto-generate strong passcodes
+  useEffect(() => {
+    try {
+      generatePasscode();
+      if (typeof window !== 'undefined') {
+        const sp = new URLSearchParams(window.location.search);
+        const j = sp.get('join') || sp.get('r') || sp.get('room');
+        const p = sp.get('p') || sp.get('pass');
+        if (j) {
+          setJoinCode(j);
+          setActiveTab('join');
+        }
+        if (p) {
+          setJoinPass(p);
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      hindiLofi.stop();
+    };
+  }, []);
+
+  // Periodic subtle ambient couple reaction
+  useEffect(() => {
+    if (!simPlaying) return;
+    const pool = ['💖', '🍿', '✨', '🎬', '🔥'];
+    const timer = setInterval(() => {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      triggerReaction(pick);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [simPlaying]);
+
+  // Kinetic Rotating Audience Ticker
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAudienceIndex((prev) => (prev + 1) % AUDIENCES.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Interactive Telemetry Simulator timer
+  useEffect(() => {
+    if (!simPlaying) return;
+    const timer = setInterval(() => {
+      setSimSeconds((s) => s + 0.1);
+      setSimFrame((f) => f + 3);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [simPlaying]);
 
   // Launch / Create Room (Strict password enforcement)
   const handleCreateRoom = (e) => {
