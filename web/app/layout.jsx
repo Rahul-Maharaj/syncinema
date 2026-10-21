@@ -2,6 +2,7 @@ import './globals.css';
 import { Fraunces, DM_Sans } from 'next/font/google';
 import Floaters from '@/components/Floaters';
 import AutoFixWatchdog from '@/components/AutoFixWatchdog';
+import AntiInspectShield from '@/components/AntiInspectShield';
 
 const display = Fraunces({ subsets: ['latin'], variable: '--font-display' });
 const body = DM_Sans({ subsets: ['latin'], variable: '--font-body' });
@@ -136,6 +137,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning className="bg-[#222222] text-pink-100 min-h-screen">
+        <AntiInspectShield />
         <AutoFixWatchdog />
         <div className="relative z-10">{children}</div>
       </body>

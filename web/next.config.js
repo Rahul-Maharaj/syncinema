@@ -18,6 +18,10 @@ module.exports = {
   output: process.env.STANDALONE ? 'standalone' : undefined,
   reactStrictMode: true,
   poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
   async headers() {
     const commonHeaders = [
       { key: 'X-Content-Type-Options', value: 'nosniff' },

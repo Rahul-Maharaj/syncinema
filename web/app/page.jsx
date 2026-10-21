@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
+import CinematicReelsShowcase from '@/components/CinematicReelsShowcase';
 import HolographicStreamPortal from '@/components/HolographicStreamPortal';
 import AudioVisualizerSuite from '@/components/AudioVisualizerSuite';
 import VisualFeatureVisualizer from '@/components/VisualFeatureVisualizer';
@@ -1012,6 +1013,14 @@ export default function SynCinemaPlatform() {
 
       {/* INTERACTIVE VISUAL ARCHITECTURE & LIVE FEATURE VISUALIZER */}
       <VisualFeatureVisualizer
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
+
+      {/* OFFICIAL CINEMATIC REELS SHOWCASE (ANTI-LAG 4K VERTICAL REELS) */}
+      <CinematicReelsShowcase
         onStartRoom={() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setActiveTab('create');

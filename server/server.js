@@ -670,8 +670,8 @@ app.post('/api/upload', (req, res) => {
   const fileId = `${crypto.randomUUID()}${cleanExt}`;
   const filePath = path.join(UPLOADS_DIR, fileId);
 
-  // High-performance write stream with 4MB chunk buffer for ultra-fast disk writes
-  const fileStream = fs.createWriteStream(filePath, { highWaterMark: 1024 * 1024 * 4 });
+  // High-performance write stream with 16MB chunk buffer for ultra-fast cloud disk writes
+  const fileStream = fs.createWriteStream(filePath, { highWaterMark: 1024 * 1024 * 16 });
   req.pipe(fileStream);
 
   fileStream.on('finish', () => {

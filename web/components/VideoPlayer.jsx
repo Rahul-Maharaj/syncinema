@@ -1340,7 +1340,8 @@ export default function VideoPlayer({
     socket?.emit('media:set', { media: instantMedia });
 
     // Stream file to server with high-performance buffer in background so other devices can stream it
-    setUploading({ progress: 0, name: f.name, size: f.size });
+    const startTime = Date.now();
+    setUploading({ progress: 0, name: f.name, size: f.size, speed: '0.0' });
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/upload');
     xhr.setRequestHeader('x-file-name', encodeURIComponent(f.name));
@@ -1348,14 +1349,16 @@ export default function VideoPlayer({
     xhr.upload.onprogress = (evt) => {
       if (evt.lengthComputable) {
         const pct = Math.round((evt.loaded / evt.total) * 100);
-        setUploading({ progress: pct, name: f.name, size: f.size });
-        socket?.emit('upload:progress', { progress: pct, name: f.name, fileSize: f.size });
+        const elapsedSec = (Date.now() - startTime) / 1000;
+        const mbps = elapsedSec > 0 ? ((evt.loaded / (1024 * 1024)) / elapsedSec).toFixed(1) : '0.0';
+        setUploading({ progress: pct, name: f.name, size: f.size, speed: mbps });
+        socket?.emit('upload:progress', { progress: pct, name: f.name, fileSize: f.size, speed: mbps });
       }
     };
 
     xhr.onload = () => {
       setUploading(null);
-      socket?.emit('upload:progress', { progress: 100, name: f.name, fileSize: f.size });
+      socket?.emit('upload:progress', { progress: 100, name: f.name, fileSize: f.size, speed: '0.0' });
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const res = JSON.parse(xhr.responseText);
@@ -1623,12 +1626,14 @@ export default function VideoPlayer({
         {/* Remote Cloud Upload Progress Card (for Partner) */}
         {remoteUpload && remoteUpload.progress < 100 && (
           <div className="absolute top-14 inset-x-4 z-30 mx-auto max-w-md pointer-events-auto">
-            <div className="p-3.5 rounded-2xl bg-[#1A1A1D]/95 border border-pink-500/30 backdrop-blur-md shadow-2xl space-y-2">
+            <div className="p-3.5 rounded-2xl bg-[#1A1A1D]/95 border border-pink-500/30 backdrop-blur-md shadow-2xl space-y-2.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-pink-200 flex items-center gap-1.5">
-                  <SparkleStar3D size={16} /> Host uploading movie to cloud
+                <span className="font-bold text-pink-200 flex items-center gap-1.5 truncate">
+                  <SparkleStar3D size={16} /> Partner uploading: {remoteUpload.name || 'Movie'}
                 </span>
-                <span className="font-mono text-pink-300 font-extrabold">{remoteUpload.progress}%</span>
+                <span className="font-mono text-pink-300 font-extrabold shrink-0">
+                  {remoteUpload.progress}% {remoteUpload.speed ? `(${remoteUpload.speed} MB/s)` : ''}
+                </span>
               </div>
               <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden border border-pink-500/20">
                 <div
@@ -1636,9 +1641,16 @@ export default function VideoPlayer({
                   style={{ width: `${remoteUpload.progress}%` }}
                 />
               </div>
-              <p className="text-[11px] text-pink-200/70">
-                Preparing cloud stream… Have this file on your device? Tap &ldquo;My file&rdquo; below to watch immediately with 0s wait!
-              </p>
+              <div className="flex items-center justify-between gap-2 pt-0.5">
+                <p className="text-[11px] text-pink-200/80 leading-snug">
+                  Waiting for cloud upload?
+                </p>
+                <label className="btn-pink py-1.5 px-3 rounded-xl text-white font-extrabold text-[11px] inline-flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 shrink-0">
+                  <Zap className="h-3 w-3" />
+                  <span>Pick My Copy (0s Wait)</span>
+                  <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
+                </label>
+              </div>
             </div>
           </div>
         )}
@@ -1648,7 +1660,7 @@ export default function VideoPlayer({
           <div className="absolute top-14 inset-x-4 z-30 mx-auto max-w-md pointer-events-auto">
             <div className="p-2.5 rounded-xl bg-[#1A1A1D]/95 border border-pink-500/30 backdrop-blur-md shadow-2xl flex items-center justify-between gap-3 text-xs">
               <span className="text-pink-200 truncate flex items-center gap-1.5 font-medium">
-                <SyncBolt3D size={16} /> Cloud upload: {uploading.progress}% (Playing locally with 0s wait)
+                <SyncBolt3D size={16} /> High-Speed Cloud upload: {uploading.progress}% {uploading.speed ? `(${uploading.speed} MB/s)` : ''} (Playing locally with 0s wait)
               </span>
               <span className="font-mono text-pink-300 font-bold shrink-0">{uploading.progress}%</span>
             </div>
