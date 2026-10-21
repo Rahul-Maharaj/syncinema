@@ -44,6 +44,7 @@ import {
   SparkleStar3D,
 } from '@/components/Icons3D';
 import { hindiLofi, HINDI_LOFI_SONGS } from '@/lib/hindiLofiSongs';
+import { isSearchBot } from '@/lib/antiBot';
 
 const VISUAL_SCENARIOS = [
   {
@@ -113,7 +114,7 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
   const [selectedSongId, setSelectedSongId] = useState('aaja_sanam');
 
   // Video Management: Support for user's own video file / URL
-  const [videoSource, setVideoSource] = useState('/sample-cinema.mp4');
+  const [videoSource, setVideoSource] = useState('');
   const [videoTitle, setVideoTitle] = useState('My Cinema Video (sample-cinema.mp4)');
   const [isCustomVideo, setIsCustomVideo] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -131,7 +132,7 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
 
   // Anti-Lag Viewport Observer: ONLY play and decode video when visualizer is in viewport!
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isSearchBot()) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         const visible = Boolean(entry?.isIntersecting);
@@ -154,6 +155,14 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
     }
     return () => observer.disconnect();
   }, [isPlaying, isGlitching]);
+
+  // Lazy video loader: Only load sample MP4 for real users when visualizer enters view
+  useEffect(() => {
+    if (typeof window === 'undefined' || isSearchBot()) return;
+    if (isInView && !videoSource) {
+      setVideoSource('/sample-cinema.mp4');
+    }
+  }, [isInView, videoSource]);
 
   // Synchronize play/pause states strictly when in view
   useEffect(() => {

@@ -1,8 +1,19 @@
 // Client-Side Human & Anti-Bot Verification Engine
-// Protects room joins and visitor telemetry from automated headless scripts.
+// Protects room joins and visitor telemetry from automated headless scripts and search engine crawlers.
+
+export function isSearchBot() {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /googlebot|bingbot|bravebot|duckduckbot|baiduspider|yandexbot|slurp|google-inspectiontool|googleother|google-favicon|bot|crawler|spider|robot|headless/i.test(ua);
+}
 
 export function isRealHumanBrowser() {
   if (typeof window === 'undefined') return true;
+
+  // Search engine crawlers (Googlebot, Bingbot, etc.) are strictly excluded from human visitor tracking
+  if (isSearchBot()) {
+    return false;
+  }
 
   try {
     // 0. Real mobile and tablet devices are always permitted (WhatsApp webview, mobile Chrome, Safari, etc.)
@@ -25,14 +36,7 @@ export function isRealHumanBrowser() {
       return false;
     }
 
-    // 4. Detect headless Chrome plugins anomaly
-    if (navigator.plugins && navigator.plugins.length === 0 && !/mobile|android|iphone/i.test(navigator.userAgent)) {
-      if (navigator.userAgent.includes('Chrome') && !navigator.userAgent.includes('Headless')) {
-        // Many headless Chrome instances have 0 plugins
-      }
-    }
-
-    // 5. Detect fake screen dimensions
+    // 4. Detect fake screen dimensions
     if (window.screen && (window.screen.width === 0 || window.screen.height === 0)) {
       return false;
     }
@@ -49,7 +53,7 @@ export function getHumanProofToken() {
   if (typeof window === 'undefined') return '';
   const ts = Math.floor(Date.now() / 30000); // 30s window
   const entropy = [
-    navigator.userAgent.slice(0, 32),
+    (navigator.userAgent || '').slice(0, 32),
     window.screen?.width || 1920,
     window.screen?.height || 1080,
     ts,

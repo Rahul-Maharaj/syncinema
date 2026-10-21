@@ -28,6 +28,7 @@ import {
   Ticket3D,
   SparkleStar3D,
 } from '@/components/Icons3D';
+import { isSearchBot } from '@/lib/antiBot';
 
 const CINEMATIC_REELS = [
   {
@@ -79,7 +80,7 @@ export default function CinematicReelsShowcase({ onStartRoom }) {
 
   // Anti-Lag Intersection Observer: Only play videos when scrolled into view
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isSearchBot()) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -188,8 +189,7 @@ export default function CinematicReelsShowcase({ onStartRoom }) {
                   loop
                   muted={isMuted}
                   playsInline
-                  autoPlay
-                  preload="metadata"
+                  preload="none"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover/video:scale-102"
                 />
 

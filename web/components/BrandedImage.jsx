@@ -24,6 +24,7 @@ export default function BrandedImage({
         alt={alt}
         className={`w-full h-full object-cover ${imgClassName}`}
         loading="lazy"
+        decoding="async"
       />
 
       {/* Official SynCinema Watermark Logo in Right Top Corner */}

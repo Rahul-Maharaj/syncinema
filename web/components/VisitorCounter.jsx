@@ -15,6 +15,8 @@ export default function VisitorCounter() {
 
   useEffect(() => {
     setMounted(true);
+    if (!isRealHumanBrowser()) return;
+
     const base = serverUrl();
     const socket = getSocket();
 

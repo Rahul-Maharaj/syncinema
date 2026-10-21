@@ -2,16 +2,21 @@
 
 import { useEffect } from 'react';
 import { serverUrl, getSocket } from '@/lib/socket';
+import { isSearchBot } from '@/lib/antiBot';
 
 /**
  * RealAudienceTracker: Global 100% Genuine Telemetry Beacon
  * Emits strictly real client telemetry (screen resolution, path, referrer, client ID)
  * to /api/stats/visitors to populate the Admin 100% Real Daily Audience Tracking System.
- * Zero fake numbers. Zero synthetic seeds.
+ * Automated search engine bots (Googlebot, Bingbot, etc.) are strictly excluded
+ * to preserve 100% human accuracy and avoid Google Search Console crawl errors.
  */
 export default function RealAudienceTracker() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Search engine crawlers must NEVER run visitor tracking or open socket connections
+    if (isSearchBot()) return;
 
     // Get or create persistent unique client ID in localStorage
     let cid = '';
