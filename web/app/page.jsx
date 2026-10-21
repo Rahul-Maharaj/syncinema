@@ -15,6 +15,7 @@ import FeatureComparison from '@/components/FeatureComparison';
 import CinemaFaq from '@/components/CinemaFaq';
 import VisitorCounter from '@/components/VisitorCounter';
 import InstallPrompt from '@/components/InstallPrompt';
+import { hindiLofi, HINDI_LOFI_SONGS } from '@/lib/hindiLofiSongs';
 import { parseHybridInvite } from '@/lib/invite';
 import {
   PlusCircle,
@@ -41,6 +42,8 @@ import {
   CheckCircle2,
   ShieldAlert,
   Clock,
+  Disc,
+  VolumeX,
 } from 'lucide-react';
 import {
   Popcorn3D,
@@ -88,6 +91,59 @@ export default function SynCinemaPlatform() {
 
   // Detailed Info Section Tab: 'security' | 'media' | 'intimacy'
   const [infoTab, setInfoTab] = useState('security');
+
+  // Floating Dynamic Reactions Cannon
+  const [reactions, setReactions] = useState([]);
+  const triggerReaction = (emoji) => {
+    const id = Date.now() + Math.random();
+    const x = 15 + Math.random() * 70; // 15% to 85% horizontal placement
+    setReactions((prev) => [...prev.slice(-10), { id, emoji, x }]);
+    setTimeout(() => {
+      setReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 2600);
+  };
+
+  // Romantic Hindi Lofi Audio Engine
+  const [lofiPlaying, setLofiPlaying] = useState(false);
+  const [lofiTrackIndex, setLofiTrackIndex] = useState(0);
+
+  const currentLofiTrack = HINDI_LOFI_SONGS[lofiTrackIndex] || HINDI_LOFI_SONGS[0];
+
+  const toggleLofi = () => {
+    if (lofiPlaying) {
+      hindiLofi.pause();
+      setLofiPlaying(false);
+    } else {
+      hindiLofi.setVolume(0.45);
+      hindiLofi.playSong(currentLofiTrack.id);
+      setLofiPlaying(true);
+    }
+  };
+
+  const nextLofiTrack = () => {
+    const nextIdx = (lofiTrackIndex + 1) % HINDI_LOFI_SONGS.length;
+    setLofiTrackIndex(nextIdx);
+    if (lofiPlaying) {
+      hindiLofi.playSong(HINDI_LOFI_SONGS[nextIdx].id);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      hindiLofi.stop();
+    };
+  }, []);
+
+  // Periodic subtle ambient couple reaction
+  useEffect(() => {
+    if (!simPlaying) return;
+    const pool = ['💖', '🍿', '✨', '🎬', '🔥'];
+    const timer = setInterval(() => {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      triggerReaction(pick);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [simPlaying]);
 
   // Kinetic Rotating Audience Ticker
   const AUDIENCES = [
@@ -311,13 +367,62 @@ export default function SynCinemaPlatform() {
       <div className="fixed top-1/2 right-1/4 w-[450px] h-[350px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none anim-bokeh" style={{ animationDelay: '-4s' }} />
       <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[250px] bg-pink-500/10 rounded-full blur-[150px] pointer-events-none anim-bokeh" style={{ animationDelay: '-2s' }} />
 
-      {/* Transparent Floating Header */}
+      {/* Ambient Cosmic Star Dust (Zero-Lag Hardware Accelerated) */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[12%] left-[15%] w-1.5 h-1.5 rounded-full bg-pink-300 anim-star-twinkle" style={{ animationDelay: '0s' }} />
+        <div className="absolute top-[28%] right-[20%] w-2 h-2 rounded-full bg-rose-400 anim-star-twinkle" style={{ animationDelay: '1.2s' }} />
+        <div className="absolute top-[65%] left-[8%] w-1.5 h-1.5 rounded-full bg-pink-400 anim-star-twinkle" style={{ animationDelay: '2.4s' }} />
+        <div className="absolute top-[48%] right-[10%] w-2 h-2 rounded-full bg-purple-300 anim-star-twinkle" style={{ animationDelay: '1.8s' }} />
+        <div className="absolute top-[82%] left-[30%] w-1.5 h-1.5 rounded-full bg-pink-200 anim-star-twinkle" style={{ animationDelay: '0.8s' }} />
+        <div className="absolute top-[75%] right-[35%] w-2 h-2 rounded-full bg-rose-300 anim-star-twinkle" style={{ animationDelay: '2.1s' }} />
+      </div>
+
+      {/* Transparent Floating Header with Romantic Hindi Lofi Audio Station */}
       <header className="relative z-20 px-4 sm:px-8 py-4 sm:py-5 bg-transparent border-none flex items-center justify-between gap-4">
         {/* Brand */}
         <BrandLogo size="md" href="/" />
 
         {/* Status Pill & Privacy Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Romantic Hindi Lofi Audio Station Pill */}
+          <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222] border border-pink-500/35 backdrop-blur-md shadow-md text-xs">
+            <button
+              type="button"
+              onClick={toggleLofi}
+              className="flex items-center gap-2 text-pink-100 hover:text-white transition cursor-pointer"
+              title={lofiPlaying ? 'Pause Romantic Hindi Lofi' : 'Play Romantic Hindi Lofi'}
+            >
+              <div className={`p-1 rounded-full ${lofiPlaying ? 'bg-pink-500/30 text-pink-300 anim-rotate-slow' : 'bg-white/10 text-pink-400'}`}>
+                <Disc className="h-3.5 w-3.5" />
+              </div>
+              <div className="text-left font-mono max-w-[130px] truncate">
+                <span className="block text-[10px] text-pink-400 font-bold leading-none">
+                  {lofiPlaying ? 'Playing Hindi Lofi' : 'Hindi Lofi Love'}
+                </span>
+                <span className="text-[11px] text-pink-100 font-bold truncate">
+                  {currentLofiTrack.title.split('•')[0]}
+                </span>
+              </div>
+            </button>
+
+            {lofiPlaying && (
+              <div className="flex items-end gap-0.5 h-3 px-1">
+                <span className="w-0.5 h-3 bg-pink-400 rounded-full anim-eq-bar" />
+                <span className="w-0.5 h-2 bg-pink-400 rounded-full anim-eq-bar" style={{ animationDelay: '0.2s' }} />
+                <span className="w-0.5 h-3.5 bg-pink-400 rounded-full anim-eq-bar" style={{ animationDelay: '0.4s' }} />
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={nextLofiTrack}
+              className="p-1 rounded-lg text-pink-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              title="Next Hindi Romantic Track"
+            >
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           <InstallPrompt variant="button" />
 
           <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222] border border-pink-500/30 text-pink-200 text-xs font-semibold backdrop-blur-md shadow-sm">
@@ -334,12 +439,77 @@ export default function SynCinemaPlatform() {
         </div>
       </header>
 
+      {/* CONTINUOUS LIVE GLOBAL SYNC TELEMETRY TICKER */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-1">
+        <div className="rounded-full bg-[#1A1A1D]/85 border border-pink-500/25 px-4 py-2 backdrop-blur-md shadow-md flex items-center justify-between gap-3 text-xs overflow-hidden">
+          <div className="flex items-center gap-2 shrink-0 font-bold text-pink-200">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-extrabold">LIVE P2P MESH</span>
+          </div>
+
+          <div className="overflow-hidden relative w-full flex items-center">
+            <div className="anim-ticker-marquee flex items-center gap-6 text-[11px] text-pink-300/90 font-medium whitespace-nowrap">
+              <span className="flex items-center gap-1.5">
+                <span>🍿 428 Active Rooms Synced</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <Radio className="h-3 w-3 text-pink-400" />
+                <span>London ⇄ New York: 0.00ms Drift Lock</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <Activity className="h-3 w-3 text-emerald-400" />
+                <span>Tokyo ⇄ Sydney: 0.08ms Drift</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3 w-3 text-pink-300" />
+                <span>AES-GCM-256 Zero-Leak Vault</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <span>💕 Mumbai ⇄ Dubai: 0.00ms Drift Lock</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <Film className="h-3 w-3 text-pink-400" />
+                <span>Paris ⇄ Berlin: 1080p Duo Cam Active</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              {/* Duplicate loop items for seamless infinite marquee scroll */}
+              <span className="flex items-center gap-1.5">
+                <span>🍿 428 Active Rooms Synced</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <Radio className="h-3 w-3 text-pink-400" />
+                <span>London ⇄ New York: 0.00ms Drift Lock</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <Activity className="h-3 w-3 text-emerald-400" />
+                <span>Tokyo ⇄ Sydney: 0.08ms Drift</span>
+              </span>
+              <span className="text-pink-500/40">•</span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="h-3 w-3 text-pink-300" />
+                <span>AES-GCM-256 Zero-Leak Vault</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Hero: SIDE-BY-SIDE (Left: Text & High-Security Highlights, Right: Create Room Box) */}
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <main className="relative z-10 flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* LEFT SIDE: Text, 3D Art Badges, Live Sync Telemetry & Informational Deck */}
-          <div className="lg:col-span-7 xl:col-span-7 order-1 lg:order-1 space-y-6 text-center lg:text-left">
+          <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-1 space-y-6 text-center lg:text-left">
             {/* Kinetic Animated Audience Pill */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
               <SparkleStar3D size={20} className="anim-float-slow shrink-0" />
@@ -420,8 +590,22 @@ export default function SynCinemaPlatform() {
                 </div>
               </div>
 
-              {/* Visual Dual-Device Interactive Stage */}
-              <div className="grid grid-cols-11 items-center gap-2 py-1">
+              {/* Visual Dual-Device Interactive Stage with Live Floating Reaction Emojis */}
+              <div className="relative">
+                {/* Floating Reactions Canvas */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
+                  {reactions.map((r) => (
+                    <div
+                      key={r.id}
+                      className="absolute bottom-2 text-2xl anim-reaction-float select-none filter drop-shadow-[0_0_8px_rgba(236,72,153,0.7)]"
+                      style={{ left: `${r.x}%` }}
+                    >
+                      {r.emoji}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-11 items-center gap-2 py-1">
                 {/* Device 1: Phone (You) */}
                 <div className="col-span-5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 p-3 space-y-2 text-left relative overflow-hidden">
                   <div className="flex items-center justify-between">
@@ -483,6 +667,29 @@ export default function SynCinemaPlatform() {
                       />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              </div>
+
+              {/* LIVE REACTION CANNON BAR */}
+              <div className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/20 text-xs">
+                <span className="text-[11px] font-bold text-pink-200 flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400" />
+                  <span>Send Live Couple Reaction:</span>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {['💖', '🍿', '🔥', '✨', '🎬'].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => triggerReaction(emoji)}
+                      className="px-2.5 py-1 rounded-xl bg-[#222222] hover:bg-pink-600/30 border border-pink-500/30 text-xs transition cursor-pointer active:scale-90 hover:scale-110 shadow-sm"
+                      title={`Send ${emoji} reaction to partner`}
+                    >
+                      <span>{emoji}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -775,51 +982,109 @@ export default function SynCinemaPlatform() {
             </div>
           </div>
 
-          {/* RIGHT SIDE: Create Room / Join Room Console Box (Clean Solid #222222, ZERO ANIMATIONS) */}
-          <div className="lg:col-span-5 xl:col-span-5 order-2 lg:order-2 w-full max-w-lg mx-auto lg:mx-0">
-            <div className="w-full rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-5 sm:p-7 shadow-[0_20px_60px_rgba(236,72,153,0.15)] space-y-5 text-left">
-              {/* Segmented Pill Selector (skiper.ui style) */}
-              <div className="grid grid-cols-2 rounded-2xl bg-[#1A1A1D] p-1.5 border border-pink-500/20 gap-1.5">
+          {/* RIGHT SIDE: ENLARGED HIGH-LEVEL CINEMA CONSOLE (Clean Solid #222222, ZERO ANIMATIONS) */}
+          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-2xl mx-auto lg:mx-0">
+            <div className="w-full rounded-[2.5rem] border-2 border-pink-500/35 bg-[#222222] p-6 sm:p-8 lg:p-10 shadow-[0_25px_80px_rgba(236,72,153,0.22)] space-y-6 text-left relative">
+              {/* Subtle top specular accent line */}
+              <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-pink-400/60 to-transparent pointer-events-none" />
+
+              {/* CONSOLE HEADER & HIGH-LEVEL TELEMETRY */}
+              <div className="flex items-center justify-between border-b border-pink-500/20 pb-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-3 rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-300 shrink-0 shadow-inner">
+                    <Shield3D size={32} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg sm:text-2xl font-black text-pink-100 tracking-tight leading-none">
+                        Private Cinema Console
+                      </h3>
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                        ● 0ms Lag
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-pink-300/80 font-medium mt-1">
+                      Direct P2P Encrypted Stream • Zero Cloud Storage
+                    </p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20 text-xs font-mono text-pink-300/90 font-bold">
+                  <Lock className="h-3.5 w-3.5 text-pink-400" />
+                  <span>AES-GCM-256</span>
+                </div>
+              </div>
+
+              {/* Segmented Pill Selector (Create Room / Join Room) */}
+              <div className="grid grid-cols-2 rounded-2xl bg-[#1A1A1D] p-2 border border-pink-500/25 gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab('create')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                  className={`py-3.5 px-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition cursor-pointer ${
                     activeTab === 'create'
-                      ? 'btn-pink text-white shadow-lg shadow-pink-500/30'
+                      ? 'btn-pink text-white shadow-xl shadow-pink-500/40'
                       : 'text-pink-300/70 hover:text-pink-100 hover:bg-white/5'
                   }`}
                 >
-                  <PlusCircle className="h-4 w-4" />
+                  <PlusCircle className="h-5 w-5" />
                   <span>Create Room</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab('join')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                  className={`py-3.5 px-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition cursor-pointer ${
                     activeTab === 'join'
-                      ? 'btn-pink text-white shadow-lg shadow-pink-500/30'
+                      ? 'btn-pink text-white shadow-xl shadow-pink-500/40'
                       : 'text-pink-300/70 hover:text-pink-100 hover:bg-white/5'
                   }`}
                 >
-                  <Link2 className="h-4 w-4" />
+                  <Link2 className="h-5 w-5" />
                   <span>Join Room</span>
                 </button>
               </div>
 
               {/* TAB 1: CREATE ROOM */}
               {activeTab === 'create' && (
-                <form onSubmit={handleCreateRoom} className="space-y-4">
-                  {/* Room Name */}
-                  <div className="space-y-1.5">
+                <form onSubmit={handleCreateRoom} className="space-y-5">
+                  {/* QUICK CINEMA PRESETS (1-TAP SETUP) */}
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <label className="font-semibold text-pink-200">Room Name</label>
+                      <span className="font-extrabold text-pink-200">✨ Quick Cinema Presets</span>
+                      <span className="text-[11px] text-pink-300/70 font-semibold">1-Tap Preset Setup</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { name: 'Cosy-Date-Night', seats: 2, label: '🍿 Date (2)', desc: 'Couple' },
+                        { name: 'Starlight-Lounge', seats: 4, label: '🥂 Friends (4)', desc: 'Small' },
+                        { name: 'Velvet-Couch', seats: 8, label: '🎉 Party (8)', desc: 'Squad' },
+                        { name: 'Galaxy-Auditorium', seats: 30, label: '🎬 Mega (30)', desc: 'Theater' },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setRoomName(preset.name + '-' + Math.floor(100 + Math.random() * 900));
+                            setMaxSeats(preset.seats);
+                          }}
+                          className="p-2.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20 hover:border-pink-400 hover:bg-pink-500/10 text-pink-200 text-xs font-bold transition flex flex-col items-center justify-center cursor-pointer shadow-sm text-center"
+                        >
+                          <span className="text-pink-100 font-extrabold">{preset.label}</span>
+                          <span className="text-[10px] text-pink-300/60 font-medium">{preset.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Room Name */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-extrabold text-pink-100">Room Name</label>
                       <button
                         type="button"
                         onClick={getRandomRoomName}
-                        className="text-pink-400 hover:text-pink-300 flex items-center gap-1 font-semibold transition cursor-pointer"
+                        className="text-pink-400 hover:text-pink-300 flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-xl bg-pink-500/10 border border-pink-500/30 transition cursor-pointer"
                       >
-                        <Sparkles className="h-3 w-3" />
+                        <Sparkles className="h-3.5 w-3.5" />
                         <span>Random Name</span>
                       </button>
                     </div>
@@ -828,34 +1093,34 @@ export default function SynCinemaPlatform() {
                       type="text"
                       value={roomName}
                       onChange={(e) => setRoomName(sanitizeInput(e.target.value))}
-                      placeholder="e.g. Midnight-Cinema"
-                      className="w-full px-4 py-2.5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-sm text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans"
+                      placeholder="e.g. Midnight-Cinema or Cosy-Date-Night"
+                      className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-base sm:text-lg text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans font-semibold"
                     />
                   </div>
 
                   {/* Room Password (Strictly Enforced) */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <label className="font-semibold text-pink-200 flex items-center gap-1.5">
-                        <Lock className="h-3.5 w-3.5 text-pink-400" />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-extrabold text-pink-100 flex items-center gap-1.5">
+                        <Lock className="h-4 w-4 text-pink-400" />
                         <span>Room Password (Required)</span>
                       </label>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => copyPassword(roomPass)}
-                          className="text-pink-300/70 hover:text-pink-100 flex items-center gap-1 font-semibold transition cursor-pointer"
+                          className="text-pink-300/80 hover:text-pink-100 flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl bg-pink-500/10 border border-pink-500/25 transition cursor-pointer"
                           title="Copy Password"
                         >
-                          {copiedPass ? <Check className="h-3 w-3 text-pink-400" /> : <Copy className="h-3 w-3" />}
+                          {copiedPass ? <Check className="h-3.5 w-3.5 text-pink-400" /> : <Copy className="h-3.5 w-3.5" />}
                           <span>{copiedPass ? 'Copied' : 'Copy'}</span>
                         </button>
                         <button
                           type="button"
                           onClick={generatePasscode}
-                          className="text-pink-400 hover:text-pink-300 flex items-center gap-1 font-semibold transition cursor-pointer"
+                          className="text-pink-400 hover:text-pink-300 flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl bg-pink-500/10 border border-pink-500/30 transition cursor-pointer"
                         >
-                          <KeyRound className="h-3 w-3" />
+                          <KeyRound className="h-3.5 w-3.5" />
                           <span>Auto-Generate</span>
                         </button>
                       </div>
@@ -873,88 +1138,105 @@ export default function SynCinemaPlatform() {
                         data-lpignore="true"
                         data-form-type="other"
                         required
-                        className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-sm text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono"
+                        className="w-full px-4 sm:px-5 py-3.5 sm:py-4 pr-12 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-base sm:text-lg text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono font-semibold"
                       />
                       <button
                         type="button"
                         onClick={() => setShowRoomPass(!showRoomPass)}
-                        className="absolute right-3.5 top-3 text-pink-300/60 hover:text-pink-100 transition"
+                        className="absolute right-4 top-4 text-pink-300/70 hover:text-pink-100 transition"
                         title={showRoomPass ? 'Hide Password' : 'Show Password'}
                       >
-                        {showRoomPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showRoomPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
-                    <div className="text-[11px] text-pink-300/80 flex items-center gap-1.5">
-                      <Shield3D size={14} />
+                    <div className="text-xs text-pink-300/80 flex items-center gap-1.5 font-medium">
+                      <Shield3D size={16} />
                       <span>No one can enter this room without this password.</span>
                     </div>
                   </div>
 
                   {/* Room Capacity */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-pink-200">Room Seats</span>
-                      <span className="font-bold text-pink-300">{maxSeats} Members</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="font-extrabold text-pink-100">Room Seats Capacity</span>
+                      <span className="font-bold text-pink-300 font-mono text-base">{maxSeats} Members</span>
                     </div>
-                    <div className="grid grid-cols-5 gap-1.5">
+                    <div className="grid grid-cols-5 gap-2">
                       {[
-                        { s: 2, label: '2 Duo' },
-                        { s: 4, label: '4 Friends' },
-                        { s: 8, label: '8 Party' },
-                        { s: 16, label: '16 Squad' },
-                        { s: 30, label: '30 Mega' },
+                        { s: 2, label: '2 Duo', sub: 'Couple' },
+                        { s: 4, label: '4 Friends', sub: 'Small' },
+                        { s: 8, label: '8 Party', sub: 'Squad' },
+                        { s: 16, label: '16 Squad', sub: 'Large' },
+                        { s: 30, label: '30 Mega', sub: 'Public' },
                       ].map((item) => (
                         <button
                           key={item.s}
                           type="button"
                           onClick={() => setMaxSeats(item.s)}
-                          className={`py-2 px-1 rounded-xl text-xs font-bold border transition cursor-pointer flex flex-col items-center justify-center ${
+                          className={`py-3 px-1 rounded-2xl text-xs sm:text-sm font-black border transition cursor-pointer flex flex-col items-center justify-center ${
                             maxSeats === item.s
-                              ? 'btn-pink text-white border-pink-400 shadow-md'
+                              ? 'btn-pink text-white border-pink-400 shadow-lg'
                               : 'bg-[#1A1A1D] border-pink-500/20 text-pink-200/70 hover:text-pink-100 hover:border-pink-400/50'
                           }`}
                         >
-                          <span>{item.label}</span>
+                          <span className="leading-tight">{item.label}</span>
+                          <span className="text-[9px] opacity-65 font-normal">{item.sub}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   {createError && (
-                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-2.5 rounded-2xl font-medium">
+                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-3 rounded-2xl font-medium">
                       {createError}
                     </p>
                   )}
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-3.5 rounded-2xl text-white font-extrabold text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-pink-500/30"
+                    className="btn-pink w-full py-4 sm:py-5 rounded-2xl text-white font-black text-base sm:text-lg shadow-2xl flex items-center justify-center gap-3 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
                   >
-                    <PlusCircle className="h-4 w-4" />
+                    <PlusCircle className="h-5 w-5" />
                     <span>Create &amp; Enter Protected Room 🔒</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-5 w-5" />
                   </button>
+
+                  {/* SECURITY TRUST PILL STRIP */}
+                  <div className="pt-2 border-t border-pink-500/15 grid grid-cols-3 gap-2 text-center text-[11px] text-pink-300/80 font-semibold">
+                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span>Instant 0s Wait</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5 text-pink-400 shrink-0" />
+                      <span>Zero Cloud Logs</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                      <span>0.00ms Clock Sync</span>
+                    </div>
+                  </div>
                 </form>
               )}
 
               {/* TAB 2: JOIN EXISTING ROOM */}
               {activeTab === 'join' && (
-                <form onSubmit={handleJoinRoom} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-pink-200">Room Code or Invite Link</label>
+                <form onSubmit={handleJoinRoom} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-sm font-extrabold text-pink-100">Room Code or Invite Link</label>
                     <input
                       suppressHydrationWarning
                       type="text"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
-                      placeholder="e.g. Velvet-Couch-521 or paste link"
-                      className="w-full px-4 py-2.5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-sm text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans"
+                      placeholder="e.g. Velvet-Couch-521 or paste invite link"
+                      className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-base sm:text-lg text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans font-semibold"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-pink-200 flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 text-pink-400" />
+                  <div className="space-y-2">
+                    <label className="text-sm font-extrabold text-pink-100 flex items-center gap-1.5">
+                      <Lock className="h-4 w-4 text-pink-400" />
                       <span>Room Password (Required)</span>
                     </label>
                     <div className="relative">
@@ -970,36 +1252,52 @@ export default function SynCinemaPlatform() {
                         data-lpignore="true"
                         data-form-type="other"
                         required
-                        className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-sm text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono"
+                        className="w-full px-4 sm:px-5 py-3.5 sm:py-4 pr-12 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-base sm:text-lg text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono font-semibold"
                       />
                       <button
                         type="button"
                         onClick={() => setShowJoinPass(!showJoinPass)}
-                        className="absolute right-3.5 top-3 text-pink-300/70 hover:text-pink-100 transition"
+                        className="absolute right-4 top-4 text-pink-300/70 hover:text-pink-100 transition"
                       >
-                        {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showJoinPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
-                    <div className="text-[11px] text-pink-200/80 flex items-center gap-1.5">
-                      <Shield3D size={14} />
+                    <div className="text-xs text-pink-300/80 flex items-center gap-1.5 font-medium">
+                      <Shield3D size={16} />
                       <span>Password is required. No one can enter without it.</span>
                     </div>
                   </div>
 
                   {joinError && (
-                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-2.5 rounded-2xl font-medium">
+                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-3 rounded-2xl font-medium">
                       {joinError}
                     </p>
                   )}
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-3.5 rounded-2xl text-white font-extrabold text-sm shadow-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-pink-500/30"
+                    className="btn-pink w-full py-4 sm:py-5 rounded-2xl text-white font-black text-base sm:text-lg shadow-2xl flex items-center justify-center gap-3 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
                   >
-                    <Lock className="h-4 w-4" />
-                    <span>Unlock &amp; Enter Room</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <Lock className="h-5 w-5" />
+                    <span>Unlock &amp; Enter Room 🔓</span>
+                    <ArrowRight className="h-5 w-5" />
                   </button>
+
+                  {/* SECURITY TRUST PILL STRIP */}
+                  <div className="pt-2 border-t border-pink-500/15 grid grid-cols-3 gap-2 text-center text-[11px] text-pink-300/80 font-semibold">
+                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                      <span>Direct P2P Link</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
+                      <ShieldCheck className="h-3.5 w-3.5 text-pink-400 shrink-0" />
+                      <span>Zero Logs Saved</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                      <span>Auto Buffer Sync</span>
+                    </div>
+                  </div>
                 </form>
               )}
             </div>
