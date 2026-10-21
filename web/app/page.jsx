@@ -739,6 +739,7 @@ export default function SynCinemaPlatform() {
 
             {/* Kinetic Shimmer Headline */}
             <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-black text-pink-100 tracking-tight leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+              <span className="sr-only">Syncinema (SyncCinema) — </span>
               Same Movie.{' '}
               <span className="anim-text-shimmer inline-block">
                 Different Places.
@@ -748,7 +749,7 @@ export default function SynCinemaPlatform() {
             </h1>
 
             <p className="text-xs sm:text-sm text-pink-200/90 font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
-              Stream YouTube, movies, or direct links in sub-second synchronization with real-time video calls. Every room is strictly password protected with zero-leak peer-to-peer privacy.
+              Stream movies, YouTube, series, or direct links on Syncinema in sub-second synchronization with real-time video calls. Every room is strictly password protected with zero-leak peer-to-peer privacy.
             </p>
 
             {/* Floating 3D Art Stickers (Hardware-Accelerated, Zero-Lag) */}

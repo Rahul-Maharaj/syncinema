@@ -24,7 +24,7 @@ export default function robots() {
       },
       {
         // Legitimate search engines can index public pages, but strictly excluded from private rooms & internal APIs
-        userAgent: ['Googlebot', 'Bingbot'],
+        userAgent: ['Googlebot', 'Bingbot', 'Bravebot', 'DuckDuckBot', 'Applebot', 'YandexBot'],
         allow: '/',
         disallow: [
           '/api/',

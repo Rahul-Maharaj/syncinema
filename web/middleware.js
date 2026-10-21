@@ -8,13 +8,13 @@ const SOCIAL_PREVIEW_REGEX = /whatsapp|telegrambot|facebookexternalhit|twitterbo
 
 const PROBE_REGEX = /\.(env|git|svn|htaccess|aws|sql|bak|old|swp|tar|gz|zip|conf|ini|yaml|yml)($|\/|\?)|(wp-login|wp-admin|phpmyadmin|pma|actuator|xmlrpc|setup\.php|shell\.php|eval-stdin|solr|cgi-bin)/i;
 
-const LEGIT_SEARCH_ENGINES = /googlebot|bingbot|duckduckbot|googleother|google-favicon|google/i;
+const LEGIT_SEARCH_ENGINES = /googlebot|bingbot|msnbot|bingpreview|bravebot|duckduckbot|duckduckgo|applebot|yandex|qwant|seznam|yahoo|slurp|baiduspider|googleother|google-favicon|google-inspectiontool|google/i;
 
 export function middleware(request) {
   const ua = request.headers.get('user-agent') || '';
   const pathname = request.nextUrl.pathname;
 
-  // 1. Allow Next.js internal files, favicon, manifest, static assets, health checks, service worker
+  // 1. Allow Next.js internal files, favicon, manifest, static assets, health checks, service worker, IndexNow txt
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
@@ -25,6 +25,7 @@ export function middleware(request) {
     pathname.endsWith('.svg') ||
     pathname.endsWith('.ico') ||
     pathname.endsWith('.webmanifest') ||
+    pathname.endsWith('.txt') ||
     pathname === '/sw.js' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
