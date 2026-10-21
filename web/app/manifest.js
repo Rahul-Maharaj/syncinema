@@ -15,6 +15,18 @@ export default function manifest() {
     prefer_related_applications: false,
     icons: [
       {
+        src: '/icon-48.png',
+        sizes: '48x48',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icon-96.png',
+        sizes: '96x96',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
         src: '/icon-192.png',
         sizes: '192x192',
         type: 'image/png',
@@ -37,12 +49,6 @@ export default function manifest() {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
-      },
-      {
-        src: '/logo.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'any',
       },
     ],
     shortcuts: [

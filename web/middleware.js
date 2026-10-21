@@ -8,22 +8,26 @@ const SOCIAL_PREVIEW_REGEX = /whatsapp|telegrambot|facebookexternalhit|twitterbo
 
 const PROBE_REGEX = /\.(env|git|svn|htaccess|aws|sql|bak|old|swp|tar|gz|zip|conf|ini|yaml|yml)($|\/|\?)|(wp-login|wp-admin|phpmyadmin|pma|actuator|xmlrpc|setup\.php|shell\.php|eval-stdin|solr|cgi-bin)/i;
 
-const LEGIT_SEARCH_ENGINES = /googlebot|bingbot|duckduckbot/i;
+const LEGIT_SEARCH_ENGINES = /googlebot|bingbot|duckduckbot|googleother|google-favicon|google/i;
 
 export function middleware(request) {
   const ua = request.headers.get('user-agent') || '';
   const pathname = request.nextUrl.pathname;
 
-  // 1. Allow Next.js internal files, favicon, manifest, static assets, health checks
+  // 1. Allow Next.js internal files, favicon, manifest, static assets, health checks, service worker
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
+    pathname.startsWith('/icon') ||
     pathname.endsWith('.png') ||
     pathname.endsWith('.jpg') ||
     pathname.endsWith('.jpeg') ||
     pathname.endsWith('.svg') ||
     pathname.endsWith('.ico') ||
     pathname.endsWith('.webmanifest') ||
+    pathname === '/sw.js' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
     pathname === '/health'
   ) {
     return NextResponse.next();
