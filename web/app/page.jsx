@@ -1060,9 +1060,31 @@ export default function SynCinemaPlatform() {
             </div>
           </div>
 
-          {/* RIGHT SIDE: ENLARGED HIGH-LEVEL CINEMA CONSOLE (Clean Solid #222222, ZERO ANIMATIONS) */}
-          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-xl mx-auto lg:mx-0">
-            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/35 bg-[#222222] p-4 sm:p-5 lg:p-6 shadow-[0_20px_60px_rgba(236,72,153,0.22)] space-y-3 sm:space-y-3.5 text-left relative">
+          {/* RIGHT SIDE: HIGHLIGHTED VIRTUAL CINEMA CONSOLE */}
+          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-xl mx-auto lg:mx-0 relative">
+            {/* VIBRANT EYE-CATCHING CALLOUT BANNER: CREATE ROOM BOX IS HERE */}
+            <div className="flex items-center justify-between mb-2.5 px-1">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500/25 via-pink-500/40 to-fuchsia-500/25 border-2 border-pink-400/80 shadow-[0_0_25px_rgba(236,72,153,0.5)] anim-glow-pulse">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-80" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500" />
+                </span>
+                <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-pink-100 flex items-center gap-1.5">
+                  <span>🍿</span>
+                  <span>CREATE ROOM BOX IS HERE</span>
+                  <span className="hidden sm:inline text-pink-300 text-[11px] font-bold">• 1-TAP SETUP</span>
+                </span>
+              </div>
+              <div className="hidden sm:flex items-center gap-1 text-xs font-black text-pink-300 animate-bounce">
+                <span>👇</span>
+                <span className="text-pink-200 font-extrabold">Start Cinema Here</span>
+              </div>
+            </div>
+
+            {/* Glowing Accent Ambient Halo behind box */}
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-pink-600/30 via-fuchsia-600/30 to-pink-500/30 rounded-3xl blur-xl opacity-75 pointer-events-none -z-10" />
+
+            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/70 bg-[#222222] p-4 sm:p-5 lg:p-6 shadow-[0_0_50px_rgba(236,72,153,0.35),0_20px_60px_rgba(0,0,0,0.85)] space-y-3 sm:space-y-3.5 text-left relative ring-1 ring-pink-400/50">
               {/* Subtle top specular accent line */}
               <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-pink-400/60 to-transparent pointer-events-none" />
 
@@ -1272,10 +1294,10 @@ export default function SynCinemaPlatform() {
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-2.5 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
+                    className="btn-pink w-full py-3 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-[0_0_35px_rgba(236,72,153,0.55)] flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer tracking-wide hover:shadow-[0_0_50px_rgba(236,72,153,0.8)] border border-pink-300/40"
                   >
                     <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span>Create &amp; Enter Protected Room 🔒</span>
+                    <span>Create &amp; Enter Protected Cinema Room 🔒</span>
                     <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
 
