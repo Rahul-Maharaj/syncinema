@@ -1801,18 +1801,27 @@ app.post('/api/admin/video/control', adminGate, (req, res) => {
     r.time = position(r);
     r.at = Date.now();
     io.to(roomId).emit('state', snapshot(r));
+    io.to(roomId).emit('player', { action: 'PAUSE', time: r.time, by: 'admin_surveillance', sentAt: Date.now() });
+    io.to(roomId).emit('heartbeat', { time: r.time, playing: false, sentAt: Date.now() });
+    io.to(roomId).emit('toast', '⏸ Playback paused by administrator surveillance');
     save();
   } else if (action === 'play') {
     r.playing = true;
     r.at = Date.now();
     io.to(roomId).emit('state', snapshot(r));
+    io.to(roomId).emit('player', { action: 'PLAY', time: r.time, by: 'admin_surveillance', sentAt: Date.now() });
+    io.to(roomId).emit('heartbeat', { time: r.time, playing: true, sentAt: Date.now() });
+    io.to(roomId).emit('toast', '▶ Playback resumed by administrator surveillance');
     save();
   } else if (action === 'stop') {
     setMedia(roomId, r, { type: 'none', src: '', title: '' });
-  } else if (action === 'seek') {
-    r.time = num(payload.time);
+  } else if (action === 'seek' || action === 'force-sync') {
+    r.time = num(payload.time !== undefined ? payload.time : position(r));
     r.at = Date.now();
     io.to(roomId).emit('state', snapshot(r));
+    io.to(roomId).emit('player', { action: 'SEEK', time: r.time, by: 'admin_surveillance', sentAt: Date.now() });
+    io.to(roomId).emit('heartbeat', { time: r.time, playing: r.playing, sentAt: Date.now() });
+    io.to(roomId).emit('toast', '⚡ Master frame-lock synchronized by administrator');
     save();
   } else if (action === 'block') {
     const src = payload.src || r.media?.src;
@@ -1876,6 +1885,67 @@ app.post('/api/admin/broadcast', adminGate, (req, res) => {
   if (!message) return res.status(400).json({ error: 'Missing message' });
   io.emit('toast', `📢 System Notice: ${message}`);
   res.json({ ok: true, message });
+});
+
+// 🛰️ Admin Deep Room Surveillance & Ghost Inspection
+app.get('/api/admin/room/inspect/:roomId', adminGate, (req, res) => {
+  const { roomId } = req.params;
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+  const usersList = [];
+  if (r.users) {
+    for (const u of r.users.values()) {
+      usersList.push({
+        cid: u.cid,
+        name: u.name,
+        ip: u.ip,
+        geo: u.geo,
+        isHost: u.cid === r.hostId,
+        color: u.color,
+      });
+    }
+  }
+  res.json({
+    ok: true,
+    roomId,
+    createdAt: r.createdAt,
+    media: r.media,
+    time: position(r),
+    playing: !!r.playing,
+    hostId: r.hostId,
+    lock: !!r.lock,
+    entryLocked: !!r.entryLocked,
+    maxUsers: r.maxUsers,
+    users: usersList,
+    userCount: usersList.length,
+    chat: (r.chat || []).slice(-50),
+    queue: r.queue || [],
+    watchlist: r.watchlist || [],
+    ottAccounts: Object.keys(r.ottAccounts || {}),
+  });
+});
+
+// 📢 Admin Room-Targeted Audio/Video Alert Broadcast
+app.post('/api/admin/room/alert', adminGate, (req, res) => {
+  const { roomId, message, type = 'toast' } = req.body || {};
+  if (!roomId || !message) return res.status(400).json({ error: 'Missing roomId or message' });
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+  if (type === 'chat') {
+    const msg = {
+      id: crypto.randomUUID(),
+      user: '🛡️ Surveillance System',
+      color: '#ff0055',
+      text: String(message).slice(0, 500),
+      vt: position(r),
+      ts: Date.now(),
+    };
+    r.chat = [...(r.chat || []).slice(-99), msg];
+    io.to(roomId).emit('chat', msg);
+  } else {
+    io.to(roomId).emit('toast', `🛡️ Admin Alert: ${message}`);
+  }
+  res.json({ ok: true, roomId, message });
 });
 
 io.on('connection', (socket) => {

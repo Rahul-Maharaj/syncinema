@@ -13,7 +13,6 @@ import HowItWorksGuide from '@/components/HowItWorksGuide';
 import CinemaPlatformMetrics from '@/components/CinemaPlatformMetrics';
 import FeatureComparison from '@/components/FeatureComparison';
 import CinemaFaq from '@/components/CinemaFaq';
-import VisitorCounter from '@/components/VisitorCounter';
 import InstallPrompt from '@/components/InstallPrompt';
 import { hindiLofi, HINDI_LOFI_SONGS } from '@/lib/hindiLofiSongs';
 import { parseHybridInvite } from '@/lib/invite';
@@ -172,6 +171,13 @@ export default function SynCinemaPlatform() {
     setTimeout(() => {
       setReactions((prev) => prev.filter((r) => r.id !== id));
     }, 2600);
+  };
+
+  const triggerStickerClick = (emoji, toastText) => {
+    triggerReaction(emoji);
+    setTimeout(() => triggerReaction(emoji), 140);
+    setTimeout(() => triggerReaction('✨'), 280);
+    showToast(`${emoji} ${toastText}`);
   };
 
   const toggleLofi = () => {
@@ -539,26 +545,65 @@ export default function SynCinemaPlatform() {
 
             {/* Floating 3D Art Stickers (Hardware-Accelerated, Zero-Lag) */}
             <div className="relative flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1 text-xs">
-              <div className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+              <button
+                type="button"
+                onClick={() => triggerStickerClick('🍿', 'Popcorn ready! Crisp 1080p/4K movie night loaded')}
+                className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Tap to trigger popcorn celebration"
+              >
                 <Popcorn3D size={22} />
                 <span>🍿 Crisp 1080p/4K</span>
-              </div>
-              <div className="anim-heartbeat px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => triggerStickerClick('💖', 'Duo Webcam Call active! Zero lag romance')}
+                className="anim-heartbeat px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Tap to trigger romantic love hearts"
+              >
                 <Heart3D size={22} />
                 <span>💖 Duo Webcams</span>
-              </div>
-              <div className="anim-float-reverse px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => triggerStickerClick('⚡', '0ms Drift Clock Sync locked! Sub-millisecond precision')}
+                className="anim-float-reverse px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Tap to trigger frame-lock lightning"
+              >
                 <SyncBolt3D size={22} />
                 <span>⚡ 0ms Clock Drift</span>
-              </div>
-              <div className="anim-float-sway px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => triggerStickerClick('🔒', '100% P2P Vault engaged! Zero data tracking')}
+                className="anim-float-sway px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Tap to verify cryptographic vault"
+              >
                 <Shield3D size={22} />
                 <span>🔒 100% P2P Vault</span>
-              </div>
-              <div className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 transition cursor-default">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => triggerStickerClick('🎟️', 'VIP Theater Pass granted! 100% Ad-Free')}
+                className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Tap to activate VIP theater pass"
+              >
                 <Ticket3D size={22} />
                 <span>🎟️ Ad-Free Theater</span>
-              </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => triggerStickerClick('🎬', 'Studio Director Mode: Universal media streaming')}
+                className="anim-float-reverse px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Tap to trigger action clapperboard"
+              >
+                <Clapper3D size={22} />
+                <span>🎬 Studio Master</span>
+              </button>
             </div>
 
             {/* MOTION GRAPHICS DUAL-DEVICE SYNC TELEMETRY SIMULATOR (ZERO LAG, GPU-ACCELERATED) */}
@@ -682,14 +727,22 @@ export default function SynCinemaPlatform() {
                   <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400" />
                   <span>Send Live Couple Reaction:</span>
                 </span>
-                <div className="flex items-center gap-1.5">
-                  {['💖', '🍿', '🔥', '✨', '🎬'].map((emoji) => (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { emoji: '💖', label: 'Love' },
+                    { emoji: '🍿', label: 'Popcorn' },
+                    { emoji: '🔥', label: 'Hype' },
+                    { emoji: '✨', label: 'Magic' },
+                    { emoji: '🎬', label: 'Cinema' },
+                    { emoji: '⚡', label: 'Sync' },
+                    { emoji: '🎟️', label: 'VIP' },
+                  ].map(({ emoji, label }) => (
                     <button
                       key={emoji}
                       type="button"
-                      onClick={() => triggerReaction(emoji)}
-                      className="px-2.5 py-1 rounded-xl bg-[#222222] hover:bg-pink-600/30 border border-pink-500/30 text-xs transition cursor-pointer active:scale-90 hover:scale-110 shadow-sm"
-                      title={`Send ${emoji} reaction to partner`}
+                      onClick={() => triggerStickerClick(emoji, `${label} reaction popped!`)}
+                      className="px-2 py-1 rounded-xl bg-[#222222] hover:bg-pink-600/30 border border-pink-500/30 text-xs transition cursor-pointer active:scale-90 hover:scale-115 shadow-sm hover:border-pink-400"
+                      title={`Send ${emoji} ${label} reaction`}
                     >
                       <span>{emoji}</span>
                     </button>
@@ -1442,18 +1495,144 @@ export default function SynCinemaPlatform() {
       {/* FREQUENTLY ASKED QUESTIONS ACCORDION */}
       <CinemaFaq />
 
-      {/* REAL LIVE VISITORS & COMMUNITY ACTIVITY COUNTER */}
-      <VisitorCounter />
-
       {/* Mobile & Tablet App Install Banner */}
       <InstallPrompt variant="banner" />
 
-      {/* Sleek Translucent Footer in Romantic Pink Palette */}
-      <footer className="relative z-10 text-center text-xs text-pink-200/80 py-6 max-w-5xl mx-auto w-full px-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-pink-500/20">
-        <BrandLogo size="sm" href="/" />
-        <div className="flex items-center gap-2 text-xs">
-          <Heart3D size={18} />
-          <span className="text-pink-100 font-medium">Different places... Same screen.</span>
+      {/* FULL COMPREHENSIVE CINEMA FOOTER */}
+      <footer className="relative z-10 border-t border-pink-500/20 bg-gradient-to-b from-[#181119] via-[#0d090d] to-[#050305] text-pink-100/80 pt-16 pb-12 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          {/* Top Row: Mission, Live Badges & Quick Action */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 border-b border-white/10 pb-10">
+            <div className="space-y-3 max-w-lg">
+              <div className="flex items-center gap-3">
+                <BrandLogo size="md" href="/" />
+                <span className="rounded-full bg-pink-500/20 border border-pink-500/40 px-2.5 py-0.5 text-[10px] font-bold text-pink-300">
+                  v2.6 NEXT-GEN CINEMA
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-pink-200/70 leading-relaxed">
+                SynCinema connects couples and watch squads across the world with zero-lag WebRTC video calls, frame-locked 0ms audio/video sync, and private ephemeral rooms.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-pink-500/30 text-xs text-pink-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>0ms Drift Clock Sync Engine Active</span>
+              </div>
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 border border-pink-500/30 text-xs text-pink-200">
+                <Shield3D size={16} />
+                <span>Zero Logins &bull; Zero Data Tracking</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setActiveTab('create');
+                }}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-pink-600/30 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>⚡ Create Free Couch</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 5-Column Navigation & Feature Deep Dive */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 text-xs">
+            {/* Column 1: Cinema Suites */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <Popcorn3D size={16} />
+                <span>Watch Parties</span>
+              </h4>
+              <ul className="space-y-2 text-pink-200/70">
+                <li><span className="hover:text-pink-100 transition cursor-pointer" onClick={() => { setActiveTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Private Duo Date Night</span></li>
+                <li><span className="hover:text-pink-100 transition cursor-pointer" onClick={() => { setActiveTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Squad Movie Marathon</span></li>
+                <li><span className="hover:text-pink-100 transition cursor-pointer" onClick={() => { setActiveTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>HD WebRTC Video Calls</span></li>
+                <li><span className="hover:text-pink-100 transition">Smart Voice Ducking</span></li>
+                <li><span className="hover:text-pink-100 transition">Floating Reaction Emojis</span></li>
+              </ul>
+            </div>
+
+            {/* Column 2: Universal Playback */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <Clapper3D size={16} />
+                <span>Universal Media</span>
+              </h4>
+              <ul className="space-y-2 text-pink-200/70">
+                <li><span className="hover:text-pink-100 transition">Instant Local File Stream</span></li>
+                <li><span className="hover:text-pink-100 transition">High-Speed Cloud Uploads</span></li>
+                <li><span className="hover:text-pink-100 transition">YouTube &amp; Vimeo Integration</span></li>
+                <li><span className="hover:text-pink-100 transition">Direct MP4 / WebM / HLS</span></li>
+                <li><span className="hover:text-pink-100 transition">OTT Platform Vault</span></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Sync & Audio Engine */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <SyncBolt3D size={16} />
+                <span>Zero Drift Engine</span>
+              </h4>
+              <ul className="space-y-2 text-pink-200/70">
+                <li><span className="hover:text-pink-100 transition">Sub-Millisecond Clock Sync</span></li>
+                <li><span className="hover:text-pink-100 transition">P2P Frame Lock</span></li>
+                <li><span className="hover:text-pink-100 transition">Zero Buffer Playback Hold</span></li>
+                <li><span className="hover:text-pink-100 transition">Romantic Hindi Lofi Player</span></li>
+                <li><span className="hover:text-pink-100 transition">Ambient Cyber Lounge Glow</span></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Cryptographic Privacy */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <Shield3D size={16} />
+                <span>Privacy &amp; Defense</span>
+              </h4>
+              <ul className="space-y-2 text-pink-200/70">
+                <li><span className="hover:text-pink-100 transition">Zero-Log Encryption</span></li>
+                <li><span className="hover:text-pink-100 transition">Anti-Data-Breach Armor</span></li>
+                <li><span className="hover:text-pink-100 transition">Anti-Inspect DevTools Shield</span></li>
+                <li><span className="hover:text-pink-100 transition">Ephemeral Passkeys</span></li>
+                <li><span className="hover:text-pink-100 transition">No Account Required</span></li>
+              </ul>
+            </div>
+
+            {/* Column 5: Platform & PWA */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                <Ticket3D size={16} />
+                <span>Universal Access</span>
+              </h4>
+              <ul className="space-y-2 text-pink-200/70">
+                <li><span className="hover:text-pink-100 transition">Mobile PWA (iOS &amp; Android)</span></li>
+                <li><span className="hover:text-pink-100 transition">Desktop Web App</span></li>
+                <li><span className="hover:text-pink-100 transition">Low-End Device Mode</span></li>
+                <li><span className="hover:text-pink-100 transition">Keyboard Navigation</span></li>
+                <li><span className="hover:text-pink-100 transition">Global CDN Infrastructure</span></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar: Copyright & Security Sign-off */}
+          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-pink-200/60">
+            <div className="flex items-center gap-2">
+              <Heart3D size={16} />
+              <span className="text-pink-100 font-medium">Different places... Same screen.</span>
+              <span className="text-white/40">&bull;</span>
+              <span>&copy; {new Date().getFullYear()} SynCinema. All rights reserved.</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-pink-200/70">
+              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <span>P2P Encrypted Network</span>
+              </span>
+              <span>100% Anti-Inspect Protected</span>
+              <span>Ultra-Low Latency TURN/STUN</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
