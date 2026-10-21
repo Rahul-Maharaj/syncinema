@@ -375,7 +375,7 @@ export default function CinemaPlugins({
     img1.onload = () => { imagesRef.current.couch = img1; if (activeTab === 'keepsake') drawPolaroid(); };
 
     const img2 = new Image();
-    img2.src = '/feature-couple.jpg';
+    img2.src = '/syncinema-polaroids.jpg';
     img2.onload = () => { imagesRef.current.couple = img2; if (activeTab === 'keepsake') drawPolaroid(); };
   }, [activeTab]);
 

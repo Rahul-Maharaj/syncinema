@@ -93,7 +93,7 @@ export default function AudioVisualizerSuite({ inRoom = false, onStartRoom }) {
   const [activeMode, setActiveMode] = useState('spectrum');
   const [isPlaying, setIsPlaying] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [selectedSongId, setSelectedSongId] = useState('tum_hi_ho');
+  const [selectedSongId, setSelectedSongId] = useState('aaja_sanam');
   const [gainLevel, setGainLevel] = useState(100);
   const [pulseTick, setPulseTick] = useState(0);
 

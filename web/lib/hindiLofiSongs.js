@@ -1,159 +1,66 @@
 /**
- * SynCinema Hindi Love Instrumental Lo-Fi Synthesizer Engine
- * Generates soulful, nostalgic Hindi romantic lo-fi melodies (Tum Hi Ho, Pehli Nazar,
- * Raataan Lambiyan, Kesariya) with warm acoustic Bansuri flutes, Rhodes chords,
- * gentle vinyl tape crackle, and chill heartbeat lo-fi beats.
+ * SynCinema Best Romantic Hindi Instrumental Songs Engine
+ * Plays real, studio-recorded, high-fidelity romantic Hindi songs:
+ * 1. Aaja Sanam Madhur Chandni (Mandolin & Hawaiian Guitar Romance)
+ * 2. Dekha Ek Khwab To Yeh Silsile (Soulful Bansuri Flute & Silsila Strings)
+ * 3. Gaata Rahe Mera Dil (Hawaiian Guitar & Accordion Romance)
+ * 4. Roop Tera Mastana (Smooth Saxophone & Midnight Blues Guitar)
+ * 
+ * Connected with Web Audio API Analyser for real-time 60fps audio visualizers,
+ * smooth volume control, and dynamic voice ducking for couples.
  */
 
 export const HINDI_LOFI_SONGS = [
   {
-    id: 'tum_hi_ho',
-    title: 'Tum Hi Ho • Aashiqui Lofi',
-    subtitle: 'Soulful Bansuri Flute & Rain Ambiance',
-    bpm: 78,
-    scale: 'E Minor (Raag Yaman Melancholy)',
-    // Melody notes in Hz (Hum tere bin ab reh nahi sakte... Tere bina kya wajood mera)
-    melody: [
-      246.94, // B3
-      329.63, // E4
-      392.00, // G4
-      369.99, // F#4
-      329.63, // E4
-      311.13, // D#4
-      329.63, // E4
-      392.00, // G4
-      493.88, // B4
-      440.00, // A4
-      392.00, // G4
-      369.99, // F#4
-      329.63, // E4
-      293.66, // D4
-      329.63, // E4
-      369.99, // F#4
-    ],
-    bassRoots: [82.41, 73.42, 65.41, 73.42], // E2 -> D2 -> C2 -> D2
-    chords: [
-      [164.81, 196.00, 246.94], // Em
-      [146.83, 185.00, 220.00], // D
-      [130.81, 164.81, 196.00], // C
-      [146.83, 185.00, 220.00], // D
-    ],
+    id: 'aaja_sanam',
+    title: 'Aaja Sanam Madhur Chandni',
+    subtitle: 'Romantic Mandolin & Hawaiian Guitar Classic',
+    file: '/hindi-lofi-1.mp3',
+    genre: 'Raj Kapoor & Nargis Classic Romance',
+    tempo: '82 BPM',
+    instrument: 'Mandolin • Hawaiian Guitar • Accordion',
   },
   {
-    id: 'pehli_nazar',
-    title: 'Pehli Nazar Mein • Coffee Date Lofi',
-    subtitle: 'Nostalgic Plucked Guitar & Chillhop Waves',
-    bpm: 82,
-    scale: 'C Major (Pure Romance)',
-    // Pehli nazar mein, kaisa jaadu kar diya...
-    melody: [
-      392.00, // G4
-      329.63, // E4
-      392.00, // G4
-      440.00, // A4
-      392.00, // G4
-      329.63, // E4
-      261.63, // C4
-      293.66, // D4
-      329.63, // E4
-      349.23, // F4
-      329.63, // E4
-      293.66, // D4
-      261.63, // C4
-      293.66, // D4
-      329.63, // E4
-      261.63, // C4
-    ],
-    bassRoots: [65.41, 55.00, 43.65, 49.00], // C2 -> A1 -> F1 -> G1
-    chords: [
-      [130.81, 164.81, 196.00], // C
-      [110.00, 130.81, 164.81], // Am
-      [87.31, 110.00, 130.81],  // F
-      [98.00, 123.47, 146.83],  // G
-    ],
+    id: 'dekha_ek_khwab',
+    title: 'Dekha Ek Khwab • Silsila',
+    subtitle: 'Soulful Indian Bansuri Flute & Romantic Strings',
+    file: '/hindi-lofi-2.mp3',
+    genre: 'Evergreen Silsila Romance',
+    tempo: '78 BPM',
+    instrument: 'Indian Bansuri Flute • Violins • Sitar',
   },
   {
-    id: 'raataan_lambiyan',
-    title: 'Raataan Lambiyan • Midnight Starlight Lofi',
-    subtitle: 'Nocturnal Piano & Warm Ambient Tape',
-    bpm: 80,
-    scale: 'D Major (Starlit Date)',
-    // Kaate kate na re katena... Tere bin sajan mora jiya lage na
-    melody: [
-      369.99, // F#4
-      440.00, // A4
-      493.88, // B4
-      440.00, // A4
-      369.99, // F#4
-      329.63, // E4
-      293.66, // D4
-      329.63, // E4
-      369.99, // F#4
-      440.00, // A4
-      369.99, // F#4
-      329.63, // E4
-      293.66, // D4
-      246.94, // B3
-      293.66, // D4
-      329.63, // E4
-    ],
-    bassRoots: [73.42, 61.74, 49.00, 55.00], // D2 -> B1 -> G1 -> A1
-    chords: [
-      [146.83, 185.00, 220.00], // D
-      [123.47, 146.83, 185.00], // Bm
-      [98.00, 123.47, 146.83],  // G
-      [110.00, 138.59, 164.81], // A
-    ],
+    id: 'gaata_rahe_dil',
+    title: 'Gaata Rahe Mera Dil • Guide',
+    subtitle: 'Hawaiian Guitar, Accordion & Romantic Beat',
+    file: '/hindi-lofi-3.mp3',
+    genre: 'Dev Anand Classic Love Anthem',
+    tempo: '88 BPM',
+    instrument: 'Hawaiian Lap Steel • Accordion • Rhythm',
   },
   {
-    id: 'kesariya',
-    title: 'Kesariya Ishq • Warm Sunset Lofi',
-    subtitle: 'Acoustic Harmonium & Tape Flutter Bloom',
-    bpm: 76,
-    scale: 'F Major (Golden Sunset)',
-    // Kesariya tera ishq hai piya... Rang jaaun jo main haath lagaun
-    melody: [
-      349.23, // F4
-      440.00, // A4
-      523.25, // C5
-      466.16, // Bb4
-      440.00, // A4
-      392.00, // G4
-      440.00, // A4
-      349.23, // F4
-      392.00, // G4
-      440.00, // A4
-      466.16, // Bb4
-      440.00, // A4
-      392.00, // G4
-      349.23, // F4
-      329.63, // E4
-      349.23, // F4
-    ],
-    bassRoots: [87.31, 65.41, 73.42, 58.27], // F2 -> C2 -> D2 -> Bb1
-    chords: [
-      [174.61, 220.00, 261.63], // F
-      [130.81, 164.81, 196.00], // C
-      [146.83, 174.61, 220.00], // Dm
-      [116.54, 146.83, 174.61], // Bb
-    ],
+    id: 'roop_tera_mastana',
+    title: 'Roop Tera Mastana • Midnight Romance',
+    subtitle: 'Sensual Saxophone, Piano & Lo-Fi Blues',
+    file: '/hindi-lofi-4.mp3',
+    genre: 'Aradhana Sensual Midnight Romance',
+    tempo: '80 BPM',
+    instrument: 'Alto Saxophone • Piano • Acoustic Bass',
   },
 ];
 
 class HindiLofiEngine {
   constructor() {
+    this.audio = null;
     this.ctx = null;
+    this.sourceNode = null;
     this.masterGain = null;
-    this.filter = null;
     this.analyser = null;
-    this.vinylGain = null;
-    this.activeSongId = 'tum_hi_ho';
-    this.stepIndex = 0;
-    this.timerId = null;
-    this.vinylTimerId = null;
+    this.activeSongId = 'aaja_sanam';
     this.active = false;
-    this.volume = 0.55;
+    this.volume = 0.65;
     this.ducked = false;
+    this.connectedToWebAudio = false;
   }
 
   get currentSong() {
@@ -164,67 +71,75 @@ class HindiLofiEngine {
   }
 
   init() {
-    if (this.ctx) return;
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
+    if (typeof window === 'undefined') return;
 
-      // Master Gain Node
-      this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(this.volume * 0.14, this.ctx.currentTime);
+    if (!this.audio) {
+      this.audio = new Audio();
+      this.audio.loop = true;
+      this.audio.crossOrigin = 'anonymous';
+      this.audio.preload = 'auto';
+      this.audio.src = this.currentSong.file;
+      this.updateAudioVolume();
+    }
 
-      // Warm Lo-Fi Analog Filter (Warm 1200 Hz lowpass to give that mellow tape tone)
-      this.filter = this.ctx.createBiquadFilter();
-      this.filter.type = 'lowpass';
-      this.filter.frequency.setValueAtTime(1250, this.ctx.currentTime);
-      this.filter.Q.setValueAtTime(1.8, this.ctx.currentTime);
+    if (!this.ctx) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
 
-      // Real-time Analyser for Visualizers
-      this.analyser = this.ctx.createAnalyser();
-      this.analyser.fftSize = 64;
-      this.analyser.smoothingTimeConstant = 0.8;
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 64;
+        this.analyser.smoothingTimeConstant = 0.8;
 
-      this.filter.connect(this.masterGain);
-      this.masterGain.connect(this.analyser);
-      this.analyser.connect(this.ctx.destination);
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
 
-      // Vinyl Noise Gain Node (subtle tape crackle)
-      this.vinylGain = this.ctx.createGain();
-      this.vinylGain.gain.setValueAtTime(0.006, this.ctx.currentTime);
-      this.vinylGain.connect(this.filter);
-    } catch (e) {
-      console.warn('HindiLofiEngine init error:', e);
+        // Try connecting media element to Web Audio
+        try {
+          if (!this.sourceNode && this.audio) {
+            this.sourceNode = this.ctx.createMediaElementSource(this.audio);
+            this.sourceNode.connect(this.masterGain);
+            this.masterGain.connect(this.analyser);
+            this.analyser.connect(this.ctx.destination);
+            this.connectedToWebAudio = true;
+          }
+        } catch {
+          // Fallback direct destination connection
+        }
+      } catch (e) {
+        console.warn('Web Audio init fallback:', e);
+      }
     }
   }
 
   start() {
-    if (this.active) return;
+    if (typeof window === 'undefined') return;
     this.init();
-    if (!this.ctx) return;
+    this.active = true;
 
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
     }
 
-    this.active = true;
-    this.stepIndex = 0;
-    this.scheduleNextBeat();
-    this.startVinylCrackle();
+    if (this.audio) {
+      if (this.audio.src !== window.location.origin + this.currentSong.file && !this.audio.src.endsWith(this.currentSong.file)) {
+        this.audio.src = this.currentSong.file;
+      }
+      this.updateAudioVolume();
+      const playPromise = this.audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay policy handled gracefully on next user click
+        });
+      }
+    }
   }
 
   stop() {
     this.active = false;
-    if (this.timerId) {
-      clearTimeout(this.timerId);
-      this.timerId = null;
-    }
-    if (this.vinylTimerId) {
-      clearTimeout(this.vinylTimerId);
-      this.vinylTimerId = null;
-    }
-    if (this.masterGain && this.ctx) {
+    if (this.audio) {
       try {
-        this.masterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.15);
+        this.audio.pause();
       } catch {}
     }
   }
@@ -232,220 +147,54 @@ class HindiLofiEngine {
   setSong(songId) {
     if (this.activeSongId !== songId) {
       this.activeSongId = songId;
-      this.stepIndex = 0;
+      const song = this.currentSong;
+      if (this.audio) {
+        const wasPlaying = !this.audio.paused && this.active;
+        this.audio.src = song.file;
+        this.audio.currentTime = 0;
+        this.updateAudioVolume();
+        if (wasPlaying) {
+          this.audio.play().catch(() => {});
+        }
+      }
     }
   }
 
   setDucked(isDucked) {
     this.ducked = isDucked;
-    if (!this.masterGain || !this.ctx) return;
-    const target = isDucked ? this.volume * 0.025 : this.volume * 0.14;
-    try {
-      this.masterGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.12);
-    } catch {}
+    this.updateAudioVolume();
   }
 
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(1, vol));
+    this.updateAudioVolume();
+  }
+
+  updateAudioVolume() {
+    const target = this.ducked ? this.volume * 0.2 : this.volume;
+    if (this.audio) {
+      this.audio.volume = target;
+    }
     if (this.masterGain && this.ctx) {
-      const target = this.ducked ? this.volume * 0.025 : this.volume * 0.14;
       try {
-        this.masterGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.08);
+        this.masterGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.1);
       } catch {}
     }
   }
 
   getByteFrequencyData(array) {
-    if (this.analyser) {
+    if (this.analyser && this.connectedToWebAudio) {
       this.analyser.getByteFrequencyData(array);
+    } else {
+      // Harmonic fallback animation if browser security prevents direct media element analysis
+      if (this.active && array) {
+        const now = Date.now() / 150;
+        for (let i = 0; i < array.length; i++) {
+          const val = 80 + Math.sin(now + i * 0.5) * 60 + Math.cos(now * 0.7 + i * 0.3) * 40;
+          array[i] = Math.max(20, Math.min(255, Math.round(val)));
+        }
+      }
     }
-  }
-
-  scheduleNextBeat() {
-    if (!this.active || !this.ctx) return;
-
-    const song = this.currentSong;
-    const noteFreq = song.melody[this.stepIndex % song.melody.length];
-    const isBarStart = this.stepIndex % 4 === 0;
-    const isBeat2or4 = this.stepIndex % 2 === 1;
-
-    // 1. Play Bansuri Flute Lead Note with gentle Indian meend (glide)
-    const prevNote = song.melody[(this.stepIndex - 1 + song.melody.length) % song.melody.length];
-    this.playBansuriNote(noteFreq, prevNote);
-
-    // 2. Play Lo-Fi Rhodes Chord & Bass Root on Bar Changes
-    if (isBarStart) {
-      const chordIndex = Math.floor(this.stepIndex / 4) % song.chords.length;
-      this.playRhodesChord(song.chords[chordIndex]);
-      this.playSubBass(song.bassRoots[chordIndex]);
-      this.playLofiKick();
-    }
-
-    // 3. Play Chill Rimshot / Finger Snap on Beats 2 and 4
-    if (isBeat2or4) {
-      this.playLofiSnare();
-    }
-
-    this.stepIndex++;
-
-    // Calculate tempo delay based on BPM (eighth note step)
-    const stepDurationMs = Math.round((60000 / song.bpm) / 2);
-    this.timerId = setTimeout(() => {
-      this.scheduleNextBeat();
-    }, stepDurationMs);
-  }
-
-  // Authentic Bansuri Flute Synth: Warm triangle oscillator with gentle breath vibrato and meend glide
-  playBansuriNote(targetFreq, prevFreq) {
-    if (!this.ctx || !this.filter) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const vibrato = this.ctx.createOscillator();
-    const vibratoGain = this.ctx.createGain();
-
-    osc.type = 'triangle';
-
-    // Meend / Portamento (glide from previous note for that soulful Indian classical touch)
-    const startFreq = prevFreq ? (prevFreq + targetFreq) / 2 : targetFreq;
-    osc.frequency.setValueAtTime(startFreq, now);
-    osc.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.08);
-
-    // Subtle 4.8 Hz Bansuri breath vibrato
-    vibrato.frequency.setValueAtTime(4.8, now);
-    vibratoGain.gain.setValueAtTime(2.2, now);
-    vibrato.connect(osc.frequency);
-    vibrato.start(now);
-    vibrato.stop(now + 0.65);
-
-    // ADSR Envelope: Soft breathy attack, warm sustain, gentle release
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.24, now + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.28);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-
-    osc.connect(gain);
-    gain.connect(this.filter);
-
-    osc.start(now);
-    osc.stop(now + 0.62);
-  }
-
-  // Mellow Lo-Fi Rhodes Electric Piano Chords
-  playRhodesChord(chordNotes) {
-    if (!this.ctx || !this.filter || !chordNotes) return;
-    const now = this.ctx.currentTime;
-
-    chordNotes.forEach((freq, idx) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
-
-      gain.gain.setValueAtTime(0.001, now + idx * 0.015);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.03 + idx * 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.02, now + 0.6);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
-
-      osc.connect(gain);
-      gain.connect(this.filter);
-
-      osc.start(now + idx * 0.015);
-      osc.stop(now + 1.45);
-    });
-  }
-
-  // Deep Warm Sub-Bass Root
-  playSubBass(freq) {
-    if (!this.ctx || !this.filter || !freq) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, now);
-
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.22, now + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
-
-    osc.connect(gain);
-    gain.connect(this.filter);
-
-    osc.start(now);
-    osc.stop(now + 1.25);
-  }
-
-  // Soft Lo-Fi Kick Drum (75 Hz down to 42 Hz pitch sweep)
-  playLofiKick() {
-    if (!this.ctx || !this.filter) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.frequency.setValueAtTime(75, now);
-    osc.frequency.exponentialRampToValueAtTime(42, now + 0.12);
-
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-
-    osc.connect(gain);
-    gain.connect(this.filter);
-
-    osc.start(now);
-    osc.stop(now + 0.25);
-  }
-
-  // Chill Brushed Snare / Rimshot Click
-  playLofiSnare() {
-    if (!this.ctx || !this.filter) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(210, now);
-    osc.frequency.exponentialRampToValueAtTime(95, now + 0.08);
-
-    gain.gain.setValueAtTime(0.11, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-
-    osc.connect(gain);
-    gain.connect(this.filter);
-
-    osc.start(now);
-    osc.stop(now + 0.16);
-  }
-
-  // Authentic Vinyl Crackle & Ambient Tape Dust
-  startVinylCrackle() {
-    if (!this.active || !this.ctx || !this.vinylGain) return;
-
-    // Trigger subtle random vinyl micro-pops
-    const now = this.ctx.currentTime;
-    const popOsc = this.ctx.createOscillator();
-    const popGain = this.ctx.createGain();
-
-    popOsc.type = 'square';
-    popOsc.frequency.setValueAtTime(600 + Math.random() * 2000, now);
-
-    popGain.gain.setValueAtTime(0.004, now);
-    popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
-
-    popOsc.connect(popGain);
-    popGain.connect(this.vinylGain);
-
-    popOsc.start(now);
-    popOsc.stop(now + 0.025);
-
-    // Random interval for vinyl dust pops
-    const nextPopDelay = 150 + Math.random() * 450;
-    this.vinylTimerId = setTimeout(() => {
-      this.startVinylCrackle();
-    }, nextPopDelay);
   }
 }
 
@@ -471,7 +220,7 @@ export const hindiLofi = {
     return getHindiLofiEngine()?.active || false;
   },
   get activeSongId() {
-    return getHindiLofiEngine()?.activeSongId || 'tum_hi_ho';
+    return getHindiLofiEngine()?.activeSongId || 'aaja_sanam';
   },
   get currentSong() {
     return getHindiLofiEngine()?.currentSong || HINDI_LOFI_SONGS[0];

@@ -90,17 +90,17 @@ const VISUAL_SCENARIOS = [
 
 const VIDEO_PRESETS = [
   {
-    id: 'demo',
-    title: 'SynCinema 4K Romantic Date (Default)',
+    id: 'user_uploaded',
+    title: 'My Cinema Video (sample-cinema.mp4)',
     url: '/sample-cinema.mp4',
-    badge: 'Default',
+    badge: 'Your Video',
   },
 ];
 
 export default function VisualFeatureVisualizer({ onStartRoom }) {
   const [activeScenario, setActiveScenario] = useState('sync_engine');
   const [isPlaying, setIsPlaying] = useState(true);
-  const [simTime, setSimTime] = useState(12.4);
+  const [simTime, setSimTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(30);
   const [simSpeed, setSimSpeed] = useState(1.0);
   const [isGlitching, setIsGlitching] = useState(false);
@@ -110,11 +110,11 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
   const [floatingHearts, setFloatingHearts] = useState([]);
   const [laserPulse, setLaserPulse] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [selectedSongId, setSelectedSongId] = useState('tum_hi_ho');
+  const [selectedSongId, setSelectedSongId] = useState('aaja_sanam');
 
   // Video Management: Support for user's own video file / URL
   const [videoSource, setVideoSource] = useState('/sample-cinema.mp4');
-  const [videoTitle, setVideoTitle] = useState('SynCinema 4K Romantic Date');
+  const [videoTitle, setVideoTitle] = useState('My Cinema Video (sample-cinema.mp4)');
   const [isCustomVideo, setIsCustomVideo] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [customUrlInput, setCustomUrlInput] = useState('');
@@ -238,7 +238,7 @@ export default function VisualFeatureVisualizer({ onStartRoom }) {
   // Reset to default cinema video
   const resetToDefaultVideo = () => {
     setVideoSource('/sample-cinema.mp4');
-    setVideoTitle('SynCinema 4K Romantic Date');
+    setVideoTitle('My Cinema Video (sample-cinema.mp4)');
     setIsCustomVideo(false);
     setShowVideoModal(false);
     setSimTime(0);
