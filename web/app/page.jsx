@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import FeatureAdsShowcase from '@/components/FeatureAdsShowcase';
-import CinematicReelsShowcase from '@/components/CinematicReelsShowcase';
+import CinematicReelSpotlight from '@/components/CinematicReelSpotlight';
 import HolographicStreamPortal from '@/components/HolographicStreamPortal';
 import AudioVisualizerSuite from '@/components/AudioVisualizerSuite';
 import VisualFeatureVisualizer from '@/components/VisualFeatureVisualizer';
@@ -1011,6 +1011,32 @@ export default function SynCinemaPlatform() {
       {/* LIVE SAAS PLATFORM METRICS & CRYPTOGRAPHIC TRUST RIBBON */}
       <CinemaPlatformMetrics />
 
+      {/* SPOTLIGHT AD 1: QUANTUM SYNC ARC (4K VERTICAL REEL: ads.mp4) */}
+      <CinematicReelSpotlight
+        reelId="reel_sync_arc"
+        src="/ads.mp4"
+        badge="0.00ms Satellite Sync"
+        badgeColor="bg-emerald-500/20 text-emerald-200 border-emerald-500/40"
+        headline="Quantum Sync Arc: Long Distance Lovers Connected"
+        title="Dual Horizon P2P Playback"
+        tagline="Zero latency across continents"
+        description="Watch how SynCinema's quantum sync arc connects partners thousands of miles apart. In this real session, a young man on his sofa and his partner in bed watch the same 4K movie frame with continuous microsecond drift calibration and zero buffering delay."
+        bullets={[
+          'Real-Time Laser Clock Lock',
+          '0.00ms Audio/Video Drift',
+          'Automatic Jitter Compensation',
+          'Private Encrypted P2P Bridge',
+        ]}
+        specs={['FPS: 60 LOCKED', 'SYNC DRIFT: 0.00ms', 'NETWORK: P2P DIRECT', 'CODEC: AV1 / H.264']}
+        icon={SyncBolt3D}
+        layout="left"
+        glowColor="rgba(16,185,129,0.18)"
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
+
       {/* INTERACTIVE VISUAL ARCHITECTURE & LIVE FEATURE VISUALIZER */}
       <VisualFeatureVisualizer
         onStartRoom={() => {
@@ -1019,16 +1045,34 @@ export default function SynCinemaPlatform() {
         }}
       />
 
-      {/* OFFICIAL CINEMATIC REELS SHOWCASE (ANTI-LAG 4K VERTICAL REELS) */}
-      <CinematicReelsShowcase
+      {/* STEP-BY-STEP DETAILED HOW IT WORKS GUIDE */}
+      <HowItWorksGuide
         onStartRoom={() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setActiveTab('create');
         }}
       />
 
-      {/* STEP-BY-STEP DETAILED HOW IT WORKS GUIDE */}
-      <HowItWorksGuide
+      {/* SPOTLIGHT AD 2: SYNCINEMA PLATFORM TOUR & PRIVACY VAULT (4K VERTICAL REEL: ads(2).mp4) */}
+      <CinematicReelSpotlight
+        reelId="reel_platform_tour"
+        src="/ads(2).mp4"
+        badge="Zero-Log Privacy Vault"
+        badgeColor="bg-pink-500/20 text-pink-100 border-pink-500/40"
+        headline="SynCinema Platform Tour: The Zero-Log Cinema Vault"
+        title="Sleek High-End Cinema UI"
+        tagline="Full privacy & effortless media control"
+        description="A detailed walkthrough of the SynCinema dashboard on a luxury workstation setup. Experience instant room spinning, real-time media queue management, custom theme switching, and client-side end-to-end encrypted rooms where nothing is stored on cloud servers."
+        bullets={[
+          'No Sign-Up or Accounts Required',
+          '1-Click Custom Instant Rooms',
+          'Zero Tracking or Log Storage',
+          'Browser-Native Hardware Acceleration',
+        ]}
+        specs={['CIPHER: AES-GCM-256', 'STORAGE: ZERO-LOG RAM', 'LATENCY: < 15ms', 'RESOLUTION: UP TO 4K']}
+        icon={Shield3D}
+        layout="right"
+        glowColor="rgba(236,72,153,0.22)"
         onStartRoom={() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setActiveTab('create');
@@ -1045,6 +1089,32 @@ export default function SynCinemaPlatform() {
 
       {/* DYNAMIC HOLOGRAPHIC STREAM PORTAL & AUDIO SPECTRUM VISUALIZER */}
       <HolographicStreamPortal
+        onStartRoom={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setActiveTab('create');
+        }}
+      />
+
+      {/* SPOTLIGHT AD 3: LIVE DUO WEBCAMS & MOVIE DATE (4K VERTICAL REEL: ads(3).mp4) */}
+      <CinematicReelSpotlight
+        reelId="reel_video_call_date"
+        src="/ads(3).mp4"
+        badge="1080p Duo Webcams"
+        badgeColor="bg-rose-500/20 text-rose-100 border-rose-500/40"
+        headline="Live Duo Webcams & Romantic Movie Date Night"
+        title="Side-by-Side Intimate Presence"
+        tagline="Feel like you're on the same couch"
+        description="Experience intimate date nights with high-definition side-by-side duo webcams. As the movie unfolds, share every laugh, gasp, and smile under cozy ambient lighting with live audio ducking that automatically softens film audio when you speak to each other."
+        bullets={[
+          'Adaptive Smart Audio Ducking',
+          'Flicker-Free 1080p Webcams',
+          'Floating Heart Reactions & Soundboard',
+          'Zero Screen-Share Choppiness',
+        ]}
+        specs={['AUDIO DUCKING: 60% SMART', 'VIDEO CALL: 1080p 60fps', 'ECHO CANCEL: DUAL FILTER', 'PRIVACY: P2P WEBRTC']}
+        icon={DuoCam3D}
+        layout="left"
+        glowColor="rgba(244,114,182,0.2)"
         onStartRoom={() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setActiveTab('create');
