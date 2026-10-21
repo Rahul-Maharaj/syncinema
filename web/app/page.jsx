@@ -515,22 +515,22 @@ export default function SynCinemaPlatform() {
       </div>
 
       {/* Main Hero: SIDE-BY-SIDE (Left: Text & High-Security Highlights, Right: Create Room Box) */}
-      <main className="relative z-10 flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <main className="relative z-10 flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-7">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
           {/* LEFT SIDE: Text, 3D Art Badges, Live Sync Telemetry & Informational Deck */}
-          <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-1 space-y-6 text-center lg:text-left">
+          <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-1 space-y-3.5 sm:space-y-4 text-center lg:text-left">
             {/* Kinetic Animated Audience Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
-              <SparkleStar3D size={20} className="anim-float-slow shrink-0" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/40 text-pink-200 text-xs font-bold tracking-wider uppercase shadow-md backdrop-blur-md">
+              <SparkleStar3D size={16} className="anim-float-slow shrink-0" />
               <span>Virtual Cinema For</span>
-              <span className="text-pink-300 font-extrabold transition-all duration-300 min-w-[210px] text-left">
+              <span className="text-pink-300 font-extrabold transition-all duration-300 min-w-[200px] text-left">
                 {AUDIENCES[audienceIndex]}
               </span>
             </div>
 
             {/* Kinetic Shimmer Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-pink-100 tracking-tight leading-[1.1] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+            <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-black text-pink-100 tracking-tight leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
               Same Movie.{' '}
               <span className="anim-text-shimmer inline-block">
                 Different Places.
@@ -539,81 +539,81 @@ export default function SynCinemaPlatform() {
               One Screen.
             </h1>
 
-            <p className="text-sm sm:text-base lg:text-lg text-pink-200/90 font-medium max-w-2xl mx-auto lg:mx-0 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+            <p className="text-xs sm:text-sm text-pink-200/90 font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
               Stream YouTube, movies, or direct links in sub-second synchronization with real-time video calls. Every room is strictly password protected with zero-leak peer-to-peer privacy.
             </p>
 
             {/* Floating 3D Art Stickers (Hardware-Accelerated, Zero-Lag) */}
-            <div className="relative flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1 text-xs">
+            <div className="relative flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-0.5 text-xs">
               <button
                 type="button"
                 onClick={() => triggerStickerClick('🍿', 'Popcorn ready! Crisp 1080p/4K movie night loaded')}
-                className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                className="anim-float-slow px-2.5 py-1.5 rounded-xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
                 title="Tap to trigger popcorn celebration"
               >
-                <Popcorn3D size={22} />
+                <Popcorn3D size={18} />
                 <span>🍿 Crisp 1080p/4K</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => triggerStickerClick('💖', 'Duo Webcam Call active! Zero lag romance')}
-                className="anim-heartbeat px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                className="anim-heartbeat px-2.5 py-1.5 rounded-xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
                 title="Tap to trigger romantic love hearts"
               >
-                <Heart3D size={22} />
+                <Heart3D size={18} />
                 <span>💖 Duo Webcams</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => triggerStickerClick('⚡', '0ms Drift Clock Sync locked! Sub-millisecond precision')}
-                className="anim-float-reverse px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                className="anim-float-reverse px-2.5 py-1.5 rounded-xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
                 title="Tap to trigger frame-lock lightning"
               >
-                <SyncBolt3D size={22} />
+                <SyncBolt3D size={18} />
                 <span>⚡ 0ms Clock Drift</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => triggerStickerClick('🔒', '100% P2P Vault engaged! Zero data tracking')}
-                className="anim-float-sway px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                className="anim-float-sway px-2.5 py-1.5 rounded-xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
                 title="Tap to verify cryptographic vault"
               >
-                <Shield3D size={22} />
+                <Shield3D size={18} />
                 <span>🔒 100% P2P Vault</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => triggerStickerClick('🎟️', 'VIP Theater Pass granted! 100% Ad-Free')}
-                className="anim-float-slow px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                className="anim-float-slow px-2.5 py-1.5 rounded-xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
                 title="Tap to activate VIP theater pass"
               >
-                <Ticket3D size={22} />
+                <Ticket3D size={18} />
                 <span>🎟️ Ad-Free Theater</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => triggerStickerClick('🎬', 'Studio Director Mode: Universal media streaming')}
-                className="anim-float-reverse px-3.5 py-2 rounded-2xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-2 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+                className="anim-float-reverse px-2.5 py-1.5 rounded-xl bg-[#222222]/90 border border-pink-500/30 text-pink-100 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-md hover:border-pink-400 hover:scale-105 active:scale-95 transition cursor-pointer"
                 title="Tap to trigger action clapperboard"
               >
-                <Clapper3D size={22} />
+                <Clapper3D size={18} />
                 <span>🎬 Studio Master</span>
               </button>
             </div>
 
             {/* MOTION GRAPHICS DUAL-DEVICE SYNC TELEMETRY SIMULATOR (ZERO LAG, GPU-ACCELERATED) */}
-            <div className="rounded-3xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-4 sm:p-5 shadow-[0_15px_40px_rgba(236,72,153,0.18)] space-y-3.5 overflow-hidden relative">
+            <div className="rounded-2xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md p-3 sm:p-3.5 shadow-[0_15px_40px_rgba(236,72,153,0.18)] space-y-2.5 overflow-hidden relative">
               {/* Simulator Header with Interactive Sync Controls */}
-              <div className="flex items-center justify-between border-b border-pink-500/20 pb-2.5">
+              <div className="flex items-center justify-between border-b border-pink-500/20 pb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`h-2.5 w-2.5 rounded-full ${simPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  <span className="text-xs font-black tracking-wider text-pink-100 uppercase flex items-center gap-1.5">
-                    <Activity className="h-3.5 w-3.5 text-pink-400" />
+                  <div className={`h-2 w-2 rounded-full ${simPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  <span className="text-[11px] font-black tracking-wider text-pink-100 uppercase flex items-center gap-1">
+                    <Activity className="h-3 w-3 text-pink-400" />
                     <span>Live Lockstep Sync Telemetry</span>
                   </span>
                 </div>
@@ -622,7 +622,7 @@ export default function SynCinemaPlatform() {
                   <button
                     type="button"
                     onClick={() => setSimPlaying(!simPlaying)}
-                    className={`text-[10px] px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 transition cursor-pointer border ${
                       simPlaying
                         ? 'bg-pink-500/20 text-pink-200 border-pink-500/40 hover:bg-pink-500/30'
                         : 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 hover:bg-emerald-500/30'
@@ -632,8 +632,8 @@ export default function SynCinemaPlatform() {
                     <span>{simPlaying ? '⏸ Pause Sync' : '▶ Play Sync'}</span>
                   </button>
 
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 hidden sm:flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-emerald-400" />
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30 hidden sm:flex items-center gap-1">
+                    <Zap className="h-2.5 w-2.5 text-emerald-400" />
                     <span>0.00ms Drift Lock</span>
                   </span>
                 </div>
@@ -654,9 +654,9 @@ export default function SynCinemaPlatform() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-11 items-center gap-2 py-1">
+                <div className="grid grid-cols-11 items-center gap-2 py-0.5">
                 {/* Device 1: Phone (You) */}
-                <div className="col-span-5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 p-3 space-y-2 text-left relative overflow-hidden">
+                <div className="col-span-5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 p-2 space-y-1.5 text-left relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
                       <Smartphone className="h-3 w-3 text-pink-400" />
@@ -664,11 +664,11 @@ export default function SynCinemaPlatform() {
                     </span>
                     <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                   </div>
-                  <div className="h-14 rounded-xl bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-3 relative overflow-hidden">
-                    <Film className="h-5 w-5 text-pink-400 shrink-0" />
+                  <div className="h-11 rounded-lg bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-2.5 relative overflow-hidden">
+                    <Film className="h-4 w-4 text-pink-400 shrink-0" />
                     <div className="text-right">
                       <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
-                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
+                      <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
                     </div>
                     {/* Animated Playhead Track */}
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
@@ -682,19 +682,19 @@ export default function SynCinemaPlatform() {
 
                 {/* Center Motion Graphics Pulse Wave Laser */}
                 <div className="col-span-1 flex flex-col items-center justify-center relative">
-                  <div className="h-7 w-px bg-pink-500/30 relative overflow-hidden">
-                    <div className="absolute inset-x-0 h-3 bg-pink-400 anim-sync-laser" />
+                  <div className="h-5 w-px bg-pink-500/30 relative overflow-hidden">
+                    <div className="absolute inset-x-0 h-2 bg-pink-400 anim-sync-laser" />
                   </div>
-                  <div className={`p-1.5 rounded-full bg-pink-600/30 border border-pink-500/50 shrink-0 ${simPlaying ? 'anim-heartbeat' : ''}`}>
-                    <Zap className="h-3.5 w-3.5 text-pink-300" />
+                  <div className={`p-1 rounded-full bg-pink-600/30 border border-pink-500/50 shrink-0 ${simPlaying ? 'anim-heartbeat' : ''}`}>
+                    <Zap className="h-3 w-3 text-pink-300" />
                   </div>
-                  <div className="h-7 w-px bg-pink-500/30 relative overflow-hidden">
-                    <div className="absolute inset-x-0 h-3 bg-pink-400 anim-sync-laser" />
+                  <div className="h-5 w-px bg-pink-500/30 relative overflow-hidden">
+                    <div className="absolute inset-x-0 h-2 bg-pink-400 anim-sync-laser" />
                   </div>
                 </div>
 
                 {/* Device 2: Laptop (Partner) */}
-                <div className="col-span-5 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 p-3 space-y-2 text-left relative overflow-hidden">
+                <div className="col-span-5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 p-2 space-y-1.5 text-left relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
                       <Laptop className="h-3 w-3 text-pink-400" />
@@ -702,11 +702,11 @@ export default function SynCinemaPlatform() {
                     </span>
                     <span className={`h-1.5 w-1.5 rounded-full ${simPlaying ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                   </div>
-                  <div className="h-14 rounded-xl bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-3 relative overflow-hidden">
-                    <Film className="h-5 w-5 text-pink-400 shrink-0" />
+                  <div className="h-11 rounded-lg bg-gradient-to-tr from-pink-950/60 to-purple-950/60 border border-pink-500/30 flex items-center justify-between px-2.5 relative overflow-hidden">
+                    <Film className="h-4 w-4 text-pink-400 shrink-0" />
                     <div className="text-right">
                       <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
-                      <p className="text-[9px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
+                      <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
                     </div>
                     {/* Animated Playhead Track */}
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
@@ -722,7 +722,7 @@ export default function SynCinemaPlatform() {
               </div>
 
               {/* LIVE REACTION CANNON BAR */}
-              <div className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-[#1A1A1D]/90 border border-pink-500/20 text-xs">
+              <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/20 text-xs">
                 <span className="text-[11px] font-bold text-pink-200 flex items-center gap-1.5">
                   <Heart className="h-3.5 w-3.5 text-pink-400 fill-pink-400" />
                   <span>Send Live Couple Reaction:</span>
@@ -1040,76 +1040,76 @@ export default function SynCinemaPlatform() {
           </div>
 
           {/* RIGHT SIDE: ENLARGED HIGH-LEVEL CINEMA CONSOLE (Clean Solid #222222, ZERO ANIMATIONS) */}
-          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-2xl mx-auto lg:mx-0">
-            <div className="w-full rounded-[2.5rem] border-2 border-pink-500/35 bg-[#222222] p-6 sm:p-8 lg:p-10 shadow-[0_25px_80px_rgba(236,72,153,0.22)] space-y-6 text-left relative">
+          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-xl mx-auto lg:mx-0">
+            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/35 bg-[#222222] p-4 sm:p-5 lg:p-6 shadow-[0_20px_60px_rgba(236,72,153,0.22)] space-y-3 sm:space-y-3.5 text-left relative">
               {/* Subtle top specular accent line */}
               <div className="absolute top-0 inset-x-8 h-px bg-gradient-to-r from-transparent via-pink-400/60 to-transparent pointer-events-none" />
 
               {/* CONSOLE HEADER & HIGH-LEVEL TELEMETRY */}
-              <div className="flex items-center justify-between border-b border-pink-500/20 pb-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="p-3 rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-300 shrink-0 shadow-inner">
-                    <Shield3D size={32} />
+              <div className="flex items-center justify-between border-b border-pink-500/20 pb-2.5">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="p-2 sm:p-2.5 rounded-xl bg-pink-500/15 border border-pink-500/30 text-pink-300 shrink-0 shadow-inner">
+                    <Shield3D size={24} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg sm:text-2xl font-black text-pink-100 tracking-tight leading-none">
+                      <h3 className="text-base sm:text-xl font-black text-pink-100 tracking-tight leading-none">
                         Private Cinema Console
                       </h3>
-                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                      <span className="text-[9px] sm:text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
                         ● 0ms Lag
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-pink-300/80 font-medium mt-1">
+                    <p className="text-[11px] sm:text-xs text-pink-300/80 font-medium mt-0.5">
                       Direct P2P Encrypted Stream • Zero Cloud Storage
                     </p>
                   </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20 text-xs font-mono text-pink-300/90 font-bold">
-                  <Lock className="h-3.5 w-3.5 text-pink-400" />
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#1A1A1D] border border-pink-500/20 text-[11px] font-mono text-pink-300/90 font-bold">
+                  <Lock className="h-3 w-3 text-pink-400" />
                   <span>AES-GCM-256</span>
                 </div>
               </div>
 
               {/* Segmented Pill Selector (Create Room / Join Room) */}
-              <div className="grid grid-cols-2 rounded-2xl bg-[#1A1A1D] p-2 border border-pink-500/25 gap-2">
+              <div className="grid grid-cols-2 rounded-xl bg-[#1A1A1D] p-1.5 border border-pink-500/25 gap-1.5">
                 <button
                   type="button"
                   onClick={() => setActiveTab('create')}
-                  className={`py-3.5 px-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition cursor-pointer ${
+                  className={`py-2 px-3 rounded-lg font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                     activeTab === 'create'
-                      ? 'btn-pink text-white shadow-xl shadow-pink-500/40'
+                      ? 'btn-pink text-white shadow-lg shadow-pink-500/40'
                       : 'text-pink-300/70 hover:text-pink-100 hover:bg-white/5'
                   }`}
                 >
-                  <PlusCircle className="h-5 w-5" />
+                  <PlusCircle className="h-4 w-4" />
                   <span>Create Room</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab('join')}
-                  className={`py-3.5 px-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition cursor-pointer ${
+                  className={`py-2 px-3 rounded-lg font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
                     activeTab === 'join'
-                      ? 'btn-pink text-white shadow-xl shadow-pink-500/40'
+                      ? 'btn-pink text-white shadow-lg shadow-pink-500/40'
                       : 'text-pink-300/70 hover:text-pink-100 hover:bg-white/5'
                   }`}
                 >
-                  <Link2 className="h-5 w-5" />
+                  <Link2 className="h-4 w-4" />
                   <span>Join Room</span>
                 </button>
               </div>
 
               {/* TAB 1: CREATE ROOM */}
               {activeTab === 'create' && (
-                <form onSubmit={handleCreateRoom} className="space-y-5">
+                <form onSubmit={handleCreateRoom} className="space-y-2.5 sm:space-y-3">
                   {/* QUICK CINEMA PRESETS (1-TAP SETUP) */}
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-extrabold text-pink-200">✨ Quick Cinema Presets</span>
-                      <span className="text-[11px] text-pink-300/70 font-semibold">1-Tap Preset Setup</span>
+                      <span className="text-[10px] text-pink-300/70 font-semibold">1-Tap Preset Setup</span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                       {[
                         { name: 'Cosy-Date-Night', seats: 2, label: '🍿 Date (2)', desc: 'Couple' },
                         { name: 'Starlight-Lounge', seats: 4, label: '🥂 Friends (4)', desc: 'Small' },
@@ -1123,25 +1123,25 @@ export default function SynCinemaPlatform() {
                             setRoomName(preset.name + '-' + Math.floor(100 + Math.random() * 900));
                             setMaxSeats(preset.seats);
                           }}
-                          className="p-2.5 rounded-xl bg-[#1A1A1D] border border-pink-500/20 hover:border-pink-400 hover:bg-pink-500/10 text-pink-200 text-xs font-bold transition flex flex-col items-center justify-center cursor-pointer shadow-sm text-center"
+                          className="py-1.5 px-2 rounded-xl bg-[#1A1A1D] border border-pink-500/20 hover:border-pink-400 hover:bg-pink-500/10 text-pink-200 text-xs font-bold transition flex flex-col items-center justify-center cursor-pointer shadow-sm text-center"
                         >
-                          <span className="text-pink-100 font-extrabold">{preset.label}</span>
-                          <span className="text-[10px] text-pink-300/60 font-medium">{preset.desc}</span>
+                          <span className="text-pink-100 font-extrabold text-[11px] leading-tight">{preset.label}</span>
+                          <span className="text-[9px] text-pink-300/60 font-medium">{preset.desc}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   {/* Room Name */}
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-extrabold text-pink-100">Room Name</label>
+                      <label className="text-xs font-extrabold text-pink-100">Room Name</label>
                       <button
                         type="button"
                         onClick={getRandomRoomName}
-                        className="text-pink-400 hover:text-pink-300 flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-xl bg-pink-500/10 border border-pink-500/30 transition cursor-pointer"
+                        className="text-pink-400 hover:text-pink-300 flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-pink-500/10 border border-pink-500/30 transition cursor-pointer"
                       >
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <Sparkles className="h-3 w-3" />
                         <span>Random Name</span>
                       </button>
                     </div>
@@ -1151,33 +1151,33 @@ export default function SynCinemaPlatform() {
                       value={roomName}
                       onChange={(e) => setRoomName(sanitizeInput(e.target.value))}
                       placeholder="e.g. Midnight-Cinema or Cosy-Date-Night"
-                      className="w-full px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-base sm:text-lg text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans font-semibold"
+                      className="w-full px-3.5 py-2 sm:py-2.5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 text-sm sm:text-base text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans font-semibold"
                     />
                   </div>
 
                   {/* Room Password (Strictly Enforced) */}
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-extrabold text-pink-100 flex items-center gap-1.5">
-                        <Lock className="h-4 w-4 text-pink-400" />
+                      <label className="text-xs font-extrabold text-pink-100 flex items-center gap-1.5">
+                        <Lock className="h-3.5 w-3.5 text-pink-400" />
                         <span>Room Password (Required)</span>
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => copyPassword(roomPass)}
-                          className="text-pink-300/80 hover:text-pink-100 flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl bg-pink-500/10 border border-pink-500/25 transition cursor-pointer"
+                          className="text-pink-300/80 hover:text-pink-100 flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-pink-500/10 border border-pink-500/25 transition cursor-pointer"
                           title="Copy Password"
                         >
-                          {copiedPass ? <Check className="h-3.5 w-3.5 text-pink-400" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copiedPass ? <Check className="h-3 w-3 text-pink-400" /> : <Copy className="h-3 w-3" />}
                           <span>{copiedPass ? 'Copied' : 'Copy'}</span>
                         </button>
                         <button
                           type="button"
                           onClick={generatePasscode}
-                          className="text-pink-400 hover:text-pink-300 flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-xl bg-pink-500/10 border border-pink-500/30 transition cursor-pointer"
+                          className="text-pink-400 hover:text-pink-300 flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-pink-500/10 border border-pink-500/30 transition cursor-pointer"
                         >
-                          <KeyRound className="h-3.5 w-3.5" />
+                          <KeyRound className="h-3 w-3" />
                           <span>Auto-Generate</span>
                         </button>
                       </div>
@@ -1195,30 +1195,30 @@ export default function SynCinemaPlatform() {
                         data-lpignore="true"
                         data-form-type="other"
                         required
-                        className="w-full px-4 sm:px-5 py-3.5 sm:py-4 pr-12 rounded-2xl bg-[#1A1A1D] border border-pink-500/25 text-base sm:text-lg text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono font-semibold"
+                        className="w-full px-3.5 py-2 sm:py-2.5 pr-10 rounded-xl bg-[#1A1A1D] border border-pink-500/25 text-sm sm:text-base text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono font-semibold"
                       />
                       <button
                         type="button"
                         onClick={() => setShowRoomPass(!showRoomPass)}
-                        className="absolute right-4 top-4 text-pink-300/70 hover:text-pink-100 transition"
+                        className="absolute right-3 top-2.5 text-pink-300/70 hover:text-pink-100 transition"
                         title={showRoomPass ? 'Hide Password' : 'Show Password'}
                       >
-                        {showRoomPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        {showRoomPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    <div className="text-xs text-pink-300/80 flex items-center gap-1.5 font-medium">
-                      <Shield3D size={16} />
+                    <div className="text-[10px] text-pink-300/75 flex items-center gap-1 font-medium">
+                      <Shield3D size={13} />
                       <span>No one can enter this room without this password.</span>
                     </div>
                   </div>
 
                   {/* Room Capacity */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-xs">
                       <span className="font-extrabold text-pink-100">Room Seats Capacity</span>
-                      <span className="font-bold text-pink-300 font-mono text-base">{maxSeats} Members</span>
+                      <span className="font-bold text-pink-300 font-mono text-xs">{maxSeats} Members</span>
                     </div>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 gap-1.5">
                       {[
                         { s: 2, label: '2 Duo', sub: 'Couple' },
                         { s: 4, label: '4 Friends', sub: 'Small' },
@@ -1230,47 +1230,130 @@ export default function SynCinemaPlatform() {
                           key={item.s}
                           type="button"
                           onClick={() => setMaxSeats(item.s)}
-                          className={`py-3 px-1 rounded-2xl text-xs sm:text-sm font-black border transition cursor-pointer flex flex-col items-center justify-center ${
+                          className={`py-1.5 sm:py-2 px-1 rounded-xl text-xs font-black border transition cursor-pointer flex flex-col items-center justify-center ${
                             maxSeats === item.s
-                              ? 'btn-pink text-white border-pink-400 shadow-lg'
+                              ? 'btn-pink text-white border-pink-400 shadow-md'
                               : 'bg-[#1A1A1D] border-pink-500/20 text-pink-200/70 hover:text-pink-100 hover:border-pink-400/50'
                           }`}
                         >
-                          <span className="leading-tight">{item.label}</span>
-                          <span className="text-[9px] opacity-65 font-normal">{item.sub}</span>
+                          <span className="leading-tight text-[11px] sm:text-xs">{item.label}</span>
+                          <span className="text-[8px] sm:text-[9px] opacity-65 font-normal">{item.sub}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   {createError && (
-                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-3 rounded-2xl font-medium">
+                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-2 rounded-xl font-medium">
                       {createError}
                     </p>
                   )}
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-4 sm:py-5 rounded-2xl text-white font-black text-base sm:text-lg shadow-2xl flex items-center justify-center gap-3 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
+                    className="btn-pink w-full py-2.5 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
                   >
-                    <PlusCircle className="h-5 w-5" />
+                    <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span>Create &amp; Enter Protected Room 🔒</span>
-                    <ArrowRight className="h-5 w-5" />
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
 
                   {/* SECURITY TRUST PILL STRIP */}
-                  <div className="pt-2 border-t border-pink-500/15 grid grid-cols-3 gap-2 text-center text-[11px] text-pink-300/80 font-semibold">
-                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <div className="pt-1 border-t border-pink-500/15 grid grid-cols-3 gap-1.5 text-center text-[10px] sm:text-[11px] text-pink-300/80 font-semibold">
+                    <div className="p-1 sm:p-1.5 rounded-lg bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
                       <span>Instant 0s Wait</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
-                      <ShieldCheck className="h-3.5 w-3.5 text-pink-400 shrink-0" />
+                    <div className="p-1 sm:p-1.5 rounded-lg bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1">
+                      <ShieldCheck className="h-3 w-3 text-pink-400 shrink-0" />
                       <span>Zero Cloud Logs</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1.5">
-                      <Zap className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <div className="p-1 sm:p-1.5 rounded-lg bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-400 shrink-0" />
                       <span>0.00ms Clock Sync</span>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* TAB 2: JOIN EXISTING ROOM */}
+              {activeTab === 'join' && (
+                <form onSubmit={handleJoinRoom} className="space-y-2.5 sm:space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-extrabold text-pink-100">Room Code or Invite Link</label>
+                    <input
+                      suppressHydrationWarning
+                      type="text"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value)}
+                      placeholder="e.g. Velvet-Couch-521 or paste invite link"
+                      className="w-full px-3.5 py-2 sm:py-2.5 rounded-xl bg-[#1A1A1D] border border-pink-500/25 text-sm sm:text-base text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-sans font-semibold"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-extrabold text-pink-100 flex items-center gap-1.5">
+                      <Lock className="h-3.5 w-3.5 text-pink-400" />
+                      <span>Room Password (Required)</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        suppressHydrationWarning
+                        type={showJoinPass ? 'text' : 'password'}
+                        value={joinPass}
+                        onChange={(e) => setJoinPass(e.target.value)}
+                        placeholder="Enter password set by the host"
+                        minLength={4}
+                        maxLength={64}
+                        autoComplete="current-password"
+                        data-lpignore="true"
+                        data-form-type="other"
+                        required
+                        className="w-full px-3.5 py-2 sm:py-2.5 pr-10 rounded-xl bg-[#1A1A1D] border border-pink-500/25 text-sm sm:text-base text-pink-100 placeholder-pink-300/40 outline-none focus:border-pink-500 transition shadow-inner font-mono font-semibold"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowJoinPass(!showJoinPass)}
+                        className="absolute right-3 top-2.5 text-pink-300/70 hover:text-pink-100 transition"
+                        title={showJoinPass ? 'Hide Password' : 'Show Password'}
+                      >
+                        {showJoinPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <div className="text-[10px] text-pink-300/75 flex items-center gap-1 font-medium">
+                      <Shield3D size={13} />
+                      <span>Password is required. No one can enter without it.</span>
+                    </div>
+                  </div>
+
+                  {joinError && (
+                    <p className="text-xs text-pink-200 bg-pink-500/20 border border-pink-500/40 p-2 rounded-xl font-medium">
+                      {joinError}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="btn-pink w-full py-2.5 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
+                  >
+                    <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span>Unlock &amp; Enter Room 🔓</span>
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+
+                  {/* SECURITY TRUST PILL STRIP */}
+                  <div className="pt-1 border-t border-pink-500/15 grid grid-cols-3 gap-1.5 text-center text-[10px] sm:text-[11px] text-pink-300/80 font-semibold">
+                    <div className="p-1 sm:p-1.5 rounded-lg bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <span>Direct P2P Link</span>
+                    </div>
+                    <div className="p-1 sm:p-1.5 rounded-lg bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1">
+                      <ShieldCheck className="h-3 w-3 text-pink-400 shrink-0" />
+                      <span>Zero Logs Saved</span>
+                    </div>
+                    <div className="p-1 sm:p-1.5 rounded-lg bg-[#1A1A1D]/80 border border-pink-500/10 flex items-center justify-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-400 shrink-0" />
+                      <span>Auto Buffer Sync</span>
                     </div>
                   </div>
                 </form>
