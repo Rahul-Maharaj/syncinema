@@ -111,7 +111,10 @@ const adminKeyOk = (k) => {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
-const ipOf = (r) => String(r.headers['x-forwarded-for'] || r.address || r.socket?.remoteAddress || '').split(',')[0].trim();
+const ipOf = (r) => {
+  const headers = r?.headers || {};
+  return String(headers['cf-connecting-ip'] || headers['x-real-ip'] || headers['x-forwarded-for'] || r?.address || r?.socket?.remoteAddress || '').split(',')[0].trim();
+};
 const isLocalIp = (ip) => !ip || ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || ip === '::ffff:127.0.0.1';
 const locked = (ip) => !isLocalIp(ip) && (fails.get(ip)?.until || 0) > Date.now();
 
@@ -120,12 +123,12 @@ const fail = (ip) => {
   const f = fails.get(ip) || { n: 0 };
   f.n = (f.n || 0) + 1;
   if (f.n >= 7) {
-    blockedIps.add(ip);
-    f.until = Date.now() + 24 * 60 * 60_000;
-    console.warn(`[Admin Security Firewall] Maximum failed attempts exceeded. Permanent IP ban applied: ${ip}`);
+    // 2-hour progressive lock for admin gate rather than permanent IP ban to protect shared college CGNAT IPs
+    f.until = Date.now() + 2 * 60 * 60_000;
+    console.warn(`[Admin Security Firewall] Maximum failed attempts exceeded. Admin route lock applied for: ${ip}`);
   } else if (f.n >= 4) {
     f.until = Date.now() + 30 * 60_000;
-    console.warn(`[Admin Security Firewall] 30m IP lock applied for suspicious probe from: ${ip}`);
+    console.warn(`[Admin Security Firewall] 30m Admin lock applied for suspicious probe from: ${ip}`);
   }
   fails.set(ip, f);
 };
@@ -692,16 +695,27 @@ app.get('/api/stats/visitors', (req, res) => {
 
 app.get('/api/ice', (req, res) => {
   const iceServers = [
+    { urls: 'stun:stun.cloudflare.com:3478' },
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun.cloudflare.com:3478' },
-    { urls: 'stun:stun.services.mozilla.com' },
+    { urls: 'stun:openrelay.metered.ca:80' },
+    // Built-in College Wi-Fi / Cloudpath Firewall Bypass:
+    // Tunnels WebRTC video/voice calls through standard TCP and TLS on Port 443
+    {
+      urls: [
+        'turn:openrelay.metered.ca:80',
+        'turn:openrelay.metered.ca:443',
+        'turn:openrelay.metered.ca:443?transport=tcp',
+        'turns:openrelay.metered.ca:443?transport=tcp',
+      ],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ];
   if (TURN_URL && TURN_SECRET) {
     const username = `${Math.floor(Date.now() / 1000) + 86400}:synccinema`;
     const credential = crypto.createHmac('sha1', TURN_SECRET).update(username).digest('base64');
-    iceServers.push({ urls: TURN_URL.includes(',') ? TURN_URL.split(',') : TURN_URL, username, credential });
+    iceServers.unshift({ urls: TURN_URL.includes(',') ? TURN_URL.split(',') : TURN_URL, username, credential });
   }
   try { iceServers.push(...JSON.parse(process.env.EXTRA_ICE || '[]')); } catch {}
   res.json({ iceServers, peerKey: PEER_KEY });
