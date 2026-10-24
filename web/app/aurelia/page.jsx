@@ -80,22 +80,58 @@ function StealthVideoTile({ stream, user, listenAudio }) {
 
   const effectiveAudio = individualMute !== null ? !individualMute : Boolean(listenAudio);
 
-  // Check track availability
+  // Check track availability with live event listeners & fallback poll
   useEffect(() => {
     if (!stream) {
       setHasVideo(false);
       setHasAudio(false);
       return;
     }
-    try {
-      const vTracks = typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks() : [];
-      const aTracks = typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : [];
-      setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled));
-      setHasAudio(aTracks.length > 0 && aTracks.some((t) => t.enabled));
-    } catch {
-      setHasVideo(false);
-      setHasAudio(false);
-    }
+
+    const checkTracks = () => {
+      try {
+        const vTracks = typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks() : [];
+        const aTracks = typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : [];
+        setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled && t.readyState !== 'ended'));
+        setHasAudio(aTracks.length > 0 && aTracks.some((t) => t.enabled && t.readyState !== 'ended'));
+      } catch {
+        setHasVideo(false);
+        setHasAudio(false);
+      }
+    };
+
+    checkTracks();
+
+    stream.addEventListener?.('addtrack', checkTracks);
+    stream.addEventListener?.('removetrack', checkTracks);
+
+    const vTracks = typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks() : [];
+    vTracks.forEach((t) => {
+      t.addEventListener?.('unmute', checkTracks);
+      t.addEventListener?.('mute', checkTracks);
+    });
+
+    const aTracks = typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : [];
+    aTracks.forEach((t) => {
+      t.addEventListener?.('unmute', checkTracks);
+      t.addEventListener?.('mute', checkTracks);
+    });
+
+    const interval = setInterval(checkTracks, 800);
+
+    return () => {
+      clearInterval(interval);
+      stream.removeEventListener?.('addtrack', checkTracks);
+      stream.removeEventListener?.('removetrack', checkTracks);
+      vTracks.forEach((t) => {
+        t.removeEventListener?.('unmute', checkTracks);
+        t.removeEventListener?.('mute', checkTracks);
+      });
+      aTracks.forEach((t) => {
+        t.removeEventListener?.('unmute', checkTracks);
+        t.removeEventListener?.('mute', checkTracks);
+      });
+    };
   }, [stream]);
 
   // Video playback
@@ -103,7 +139,9 @@ function StealthVideoTile({ stream, user, listenAudio }) {
     if (!videoRef.current) return;
     try {
       if (stream && typeof stream.getVideoTracks === 'function') {
-        videoRef.current.srcObject = stream;
+        if (videoRef.current.srcObject !== stream) {
+          videoRef.current.srcObject = stream;
+        }
         videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.srcObject = null;
@@ -111,7 +149,7 @@ function StealthVideoTile({ stream, user, listenAudio }) {
     } catch (e) {
       console.warn('StealthVideoTile video error:', e);
     }
-  }, [stream]);
+  }, [stream, hasVideo]);
 
   // Voice Activity Detection (VAD) via Web Audio API
   useEffect(() => {

