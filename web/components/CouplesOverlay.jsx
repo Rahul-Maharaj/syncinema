@@ -179,8 +179,18 @@ export function Tile({
         el.srcObject = stream;
         el.muted = true; // Video element is muted; audio plays through RemoteAudio
 
+        const checkTracks = () => {
+          const vTracks = stream.getVideoTracks() || [];
+          const hasLive = vTracks.length > 0 && vTracks.some((t) => t.readyState !== 'ended');
+          setHasVideoTrack(hasLive);
+        };
+        checkTracks();
+
         const vTracks = stream.getVideoTracks() || [];
-        setHasVideoTrack(vTracks.length > 0 && vTracks.some((t) => t.enabled && t.readyState === 'live'));
+        vTracks.forEach((t) => {
+          t.addEventListener('unmute', checkTracks);
+          t.addEventListener('ended', checkTracks);
+        });
 
         const tryPlay = () => {
           el.play().catch(() => {
@@ -190,6 +200,13 @@ export function Tile({
           });
         };
         tryPlay();
+
+        return () => {
+          vTracks.forEach((t) => {
+            t.removeEventListener('unmute', checkTracks);
+            t.removeEventListener('ended', checkTracks);
+          });
+        };
       } else {
         el.srcObject = null;
         setHasVideoTrack(false);
@@ -297,29 +314,13 @@ export function Tile({
             playsInline
             webkit-playsinline="true"
             muted
-            className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+            onLoadedMetadata={() => setHasVideoTrack(true)}
+            onPlaying={() => setHasVideoTrack(true)}
+            className={`h-full w-full object-cover transition-transform duration-300 ${
               !isPartner ? '-scale-x-100' : ''
             } ${(!hasVideoTrack || isCamOff) ? 'hidden' : 'block'}`}
           />
         </>
-      )}
-
-      {/* User Name Tag Overlay */}
-      <div className="absolute bottom-2 left-2 rounded-xl bg-[#222222]/85 border border-pink-500/25 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md flex items-center gap-1.5 z-20 shadow-md pointer-events-none">
-        <span className="truncate max-w-[90px] sm:max-w-[120px]">{name}</span>
-        {isSpeaking ? (
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-        ) : isMicMuted ? (
-          <MicOff className="h-3 w-3 text-rose-400" />
-        ) : null}
-      </div>
-
-      {/* Speaking Active Glow Pill */}
-      {isSpeaking && (
-        <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-600 to-rose-600 px-2 py-0.5 text-[9px] font-extrabold text-white shadow-lg z-20 animate-pulse pointer-events-none">
-          <Mic className="h-2.5 w-2.5" />
-          <span>Speaking</span>
-        </div>
       )}
 
       {/* Fullscreen Button */}
@@ -328,7 +329,7 @@ export function Tile({
           type="button"
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit full screen' : 'Full screen partner video'}
-          className="absolute right-2 top-2 rounded-xl bg-[#222222]/85 hover:bg-[#222222] p-1.5 text-white/80 hover:text-white border border-pink-500/25 backdrop-blur-md transition hover:scale-110 z-20 cursor-pointer shadow-md"
+          className="absolute right-2 top-2 rounded-xl bg-[#222222]/85 hover:bg-[#222222] p-1.5 text-white/80 hover:text-white border border-pink-500/25 backdrop-blur-md transition hover:scale-110 z-20 cursor-pointer shadow-md opacity-0 group-hover:opacity-100"
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
@@ -369,6 +370,7 @@ export default function CouplesOverlay({
 
   const box = useRef(), grip = useRef(), local = useRef();
   const activeCalls = useRef(new Map()); // targetPeerId -> PeerJS MediaConnection
+  const callAttemptTimes = useRef({}); // targetPeerId -> timestamp of call initiation
   const knownReadyPeers = useRef(new Set()); // peerIds that announced readiness via socket
 
   // Voice Activity State Tracking (Local + Remote)
@@ -414,11 +416,17 @@ export default function CouplesOverlay({
     if (!peerRef.current || !ready || !local.current) return;
     if (activeCalls.current.has(targetId)) {
       if (remote[targetId]) return; // already connected with remote stream
+      const elapsed = Date.now() - (callAttemptTimes.current[targetId] || 0);
+      if (elapsed < 8000) {
+        // Call is in progress (gathering ICE & establishing STUN/TURN tunnel). Let it finish connecting!
+        return;
+      }
       try { activeCalls.current.get(targetId)?.close(); } catch {}
       activeCalls.current.delete(targetId);
     }
 
     try {
+      callAttemptTimes.current[targetId] = Date.now();
       const c = peerRef.current.call(targetId, local.current, { metadata: { type: 'cam', isGhost: Boolean(isGhost) } });
       if (!c) return;
       activeCalls.current.set(targetId, c);
@@ -445,7 +453,7 @@ export default function CouplesOverlay({
       console.warn('Failed to initiate call to', targetId, e);
       activeCalls.current.delete(targetId);
     }
-  }, [ready, remote]);
+  }, [ready, remote, isGhost]);
 
   // Main WebRTC & Media Initialization
   useEffect(() => {
@@ -772,26 +780,30 @@ export default function CouplesOverlay({
     return () => socket.off('webrtc:signal', onSignal);
   }, [socket, ready, me, callPeer]);
 
-  // Watchdog & Reconnection loop: checks every 3 seconds to ensure every peer has a live stream
+  // Watchdog & Reconnection loop: safely monitors peer connectivity without disrupting in-progress calls
   useEffect(() => {
     if (!ready || !local.current) return;
 
     const checkConnections = () => {
-      const partnerUsers = users.filter((u) => u.id !== me);
+      const partnerUsers = users.filter((u) => u && u.id !== me);
       partnerUsers.forEach((partner) => {
         // If partner is present in room, but we don't have their stream yet:
         if (!remote[partner.id]) {
-          if (isGhost || me < partner.id) {
-            callPeer(partner.id);
-          } else {
-            // Signal partner to retry calling us
-            socket?.emit('webrtc:signal', { type: 'retry', targetId: partner.id, fromCid: me });
+          const elapsed = Date.now() - (callAttemptTimes.current[partner.id] || 0);
+          // Only trigger if no call is active or existing call attempt has timed out (> 8s)
+          if (!activeCalls.current.has(partner.id) || elapsed > 8000) {
+            if (isGhost || me < partner.id) {
+              callPeer(partner.id);
+            } else {
+              // Signal partner to retry calling us
+              socket?.emit('webrtc:signal', { type: 'retry', targetId: partner.id, fromCid: me });
+            }
           }
         }
       });
     };
 
-    const interval = setInterval(checkConnections, 3200);
+    const interval = setInterval(checkConnections, 5000);
     checkConnections();
     return () => clearInterval(interval);
   }, [users, ready, remote, me, socket, callPeer, isGhost]);

@@ -4,7 +4,9 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.PermissionRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -37,12 +39,22 @@ public class MainActivity extends BridgeActivity {
         // so WebRTC media capture is granted at the OS level immediately when the app launches
         requestMediaPermissionsIfNeeded();
 
-        // Customise WebView for zero-drift playback, notch padding, and WebRTC video/audio calls
+        // Customise WebView for 60FPS hardware-accelerated playback on low-end devices, notch padding, and WebRTC calls
         if (this.bridge != null && this.bridge.getWebView() != null) {
             WebView webView = this.bridge.getWebView();
-            webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-            webView.getSettings().setDomStorageEnabled(true);
-            webView.getSettings().setDatabaseEnabled(true);
+            
+            // 🚀 Maximum Hardware Acceleration for Budget & Older Android Devices (Mali/Adreno GPUs)
+            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            WebSettings settings = webView.getSettings();
+            settings.setMediaPlaybackRequiresUserGesture(false);
+            settings.setDomStorageEnabled(true);
+            settings.setDatabaseEnabled(true);
+            settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
+            settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+            settings.setOffscreenPreRaster(true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+            }
 
             // Dynamically push WebView below system status bar and hardware camera notch
             webView.setFitsSystemWindows(true);
@@ -62,8 +74,19 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPermissionRequest(final PermissionRequest request) {
                     runOnUiThread(() -> {
-                        if (hasMediaPermissions()) {
-                            request.grant(request.getResources());
+                        List<String> toGrant = new ArrayList<>();
+                        for (String r : request.getResources()) {
+                            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) {
+                                if (hasCameraPermission()) toGrant.add(r);
+                            } else if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) {
+                                if (hasAudioPermission()) toGrant.add(r);
+                            } else {
+                                toGrant.add(r);
+                            }
+                        }
+
+                        if (!toGrant.isEmpty()) {
+                            request.grant(toGrant.toArray(new String[0]));
                         } else {
                             pendingWebPermissionRequest = request;
                             requestMediaPermissionsIfNeeded();
@@ -82,21 +105,27 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    private boolean hasCameraPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean hasAudioPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
     private boolean hasMediaPermissions() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-               ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        return hasCameraPermission() && hasAudioPermission();
     }
 
     private void requestMediaPermissionsIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             List<String> needed = new ArrayList<>();
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (!hasCameraPermission()) {
                 needed.add(Manifest.permission.CAMERA);
             }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            if (!hasAudioPermission()) {
                 needed.add(Manifest.permission.RECORD_AUDIO);
             }
             if (!needed.isEmpty()) {
@@ -113,8 +142,18 @@ public class MainActivity extends BridgeActivity {
                 final PermissionRequest req = pendingWebPermissionRequest;
                 pendingWebPermissionRequest = null;
                 runOnUiThread(() -> {
-                    if (hasMediaPermissions()) {
-                        req.grant(req.getResources());
+                    List<String> toGrant = new ArrayList<>();
+                    for (String r : req.getResources()) {
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) {
+                            if (hasCameraPermission()) toGrant.add(r);
+                        } else if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) {
+                            if (hasAudioPermission()) toGrant.add(r);
+                        } else {
+                            toGrant.add(r);
+                        }
+                    }
+                    if (!toGrant.isEmpty()) {
+                        req.grant(toGrant.toArray(new String[0]));
                     } else {
                         req.deny();
                     }

@@ -2781,22 +2781,36 @@ io.on('connection', (socket) => {
   socket.on('chat:clear', () => { if (joined()) { room.chat = []; io.to(rid).emit('chat:cleared'); save(); } });   // wipe saved chat for both
   socket.on('nudge', () => { if (joined()) socket.to(rid).emit('nudge', { from: user.name }); });
 
-  // PLAY | PAUSE | SEEK | BUFFERING
-  socket.on('player', ({ action, time } = {}) => {
+  // PLAY | PAUSE | SEEK | BUFFERING (Zero-Drift Multi-User Sync Engine)
+  socket.on('player', ({ action, time, playing } = {}) => {
     if (!canControl() || !['PLAY', 'PAUSE', 'SEEK', 'BUFFERING'].includes(action)) return;
     touchRoom(room);
     room.time = num(time); room.at = Date.now();
     if (action === 'PLAY') room.playing = true;
     if (action === 'PAUSE') room.playing = false;
+    if (action === 'SEEK') {
+      room.lastSeekAt = Date.now();
+      room.lastSeekBy = user.cid;
+      if (typeof playing === 'boolean') room.playing = playing;
+    }
     // BUFFERING is handled as non-blocking soft notification, never stops the other person's player
     if (action !== 'BUFFERING') {
-      socket.to(rid).emit('player', { action, time: room.time, by: user.cid, sentAt: Date.now() });
+      socket.to(rid).emit('player', { action, time: room.time, playing: room.playing, by: user.cid, sentAt: Date.now() });
     }
   });
 
   // host heartbeat → clients correct drift smoothly with transit timestamp
   socket.on('heartbeat', ({ time, playing } = {}) => {
     if (!joined() || user.cid !== room.hostId) return;
+    // Anti-Jerk Protection: If any room member just moved/seeked the video in the last 2.5 seconds,
+    // do not allow a lagging host heartbeat with stale timestamp to drag other users back!
+    if (room.lastSeekAt && (Date.now() - room.lastSeekAt < 2500) && room.lastSeekBy !== user.cid) {
+      if (Math.abs(num(time) - room.time) > 1.2) {
+        // Correct the host to the newly seeked timestamp immediately
+        socket.emit('player', { action: 'SEEK', time: room.time, playing: room.playing, by: room.lastSeekBy, sentAt: Date.now() });
+        return;
+      }
+    }
     room.time = num(time); room.playing = !!playing; room.at = Date.now();
     socket.to(rid).emit('heartbeat', { time: room.time, playing: room.playing, sentAt: Date.now() });
   });

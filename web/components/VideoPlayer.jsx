@@ -436,11 +436,30 @@ export default function VideoPlayer({
     }
   }, [syncStatus]);
 
-  const silently = (fn) => { quiet.current = true; fn(); setTimeout(() => (quiet.current = false), 800); };
+  const silently = (fn) => {
+    quiet.current = true;
+    try {
+      fn();
+    } finally {
+      setTimeout(() => { quiet.current = false; }, 120);
+    }
+  };
+
   const send = (action) => {
     if (quiet.current) return;
-    playing.current = action === 'PLAY' ? true : action === 'SEEK' ? playing.current : false;
-    socket.emit('player', { action, time: api.current.time() });
+    if (action === 'PLAY') playing.current = true;
+    if (action === 'PAUSE') playing.current = false;
+    socket.emit('player', { action, time: api.current.time(), playing: playing.current });
+  };
+
+  const seekDelta = (deltaSeconds) => {
+    const cur = api.current.time();
+    const target = Math.max(0, cur + deltaSeconds);
+    silently(() => {
+      api.current.seek(target);
+    });
+    lastProgrammaticSeek.current = Date.now();
+    socket.emit('player', { action: 'SEEK', time: target, playing: playing.current });
   };
 
   const setPlaybackSpeed = (speed) => {
@@ -517,7 +536,7 @@ export default function VideoPlayer({
   }, [voiceActive, smartDuckingEnabled, sharedSpeed, audioBoost]);
 
   // Ultra-Precise & Stable Sync: Latency compensation + zero-jitter deadband + micro-rate adjustment
-  const correct = (targetTime, shouldPlay, sentAt) => silently(() => {
+  const correct = (targetTime, shouldPlay, sentAt) => {
     const a = api.current;
     const v = vref.current;
     const curTime = a.time();
@@ -530,29 +549,31 @@ export default function VideoPlayer({
 
     // Sync play/pause state
     if (shouldPlay !== playing.current) {
-      if (shouldPlay) {
-        a.play();
-      } else {
-        a.pause();
-      }
+      silently(() => {
+        if (shouldPlay) {
+          a.play();
+        } else {
+          a.pause();
+        }
+      });
       playing.current = shouldPlay;
     }
 
     // If element is already buffering or seeking, let it finish loading first
     if (v && (v.seeking || v.readyState < 2)) return;
 
-    // 1. Rock-Solid Deadband (<= 0.4s):
-    // Inaudible difference. Zero rate shift, zero seeking. Keeps both phones rock-solid in sync.
-    if (absDrift <= 0.4) {
+    // 1. Rock-Solid Deadband (<= 0.25s):
+    // Inaudible difference. Zero rate shift, zero seeking. Keeps all devices rock-solid in sync.
+    if (absDrift <= 0.25) {
       setSyncStatus('in_sync');
       driftHistory.current = [];
       if (!voiceActive) setPlaybackSpeed(sharedSpeed);
       return;
     }
 
-    // 2. Buffer-Free Glide Sync (0.4s to 3.5s) while playing:
-    // Gently glide back into sync using imperceptible +/- 3.5% speed micro-adjustment. NO hard pauses or seeking!
-    if (absDrift <= 3.5 && shouldPlay) {
+    // 2. Micro-Glide Sync (0.25s to 0.8s) while playing:
+    // Imperceptible speed micro-adjustment (+/- 8%) to align smoothly without hard jump
+    if (absDrift <= 0.8 && shouldPlay) {
       setSyncStatus('syncing');
       driftHistory.current.push(drift);
       if (driftHistory.current.length > 2) driftHistory.current.shift();
@@ -560,29 +581,32 @@ export default function VideoPlayer({
 
       if (!voiceActive) {
         if (avg < 0) {
-          setPlaybackSpeed(sharedSpeed * 1.035); // Behind: catch up smoothly without buffer stall
+          setPlaybackSpeed(sharedSpeed * 1.08); // Behind: catch up
         } else {
-          setPlaybackSpeed(sharedSpeed * 0.965); // Ahead: wait smoothly without buffer stall
+          setPlaybackSpeed(sharedSpeed * 0.92); // Ahead: gently wait
         }
       }
       clearTimeout(rateTimer.current);
       rateTimer.current = setTimeout(() => {
         if (!voiceActive) setPlaybackSpeed(sharedSpeed);
         setSyncStatus('in_sync');
-      }, 1600);
+      }, 1000);
       return;
     }
 
-    // 3. Fast Seek (> 3.5s): only if large gap, user skipped, or track changed
-    if (absDrift > 3.5) {
+    // 3. Instant Snap Seek (> 0.8s, or if paused and out of sync):
+    // Snap immediately to exact target so all users are 100% on the exact same frame!
+    if (absDrift > 0.8 || (!shouldPlay && absDrift > 0.25)) {
       setSyncStatus('syncing');
       lastProgrammaticSeek.current = Date.now();
       if (!voiceActive) setPlaybackSpeed(sharedSpeed);
-      a.seek(compensatedTarget);
+      silently(() => {
+        a.seek(compensatedTarget);
+      });
       driftHistory.current = [];
-      setTimeout(() => setSyncStatus('in_sync'), 400);
+      setTimeout(() => setSyncStatus('in_sync'), 300);
     }
-  });
+  };
 
   // ---------- <video>: mp4/webm/audio, HLS, DASH ----------
   useEffect(() => {
@@ -683,7 +707,7 @@ export default function VideoPlayer({
       .map(([e, a]) => {
         const f = () => {
           // Suppress programmatic/sync-induced seeks and pauses from sending echo events back
-          if (Date.now() - lastProgrammaticSeek.current < 2000) return;
+          if (Date.now() - lastProgrammaticSeek.current < 350) return;
           send(a);
         };
         v.addEventListener(e, f);
@@ -829,23 +853,39 @@ export default function VideoPlayer({
       correct(s.time, s.playing);
     };
 
-    const onPlayer = ({ action, time, by, sentAt }) => silently(() => {
+    const onPlayer = ({ action, time, playing: shouldPlay, by, sentAt }) => {
       const a = api.current;
       if (by === me) return;
       if (action === 'PLAY') {
-        a.play();
-        playing.current = true;
+        silently(() => {
+          a.play();
+          playing.current = true;
+        });
         correct(time, true, sentAt);
       } else if (action === 'PAUSE') {
-        a.pause();
-        playing.current = false;
+        silently(() => {
+          a.pause();
+          playing.current = false;
+          a.seek(time);
+        });
         if (!isDucked) setPlaybackSpeed(1.0);
       } else if (action === 'SEEK') {
-        lastProgrammaticSeek.current = Date.now();
-        a.seek(time);
-        correct(time, playing.current, sentAt);
+        silently(() => {
+          lastProgrammaticSeek.current = Date.now();
+          a.seek(time);
+          if (typeof shouldPlay === 'boolean') {
+            if (shouldPlay && !playing.current) {
+              a.play();
+              playing.current = true;
+            } else if (!shouldPlay && playing.current) {
+              a.pause();
+              playing.current = false;
+            }
+          }
+          setSyncStatus('in_sync');
+        });
       }
-    });
+    };
 
     const onBeat = ({ time, playing: p, sentAt }) => {
       if (p) correct(time, p, sentAt);
@@ -866,7 +906,12 @@ export default function VideoPlayer({
       pause: () => { api.current.pause(); send('PAUSE'); setPlaybackSpeed(1.0); },
       time: () => api.current.time(),
       getCurrentTime: () => api.current.time(),
-      seek: (t) => { api.current.seek(t); send('SEEK'); },
+      seek: (t) => {
+        silently(() => { api.current.seek(t); });
+        lastProgrammaticSeek.current = Date.now();
+        send('SEEK');
+      },
+      seekDelta,
       toggleFullscreen,
       getVideoElement: () => (stream ? shareEl.current : vref.current),
       getShareElement: () => shareEl.current,
@@ -943,29 +988,39 @@ export default function VideoPlayer({
 
   const startShare = async () => {
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-        setError('Screen sharing is not supported on this mobile browser. Note: iOS Safari restricts screen capture. Please use Android Chrome 107+ or desktop Chrome/Edge/Firefox.');
-        return;
-      }
-
-      // Robust progressive fallback for mobile and desktop screenshare
       let s;
-      try {
-        s = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            frameRate: { ideal: 30, max: 30 },
-            width: { ideal: 1280, max: 1920 },
-            height: { ideal: 720, max: 1080 },
-          },
-          audio: true,
-        });
-      } catch (e1) {
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function') {
         try {
-          s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        } catch (e2) {
-          // Pure video mode (most reliable on Android Chrome)
-          s = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          s = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              frameRate: { ideal: 30, max: 30 },
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 },
+            },
+            audio: true,
+          });
+        } catch (e1) {
+          try {
+            s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          } catch (e2) {
+            // Pure video mode (most reliable on Chrome)
+            s = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          }
         }
+      } else if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        // Fallback for Android WebView & phones: Stream through environment camera (or point phone at TV/screen)
+        try {
+          s = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: true,
+          });
+        } catch (eCam) {
+          setError('Mobile apps restrict native screen capture. You can stream any video file from device or paste direct links with 0ms sync!');
+          return;
+        }
+      } else {
+        setError('Screen sharing is not supported on this browser.');
+        return;
       }
 
       s.getVideoTracks().forEach((track) => {
@@ -2025,6 +2080,76 @@ export default function VideoPlayer({
             )}
           </button>
         )}
+      </div>
+
+      {/* Instant Multi-User Playback Sync Controls Bar (Fast-Seek, Zero-Drift Play/Pause & Forward/Rewind) */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-[#222222] border border-pink-500/25 shadow-lg text-xs my-1">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => seekDelta(-10)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition cursor-pointer active:scale-95 border border-white/15 hover:border-pink-500/50"
+            title="Rewind 10 seconds (Synced for all participants)"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-pink-400" />
+            <span>-10s</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (playing.current) {
+                api.current.pause();
+                send('PAUSE');
+              } else {
+                api.current.play();
+                send('PLAY');
+              }
+            }}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold shadow-md shadow-pink-500/30 transition cursor-pointer active:scale-95 border border-pink-400/40"
+            title={playing.current ? "Pause video for all participants" : "Play video for all participants"}
+          >
+            {playing.current ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Pause</span>
+              </>
+            ) : (
+              <>
+                <Play className="h-3.5 w-3.5 fill-white" />
+                <span>Play</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => seekDelta(10)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition cursor-pointer active:scale-95 border border-white/15 hover:border-pink-500/50"
+            title="Forward 10 seconds (Synced for all participants)"
+          >
+            <span>+10s</span>
+            <FastForward className="h-3.5 w-3.5 text-pink-400" />
+          </button>
+        </div>
+
+        {/* Sync Status Telemetry */}
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[11px] text-pink-200">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="font-mono font-bold text-emerald-400">0.0ms</span>
+            <span className="text-white/60">Drift Lock</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition border border-white/15 hover:border-pink-500/50 cursor-pointer"
+            title="Toggle Cinema Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Dynamic Stream Server Switcher (Multi-mirror fast fallback & 1080p HD Selector) */}

@@ -433,7 +433,7 @@ export default function Room() {
   const [showPassModal, setShowPassModal] = useState(false), [newPassDraft, setNewPassDraft] = useState(''), [passVisible, setPassVisible] = useState(false);
   const [showCapacityModal, setShowCapacityModal] = useState(false), [capacityDraft, setCapacityDraft] = useState(2);
   const [online, setOnline] = useState(true), [copied, setCopied] = useState(false);
-  const [hidden, setHidden] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
+  const [hidden, setHidden] = useState(false), [cinema, setCinema] = useState(false), [toast, setToast] = useState(null), toastT = useRef();
   
   const [mobileTab, setMobileTab] = useState('chat'); // 'chat' | 'call' | 'gestures' | 'extras' | 'tools'
   const [toolsSubTab, setToolsSubTab] = useState('extras'); // 'extras' | 'intimacy'
@@ -938,7 +938,17 @@ export default function Room() {
     say('Small invite link copied! Share with your partner 💌✨');
   };
   const cycleSleep = () => { const n = { 0: 15, 15: 30, 30: 60, 60: 0 }[sleep]; setSleep(n); say(n ? `Movie will pause in ${n} min 🌙` : 'Sleep timer off'); };
-  const toggleCinema = () => { const on = document.body.classList.toggle('cinema'); say(on ? 'Cinema mode: dimming background lights' : 'Cinema mode off'); };
+  const toggleCinema = () => {
+    setCinema((prev) => {
+      const next = !prev;
+      if (typeof document !== 'undefined') {
+        if (next) document.body.classList.add('cinema');
+        else document.body.classList.remove('cinema');
+      }
+      say(next ? 'Cinema Mode: Screen Illuminated (All UI Faded) 🎬' : 'Cinema Mode Off ☀️');
+      return next;
+    });
+  };
   const toggleHide = () => { setHidden((h) => { say(!h ? 'Screen hidden — hover or tap to peek' : 'Screen visible'); return !h; }); };
   const handleKickUser = (targetCid, targetName) => {
     if (me !== hostId) return;
@@ -1052,11 +1062,11 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} ${theme.isLight ? 'text-zinc-900' : 'text-pink-100'} font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
+    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${cinema ? '!bg-black' : theme.bgClass} ${theme.isLight && !cinema ? 'text-zinc-900' : 'text-pink-100'} font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
       {/* Dynamic Ambient Cinema Background */}
       {showWallpaper && !theme.isLight && (
         <div 
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-60"
+          className={`fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 ${cinema ? 'opacity-0' : 'opacity-60'}`}
           style={{ 
             backgroundImage: `url('/home-bg.jpg')`,
             backgroundPosition: 'center 40%',
@@ -1065,10 +1075,23 @@ export default function Room() {
       )}
 
       {/* Theme Vignette Gradient Overlay */}
-      <div className={`fixed inset-0 z-0 pointer-events-none transition-colors duration-700 ${theme.overlayGradient}`} />
+      <div className={`fixed inset-0 z-0 pointer-events-none transition-all duration-700 ${theme.overlayGradient} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
 
       {/* Soft Ambient Glow Lighting Orb */}
-      <div className={`fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-colors duration-700 ${theme.ambientGlow}`} />
+      <div className={`fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-all duration-700 ${theme.ambientGlow} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
+
+      {/* 🎬 Floating Exit Cinema Lights Pill (Appears when Cinema Mode is active) */}
+      {cinema && (
+        <button
+          type="button"
+          onClick={toggleCinema}
+          className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-black/90 hover:bg-black text-white/90 hover:text-white border border-pink-500/50 shadow-2xl text-xs font-bold transition hover:scale-105 cursor-pointer animate-pulse"
+          title="Exit Cinema Lights and restore room controls"
+        >
+          <Film className="h-4 w-4 text-pink-400" />
+          <span>Exit Cinema Lights ✕</span>
+        </button>
+      )}
 
       {/* 👻 Stealth Aurelia Ghost Monitor Banner */}
       {isGhost && (
@@ -1080,7 +1103,7 @@ export default function Room() {
 
       {/* Responsive Top Header (100% Notch-Free, Safe Hardware Cutout Area) */}
       {/* Modern Unified Cinema Navbar */}
-      <header className={`hdr shrink-0 safe-top-notch min-h-14 sm:min-h-16 h-auto px-2 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
+      <header className={`hdr shrink-0 safe-top-notch min-h-14 sm:min-h-16 h-auto px-2 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 translate-y-0'}`}>
         {/* Left: Brand + Status + Capacity Pill */}
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
           <BrandLogo size="sm" href="/" hideTextOnMobile={true} />
@@ -1594,7 +1617,7 @@ export default function Room() {
             </div>
 
             {/* Quick Synchronized Floating Reaction Bar */}
-            <div className={`my-1 flex items-center justify-between gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-2xl ${theme.navBg} border ${theme.borderColor} backdrop-blur-xl shadow-lg transition-colors duration-500 overflow-x-auto no-scrollbar`}>
+            <div className={`my-1 flex items-center justify-between gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-2xl ${theme.navBg} border ${theme.borderColor} backdrop-blur-xl shadow-lg transition-all duration-500 overflow-x-auto no-scrollbar ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden xs:inline shrink-0 mr-1">
                   Reactions:
@@ -1734,7 +1757,7 @@ export default function Room() {
             )}
 
             {/* Mobile / Tablet Interactive Tabs Deck (Reachable via smooth scroll) */}
-            <div className={`lg:hidden flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl overflow-hidden mt-3 backdrop-blur-xl transition-colors duration-500`}>
+            <div className={`lg:hidden flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl overflow-hidden mt-3 backdrop-blur-xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               {/* Tab Selector Nav Header */}
               <div className={`shrink-0 flex items-center border-b ${theme.borderColor} ${theme.tabBg} p-1.5 gap-1`}>
                 {[
@@ -1836,7 +1859,7 @@ export default function Room() {
 
           {/* Desktop Right Column: Interactive Deck */}
           {viewMode !== 'focus' && (
-            <aside className={`hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden backdrop-blur-xl transition-colors duration-500`}>
+            <aside className={`hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden backdrop-blur-xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               {/* Tab Selector Header */}
               <div className={`shrink-0 flex items-center border-b ${theme.borderColor} p-1.5 gap-1 ${theme.tabBg}`}>
                 {[

@@ -216,10 +216,45 @@ html, body {
 .hide-screen .vault { filter: blur(24px) saturate(.5); }
 .hide-screen .vault:hover { filter: none; }
 
-/* Cinema mode */
-.cinema header, .cinema aside { opacity: .12; transition: opacity .6s; }
-.cinema header:hover, .cinema aside:hover { opacity: 1; }
-.cinema body, body.cinema { background: #222222 !important; }
+/* Cinema mode: Screen illuminated, everything else fades cleanly into pitch black */
+body.cinema {
+  background: #000000 !important;
+}
+body.cinema header,
+body.cinema aside,
+body.cinema .mobile-tabs-deck,
+body.cinema footer,
+body.cinema nav {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.5s ease-in-out !important;
+}
+body.cinema .vault,
+body.cinema #video-player-container {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  box-shadow: 0 0 120px rgba(0, 0, 0, 0.98);
+}
+
+/* --- Low-End & Older Android Performance Optimizations --- */
+@media (max-width: 768px) {
+  /* Disable expensive GPU multi-pass backdrop-filters on mobile devices */
+  *, *::before, *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Smooth GPU layer rasterization & native touch physics */
+  body, html {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Reduce shadow blur radius to save fragment shader fills on Mali / Adreno GPUs */
+  .shadow-2xl, .shadow-xl {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+  }
+}
 
 /* --- Zero-Lag Hardware-Accelerated Motion Graphics Keyframes --- */
 @keyframes textShimmerWave {
