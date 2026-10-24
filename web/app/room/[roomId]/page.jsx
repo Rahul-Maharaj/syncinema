@@ -26,6 +26,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import InstallPrompt from '@/components/InstallPrompt';
 import ChatPanel from '@/components/ChatPanel';
 import BrandLogo from '@/components/BrandLogo';
+import CinematicLoader from '@/components/CinematicLoader';
 import {
   Popcorn3D,
   Clapper3D,
@@ -886,7 +887,16 @@ export default function Room() {
     }
   };
 
-  if (name === null) return null;
+  if (name === null) {
+    return (
+      <CinematicLoader
+        title="SyncCinema VIP"
+        subtitle="Restoring your cinema pass & credentials..."
+        fullScreen={true}
+        showWallpaper={true}
+      />
+    );
+  }
   if (!name) return (
     <Gate icon={<User className="h-6 w-6" />} title="What should we call you?" hint="Your partner will see this name." cta="Join the couch"
       onSubmit={(e) => { e.preventDefault(); if (draft.trim()) { localStorage.setItem('name', draft.trim()); setName(draft.trim()); } }}>
@@ -1779,14 +1789,13 @@ export default function Room() {
       {err && <p className="card rise p-6 text-center">{{ full: 'This room is full.', locked: 'Too many wrong tries. Try again in 15 minutes.', taken: 'This seat is already in use.' }[err] || 'Could not join this room.'}</p>}
       
       {!boot && !err && (
-        <div className="flex-1 w-full flex flex-col items-center justify-center p-8 text-center space-y-4 min-h-[50vh]">
-          <div className="relative grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-600 shadow-2xl shadow-pink-950/80 animate-pulse">
-            <Film className="h-8 w-8 text-white animate-spin [animation-duration:3s]" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-base sm:text-lg text-white tracking-wide">Connecting to Private Cinema Room</h3>
-            <p className="text-xs text-pink-300/80">Securing zero-latency sync tunnel &amp; encrypted media stream...</p>
-          </div>
+        <div className="flex-1 w-full my-auto py-8">
+          <CinematicLoader
+            title="Connecting to Private Cinema Room"
+            subtitle="Securing zero-latency sync tunnel &amp; encrypted media stream..."
+            fullScreen={false}
+            showWallpaper={false}
+          />
         </div>
       )}
 

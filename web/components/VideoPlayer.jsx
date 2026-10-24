@@ -1650,47 +1650,51 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Synchronized Buffer Hold Overlay with Dynamic 12-Bar Wave Visualizer */}
+        {/* Synchronized Buffer Hold Overlay with Luxury Dynamic Cinema Visualizer */}
         {bufferHold?.active && (
-          <div className="absolute inset-0 z-35 flex items-center justify-center p-4 bg-[#222222]/85 backdrop-blur-md pointer-events-auto select-none">
-            <div className="max-w-md w-full p-5 rounded-3xl bg-[#1A1A1D]/95 border border-pink-500/30 text-center shadow-2xl space-y-4">
-              <div className="flex items-center justify-center gap-2">
-                <Popcorn3D size={28} />
-                <span className="text-xs font-extrabold text-pink-100 uppercase tracking-wider">
-                  Sync Buffer Hold Active
-                </span>
+          <div className="absolute inset-0 z-35 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl pointer-events-auto select-none anim-reveal">
+            <div className="max-w-md w-full p-6 rounded-3xl bg-[#14141B]/98 border-2 border-pink-500/50 text-center shadow-[0_20px_60px_rgba(236,72,153,0.35)] space-y-4">
+              <div className="relative mx-auto h-20 w-20 grid place-items-center">
+                <div className="absolute inset-0 rounded-full border-2 border-dashed border-pink-500/40 anim-celestial-spin" />
+                <div className="absolute inset-2 rounded-full border border-purple-400/50 anim-celestial-spin-reverse" />
+                <div className="absolute inset-3 rounded-full bg-pink-500/20 blur-md animate-pulse" />
+                <Popcorn3D size={42} className="relative z-10 drop-shadow-[0_4px_12px_rgba(236,72,153,0.6)]" />
               </div>
 
-              {/* 12-Bar Animated Equalizer / Wave Visualizer */}
+              <div className="space-y-1">
+                <span className="inline-block px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/50 text-[11px] font-black text-pink-300 uppercase tracking-widest">
+                  VIP Sync Buffer Hold
+                </span>
+                <p className="text-sm font-bold text-white pt-1">
+                  {bufferHold.isLocal ? (
+                    <span>Buffering stream… Holding playback so you stay 100% in sync with your partner.</span>
+                  ) : (
+                    <span><strong className="text-pink-300 font-black">{bufferHold.name}</strong> is buffering… Playback paused smoothly for both.</span>
+                  )}
+                </p>
+                <p className="text-xs text-pink-200/80 font-medium">
+                  ⚡ Auto-playing in 0ms lock the moment buffer recovers • Autonomous auto-fixer handles everything.
+                </p>
+              </div>
+
+              {/* 16-Bar Luxury Audio-Visual Equalizer */}
               <div className="flex items-end justify-center gap-1.5 h-10 py-1">
-                {[40, 75, 55, 90, 60, 100, 70, 85, 45, 95, 65, 80].map((h, i) => (
+                {[35, 70, 50, 95, 60, 100, 75, 85, 45, 90, 65, 80, 50, 95, 70, 40].map((h, i) => (
                   <span
                     key={i}
-                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 to-rose-300 animate-pulse"
+                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 via-rose-400 to-white anim-audio-bar"
                     style={{
                       height: `${h}%`,
-                      animationDelay: `${i * 90}ms`,
-                      animationDuration: '900ms',
+                      animationDelay: `${i * 80}ms`,
+                      animationDuration: '1.1s',
+                      boxShadow: '0 0 10px rgba(236,72,153,0.6)'
                     }}
                   />
                 ))}
               </div>
 
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-white">
-                  {bufferHold.isLocal ? (
-                    <span>Buffering stream… Holding playback so you stay 100% in sync with your partner.</span>
-                  ) : (
-                    <span><strong className="text-pink-300">{bufferHold.name}</strong> is buffering… Playback paused smoothly for both.</span>
-                  )}
-                </p>
-                <p className="text-xs text-pink-200/70">
-                  ⚡ Auto-playing together the millisecond buffer recovers • Autonomous auto-fixer handles everything.
-                </p>
-              </div>
-
-              <div className="pt-1 flex items-center justify-center gap-3">
-                <span className="text-[11px] text-pink-300/80 flex items-center gap-1">
+              <div className="pt-2 flex items-center justify-center gap-4">
+                <span className="text-xs text-emerald-400 font-extrabold flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping inline-block" />
                   Auto-Fixer Active
                 </span>
@@ -1700,7 +1704,7 @@ export default function VideoPlayer({
                     setBufferHold(null);
                     api.current?.play();
                   }}
-                  className="text-[11px] text-pink-300 hover:text-white underline cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-pink-500/25 hover:bg-pink-500/40 border border-pink-500/50 text-xs font-bold text-pink-200 hover:text-white transition cursor-pointer"
                 >
                   Resume anyway
                 </button>
@@ -2492,9 +2496,11 @@ export default function VideoPlayer({
 
       <form onSubmit={load} className="flex flex-col gap-2">
         {resolvingStatus && (
-          <div className="flex items-center gap-2 text-xs font-medium py-1.5 px-3 rounded-xl bg-pink-500/15 border border-pink-500/30 text-pink-600 dark:text-pink-200">
-            <Sparkles className="h-3.5 w-3.5 text-pink-500 shrink-0" />
-            <span>{resolvingStatus}</span>
+          <div className="relative overflow-hidden flex items-center gap-3 text-xs font-black py-2.5 px-4 rounded-2xl bg-[#1D1426] border-2 border-pink-500 text-pink-100 shadow-xl shadow-pink-950/60 anim-reveal">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-pink-500/25 to-transparent anim-shimmer-sweep pointer-events-none" />
+            <div className="h-2 w-2 rounded-full bg-pink-400 animate-ping shrink-0" />
+            <Sparkles className="h-4 w-4 text-pink-400 shrink-0 animate-pulse" />
+            <span className="relative z-10 tracking-wide drop-shadow-sm">{resolvingStatus}</span>
           </div>
         )}
         <div className="p-2 sm:p-2.5 rounded-2xl bg-[#16161A]/95 border-2 border-pink-500/30 shadow-2xl shadow-black/80 flex flex-col sm:flex-row gap-2">

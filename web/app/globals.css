@@ -698,3 +698,70 @@ body.cinema #video-player-container {
   animation: borderGlowPulse 2.8s ease-in-out infinite;
 }
 
+/* 9. Luxury Projector Light Beam */
+@keyframes projectorLight {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scaleX(0.95) rotate(-0.5deg);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scaleX(1.05) rotate(0.5deg);
+  }
+}
+
+.anim-projector-beam {
+  animation: projectorLight 4.5s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* 10. Shimmer Laser Sweep */
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.anim-shimmer-sweep {
+  animation: shimmerSweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* 11. Audio Waveform Bar Bounce */
+@keyframes audioWaveBounce {
+  0%, 100% {
+    transform: scaleY(0.25);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.anim-audio-bar {
+  animation: audioWaveBounce 1.2s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* 12. Celestial Orbital Halo Rotation */
+@keyframes celestialSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.anim-celestial-spin {
+  animation: celestialSpin 10s linear infinite;
+}
+
+.anim-celestial-spin-reverse {
+  animation: celestialSpin 7s linear infinite reverse;
+}
+
+
