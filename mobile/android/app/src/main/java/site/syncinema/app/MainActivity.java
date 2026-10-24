@@ -74,22 +74,22 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPermissionRequest(final PermissionRequest request) {
                     runOnUiThread(() -> {
-                        List<String> toGrant = new ArrayList<>();
+                        boolean needCam = false;
+                        boolean needAudio = false;
                         for (String r : request.getResources()) {
-                            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) {
-                                if (hasCameraPermission()) toGrant.add(r);
-                            } else if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) {
-                                if (hasAudioPermission()) toGrant.add(r);
-                            } else {
-                                toGrant.add(r);
+                            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r) && !hasCameraPermission()) {
+                                needCam = true;
+                            }
+                            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r) && !hasAudioPermission()) {
+                                needAudio = true;
                             }
                         }
 
-                        if (!toGrant.isEmpty()) {
-                            request.grant(toGrant.toArray(new String[0]));
-                        } else {
+                        if (needCam || needAudio) {
                             pendingWebPermissionRequest = request;
                             requestMediaPermissionsIfNeeded();
+                        } else {
+                            request.grant(request.getResources());
                         }
                     });
                 }

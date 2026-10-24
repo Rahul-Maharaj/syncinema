@@ -34,6 +34,7 @@ export default function ChatPanel({
   playerRef,
   say,
   isMobile = false,
+  theme,
 }) {
   const [text, setText] = useState('');
   const listRef = useRef(null);
@@ -97,18 +98,26 @@ export default function ChatPanel({
 
   return (
     <div
-      className="card vault flex flex-col p-2.5 sm:p-4 border border-pink-500/20 !bg-[#222222]/95 shadow-xl shadow-black/40 h-full flex-1 min-h-0 rounded-2xl overflow-hidden"
+      className={`vault flex flex-col p-2.5 sm:p-4 h-full flex-1 min-h-0 rounded-2xl overflow-hidden transition-all ${
+        theme?.isLight
+          ? 'bg-white/85 backdrop-blur-2xl border border-white/70 shadow-[0_8px_30px_rgba(0,0,0,0.06)] text-slate-800'
+          : 'card border border-pink-500/20 !bg-[#222222]/95 shadow-xl text-pink-100'
+      }`}
     >
       {/* Header: User Presence & Roster */}
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-        <span className="flex items-center gap-1 text-xs opacity-60">
+        <span className={`flex items-center gap-1 text-xs ${theme?.isLight ? 'text-slate-500' : 'opacity-60'}`}>
           <Users className="h-3.5 w-3.5" />
           {users.length} here
         </span>
         {users.map((u) => (
           <span
             key={u.id}
-            className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white/90"
+            className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border ${
+              theme?.isLight
+                ? 'bg-slate-100 border-slate-200/90 text-slate-800'
+                : 'border-white/10 bg-white/5 text-white/90'
+            }`}
           >
             <i className="h-2 w-2 rounded-full" style={{ background: u.color || '#f43f5e' }} />
             <span className="truncate max-w-[80px] sm:max-w-[110px]">{u.name}</span>
@@ -122,7 +131,7 @@ export default function ChatPanel({
                     say?.(`Handed host controls to ${u.name}`);
                   }
                 }}
-                className="opacity-40 hover:opacity-100 hover:text-amber-400 p-0.5 ml-0.5 transition"
+                className={`p-0.5 ml-0.5 transition ${theme?.isLight ? 'text-slate-400 hover:text-amber-500' : 'opacity-40 hover:opacity-100 hover:text-amber-400'}`}
                 title={`Transfer host controls to ${u.name}`}
               >
                 <Crown className="h-2.5 w-2.5" />
@@ -136,7 +145,7 @@ export default function ChatPanel({
             onClick={handleClearChat}
             title="Delete chat history"
             aria-label="Delete chat history"
-            className="ml-auto rounded-lg p-1 text-white/40 hover:text-pink-400 transition hover:bg-white/5"
+            className={`ml-auto rounded-lg p-1 transition ${theme?.isLight ? 'text-slate-400 hover:text-rose-600' : 'text-white/40 hover:text-pink-400'}`}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -147,8 +156,8 @@ export default function ChatPanel({
       <div ref={listRef} className="flex-1 space-y-2.5 overflow-y-auto pr-1 select-text">
         {chat.length === 0 && (
           <div className="mt-8 text-center text-sm opacity-50 px-4">
-            <p>No messages yet.</p>
-            <p className="mt-1 text-xs text-white/40">Say hi 👋 or tap 💬 for a conversation starter.</p>
+            <p className={theme?.isLight ? 'text-slate-700' : 'text-white'}>No messages yet.</p>
+            <p className={`mt-1 text-xs ${theme?.isLight ? 'text-slate-500' : 'text-white/40'}`}>Say hi 👋 or tap 💬 for a conversation starter.</p>
           </div>
         )}
         {chat.map((m, idx) => {
@@ -178,7 +187,9 @@ export default function ChatPanel({
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-1.5 text-sm ${
                   mine
                     ? 'rounded-tr-sm bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 text-white shadow-md shadow-pink-500/20'
-                    : 'rounded-tl-sm bg-[#222222] text-pink-100 border border-pink-500/20'
+                    : theme?.isLight
+                      ? 'rounded-tl-sm bg-white text-slate-800 border border-slate-200/80 shadow-sm'
+                      : 'rounded-tl-sm bg-[#222222] text-pink-100 border border-pink-500/20'
                 }`}
               >
                 {m.text}
@@ -189,7 +200,7 @@ export default function ChatPanel({
       </div>
 
       {/* Quick Reactions & Action Helpers */}
-      <div className="my-2 flex items-center justify-between gap-1 border-t border-white/5 pt-2">
+      <div className={`my-2 flex items-center justify-between gap-1 border-t pt-2 ${theme?.isLight ? 'border-slate-200/80' : 'border-white/5'}`}>
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {EMOJI.map((e) => (
             <button
@@ -242,7 +253,11 @@ export default function ChatPanel({
             }
           }}
           placeholder="Say something sweet…"
-          className="field flex-1 !bg-[#1A1A1D] border border-pink-500/25 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 text-sm text-pink-100 placeholder-pink-300/40 px-3 py-2 rounded-xl outline-none transition"
+          className={`field flex-1 text-sm rounded-xl outline-none transition px-3 py-2 ${
+            theme?.isLight
+              ? 'bg-slate-50 border border-slate-200/80 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-pink-500'
+              : '!bg-[#1A1A1D] border border-pink-500/25 focus:border-pink-500 text-pink-100 placeholder-pink-300/40'
+          }`}
           autoComplete="off"
           maxLength={1000}
         />

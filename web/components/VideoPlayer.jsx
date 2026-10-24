@@ -37,6 +37,7 @@ export default function VideoPlayer({
   onOpenRecent,
   ottAccounts = {},
   isGhost = false,
+  theme,
 }) {
   const [media, setMedia] = useState(initial.media);
   const mediaRef = useRef(media);
@@ -1481,46 +1482,54 @@ export default function VideoPlayer({
         onClick={isFullscreen ? resetOverlayTimer : undefined}
         onMouseMove={isFullscreen ? resetOverlayTimer : undefined}
         onTouchStart={isFullscreen ? resetOverlayTimer : undefined}
-        className={`vault relative overflow-hidden bg-[#222222] transition-all ${
+        className={`vault relative overflow-hidden transition-all ${
+          theme?.isLight ? 'bg-white/90 border border-white/70 shadow-[0_12px_40px_rgba(0,0,0,0.08)]' : 'bg-[#222222] border border-white/10'
+        } ${
           isFullscreen
             ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-0 flex items-center justify-center'
-            : 'aspect-video rounded-2xl border border-white/10'
+            : 'aspect-video rounded-3xl'
         }`}
       >
-        {/* Top-Left Status Cluster: Sync Status + Live Stream (Zero Overlap) */}
-        <div
-          className={`absolute top-3 left-3 z-30 flex items-center gap-2 transition-opacity duration-300 pointer-events-auto ${
-            isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-        >
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#222222]/90 backdrop-blur-md border border-pink-500/20 text-[11px] text-white/90 shadow-lg">
-            <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#EC4899]'}`} />
-            <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
-            {syncOffset !== 0 && (
-              <span className="text-[10px] text-[#F472B6] font-mono ml-0.5">
-                ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
-              </span>
+        {/* Top-Left Status Cluster: Sync Status + Live Stream (Only rendered when video is actively loaded) */}
+        {T !== 'none' && (
+          <div
+            className={`absolute top-3 left-3 z-30 flex items-center gap-2 transition-opacity duration-300 pointer-events-auto ${
+              isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg ${
+              theme?.isLight
+                ? 'bg-white/90 border border-slate-200 text-slate-800'
+                : 'bg-[#222222]/90 border border-pink-500/20 text-white/90'
+            }`}>
+              <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#EC4899]'}`} />
+              <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
+              {syncOffset !== 0 && (
+                <span className="text-[10px] text-[#F472B6] font-mono ml-0.5">
+                  ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
+                </span>
+              )}
+            </div>
+
+            {isLiveStream && (
+              <div className="btn-pink flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-[#FCE7F3] border border-white/20 shadow-lg backdrop-blur-md">
+                <Radio className="h-3 w-3" />
+                <span>LIVE</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (hlsRef.current?.liveSyncPosition) vref.current.currentTime = hlsRef.current.liveSyncPosition;
+                    else if (vref.current && Number.isFinite(vref.current.duration)) vref.current.currentTime = vref.current.duration;
+                  }}
+                  className="ml-1 underline hover:text-white text-[10px] cursor-pointer"
+                  title="Jump to live edge"
+                >
+                  Catch up
+                </button>
+              </div>
             )}
           </div>
-
-          {isLiveStream && (
-            <div className="btn-pink flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-[#FCE7F3] border border-white/20 shadow-lg backdrop-blur-md">
-              <Radio className="h-3 w-3" />
-              <span>LIVE</span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (hlsRef.current?.liveSyncPosition) vref.current.currentTime = hlsRef.current.liveSyncPosition;
-                  else if (vref.current && Number.isFinite(vref.current.duration)) vref.current.currentTime = vref.current.duration;
-                }}
-                className="ml-1 underline hover:text-white text-[10px] cursor-pointer"
-                title="Jump to live edge"
-              >
-                Catch up
-              </button>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Screensharing Active Header & Full Screen Toggle */}
         {stream && (
@@ -1884,13 +1893,31 @@ export default function VideoPlayer({
           </label>
         )}
         {T === 'none' && !stream && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#222222] p-4 text-center text-[#FCE7F3]">
-            <div className="relative mb-2 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-gradient-to-tr from-[#EC4899] to-[#F472B6] shadow-xl shadow-[#EC4899]/30 animate-pulse">
-              <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-[#FCE7F3] text-[#FCE7F3] ml-0.5" />
+          <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none ${
+            theme?.isLight
+              ? 'bg-white/80 backdrop-blur-2xl text-slate-800'
+              : 'bg-[#222222] text-[#FCE7F3]'
+          }`}>
+            {/* Sync Telemetry Badge */}
+            <div className={`absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+              theme?.isLight
+                ? 'bg-white/90 border border-slate-200/90 text-slate-700'
+                : 'bg-white/10 border border-white/15 text-pink-200'
+            }`}>
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>In sync</span>
+              <span className="opacity-40">•</span>
+              <span className="font-mono text-[11px] text-emerald-500 font-bold">131ms</span>
             </div>
-            <p className="font-display text-sm sm:text-base font-bold text-[#FCE7F3] tracking-wide">Ready to Stream</p>
-            <p className="text-[11px] sm:text-xs text-[#FBCFE8]/80 mt-0.5 max-w-xs">
-              Paste any movie or video link below to watch together in 0ms sync
+
+            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-pink-500 to-rose-400 shadow-xl shadow-pink-500/30">
+              <Play className="h-8 w-8 fill-white text-white ml-1" />
+            </div>
+            <p className={`font-display text-xl sm:text-2xl font-black tracking-wide ${theme?.isLight ? 'text-slate-900' : 'text-white'}`}>
+              Ready to Stream
+            </p>
+            <p className={`text-xs sm:text-sm mt-1 max-w-md ${theme?.isLight ? 'text-slate-500' : 'text-pink-200/80'}`}>
+              Paste a video link below or choose from your watchlist to begin watching together.
             </p>
           </div>
         )}
@@ -2083,15 +2110,23 @@ export default function VideoPlayer({
       </div>
 
       {/* Instant Multi-User Playback Sync Controls Bar (Fast-Seek, Zero-Drift Play/Pause & Forward/Rewind) */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-[#222222] border border-pink-500/25 shadow-lg text-xs my-1">
+      <div className={`flex items-center justify-between gap-2 px-3 py-2 rounded-2xl border shadow-lg text-xs my-1 backdrop-blur-xl transition-colors duration-300 ${
+        theme?.isLight
+          ? 'bg-white/85 border-white/60 text-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.04)]'
+          : 'bg-[#222222] border-pink-500/25 text-white'
+      }`}>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => seekDelta(-10)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition cursor-pointer active:scale-95 border border-white/15 hover:border-pink-500/50"
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border ${
+              theme?.isLight
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80 hover:border-pink-300'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
+            }`}
             title="Rewind 10 seconds (Synced for all participants)"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-pink-400" />
+            <RotateCcw className="h-3.5 w-3.5 text-pink-500" />
             <span>-10s</span>
           </button>
 
@@ -2106,7 +2141,7 @@ export default function VideoPlayer({
                 send('PLAY');
               }
             }}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold shadow-md shadow-pink-500/30 transition cursor-pointer active:scale-95 border border-pink-400/40"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold shadow-md shadow-pink-500/25 transition cursor-pointer active:scale-95"
             title={playing.current ? "Pause video for all participants" : "Play video for all participants"}
           >
             {playing.current ? (
@@ -2125,26 +2160,38 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => seekDelta(10)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition cursor-pointer active:scale-95 border border-white/15 hover:border-pink-500/50"
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border ${
+              theme?.isLight
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80 hover:border-pink-300'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
+            }`}
             title="Forward 10 seconds (Synced for all participants)"
           >
             <span>+10s</span>
-            <FastForward className="h-3.5 w-3.5 text-pink-400" />
+            <FastForward className="h-3.5 w-3.5 text-pink-500" />
           </button>
         </div>
 
         {/* Sync Status Telemetry */}
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[11px] text-pink-200">
+          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] ${
+            theme?.isLight
+              ? 'bg-slate-100 border-slate-200/80 text-slate-700'
+              : 'bg-white/5 border-white/10 text-pink-200'
+          }`}>
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="font-mono font-bold text-emerald-400">0.0ms</span>
-            <span className="text-white/60">Drift Lock</span>
+            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">0.0ms</span>
+            <span className={theme?.isLight ? 'text-slate-500' : 'text-white/60'}>Drift Lock</span>
           </div>
 
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition border border-white/15 hover:border-pink-500/50 cursor-pointer"
+            className={`p-1.5 rounded-xl transition border cursor-pointer ${
+              theme?.isLight
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80 hover:border-pink-300'
+                : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
+            }`}
             title="Toggle Cinema Fullscreen"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -2371,27 +2418,39 @@ export default function VideoPlayer({
 
       <form onSubmit={load} className="flex flex-col gap-2">
         {resolvingStatus && (
-          <div className="flex items-center gap-2 text-xs text-[#FCE7F3] font-medium py-1.5 px-3 rounded-xl bg-[#EC4899]/15 border border-[#EC4899]/30">
-            <Sparkles className="h-3.5 w-3.5 text-[#F472B6] shrink-0" />
+          <div className="flex items-center gap-2 text-xs font-medium py-1.5 px-3 rounded-xl bg-pink-500/15 border border-pink-500/30 text-pink-600 dark:text-pink-200">
+            <Sparkles className="h-3.5 w-3.5 text-pink-500 shrink-0" />
             <span>{resolvingStatus}</span>
           </div>
         )}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className={`flex flex-col sm:flex-row gap-2 ${
+          theme?.isLight
+            ? 'p-2 rounded-2xl bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(0,0,0,0.06)]'
+            : ''
+        }`}>
           <div className="relative min-w-0 flex-1">
-            <Link2 className="absolute left-3 top-3 h-4 w-4 opacity-50" />
+            <Link2 className={`absolute left-3 top-3 h-4 w-4 ${theme?.isLight ? 'text-pink-500' : 'opacity-50'}`} />
             <input
               value={url}
               onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
               placeholder="Paste any video or movie link (YouTube, HLS, MP4, Prime, Netflix) - Auto plays in sync..."
-              className="field !pl-9 !py-2.5 text-xs sm:text-sm w-full"
+              className={`w-full !pl-9 !py-2.5 text-xs sm:text-sm rounded-xl outline-none transition ${
+                theme?.isLight
+                  ? 'bg-slate-50/70 border border-slate-200/80 text-slate-900 placeholder-slate-400 focus:border-pink-400 focus:bg-white'
+                  : 'field'
+              }`}
             />
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/25 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover:border-[#EC4899]/60 hover:text-[#FCE7F3] backdrop-blur-md"
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm ${
+                theme?.isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/25 hover:border-[#EC4899]/60 hover:text-[#FCE7F3] backdrop-blur-md'
+              }`}
               title="Paste link from clipboard and play immediately"
             >
               <span>📋</span>
@@ -2399,40 +2458,52 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn-pink !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 shadow-lg shadow-[#EC4899]/30 text-[#FCE7F3] cursor-pointer active:scale-95"
+              className="btn-pink !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/25 text-white cursor-pointer active:scale-95"
             >
-              <Play className="h-3.5 w-3.5 fill-[#FCE7F3]" />
+              <Play className="h-3.5 w-3.5 fill-white" />
               <span>Play for All</span>
             </button>
           </div>
         </div>
 
-        {/* High-Contrast, Crystal-Clear Secondary Action Toolbar */}
+        {/* High-Contrast Secondary Action Toolbar */}
         <div className="flex items-center gap-2 pt-1 text-xs overflow-x-auto no-scrollbar py-0.5">
           <button
             type="button"
             onClick={enqueue}
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+              theme?.isLight
+                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
+            }`}
             title="Add this link to the Up next list"
           >
-            <ListPlus className="h-4 w-4 text-[#F472B6] shrink-0" />
+            <ListPlus className="h-4 w-4 text-pink-500 shrink-0" />
             <span>Add to queue</span>
           </button>
 
           <label
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+              theme?.isLight
+                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
+            }`}
             title="Play a movie file from your own device"
           >
-            <FolderOpen className="h-4 w-4 text-[#F472B6] shrink-0" />
+            <FolderOpen className="h-4 w-4 text-pink-500 shrink-0" />
             <span>My file</span>
             <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
           </label>
 
           <label
-            className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+              theme?.isLight
+                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
+            }`}
             title="Add .srt or .vtt subtitles"
           >
-            <Captions className="h-4 w-4 text-[#F472B6] shrink-0" />
+            <Captions className="h-4 w-4 text-pink-500 shrink-0" />
             <span>Subtitles</span>
             <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
           </label>
@@ -2441,18 +2512,26 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={onOpenRecent}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-cyan-400/60 text-white hover:text-cyan-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+                theme?.isLight
+                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                  : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-cyan-400/60 text-white hover:text-cyan-300 backdrop-blur-md'
+              }`}
               title="Open Recent Plays Bar"
             >
-              <History className="h-4 w-4 text-cyan-400 shrink-0" />
+              <History className="h-4 w-4 text-pink-500 shrink-0" />
               <span>Recent Bar</span>
             </button>
           )}
 
           {audioTracks.length > 1 && (
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-xs font-semibold text-white shadow-md backdrop-blur-md" title="Audio track / language">
-              <Volume2 className="h-4 w-4 text-[#F472B6] shrink-0" />
-              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-semibold">
+            <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm shrink-0 ${
+              theme?.isLight
+                ? 'bg-white/80 text-slate-700 border-slate-200/80'
+                : 'border-white/25 bg-white/10 text-white backdrop-blur-md'
+            }`} title="Audio track / language">
+              <Volume2 className="h-4 w-4 text-pink-500 shrink-0" />
+              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-slate-800 dark:text-white outline-none cursor-pointer font-semibold">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
               </select>
             </div>
@@ -2462,9 +2541,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={stopShare}
-              className="px-3 py-2 rounded-xl bg-[#EC4899]/30 hover:bg-[#EC4899]/50 border border-[#EC4899]/60 text-white font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-700 dark:text-white font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0"
             >
-              <MonitorOff className="h-4 w-4 text-[#F472B6] shrink-0" />
+              <MonitorOff className="h-4 w-4 text-pink-500 shrink-0" />
               <span>Stop sharing</span>
             </button>
           ) : (
@@ -2472,35 +2551,53 @@ export default function VideoPlayer({
               type="button"
               onClick={startShare}
               disabled={!!screenBy}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-emerald-400/60 text-white hover:text-emerald-300 font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer disabled:opacity-40"
+              className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-40 shrink-0 border ${
+                theme?.isLight
+                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                  : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-emerald-400/60 text-white hover:text-emerald-300 backdrop-blur-md'
+              }`}
               title="Show your screen to your partner"
             >
-              <MonitorUp className="h-4 w-4 text-emerald-400 shrink-0" />
+              <MonitorUp className="h-4 w-4 text-pink-500 shrink-0" />
               <span>Share screen</span>
             </button>
           )}
+
+          {/* Type Auto Selector */}
+          <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm shrink-0 ${
+            theme?.isLight
+              ? 'bg-white/80 text-slate-700 border-slate-200/80'
+              : 'border-white/25 bg-white/10 text-white backdrop-blur-md'
+          }`} title="Media stream resolver type">
+            <span className="text-pink-500">⚡</span>
+            <select
+              value={force}
+              onChange={(e) => setForce(e.target.value)}
+              className="bg-transparent text-slate-800 dark:text-white outline-none cursor-pointer font-semibold"
+            >
+              {TYPES.map((t) => (
+                <option key={t} value={t} className="text-black bg-white">
+                  {t === 'auto' ? 'Type: Auto ▾' : t.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {stream && (
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md transition cursor-pointer"
+              className={`px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+                theme?.isLight
+                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                  : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
+              }`}
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 text-[#F472B6] shrink-0" /> : <Maximize2 className="h-4 w-4 text-[#F472B6] shrink-0" />}
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-pink-500 shrink-0" /> : <Maximize2 className="h-4 w-4 text-pink-500 shrink-0" />}
               <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}
-
-          <select
-            value={force}
-            onChange={(e) => setForce(e.target.value)}
-            aria-label="Link type"
-            className="px-3 py-2 rounded-xl border border-white/25 bg-[#222222] text-white text-xs font-semibold shadow-md backdrop-blur-md outline-none focus:border-[#EC4899] transition cursor-pointer"
-            title="Link type (Auto detects it for you)"
-          >
-            {TYPES.map((t) => <option key={t} value={t} className="text-black bg-white">{t === 'auto' ? 'Type: Auto' : t.toUpperCase()}</option>)}
-          </select>
         </div>
       </form>
     </div>

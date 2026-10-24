@@ -6,6 +6,7 @@ export default function BrandLogo({
   href = '/',
   className = '',
   hideTextOnMobile = false,
+  isLight = false,
 }) {
   const iconSizes = {
     sm: 'h-8 w-8',
@@ -38,8 +39,8 @@ export default function BrandLogo({
 
       {/* Highlighted SynCinema Typography */}
       <div className={`items-baseline leading-none ${hideTextOnMobile ? 'hidden md:flex' : 'flex'}`}>
-        <span className={`brand-syn ${synSizes[size]} pr-0.5`}>Syn</span>
-        <span className={`brand-cinema ${cinemaSizes[size]}`}>Cinema</span>
+        <span className={`${isLight ? 'text-pink-600 font-extrabold font-display' : 'brand-syn'} ${synSizes[size]} pr-0.5`}>Syn</span>
+        <span className={`${isLight ? 'text-[#1e1b4b] font-black' : 'brand-cinema'} ${cinemaSizes[size]}`}>Cinema</span>
       </div>
     </div>
   );

@@ -176,13 +176,19 @@ export function Tile({
 
     try {
       if (stream && !isCamOff && typeof stream.getVideoTracks === 'function') {
-        el.srcObject = stream;
-        el.muted = true; // Video element is muted; audio plays through RemoteAudio
+        if (el.srcObject !== stream) {
+          el.srcObject = stream;
+        }
+        // Local preview MUST be muted to prevent acoustic feedback loop.
+        // Partner stream: unmuted so audio plays reliably through the video sink as well.
+        el.muted = !isPartner;
 
         const checkTracks = () => {
           const vTracks = stream.getVideoTracks() || [];
-          const hasLive = vTracks.length > 0 && vTracks.some((t) => t.readyState !== 'ended');
-          setHasVideoTrack(hasLive);
+          const hasLive = vTracks.length > 0 && vTracks.some((t) => t.readyState !== 'ended' && t.enabled !== false);
+          if (hasLive) {
+            setHasVideoTrack(true);
+          }
         };
         checkTracks();
 
@@ -190,10 +196,18 @@ export function Tile({
         vTracks.forEach((t) => {
           t.addEventListener('unmute', checkTracks);
           t.addEventListener('ended', checkTracks);
+          t.addEventListener('mute', checkTracks);
         });
 
+        if (stream.addEventListener) {
+          stream.addEventListener('addtrack', checkTracks);
+          stream.addEventListener('removetrack', checkTracks);
+        }
+
         const tryPlay = () => {
-          el.play().catch(() => {
+          el.play().then(() => {
+            if (el.videoWidth > 0) setHasVideoTrack(true);
+          }).catch(() => {
             const resume = () => { el.play().catch(() => {}); };
             window.addEventListener('click', resume, { once: true });
             window.addEventListener('touchstart', resume, { once: true });
@@ -205,7 +219,12 @@ export function Tile({
           vTracks.forEach((t) => {
             t.removeEventListener('unmute', checkTracks);
             t.removeEventListener('ended', checkTracks);
+            t.removeEventListener('mute', checkTracks);
           });
+          if (stream.removeEventListener) {
+            stream.removeEventListener('addtrack', checkTracks);
+            stream.removeEventListener('removetrack', checkTracks);
+          }
         };
       } else {
         el.srcObject = null;
@@ -216,7 +235,7 @@ export function Tile({
       try { el.srcObject = null; } catch {}
       setHasVideoTrack(false);
     }
-  }, [stream, isCamOff]);
+  }, [stream, isCamOff, isPartner]);
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -263,7 +282,7 @@ export function Tile({
   return (
     <div
       onDoubleClick={disableFullscreen ? undefined : toggleFullscreen}
-      className={`group relative overflow-hidden rounded-2xl bg-[#222222] transition-all duration-300 shrink-0 ${
+      className={`group relative overflow-hidden rounded-2xl bg-[#111111] transition-all duration-300 shrink-0 ${
         className || 'w-full h-full aspect-video'
       } ${
         isSpeaking
@@ -274,7 +293,7 @@ export function Tile({
     >
       {/* Voice Only Mode */}
       {voiceOnly ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#222222] to-[#1a1a1a] p-3 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#222222] to-[#1a1a1a] p-3 text-center z-10">
           <div className={`relative mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-tr from-pink-600/30 to-purple-600/30 border border-pink-500/40 text-pink-300 transition-transform ${isSpeaking ? 'scale-110 shadow-lg shadow-pink-500/40 ring-2 ring-pink-400' : ''}`}>
             <Mic className="h-6 w-6" />
           </div>
@@ -297,9 +316,9 @@ export function Tile({
         </div>
       ) : (
         <>
-          {/* Waiting/Connecting placeholder when stream is absent */}
+          {/* Connecting placeholder when video stream frames are still buffering */}
           {(!stream || !hasVideoTrack) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#222222] p-3 text-center z-10 select-none">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#18181b] p-3 text-center z-10 select-none">
               <div className="relative mb-2 grid h-10 w-10 place-items-center rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-300 animate-pulse">
                 <Video className="h-5 w-5" />
               </div>
@@ -308,17 +327,24 @@ export function Tile({
             </div>
           )}
 
+          {/* Continuous WebRTC Video Element (NEVER display: none so decoder decodes frames continuously) */}
           <video
             ref={videoRef}
             autoPlay
             playsInline
             webkit-playsinline="true"
-            muted
+            muted={!isPartner}
             onLoadedMetadata={() => setHasVideoTrack(true)}
             onPlaying={() => setHasVideoTrack(true)}
-            className={`h-full w-full object-cover transition-transform duration-300 ${
+            onPlay={() => setHasVideoTrack(true)}
+            onTimeUpdate={() => {
+              if (videoRef.current && videoRef.current.videoWidth > 0 && !hasVideoTrack) {
+                setHasVideoTrack(true);
+              }
+            }}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
               !isPartner ? '-scale-x-100' : ''
-            } ${(!hasVideoTrack || isCamOff) ? 'hidden' : 'block'}`}
+            } ${hasVideoTrack && !isCamOff ? 'opacity-100' : 'opacity-0'}`}
           />
         </>
       )}
@@ -354,6 +380,7 @@ export default function CouplesOverlay({
   isMobileCallActive = false,
   onSwitchToCallTab,
   isGhost = false,
+  theme,
 }) {
   const [mine, setMine] = useState(null);
   const [remote, setRemote] = useState({});     // peerId -> MediaStream
@@ -1036,7 +1063,11 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => setHide(false)}
-          className="hidden lg:flex fixed bottom-24 left-5 z-40 items-center gap-2 rounded-full border border-pink-500/30 bg-[#222222]/95 backdrop-blur-md px-3.5 py-2 text-xs font-semibold text-pink-200 transition hover:border-pink-400 hover:text-white shadow-2xl cursor-pointer"
+          className={`hidden lg:flex fixed bottom-24 left-5 z-40 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition shadow-2xl cursor-pointer ${
+            theme?.isLight
+              ? 'bg-white/90 border-white/80 text-slate-800 hover:bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]'
+              : 'border-pink-500/30 bg-[#222222]/95 text-pink-200 hover:border-pink-400 hover:text-white'
+          } backdrop-blur-md`}
           title="Show video call window"
         >
           <Video className="h-3.5 w-3.5 text-rose-400" />
@@ -1044,8 +1075,12 @@ export default function CouplesOverlay({
           {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
         </button>
       ) : (
-        <div ref={box} className={`hidden lg:block fixed bottom-20 left-5 z-40 rounded-2xl border border-pink-500/30 bg-[#222222]/95 backdrop-blur-xl p-2.5 transition-all shadow-2xl ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
-          <div className="flex items-center justify-between pb-1.5 px-0.5 text-white/50 gap-2">
+        <div ref={box} className={`hidden lg:block fixed bottom-20 left-5 z-40 rounded-2xl border backdrop-blur-xl p-2.5 transition-all shadow-2xl ${
+          theme?.isLight
+            ? 'bg-white/85 border-white/70 shadow-[0_12px_40px_rgba(0,0,0,0.1)] text-slate-800'
+            : 'border-pink-500/30 bg-[#222222]/95 text-white'
+        } ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
+          <div className={`flex items-center justify-between pb-1.5 px-0.5 gap-2 ${theme?.isLight ? 'text-slate-500' : 'text-white/50'}`}>
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />
             </div>
@@ -1054,7 +1089,11 @@ export default function CouplesOverlay({
                 type="button"
                 onClick={cycleLayout}
                 title={layout === 'floating' ? 'Switch to side-by-side layout' : 'Switch to floating stacked layout'}
-                className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white transition text-[10px]"
+                className={`rounded-lg px-2 py-0.5 transition text-[10px] font-semibold border ${
+                  theme?.isLight
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white border-transparent'
+                }`}
               >
                 {layout === 'floating' ? 'Side-by-side' : 'Stack'}
               </button>
@@ -1062,7 +1101,11 @@ export default function CouplesOverlay({
                 type="button"
                 onClick={() => setHide(true)}
                 title="Hide video call (audio remains active in background)"
-                className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white transition"
+                className={`rounded-lg p-1 transition ${
+                  theme?.isLight
+                    ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white'
+                }`}
               >
                 <EyeOff className="h-3.5 w-3.5" />
               </button>
@@ -1108,7 +1151,7 @@ export default function CouplesOverlay({
           </div>
 
           {!isGhost && (
-            <div className="mt-2.5 flex items-center justify-center gap-2 pt-2 border-t border-white/10 text-white">
+            <div className={`mt-2.5 flex items-center justify-center gap-2 pt-2 border-t ${theme?.isLight ? 'border-slate-200/80' : 'border-white/10'}`}>
               <button
                 type="button"
                 onClick={toggleMic}
@@ -1116,8 +1159,10 @@ export default function CouplesOverlay({
                 title={mic ? 'Mute microphone' : 'Unmute microphone'}
                 className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
                   mic
-                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-300 border border-rose-500/40 shadow-sm'
+                    ? theme?.isLight
+                      ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-800 border border-emerald-300'
+                      : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-600 dark:text-rose-300 border border-rose-500/40 shadow-sm'
                 }`}
               >
                 {mic ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
@@ -1132,8 +1177,10 @@ export default function CouplesOverlay({
                 title={cam ? 'Turn off camera (releases hardware)' : 'Turn on camera'}
                 className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
                   cam
-                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-300 border border-rose-500/40 shadow-sm'
+                    ? theme?.isLight
+                      ? 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-800 border border-indigo-300'
+                      : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-600 dark:text-rose-300 border border-rose-500/40 shadow-sm'
                 }`}
               >
                 {cam ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
@@ -1148,11 +1195,13 @@ export default function CouplesOverlay({
                 className={`px-2.5 py-2 rounded-xl text-[10px] font-semibold transition cursor-pointer flex items-center gap-1 ${
                   voiceOnly
                     ? 'bg-rose-600 text-white border border-rose-500 shadow-md'
-                    : 'bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 hover:text-white'
+                    : theme?.isLight
+                      ? 'bg-pink-500/15 hover:bg-pink-500/25 text-pink-700 border border-pink-300 font-bold'
+                      : 'bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 hover:text-white'
                 }`}
               >
                 <Volume2 className="h-3.5 w-3.5 text-rose-400" />
-                <span>{voiceOnly ? 'Voice: ON' : 'Voice Only'}</span>
+                <span className="text-[10px]">{voiceOnly ? 'Voice: ON' : 'Voice Only'}</span>
               </button>
             </div>
           )}

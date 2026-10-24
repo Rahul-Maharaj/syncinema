@@ -92,8 +92,10 @@ function StealthVideoTile({ stream, user, listenAudio }) {
       try {
         const vTracks = typeof stream.getVideoTracks === 'function' ? stream.getVideoTracks() : [];
         const aTracks = typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : [];
-        setHasVideo(vTracks.length > 0 && vTracks.some((t) => t.enabled && t.readyState !== 'ended'));
-        setHasAudio(aTracks.length > 0 && aTracks.some((t) => t.enabled && t.readyState !== 'ended'));
+        const liveV = vTracks.length > 0 && vTracks.some((t) => t.enabled !== false && t.readyState !== 'ended');
+        const liveA = aTracks.length > 0 && aTracks.some((t) => t.enabled !== false && t.readyState !== 'ended');
+        if (liveV) setHasVideo(true);
+        if (liveA) setHasAudio(true);
       } catch {
         setHasVideo(false);
         setHasAudio(false);
@@ -136,20 +138,23 @@ function StealthVideoTile({ stream, user, listenAudio }) {
 
   // Video playback
   useEffect(() => {
-    if (!videoRef.current) return;
+    const el = videoRef.current;
+    if (!el) return;
     try {
       if (stream && typeof stream.getVideoTracks === 'function') {
-        if (videoRef.current.srcObject !== stream) {
-          videoRef.current.srcObject = stream;
+        if (el.srcObject !== stream) {
+          el.srcObject = stream;
         }
-        videoRef.current.play().catch(() => {});
+        el.play().then(() => {
+          if (el.videoWidth > 0) setHasVideo(true);
+        }).catch(() => {});
       } else {
-        videoRef.current.srcObject = null;
+        el.srcObject = null;
       }
     } catch (e) {
       console.warn('StealthVideoTile video error:', e);
     }
-  }, [stream, hasVideo]);
+  }, [stream]);
 
   // Voice Activity Detection (VAD) via Web Audio API
   useEffect(() => {
@@ -271,18 +276,27 @@ function StealthVideoTile({ stream, user, listenAudio }) {
       {/* Hidden high-priority audio sink */}
       <audio ref={audioRef} autoPlay playsInline />
 
-      {/* Video Stream Element */}
+      {/* Video Stream Element (ALWAYS MOUNTED IN DOM WITH NO DISPLAY:NONE SO BROWSER DECODES FRAMES) */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
+        webkit-playsinline="true"
         muted
-        className={`w-full h-full object-cover ${hasVideo ? 'block' : 'hidden'}`}
+        onLoadedMetadata={() => setHasVideo(true)}
+        onPlaying={() => setHasVideo(true)}
+        onPlay={() => setHasVideo(true)}
+        onTimeUpdate={() => {
+          if (videoRef.current && videoRef.current.videoWidth > 0 && !hasVideo) {
+            setHasVideo(true);
+          }
+        }}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${hasVideo ? 'opacity-100' : 'opacity-0'}`}
       />
 
       {/* If caller has NO video (Voice Call Mode or Camera Off) */}
       {!hasVideo && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-[radial-gradient(ellipse_at_center,#1d102e_0%,#090514_100%)]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-[radial-gradient(ellipse_at_center,#1d102e_0%,#090514_100%)] z-10 select-none">
           <div className="relative">
             <div
               className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-base shadow-xl transition-transform ${
@@ -302,20 +316,10 @@ function StealthVideoTile({ stream, user, listenAudio }) {
           </div>
           <span className="text-xs font-bold text-white truncate max-w-[170px] mt-2">{user?.name || 'Participant'}</span>
           <div className="flex items-center gap-1.5 mt-1">
-            {isSpeaking ? (
-              <span className="text-[10px] text-emerald-300 font-semibold flex items-center gap-1">
-                <span className="flex gap-0.5 items-end h-3">
-                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_100ms] h-full rounded" />
-                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_300ms] h-2/3 rounded" />
-                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_200ms] h-4/5 rounded" />
-                  <span className="w-0.5 bg-emerald-400 animate-[bounce_0.6s_infinite_400ms] h-full rounded" />
-                </span>
-                <span>Speaking Live</span>
-              </span>
-            ) : hasAudio ? (
+            {hasAudio ? (
               <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span>Voice Call Hearable</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Voice Connected</span>
               </span>
             ) : (
               <span className="text-[10px] text-purple-300/50">Awaiting audio / video feed…</span>
@@ -336,36 +340,16 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         </button>
       )}
 
-      {/* Top Overlay Badge */}
-      <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 max-w-[65%]">
+      {/* Clean User Tag: Minimal subtle pill in top-left, unobstructed face */}
+      <div className="absolute top-2 left-2 z-20 pointer-events-none opacity-85 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 shadow">
           <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: user?.color || '#ec4899' }} />
-          <span className="text-[10px] font-bold text-white truncate">{user?.name || 'User'}</span>
+          <span className="text-[10px] font-bold text-white truncate max-w-[90px]">{user?.name || 'User'}</span>
           {user?.isHost && (
             <span className="text-[8px] bg-amber-500/30 text-amber-300 px-1 rounded font-bold uppercase shrink-0">Host</span>
           )}
-        </div>
-
-        <div className="flex items-center gap-1">
-          {isSpeaking ? (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1 animate-pulse">
-              <Mic className="h-2.5 w-2.5 text-emerald-400" />
-              <span>TALKING</span>
-            </span>
-          ) : hasVideo ? (
-            <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-              <span>LIVE CAM</span>
-            </span>
-          ) : hasAudio ? (
-            <span className="px-1.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-medium flex items-center gap-1">
-              <Mic className="h-2.5 w-2.5" />
-              <span>VOICE ONLY</span>
-            </span>
-          ) : (
-            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-medium">
-              Connecting…
-            </span>
+          {isSpeaking && (
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
           )}
         </div>
       </div>
