@@ -1,0 +1,22 @@
+{
+  "appId": "site.syncinema.app",
+  "appName": "SyncCinema",
+  "webDir": "dist",
+  "server": {
+    "url": "https://www.syncinema.site",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 1500,
+      "backgroundColor": "#090514",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#090514"
+    }
+  }
+}

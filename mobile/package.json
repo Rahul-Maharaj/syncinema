@@ -1,0 +1,34 @@
+{
+  "name": "syncinema-mobile",
+  "version": "1.0.0",
+  "description": "SynCinema Official Native Android & Mobile Application",
+  "type": "module",
+  "keywords": [
+    "capacitor",
+    "mobile",
+    "syncinema",
+    "android"
+  ],
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "cap:sync": "cap sync",
+    "cap:open": "cap open android",
+    "cap:build": "vite build && cap sync",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/camera": "latest",
+    "@capacitor/core": "latest",
+    "@capacitor/splash-screen": "latest",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest",
+    "vite": "^7.3.1"
+  },
+  "author": "Rahul Maharaj",
+  "license": "ISC"
+}
