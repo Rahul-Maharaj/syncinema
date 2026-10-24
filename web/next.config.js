@@ -85,4 +85,12 @@ module.exports = {
       },
     ];
   },
+  async rewrites() {
+    const backend = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000';
+    return [
+      { source: '/socket.io/:path*', destination: `${backend}/socket.io/:path*` },
+      { source: '/peerjs/:path*', destination: `${backend}/peerjs/:path*` },
+      { source: '/api/:path*', destination: `${backend}/api/:path*` },
+    ];
+  },
 };

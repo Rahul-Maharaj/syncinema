@@ -161,6 +161,27 @@ export const ROOM_THEMES = {
     swatches: ['#222222', '#71717a', '#ffffff'],
     showWallpaperDefault: false,
   },
+  offwhite: {
+    id: 'offwhite',
+    name: 'Daylight Off-White',
+    tag: 'Crisp & Airy • Modern Off-White Ivory & Rose',
+    icon: '☀️',
+    bgClass: 'bg-[#F8F9FA] text-[#18181B]',
+    navBg: 'bg-[#FFFFFF]/95 border-pink-500/25 shadow-md shadow-pink-500/5 text-zinc-900',
+    asideBg: 'bg-[#FFFFFF]/95 border-pink-500/20 text-zinc-900',
+    tabBg: 'bg-[#F3F4F6] text-zinc-900',
+    overlayGradient: 'bg-gradient-to-t from-[#F8F9FA] via-[#F8F9FA]/90 to-[#F8F9FA]/60',
+    ambientGlow: 'bg-pink-500/5',
+    borderColor: 'border-pink-300/40',
+    cardBorder: 'border-pink-300/50 shadow-xl shadow-pink-500/10',
+    accentGradient: 'from-pink-600 via-rose-600 to-pink-500',
+    accentText: 'text-pink-600',
+    accentBg: 'bg-pink-600',
+    themeBtnClass: 'bg-pink-100 border-pink-300 text-pink-700 hover:bg-pink-200 shadow-sm',
+    swatches: ['#F8F9FA', '#F3F4F6', '#EC4899', '#BE185D'],
+    showWallpaperDefault: false,
+    isLight: true,
+  },
 };
 
 const hello = (n) => {
@@ -1031,9 +1052,9 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} text-pink-100 font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
+    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${theme.bgClass} ${theme.isLight ? 'text-zinc-900' : 'text-pink-100'} font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
       {/* Dynamic Ambient Cinema Background */}
-      {showWallpaper && (
+      {showWallpaper && !theme.isLight && (
         <div 
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-all duration-700 opacity-60"
           style={{ 
@@ -1057,11 +1078,11 @@ export default function Room() {
         </div>
       )}
 
-      {/* Responsive Top Header */}
+      {/* Responsive Top Header (100% Notch-Free, Safe Hardware Cutout Area) */}
       {/* Modern Unified Cinema Navbar */}
-      <header className={`hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
+      <header className={`hdr shrink-0 safe-top-notch min-h-14 sm:min-h-16 h-auto px-2 sm:px-4 py-2 flex items-center justify-between gap-1.5 sm:gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
         {/* Left: Brand + Status + Capacity Pill */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
           <BrandLogo size="sm" href="/" hideTextOnMobile={true} />
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
 
@@ -1076,7 +1097,7 @@ export default function Room() {
                   say(`Room Capacity: ${users.length} of ${maxSeats} members (Host can increase up to 30)`);
                 }
               }}
-              className={`inline-flex items-center gap-1.5 rounded-full px-2 sm:px-2.5 py-1 text-xs font-semibold border transition shrink-0 ${
+              className={`inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-1 text-xs font-semibold border transition shrink-0 ${
                 me === hostId
                   ? 'bg-white/10 hover:bg-rose-500/20 border-white/15 hover:border-rose-500/40 text-white cursor-pointer active:scale-95'
                   : 'bg-white/5 border-white/10 text-white/80 cursor-default'
@@ -1098,8 +1119,8 @@ export default function Room() {
           </div>
         </div>
 
-        {/* Right: Consolidated Action Controls */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+        {/* Right: Consolidated Action Controls (All visible on mobile, zero clipping) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 py-0.5">
           {/* View Modes Switcher (Theater, Duo Date, Party Grid, Focus) */}
           <div className="hidden xl:flex items-center gap-0.5 bg-[#222222]/95 border border-pink-500/20 p-0.5 rounded-xl">
             {[
@@ -1129,7 +1150,7 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowPlugins(true)}
-            className="h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
+            className="h-8 w-8 sm:w-auto p-1.5 sm:px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
             title="Open Cinema Plugins (Atmosphere, Keepsakes, Trivia & Intermission)"
           >
             <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
@@ -1140,7 +1161,7 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowThemeModal(true)}
-            className={`h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition shadow-lg cursor-pointer active:scale-95 shrink-0 ${theme.themeBtnClass}`}
+            className={`h-8 w-8 sm:w-auto p-1.5 sm:px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition shadow-lg cursor-pointer active:scale-95 shrink-0 ${theme.themeBtnClass}`}
             title="Change Room Color Theme & Ambiance"
           >
             <Palette className="h-3.5 w-3.5" />
@@ -1162,7 +1183,7 @@ export default function Room() {
 
           {/* Quick AV Cluster: Uniform h-8 Cam & Mic Toggles */}
           {!isGhost && (
-            <div className="flex items-center gap-0.5 sm:gap-1 bg-white/5 border border-white/10 p-0.5 rounded-xl shrink-0">
+            <div className="flex items-center gap-0.5 bg-white/5 border border-white/10 p-0.5 rounded-xl shrink-0">
               <button
                 type="button"
                 onClick={async () => {
@@ -1225,7 +1246,7 @@ export default function Room() {
           {/* Mobile Quick Exit */}
           <Link
             href="/"
-            className="lg:hidden h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 text-zinc-400 hover:text-white flex items-center justify-center transition shrink-0"
+            className="lg:hidden h-8 w-8 rounded-xl bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 text-zinc-400 hover:text-white flex items-center justify-center transition shrink-0"
             title="Leave room"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -1238,7 +1259,7 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowMenu(true)}
-            className="h-8 px-2 sm:px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white shrink-0"
+            className="h-8 w-8 sm:w-auto p-1.5 sm:px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white shrink-0"
             title="Room Controls & Settings"
           >
             <Sliders className="h-3.5 w-3.5 text-rose-400" />

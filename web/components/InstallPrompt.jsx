@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Download, Smartphone, Check, X, Share2, PlusSquare, Sparkles, ExternalLink } from 'lucide-react';
+import { Download, Smartphone, Check, X, Sparkles, Android, ExternalLink } from 'lucide-react';
 
 export default function InstallPrompt({ className = '', variant = 'button' }) {
   const [mounted, setMounted] = useState(false);
@@ -9,6 +9,7 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
   const [showModal, setShowModal] = useState(false);
   const [deviceType, setDeviceType] = useState('android'); // 'ios' | 'android' | 'desktop'
   const [dismissedBanner, setDismissedBanner] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -54,14 +55,34 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
 
   if (!mounted || installed) return null;
 
+  const triggerApkDownload = () => {
+    try {
+      setDownloadStarted(true);
+      const link = document.createElement('a');
+      link.href = '/syncinema.apk';
+      link.download = 'SyncCinema.apk';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => setDownloadStarted(false), 5000);
+    } catch (e) {
+      console.warn('APK download link error:', e);
+    }
+  };
+
   const handleInstallClick = async () => {
+    // 📥 Download the native Android APK file directly
+    triggerApkDownload();
+
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      if (choiceResult?.outcome === 'accepted') {
-        setInstalled(true);
-      }
-      setDeferredPrompt(null);
+      try {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        if (choiceResult?.outcome === 'accepted') {
+          setInstalled(true);
+        }
+        setDeferredPrompt(null);
+      } catch {}
     } else {
       setShowModal(true);
     }
@@ -75,11 +96,11 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
           suppressHydrationWarning
           type="button"
           onClick={handleInstallClick}
-          title="Install SyncCinema as an app on your phone, tablet, or PC"
-          className={`glass-btn !px-3 !py-1.5 text-xs font-semibold text-pink-100 hover:border-pink-500/60 hover:bg-pink-500/20 transition flex items-center gap-1.5 shadow-md shadow-pink-500/20 ${className}`}
+          title="Download SyncCinema Android App (APK 9.6 MB)"
+          className={`glass-btn !px-3 !py-1.5 text-xs font-semibold text-pink-100 hover:border-pink-500/60 hover:bg-pink-500/20 transition flex items-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer ${className}`}
         >
           <Smartphone className="h-3.5 w-3.5 text-pink-400 shrink-0" />
-          <span>Install Phone App</span>
+          <span>Download App (APK)</span>
         </button>
       )}
 
@@ -93,12 +114,12 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-pink-100 text-xs truncate">Install SyncCinema App</span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-pink-500/20 border border-pink-500/40 text-[9px] font-extrabold text-pink-300 uppercase">
-                    Phone / Tab
+                  <span className="font-bold text-pink-100 text-xs truncate">SyncCinema Mobile App</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[9px] font-extrabold text-emerald-300 uppercase">
+                    APK Ready
                   </span>
                 </div>
-                <p className="text-[11px] text-pink-200/70 truncate">Fast 0ms sync, full screen, &amp; zero browser lag</p>
+                <p className="text-[11px] text-pink-200/70 truncate">Fast 0ms sync &bull; Android APK (9.6 MB)</p>
               </div>
             </div>
 
@@ -106,15 +127,15 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="btn-pink px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow-lg transition cursor-pointer flex items-center gap-1"
+                className="btn-pink px-3 py-1.5 rounded-xl text-white font-bold text-xs shadow-lg transition cursor-pointer flex items-center gap-1.5 active:scale-95"
               >
-                <Download className="h-3 w-3" />
-                <span>Install</span>
+                <Download className="h-3.5 w-3.5" />
+                <span>{downloadStarted ? 'Downloading…' : 'Download APK'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setDismissedBanner(true)}
-                className="h-7 w-7 rounded-lg hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition"
+                className="h-7 w-7 rounded-lg hover:bg-white/10 text-white/60 hover:text-white flex items-center justify-center transition cursor-pointer"
                 title="Dismiss"
               >
                 <X className="h-3.5 w-3.5" />
@@ -136,50 +157,58 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-pink-100">SyncCinema Mobile App</h3>
-                  <p className="text-[11px] text-pink-400 font-medium">Ready for Phone &amp; Tablet</p>
+                  <p className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Android APK Ready (9.6 MB)</span>
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition"
+                className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/15 text-white/60 hover:text-white flex items-center justify-center transition cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Platform Instructions */}
-            {deviceType === 'ios' ? (
+            {/* Direct APK Download Banner */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-pink-500/20 via-rose-500/10 to-transparent border border-pink-500/30 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-pink-200 flex items-center gap-1.5">
+                  <span>🤖</span> Android Native APK
+                </span>
+                <span className="text-[10px] text-pink-300/80 font-mono">v1.0.0 &bull; 9.6 MB</span>
+              </div>
+              <a
+                href="/syncinema.apk"
+                download="SyncCinema.apk"
+                onClick={() => setDownloadStarted(true)}
+                className="btn-pink w-full py-2.5 px-3 rounded-xl text-white font-bold text-xs shadow-lg shadow-pink-600/30 flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition cursor-pointer text-center no-underline"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Android APK Directly</span>
+              </a>
+              <p className="text-[10px] text-pink-300/70 text-center">
+                Tap the downloaded file in your notifications to install!
+              </p>
+            </div>
+
+            {/* Platform Instructions for iOS */}
+            {deviceType === 'ios' && (
               <div className="space-y-3 bg-[#1a1a1a]/70 rounded-2xl p-4 border border-pink-500/20 text-xs">
                 <p className="font-semibold text-pink-400 flex items-center gap-1.5">
                   <span>🍎</span> Install on iPhone / iPad (Safari):
                 </p>
-                <ol className="space-y-2.5 text-pink-100/90 list-decimal list-inside text-[11px] leading-relaxed">
+                <ol className="space-y-2 text-pink-100/90 list-decimal list-inside text-[11px] leading-relaxed">
                   <li>
-                    Tap the <b>Share</b> button <span className="inline-block px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">⎋</span> at the bottom of Safari.
+                    Tap <b>Share</b> <span className="inline-block px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">⎋</span> at the bottom of Safari.
                   </li>
                   <li>
                     Scroll down and tap <b>&ldquo;Add to Home Screen&rdquo;</b> <span className="inline-block px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">➕</span>.
                   </li>
                   <li>
-                    Tap <b>&ldquo;Add&rdquo;</b> at top right. SyncCinema will open instantly like a native mobile app!
-                  </li>
-                </ol>
-              </div>
-            ) : (
-              <div className="space-y-3 bg-[#1a1a1a]/70 rounded-2xl p-4 border border-pink-500/20 text-xs">
-                <p className="font-semibold text-pink-400 flex items-center gap-1.5">
-                  <span>🤖</span> Install on Android (Chrome / Samsung):
-                </p>
-                <ol className="space-y-2.5 text-pink-100/90 list-decimal list-inside text-[11px] leading-relaxed">
-                  <li>
-                    Open Chrome or Samsung Internet menu <span className="inline-block px-1.5 py-0.5 rounded bg-white/10 text-white font-mono">⋮</span> (top right or bottom).
-                  </li>
-                  <li>
-                    Tap <b>&ldquo;Install App&rdquo;</b> or <b>&ldquo;Add to Home screen&rdquo;</b>.
-                  </li>
-                  <li>
-                    Tap <b>&ldquo;Install&rdquo;</b>. SyncCinema icon will appear on your phone home screen!
+                    Tap <b>&ldquo;Add&rdquo;</b>. SyncCinema will open instantly in full screen!
                   </li>
                 </ol>
               </div>
@@ -189,20 +218,20 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
             <div className="grid grid-cols-2 gap-2 text-[10px] text-pink-200/80">
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-pink-500/10">
                 <Sparkles className="h-3 w-3 text-pink-400 shrink-0" />
-                <span>Full screen cinema</span>
+                <span>Notch-free cinema</span>
               </div>
               <div className="flex items-center gap-1.5 p-2 rounded-xl bg-white/5 border border-pink-500/10">
                 <Check className="h-3 w-3 text-emerald-400 shrink-0" />
-                <span>Zero browser address bar</span>
+                <span>Zero browser lag</span>
               </div>
             </div>
 
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="btn-pink w-full py-2.5 rounded-xl text-white font-bold text-xs shadow-lg shadow-pink-500/30 hover:brightness-110 transition cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-pink-200 font-semibold text-xs border border-white/10 transition cursor-pointer"
             >
-              Got It, Continue Streaming
+              Close &amp; Return to Movie
             </button>
           </div>
         </div>

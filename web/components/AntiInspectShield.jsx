@@ -18,6 +18,8 @@ export default function AntiInspectShield() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Allow local development and Playwright UI testing on localhost/127.0.0.1
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
 
     // 1. SILENCE CONSOLE: Neutralize all console logging so no codes, passwords or data are exposed
     const originalConsole = {

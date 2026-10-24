@@ -62,6 +62,14 @@ html, body {
   -ms-overflow-style: none !important;
 }
 
+/* Safe Area Notch & Hardware Cutout Utilities for Mobile Phones */
+.safe-top-notch {
+  padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
+}
+.safe-bottom-bar {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+
 /* Remove all vertical and horizontal scrollbars globally */
 *, *::before, *::after, html, body, #__next, main, div, section, aside, article, ul, ol, nav {
   scrollbar-width: none !important;

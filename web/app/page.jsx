@@ -43,6 +43,7 @@ import {
   Clock,
   Disc,
   VolumeX,
+  Download,
 } from 'lucide-react';
 import {
   Popcorn3D,
@@ -1621,6 +1622,60 @@ export default function SynCinemaPlatform() {
       {/* FREQUENTLY ASKED QUESTIONS ACCORDION */}
       <CinemaFaq />
 
+      {/* DEDICATED BOTTOM MOBILE APP DOWNLOAD SECTION */}
+      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 my-10">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2a1728] via-[#1c121e] to-[#0e0712] border border-pink-500/40 p-6 sm:p-10 shadow-[0_20px_60px_rgba(236,72,153,0.25)] backdrop-blur-2xl">
+          {/* Background Ambient Glow */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/15 rounded-full blur-[90px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-rose-600/15 rounded-full blur-[80px] pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
+            <div className="space-y-3.5 text-center md:text-left max-w-xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 text-xs font-bold tracking-wide uppercase">
+                <span>🤖</span>
+                <span>Official Mobile App &bull; Android APK</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Download SyncCinema Mobile App
+              </h3>
+              <p className="text-xs sm:text-sm text-pink-200/80 leading-relaxed font-medium">
+                Stream movies with your favorite person on your phone with <span className="text-pink-300 font-bold">100% notch-free display</span>, zero browser lag, hardware camera &amp; voice calls, and frame-locked 0ms audio/video sync.
+              </p>
+
+              {/* Feature Badges */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-[11px] text-pink-200/90 font-semibold">
+                <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-pink-500/25 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span>Direct APK Download (9.6 MB)</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-pink-500/25 flex items-center gap-1.5">
+                  <span>📱</span>
+                  <span>Notch-Free Fullscreen</span>
+                </span>
+                <span className="px-2.5 py-1 rounded-xl bg-white/5 border border-pink-500/25 flex items-center gap-1.5">
+                  <span>🎥</span>
+                  <span>HD Duo Video Call</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
+              <a
+                href="/syncinema.apk"
+                download="SyncCinema.apk"
+                className="btn-pink w-full sm:w-auto px-7 py-3.5 rounded-2xl text-white font-extrabold text-sm shadow-xl shadow-pink-600/40 hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2.5 no-underline text-center cursor-pointer"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Mobile App (APK)</span>
+              </a>
+              <span className="text-[11px] text-pink-300/60 font-mono">
+                Works on all Android phones &bull; Fast Install
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Mobile & Tablet App Install Banner */}
       <InstallPrompt variant="banner" />
 
@@ -1732,6 +1787,16 @@ export default function SynCinemaPlatform() {
                 <span>Universal Access</span>
               </h4>
               <ul className="space-y-2 text-pink-200/70">
+                <li>
+                  <a
+                    href="/syncinema.apk"
+                    download="SyncCinema.apk"
+                    className="text-pink-400 hover:text-pink-300 font-bold flex items-center gap-1 transition"
+                  >
+                    <span>🤖 Download Android APK</span>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">9.6MB</span>
+                  </a>
+                </li>
                 <li><span className="hover:text-pink-100 transition">Mobile PWA (iOS &amp; Android)</span></li>
                 <li><span className="hover:text-pink-100 transition">Desktop Web App</span></li>
                 <li><span className="hover:text-pink-100 transition">Low-End Device Mode</span></li>

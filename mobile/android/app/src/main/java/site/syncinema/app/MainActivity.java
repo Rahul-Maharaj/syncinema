@@ -22,16 +22,38 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // 📱 Notch-Free Display & Screen-to-Body Ratio:
+        // Ensure web content renders below the system status bar and camera punch-hole cutout
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(true);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // Never allow window to overlap with display cutout/notch
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+        }
+
         // Pre-emptively request camera and microphone permissions on Android 6+ (API 23+)
         // so WebRTC media capture is granted at the OS level immediately when the app launches
         requestMediaPermissionsIfNeeded();
 
-        // Customise WebView for zero-drift playback and WebRTC video/audio calls
+        // Customise WebView for zero-drift playback, notch padding, and WebRTC video/audio calls
         if (this.bridge != null && this.bridge.getWebView() != null) {
             WebView webView = this.bridge.getWebView();
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             webView.getSettings().setDomStorageEnabled(true);
             webView.getSettings().setDatabaseEnabled(true);
+
+            // Dynamically push WebView below system status bar and hardware camera notch
+            webView.setFitsSystemWindows(true);
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(webView, (v, windowInsets) -> {
+                androidx.core.graphics.Insets insets = windowInsets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+                );
+                v.setPadding(0, insets.top, 0, 0);
+                return windowInsets;
+            });
 
             // Set custom WebChromeClient inheriting from BridgeWebChromeClient
             // to ensure Capacitor file upload, fullscreen video, and JS dialogs work,

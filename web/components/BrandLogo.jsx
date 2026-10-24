@@ -37,7 +37,7 @@ export default function BrandLogo({
       </div>
 
       {/* Highlighted SynCinema Typography */}
-      <div className={`items-baseline leading-none ${hideTextOnMobile ? 'hidden sm:flex' : 'flex'}`}>
+      <div className={`items-baseline leading-none ${hideTextOnMobile ? 'hidden md:flex' : 'flex'}`}>
         <span className={`brand-syn ${synSizes[size]} pr-0.5`}>Syn</span>
         <span className={`brand-cinema ${cinemaSizes[size]}`}>Cinema</span>
       </div>
