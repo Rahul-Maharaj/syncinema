@@ -562,7 +562,7 @@ body.cinema #video-player-container {
 }
 
 .text-shimmer-light {
-  background: linear-gradient(90deg, #be185d 0%, #ec4899 25%, #6366f1 50%, #ec4899 75%, #be185d 100%);
+  background: linear-gradient(90deg, #9f1239 0%, #be185d 25%, #4338ca 50%, #be185d 75%, #9f1239 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

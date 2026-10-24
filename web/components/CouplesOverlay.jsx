@@ -1063,24 +1063,24 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => setHide(false)}
-          className={`hidden lg:flex fixed bottom-24 left-5 z-40 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition shadow-2xl cursor-pointer ${
+          className={`hidden lg:flex fixed bottom-3 left-4 z-30 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition shadow-xl cursor-pointer ${
             theme?.isLight
-              ? 'bg-white/90 border-white/80 text-slate-800 hover:bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]'
+              ? 'bg-white hover:bg-rose-50 border-2 border-rose-200 text-slate-800 shadow-[0_4px_20px_rgba(244,63,94,0.12)]'
               : 'border-pink-500/30 bg-[#222222]/95 text-pink-200 hover:border-pink-400 hover:text-white'
           } backdrop-blur-md`}
-          title="Show video call window"
+          title="Show floating video call window"
         >
-          <Video className="h-3.5 w-3.5 text-rose-400" />
+          <Video className="h-3.5 w-3.5 text-rose-500" />
           <span>Show Video Call</span>
           {isAnyoneTalking && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
         </button>
       ) : (
-        <div ref={box} className={`hidden lg:block fixed bottom-20 left-5 z-40 rounded-2xl border backdrop-blur-xl p-2.5 transition-all shadow-2xl ${
+        <div ref={box} className={`hidden lg:block fixed bottom-28 left-6 z-40 rounded-3xl border-2 backdrop-blur-2xl p-3 transition-all shadow-2xl ${
           theme?.isLight
-            ? 'bg-white/85 border-white/70 shadow-[0_12px_40px_rgba(0,0,0,0.1)] text-slate-800'
+            ? 'bg-white/95 border-rose-200/90 shadow-[0_16px_50px_rgba(244,63,94,0.15)] ring-1 ring-rose-400/20 text-slate-900'
             : 'border-pink-500/30 bg-[#222222]/95 text-white'
         } ${layout === 'side' ? 'max-w-[92vw]' : ''}`}>
-          <div className={`flex items-center justify-between pb-1.5 px-0.5 gap-2 ${theme?.isLight ? 'text-slate-500' : 'text-white/50'}`}>
+          <div className={`flex items-center justify-between pb-1.5 px-0.5 gap-2 ${theme?.isLight ? 'text-slate-600 font-semibold' : 'text-white/50'}`}>
             <div ref={grip} className="flex flex-1 cursor-grab items-center active:cursor-grabbing" title="Drag to move">
               <GripHorizontal className="h-4 w-4" />
             </div>
@@ -1089,9 +1089,9 @@ export default function CouplesOverlay({
                 type="button"
                 onClick={cycleLayout}
                 title={layout === 'floating' ? 'Switch to side-by-side layout' : 'Switch to floating stacked layout'}
-                className={`rounded-lg px-2 py-0.5 transition text-[10px] font-semibold border ${
+                className={`rounded-lg px-2 py-0.5 transition text-[10px] font-bold border ${
                   theme?.isLight
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    ? 'bg-white hover:bg-rose-50 text-slate-800 border-2 border-slate-200 hover:border-rose-300'
                     : 'text-white/60 hover:bg-white/10 hover:text-white border-transparent'
                 }`}
               >
@@ -1103,7 +1103,7 @@ export default function CouplesOverlay({
                 title="Hide video call (audio remains active in background)"
                 className={`rounded-lg p-1 transition ${
                   theme?.isLight
-                    ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                    ? 'text-slate-600 hover:bg-rose-50 hover:text-rose-700'
                     : 'text-white/60 hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -1151,21 +1151,21 @@ export default function CouplesOverlay({
           </div>
 
           {!isGhost && (
-            <div className={`mt-2.5 flex items-center justify-center gap-2 pt-2 border-t ${theme?.isLight ? 'border-slate-200/80' : 'border-white/10'}`}>
+            <div className={`mt-2.5 flex items-center justify-center gap-2 pt-2 border-t ${theme?.isLight ? 'border-rose-200' : 'border-white/10'}`}>
               <button
                 type="button"
                 onClick={toggleMic}
                 aria-label="Toggle microphone"
                 title={mic ? 'Mute microphone' : 'Unmute microphone'}
-                className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+                className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold ${
                   mic
                     ? theme?.isLight
-                      ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-800 border border-emerald-300'
+                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-2 border-emerald-300'
                       : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-600 dark:text-rose-300 border border-rose-500/40 shadow-sm'
+                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-700 dark:text-rose-300 border-2 border-rose-400 shadow-sm'
                 }`}
               >
-                {mic ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+                {mic ? <Mic className="h-4 w-4 text-emerald-600" /> : <MicOff className="h-4 w-4 text-rose-600" />}
                 <span className="text-[10px]">{mic ? 'Mute' : 'Unmute'}</span>
               </button>
 
@@ -1175,15 +1175,15 @@ export default function CouplesOverlay({
                 disabled={camSwitching}
                 aria-label="Toggle camera"
                 title={cam ? 'Turn off camera (releases hardware)' : 'Turn on camera'}
-                className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+                className={`p-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-bold ${
                   cam
                     ? theme?.isLight
-                      ? 'bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-800 border border-indigo-300'
+                      ? 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-2 border-sky-300'
                       : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-600 dark:text-rose-300 border border-rose-500/40 shadow-sm'
+                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-700 dark:text-rose-300 border-2 border-rose-400 shadow-sm'
                 }`}
               >
-                {cam ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+                {cam ? <Video className="h-4 w-4 text-sky-600" /> : <VideoOff className="h-4 w-4 text-rose-600" />}
                 <span className="text-[10px]">{cam ? 'Cam Off' : 'Cam On'}</span>
               </button>
 
@@ -1192,15 +1192,15 @@ export default function CouplesOverlay({
                 onClick={toggleVoiceOnly}
                 aria-label="Voice-only mode"
                 title={voiceOnly ? 'Switch back to video mode' : 'Voice-only mode (saves bandwidth)'}
-                className={`px-2.5 py-2 rounded-xl text-[10px] font-semibold transition cursor-pointer flex items-center gap-1 ${
+                className={`px-2.5 py-2 rounded-xl text-[10px] font-bold transition cursor-pointer flex items-center gap-1 ${
                   voiceOnly
-                    ? 'bg-rose-600 text-white border border-rose-500 shadow-md'
+                    ? 'bg-rose-600 text-white border-2 border-rose-500 shadow-md'
                     : theme?.isLight
-                      ? 'bg-pink-500/15 hover:bg-pink-500/25 text-pink-700 border border-pink-300 font-bold'
+                      ? 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-2 border-rose-200'
                       : 'bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 hover:text-white'
                 }`}
               >
-                <Volume2 className="h-3.5 w-3.5 text-rose-400" />
+                <Volume2 className="h-3.5 w-3.5 text-rose-500" />
                 <span className="text-[10px]">{voiceOnly ? 'Voice: ON' : 'Voice Only'}</span>
               </button>
             </div>

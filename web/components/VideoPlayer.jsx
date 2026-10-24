@@ -1483,7 +1483,7 @@ export default function VideoPlayer({
         onMouseMove={isFullscreen ? resetOverlayTimer : undefined}
         onTouchStart={isFullscreen ? resetOverlayTimer : undefined}
         className={`vault relative overflow-hidden transition-all ${
-          theme?.isLight ? 'bg-white/90 border border-white/70 shadow-[0_12px_40px_rgba(0,0,0,0.08)]' : 'bg-[#222222] border border-white/10'
+          theme?.isLight ? 'bg-white/98 border-2 border-rose-200/90 shadow-[0_16px_50px_rgba(244,63,94,0.10)] ring-1 ring-rose-400/20' : 'bg-[#222222] border border-white/10'
         } ${
           isFullscreen
             ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-0 flex items-center justify-center'
@@ -1895,30 +1895,66 @@ export default function VideoPlayer({
         {T === 'none' && !stream && (
           <div className={`absolute inset-0 flex flex-col items-center justify-center p-6 text-center select-none ${
             theme?.isLight
-              ? 'bg-white/80 backdrop-blur-2xl text-slate-800'
+              ? 'bg-gradient-to-b from-white/98 via-[#fff7fa] to-rose-50/95 text-slate-900'
               : 'bg-[#222222] text-[#FCE7F3]'
           }`}>
             {/* Sync Telemetry Badge */}
             <div className={`absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm transition-all duration-300 hover:scale-105 ${
               theme?.isLight
-                ? 'bg-white/90 border border-slate-200/90 text-slate-700'
+                ? 'bg-white border-2 border-rose-200 text-slate-800 shadow-sm'
                 : 'bg-white/10 border border-white/15 text-pink-200'
             }`}>
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>In sync</span>
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold">In sync</span>
               <span className="opacity-40">•</span>
-              <span className="font-mono text-[11px] text-emerald-500 font-bold">131ms</span>
+              <span className="font-mono text-[11px] text-emerald-600 font-extrabold">131ms</span>
             </div>
 
-            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-pink-500 to-rose-400 shadow-xl shadow-pink-500/30 anim-pulse-glow hover:scale-110 transition-transform duration-300 cursor-pointer">
+            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-rose-500 to-pink-500 shadow-xl shadow-pink-500/30 anim-pulse-glow hover:scale-110 transition-transform duration-300 cursor-pointer">
               <Play className="h-8 w-8 fill-white text-white ml-1 drop-shadow" />
             </div>
-            <p className={`font-display text-xl sm:text-2xl font-black tracking-wide ${theme?.isLight ? 'text-shimmer-light' : 'text-shimmer'}`}>
+            <p className={`font-display text-2xl sm:text-3xl font-black tracking-tight ${theme?.isLight ? 'text-shimmer-light' : 'text-shimmer'}`}>
               Ready to Stream
             </p>
-            <p className={`text-xs sm:text-sm mt-1 max-w-md anim-reveal ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-pink-200/80'}`}>
+            <p className={`text-xs sm:text-sm mt-1 max-w-md anim-reveal ${theme?.isLight ? 'text-slate-700 font-medium' : 'text-pink-200/80'}`}>
               Paste a video link below or choose from your watchlist to begin watching together.
             </p>
+
+            {/* Quick Action Suggestion Chips */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => autoPlayUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                  theme?.isLight
+                    ? 'bg-white hover:bg-rose-50 border-2 border-rose-200 text-slate-800 hover:border-rose-400'
+                    : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white'
+                }`}
+              >
+                <span>🍿 Demo Film</span>
+              </button>
+              <label
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer ${
+                  theme?.isLight
+                    ? 'bg-white hover:bg-rose-50 border-2 border-rose-200 text-slate-800 hover:border-rose-400'
+                    : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white'
+                }`}
+              >
+                <span>📁 Open My File</span>
+                <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
+              </label>
+              <button
+                type="button"
+                onClick={handleClipboardPasteAndPlay}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                  theme?.isLight
+                    ? 'bg-rose-50 hover:bg-rose-100 border-2 border-rose-200 text-rose-800'
+                    : 'btn-pink text-white'
+                }`}
+              >
+                <span>📋 Paste Clipboard</span>
+              </button>
+            </div>
           </div>
         )}
         {/* Mobile Autoplay Permission Overlay: Unlocks audio/video on tap if browser blocked playback */}
@@ -2112,7 +2148,7 @@ export default function VideoPlayer({
       {/* Instant Multi-User Playback Sync Controls Bar (Fast-Seek, Zero-Drift Play/Pause & Forward/Rewind) */}
       <div className={`flex items-center justify-between gap-2 px-3 py-2 rounded-2xl border shadow-lg text-xs my-1 backdrop-blur-xl transition-colors duration-300 ${
         theme?.isLight
-          ? 'bg-white/85 border-white/60 text-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.04)]'
+          ? 'bg-white/95 border-2 border-rose-200/90 text-slate-900 shadow-[0_8px_30px_rgba(244,63,94,0.08)]'
           : 'bg-[#222222] border-pink-500/25 text-white'
       }`}>
         <div className="flex items-center gap-1.5">
@@ -2121,12 +2157,12 @@ export default function VideoPlayer({
             onClick={() => seekDelta(-10)}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border hover-lift ${
               theme?.isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80 hover:border-pink-300'
+                ? 'bg-slate-50 hover:bg-rose-50 text-slate-900 border-2 border-slate-200 hover:border-rose-300 font-bold'
                 : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
             }`}
             title="Rewind 10 seconds (Synced for all participants)"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-pink-500" />
+            <RotateCcw className="h-3.5 w-3.5 text-rose-600" />
             <span>-10s</span>
           </button>
 
@@ -2141,7 +2177,7 @@ export default function VideoPlayer({
                 send('PLAY');
               }
             }}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold shadow-md shadow-pink-500/25 transition cursor-pointer active:scale-95 hover-lift hover-sheen"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold shadow-md shadow-rose-500/30 transition cursor-pointer active:scale-95 hover-lift hover-sheen"
             title={playing.current ? "Pause video for all participants" : "Play video for all participants"}
           >
             {playing.current ? (
@@ -2162,26 +2198,26 @@ export default function VideoPlayer({
             onClick={() => seekDelta(10)}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border hover-lift ${
               theme?.isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80 hover:border-pink-300'
+                ? 'bg-slate-50 hover:bg-rose-50 text-slate-900 border-2 border-slate-200 hover:border-rose-300 font-bold'
                 : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
             }`}
             title="Forward 10 seconds (Synced for all participants)"
           >
             <span>+10s</span>
-            <FastForward className="h-3.5 w-3.5 text-pink-500" />
+            <FastForward className="h-3.5 w-3.5 text-rose-600" />
           </button>
         </div>
 
         {/* Sync Status Telemetry */}
         <div className="flex items-center gap-2">
-          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] ${
+          <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-semibold ${
             theme?.isLight
-              ? 'bg-slate-100 border-slate-200/80 text-slate-700'
+              ? 'bg-emerald-50 border-2 border-emerald-200/90 text-emerald-900'
               : 'bg-white/5 border-white/10 text-pink-200'
           }`}>
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">0.0ms</span>
-            <span className={theme?.isLight ? 'text-slate-500' : 'text-white/60'}>Drift Lock</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="font-mono font-bold text-emerald-700">0.0ms</span>
+            <span className={theme?.isLight ? 'text-slate-700 font-semibold' : 'text-white/60'}>Drift Lock</span>
           </div>
 
           <button
@@ -2189,7 +2225,7 @@ export default function VideoPlayer({
             onClick={toggleFullscreen}
             className={`p-1.5 rounded-xl transition border cursor-pointer ${
               theme?.isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80 hover:border-pink-300'
+                ? 'bg-white hover:bg-rose-50 text-slate-800 border-2 border-slate-200 hover:border-rose-300'
                 : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
             }`}
             title="Toggle Cinema Fullscreen"
@@ -2425,19 +2461,19 @@ export default function VideoPlayer({
         )}
         <div className={`flex flex-col sm:flex-row gap-2 ${
           theme?.isLight
-            ? 'p-2 rounded-2xl bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(0,0,0,0.06)]'
+            ? 'p-2.5 rounded-2xl bg-white/95 backdrop-blur-2xl border-2 border-rose-200/90 shadow-[0_10px_35px_rgba(244,63,94,0.08)] ring-1 ring-rose-400/10'
             : ''
         }`}>
           <div className="relative min-w-0 flex-1">
-            <Link2 className={`absolute left-3 top-3 h-4 w-4 ${theme?.isLight ? 'text-pink-500' : 'opacity-50'}`} />
+            <Link2 className={`absolute left-3 top-3 h-4 w-4 ${theme?.isLight ? 'text-rose-500' : 'opacity-50'}`} />
             <input
               value={url}
               onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
               placeholder="Paste any video or movie link (YouTube, HLS, MP4, Prime, Netflix) - Auto plays in sync..."
-              className={`w-full !pl-9 !py-2.5 text-xs sm:text-sm rounded-xl outline-none transition ${
+              className={`w-full !pl-9 !py-2.5 text-xs sm:text-sm rounded-xl outline-none transition font-medium ${
                 theme?.isLight
-                  ? 'bg-slate-50/70 border border-slate-200/80 text-slate-900 placeholder-slate-400 focus:border-pink-400 focus:bg-white'
+                  ? 'bg-white border-2 border-rose-200/90 text-slate-900 placeholder:text-slate-400 focus:border-rose-500 shadow-inner'
                   : 'field'
               }`}
             />
@@ -2446,9 +2482,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm hover-lift ${
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm hover-lift ${
                 theme?.isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 hover:border-pink-300'
+                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-2 border-rose-200 hover:border-rose-300'
                   : 'bg-white/10 hover:bg-white/20 text-white border border-white/25 hover:border-[#EC4899]/60 hover:text-[#FCE7F3] backdrop-blur-md'
               }`}
               title="Paste link from clipboard and play immediately"
@@ -2458,7 +2494,7 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn-pink !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/25 text-white cursor-pointer active:scale-95 hover-lift hover-sheen"
+              className="btn-pink !py-2.5 !px-5 text-xs font-black shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-rose-500/30 text-white cursor-pointer active:scale-95 hover-lift hover-sheen"
             >
               <Play className="h-3.5 w-3.5 fill-white" />
               <span>Play for All</span>
@@ -2467,43 +2503,45 @@ export default function VideoPlayer({
         </div>
 
         {/* High-Contrast Secondary Action Toolbar */}
-        <div className="flex items-center gap-2 pt-1 text-xs overflow-x-auto no-scrollbar py-0.5">
+        <div className={`flex items-center gap-2 pt-1 text-xs overflow-x-auto no-scrollbar py-1 px-1 rounded-2xl ${
+          theme?.isLight ? 'bg-white/95 border-2 border-rose-200/85 shadow-md backdrop-blur-xl' : ''
+        }`}>
           <button
             type="button"
             onClick={enqueue}
-            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
+            className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
               theme?.isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
+                ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300 hover:text-rose-700 shadow-sm'
                 : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
             }`}
             title="Add this link to the Up next list"
           >
-            <ListPlus className="h-4 w-4 text-pink-500 shrink-0" />
+            <ListPlus className="h-4 w-4 text-rose-500 shrink-0" />
             <span>Add to queue</span>
           </button>
 
           <label
-            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
+            className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
               theme?.isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
+                ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300 hover:text-rose-700 shadow-sm'
                 : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
             }`}
             title="Play a movie file from your own device"
           >
-            <FolderOpen className="h-4 w-4 text-pink-500 shrink-0" />
+            <FolderOpen className="h-4 w-4 text-rose-500 shrink-0" />
             <span>My file</span>
             <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
           </label>
 
           <label
-            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
+            className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
               theme?.isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
+                ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300 hover:text-rose-700 shadow-sm'
                 : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
             }`}
             title="Add .srt or .vtt subtitles"
           >
-            <Captions className="h-4 w-4 text-pink-500 shrink-0" />
+            <Captions className="h-4 w-4 text-rose-500 shrink-0" />
             <span>Subtitles</span>
             <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
           </label>
@@ -2512,26 +2550,26 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={onOpenRecent}
-              className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
                 theme?.isLight
-                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
+                  ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300 hover:text-rose-700 shadow-sm'
                   : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-cyan-400/60 text-white hover:text-cyan-300 backdrop-blur-md'
               }`}
               title="Open Recent Plays Bar"
             >
-              <History className="h-4 w-4 text-pink-500 shrink-0" />
+              <History className="h-4 w-4 text-rose-500 shrink-0" />
               <span>Recent Bar</span>
             </button>
           )}
 
           {audioTracks.length > 1 && (
-            <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm shrink-0 ${
+            <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold shadow-sm shrink-0 ${
               theme?.isLight
-                ? 'bg-white/80 text-slate-700 border-slate-200/80'
+                ? 'bg-white text-slate-800 border-slate-200'
                 : 'border-white/25 bg-white/10 text-white backdrop-blur-md'
             }`} title="Audio track / language">
-              <Volume2 className="h-4 w-4 text-pink-500 shrink-0" />
-              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-slate-800 dark:text-white outline-none cursor-pointer font-semibold">
+              <Volume2 className="h-4 w-4 text-rose-500 shrink-0" />
+              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer font-bold">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
               </select>
             </div>
@@ -2541,9 +2579,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={stopShare}
-              className="px-3.5 py-2 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/40 text-pink-700 dark:text-white font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-700 dark:text-white font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0"
             >
-              <MonitorOff className="h-4 w-4 text-pink-500 shrink-0" />
+              <MonitorOff className="h-4 w-4 text-rose-500 shrink-0" />
               <span>Stop sharing</span>
             </button>
           ) : (
@@ -2551,29 +2589,29 @@ export default function VideoPlayer({
               type="button"
               onClick={startShare}
               disabled={!!screenBy}
-              className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-40 shrink-0 border ${
+              className={`px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-40 shrink-0 border ${
                 theme?.isLight
-                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                  ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300 hover:text-rose-700 shadow-sm'
                   : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-emerald-400/60 text-white hover:text-emerald-300 backdrop-blur-md'
               }`}
               title="Show your screen to your partner"
             >
-              <MonitorUp className="h-4 w-4 text-pink-500 shrink-0" />
+              <MonitorUp className="h-4 w-4 text-rose-500 shrink-0" />
               <span>Share screen</span>
             </button>
           )}
 
           {/* Type Auto Selector */}
-          <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm shrink-0 ${
+          <div className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold shadow-sm shrink-0 ${
             theme?.isLight
-              ? 'bg-white/80 text-slate-700 border-slate-200/80'
+              ? 'bg-white text-slate-800 border-slate-200'
               : 'border-white/25 bg-white/10 text-white backdrop-blur-md'
           }`} title="Media stream resolver type">
-            <span className="text-pink-500">⚡</span>
+            <span className="text-rose-500">⚡</span>
             <select
               value={force}
               onChange={(e) => setForce(e.target.value)}
-              className="bg-transparent text-slate-800 dark:text-white outline-none cursor-pointer font-semibold"
+              className="bg-transparent text-slate-900 dark:text-white outline-none cursor-pointer font-bold"
             >
               {TYPES.map((t) => (
                 <option key={t} value={t} className="text-black bg-white">
@@ -2587,14 +2625,14 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+              className={`px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
                 theme?.isLight
-                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                  ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300'
                   : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
               }`}
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 text-pink-500 shrink-0" /> : <Maximize2 className="h-4 w-4 text-pink-500 shrink-0" />}
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-rose-500 shrink-0" /> : <Maximize2 className="h-4 w-4 text-rose-500 shrink-0" />}
               <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}

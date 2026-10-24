@@ -336,7 +336,8 @@ export default function CinemaPlugins({
   defaultTab = 'soundscapes',
   onTriggerReaction,
   callMedia,
-  playerRef
+  playerRef,
+  theme
 }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [soundVolume, setSoundVolume] = useState(60);
@@ -1168,7 +1169,11 @@ export default function CinemaPlugins({
         muted
         style={{ position: 'fixed', top: -9999, left: -9999, width: 320, height: 240, opacity: 0, pointerEvents: 'none' }}
       />
-      <div className="card w-full max-w-xl p-4 sm:p-6 space-y-4 border border-pink-500/25 !bg-[#222222]/95 rounded-3xl shadow-2xl shadow-pink-500/10 rise text-pink-100 my-auto">
+      <div className={`card w-full max-w-xl p-4 sm:p-6 space-y-4 rounded-3xl backdrop-blur-2xl shadow-2xl rise my-auto transition-all ${
+        theme?.isLight
+          ? 'bg-white/98 border-2 border-rose-200/90 shadow-[0_20px_60px_rgba(244,63,94,0.12)] text-slate-900'
+          : '!bg-[#222222]/95 border border-pink-500/25 shadow-pink-500/10 text-pink-100'
+      }`}>
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
           <div className="flex items-center gap-2.5">

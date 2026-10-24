@@ -5,7 +5,7 @@ import { History, QrCode, Play, Trash2, X, Smartphone, Copy, Check, Lock, Share2
 import { isAdultMedia, sanitizeDisplayTitle } from '@/lib/media';
 import { getSmallInviteUrl } from '@/lib/invite';
 
-export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = '', onPlayUrl, say }) {
+export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = '', onPlayUrl, say, theme }) {
   const [history, setHistory] = useState([]);
   const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState('handoff'); // 'handoff' | 'history'
@@ -101,40 +101,52 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4 backdrop-blur-md">
-      <div className="card vault w-full max-w-md space-y-4 p-5 sm:p-6 bg-[#222222] border border-pink-500/25 rounded-3xl shadow-2xl shadow-pink-500/10 text-pink-100">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+      <div className={`card vault w-full max-w-md space-y-4 p-5 sm:p-6 rounded-3xl backdrop-blur-2xl shadow-2xl rise transition-all ${
+        theme?.isLight
+          ? 'bg-white/98 border-2 border-rose-200/90 shadow-[0_20px_60px_rgba(244,63,94,0.12)] text-slate-900'
+          : 'bg-[#222222] border border-pink-500/25 shadow-pink-500/10 text-pink-100'
+      }`}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-pink-500/15 pb-3">
+        <div className={`flex items-center justify-between border-b pb-3 ${theme?.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
           <div className="flex items-center gap-2.5">
             <div className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white shadow-lg shadow-pink-500/30">
               {tab === 'handoff' ? <QrCode className="h-5 w-5" /> : <History className="h-5 w-5" />}
             </div>
             <div>
-              <h3 className="font-display text-sm sm:text-base font-bold text-pink-100">
+              <h3 className={`font-display text-sm sm:text-base font-bold ${theme?.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
                 {tab === 'handoff' ? 'QR Phone Handoff' : 'Watch History'}
               </h3>
-              <p className="text-[11px] text-pink-300/70">
+              <p className={`text-[11px] font-medium ${theme?.isLight ? 'text-slate-500' : 'text-pink-300/70'}`}>
                 {tab === 'handoff' ? 'Scan to seamlessly continue on your phone or tablet' : 'Recently played videos'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-pink-300/60 hover:text-white hover:bg-pink-500/10 transition cursor-pointer"
+            className={`p-1.5 rounded-xl transition cursor-pointer ${
+              theme?.isLight
+                ? 'text-slate-500 hover:text-slate-900 hover:bg-rose-50'
+                : 'text-pink-300/60 hover:text-white hover:bg-pink-500/10'
+            }`}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Segmented Switcher */}
-        <div className="flex rounded-2xl bg-[#1a1a1a] p-1 border border-pink-500/20 gap-1">
+        <div className={`flex rounded-2xl p-1 gap-1 ${
+          theme?.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#1a1a1a] border border-pink-500/20'
+        }`}>
           <button
             type="button"
             onClick={() => setTab('handoff')}
             className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
               tab === 'handoff'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
-                : 'text-pink-300/70 hover:text-pink-100'
+                : theme?.isLight
+                  ? 'text-slate-600 hover:text-slate-950 hover:bg-rose-100/60'
+                  : 'text-pink-300/70 hover:text-pink-100'
             }`}
           >
             <Smartphone className="h-3.5 w-3.5" />
@@ -146,7 +158,9 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
             className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
               tab === 'history'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
-                : 'text-pink-300/70 hover:text-pink-100'
+                : theme?.isLight
+                  ? 'text-slate-600 hover:text-slate-950 hover:bg-rose-100/60'
+                  : 'text-pink-300/70 hover:text-pink-100'
             }`}
           >
             <History className="h-3.5 w-3.5" />
@@ -157,7 +171,11 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
         {/* Tab 1: QR Code Mobile Handoff */}
         {tab === 'handoff' && (
           <div className="space-y-4 text-center text-xs rise pt-1">
-            <div className="relative mx-auto w-52 h-52 p-3 rounded-2xl bg-white shadow-2xl shadow-pink-500/15 flex items-center justify-center border border-pink-200">
+            <div className={`relative mx-auto w-52 h-52 p-3 rounded-2xl bg-white flex items-center justify-center ${
+              theme?.isLight
+                ? 'border-2 border-rose-200 shadow-xl ring-1 ring-rose-400/20'
+                : 'shadow-2xl shadow-pink-500/15 border border-pink-200'
+            }`}>
               {qrDataUrl ? (
                 <img
                   src={qrDataUrl}
@@ -174,15 +192,19 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
             </div>
 
             <div className="space-y-1 px-2">
-              <p className="font-bold text-pink-100 text-sm">Scan with your Phone Camera</p>
-              <p className="text-[11px] text-pink-200/80">
-                Instantly opens room <span className="text-pink-400 font-mono font-bold">{roomId}</span> with password pre-loaded.
+              <p className={`font-bold text-sm ${theme?.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Scan with your Phone Camera</p>
+              <p className={`text-[11px] font-medium ${theme?.isLight ? 'text-slate-600' : 'text-pink-200/80'}`}>
+                Instantly opens room <span className="text-pink-600 dark:text-pink-400 font-mono font-bold">{roomId}</span> with password pre-loaded.
               </p>
               {activePass && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-1 rounded-full bg-[#1a1a1a] border border-pink-500/25 text-[11px] text-pink-200">
-                  <Lock className="h-3 w-3 text-pink-400" />
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 mt-1 rounded-full text-[11px] font-semibold ${
+                  theme?.isLight
+                    ? 'bg-rose-50 border-2 border-rose-200 text-slate-900 shadow-xs'
+                    : 'bg-[#1a1a1a] border border-pink-500/25 text-pink-200'
+                }`}>
+                  <Lock className="h-3 w-3 text-pink-500" />
                   <span>Password:</span>
-                  <span className="font-mono font-bold text-pink-300">{activePass}</span>
+                  <span className="font-mono font-bold text-pink-600 dark:text-pink-300">{activePass}</span>
                 </div>
               )}
             </div>
@@ -191,7 +213,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
               <button
                 type="button"
                 onClick={copyUrl}
-                className="btn-pink flex-1 !py-2.5 !px-3 text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer active:scale-95"
+                className="btn-pink flex-1 !py-2.5 !px-3 text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer active:scale-95 font-bold"
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 <span>{copied ? 'Copied Link!' : 'Copy Link'}</span>
@@ -199,7 +221,7 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
               <button
                 type="button"
                 onClick={shareHandoff}
-                className="btn-pink !bg-pink-700/80 hover:!bg-pink-600 !py-2.5 !px-3 text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border border-pink-400/30"
+                className="btn-pink !bg-pink-700/80 hover:!bg-pink-600 !py-2.5 !px-3 text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border border-pink-400/30 font-bold"
                 title="Share link to mobile or WhatsApp"
               >
                 <Share2 className="h-4 w-4 text-white" />
@@ -213,20 +235,26 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
         {tab === 'history' && (
           <div className="space-y-3 text-xs rise">
             {history.length === 0 ? (
-              <div className="py-10 text-center text-pink-300/50">
-                <History className="h-8 w-8 mx-auto mb-2 opacity-40 text-pink-400" />
-                <p className="text-pink-200/70">No history yet. Videos you play will appear here.</p>
+              <div className={`py-10 text-center ${theme?.isLight ? 'text-slate-500' : 'text-pink-300/50'}`}>
+                <History className="h-8 w-8 mx-auto mb-2 opacity-40 text-pink-500" />
+                <p className={`font-medium ${theme?.isLight ? 'text-slate-600' : 'text-pink-200/70'}`}>No history yet. Videos you play will appear here.</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                 {history.map((url, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#1a1a1a] border border-pink-500/20 hover:border-pink-500/40 transition group"
+                    className={`flex items-center justify-between gap-2 p-2.5 rounded-xl border-2 transition group shadow-xs ${
+                      theme?.isLight
+                        ? 'bg-rose-50/60 hover:bg-rose-100/70 border-rose-200/80 text-slate-900'
+                        : 'bg-[#1a1a1a] border-pink-500/20 hover:border-pink-500/40 text-pink-100'
+                    }`}
                   >
-                    <span className="truncate text-pink-100 text-xs font-mono flex-1 text-left flex items-center gap-1.5">
-                      {isAdultMedia(url) && <Lock className="h-3.5 w-3.5 text-pink-400 shrink-0" />}
-                      <span className={isAdultMedia(url) ? 'text-pink-300 font-sans font-semibold' : ''}>
+                    <span className={`truncate text-xs font-mono flex-1 text-left flex items-center gap-1.5 font-medium ${
+                      theme?.isLight ? 'text-slate-900' : 'text-pink-100'
+                    }`}>
+                      {isAdultMedia(url) && <Lock className="h-3.5 w-3.5 text-pink-500 shrink-0" />}
+                      <span className={isAdultMedia(url) ? 'text-pink-600 font-sans font-semibold' : ''}>
                         {sanitizeDisplayTitle(url)}
                       </span>
                     </span>
@@ -236,7 +264,11 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
                         onPlayUrl?.(url);
                         onClose();
                       }}
-                      className="p-1.5 rounded-lg bg-pink-500/20 hover:bg-pink-500/40 text-pink-200 transition shrink-0 cursor-pointer"
+                      className={`p-1.5 rounded-lg transition shrink-0 cursor-pointer ${
+                        theme?.isLight
+                          ? 'bg-white hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-200 shadow-xs'
+                          : 'bg-pink-500/20 hover:bg-pink-500/40 text-pink-200'
+                      }`}
                       title="Play this again"
                     >
                       <Play className="h-3.5 w-3.5 fill-current" />
@@ -246,11 +278,11 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
               </div>
             )}
             {history.length > 0 && (
-              <div className="flex justify-end pt-2 border-t border-pink-500/15">
+              <div className={`flex justify-end pt-2 border-t ${theme?.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
                 <button
                   type="button"
                   onClick={clearHistory}
-                  className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 cursor-pointer transition"
+                  className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 cursor-pointer transition"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Clear History
                 </button>
