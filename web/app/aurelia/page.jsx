@@ -4152,7 +4152,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    window.open('/room/' + ghostModal.roomId + '?ghost=1&adminKey=' + encodeURIComponent(adminKey), '_blank');
+                    window.open('/room/' + ghostModal.roomId + '?ghost=1', '_blank');
                   }}
                   className="rounded-xl bg-purple-600 hover:bg-purple-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-purple-600/30 transition flex items-center gap-1.5"
                   title="Open stealth cinema theater in new tab"

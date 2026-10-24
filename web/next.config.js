@@ -11,7 +11,7 @@ const csp = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'self' https: http:",
+  "frame-ancestors 'self' https://www.syncinema.site https://syncinema.site",
 ].join('; ');
 
 module.exports = {
@@ -30,6 +30,7 @@ module.exports = {
   },
   async headers() {
     const commonHeaders = [
+      { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
       { key: 'X-XSS-Protection', value: '1; mode=block' },

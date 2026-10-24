@@ -46,20 +46,58 @@ try {
   }
 } catch (e) {}
 
-const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json', ADMIN_KEY = process.env.ADMIN_KEY || 'admin123' } = process.env;
+const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json' } = process.env;
+
+// Admin Key Security: Disallow default 'admin123' and generate cryptographically secure fallback if unset
+let resolvedAdminKey = (process.env.ADMIN_KEY || '').trim();
+if (!resolvedAdminKey || resolvedAdminKey === 'admin123' || resolvedAdminKey.length < 8) {
+  const generatedSecret = crypto.randomBytes(24).toString('hex');
+  resolvedAdminKey = generatedSecret;
+  console.warn('\n============================================================');
+  console.warn('⚠️  [SECURITY NOTICE] Insecure or missing ADMIN_KEY detected in environment!');
+  console.warn('An ephemeral cryptographically strong ADMIN_KEY has been generated for this session:');
+  console.warn('  ' + generatedSecret);
+  console.warn('Set a strong ADMIN_KEY in your .env file to persist your credentials.');
+  console.warn('============================================================\n');
+}
+const ADMIN_KEY = resolvedAdminKey;
+
 const MAX_USERS = +process.env.MAX_USERS_PER_ROOM || 2;     // couple mode: strictly 2 seats (host & partner)
 const GRACE_MS = 10000;                              // keep a user's seat while their socket reconnects
-const defaultOrigins = ['https://www.syncinema.site', 'https://syncinema.site', 'http://localhost:3000', 'http://127.0.0.1:3000'];
-const origin = CLIENT_ORIGIN
-  ? [...new Set([...CLIENT_ORIGIN.split(',').map((o) => o.trim()), ...defaultOrigins])]
-  : true;
+
+const defaultOrigins = [
+  'https://www.syncinema.site',
+  'https://syncinema.site',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:4000',
+  'http://127.0.0.1:4000'
+];
+const allowedOrigins = CLIENT_ORIGIN
+  ? [...new Set([...CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean), ...defaultOrigins])]
+  : defaultOrigins;
+
+const isAllowedOrigin = (orig) => {
+  if (!orig) return true; // non-browser or server-to-server
+  if (allowedOrigins.includes(orig)) return true;
+  if (process.env.NODE_ENV !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(orig)) {
+    return true;
+  }
+  return false;
+};
+
+const origin = (orig, callback) => {
+  if (isAllowedOrigin(orig)) {
+    return callback(null, true);
+  }
+  return callback(new Error('CORS blocked: Origin not allowed (' + orig + ')'), false);
+};
+
 const PEER_KEY = ACCESS_KEY ? crypto.createHmac('sha256', ACCESS_KEY).update('peer').digest('hex').slice(0, 32) : 'peerjs';
 const TYPES = ['youtube', 'vimeo', 'file', 'hls', 'dash', 'embed', 'proxy', 'hybrid', 'ott', 'ott_hub'];
 const ROOM_RE = /^[\w-]{2,64}$/;
 
-
-
-
+// --- SSRF Guard & URL Sanitization Engine ---
 // Secret word access removed: open access to website, room security handled by room passwords
 const keyOk = (k) => true;
 // --- SECURITY ENGINE & FIREWALL ---
@@ -68,9 +106,8 @@ const blockedIps = new Set();    // IP firewall blacklist
 const fails = new Map();         // brute-force lockout & progressive throttle
 
 const adminKeyOk = (k) => {
-  const expected = ADMIN_KEY || 'admin123';
   if (!k) return false;
-  const a = Buffer.from(String(k).trim()), b = Buffer.from(String(expected).trim());
+  const a = Buffer.from(String(k).trim()), b = Buffer.from(String(ADMIN_KEY).trim());
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
@@ -210,11 +247,23 @@ const normalizeUserGeo = (geoData, ip) => {
 };
 
 const app = express();
+app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(compression({ threshold: 1024 }));
 app.use(botShieldMiddleware);
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false, frameguard: false }));
-app.use(cors({ origin }));
+app.use(helmet({
+  contentSecurityPolicy: false, // Custom CSP configured
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  frameguard: { action: 'sameorigin' },
+  hsts: {
+    maxAge: 63072000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
+app.use(cors({ origin, credentials: true }));
 app.use('/api', rateLimit({
   windowMs: 60_000,
   max: 600,
@@ -222,6 +271,26 @@ app.use('/api', rateLimit({
   legacyHeaders: false,
   skip: (req) => req.url === '/health' || req.url === '/api/health',
 }));
+
+// Strict Rate Limiter for Admin Verification Gate
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // max 30 attempts per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many admin verification requests. Please try again later.' },
+});
+app.use('/api/admin', adminLimiter);
+
+// Strict Rate Limiter for Media File Uploads
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30, // max 30 uploads per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Upload limit reached. Please wait before uploading more files.' },
+});
+app.use('/api/upload', uploadLimiter);
 const server = http.createServer(app);
 app.use('/peerjs', ExpressPeerServer(server, {
   path: '/', key: PEER_KEY, allow_discovery: false,
@@ -664,30 +733,60 @@ try {
   }
 }
 
+const ALLOWED_UPLOAD_EXTS = new Set(['.mp4', '.webm', '.mkv', '.mov', '.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac']);
+const MAX_UPLOAD_SIZE = 500 * 1024 * 1024; // 500MB max per uploaded media file
+
 app.post('/api/upload', (req, res) => {
-  const fileName = req.headers['x-file-name'] ? decodeURIComponent(req.headers['x-file-name']) : 'video.mp4';
-  const cleanExt = path.extname(fileName) || '.mp4';
+  const rawFileName = req.headers['x-file-name'] ? decodeURIComponent(req.headers['x-file-name']) : 'video.mp4';
+  const cleanBaseName = path.basename(rawFileName).replace(/[^a-zA-Z0-9._-]/g, '');
+  const cleanExt = (path.extname(cleanBaseName) || '.mp4').toLowerCase();
+
+  if (!ALLOWED_UPLOAD_EXTS.has(cleanExt)) {
+    return res.status(400).json({ error: 'Unsupported file extension. Only video and audio media files are permitted.' });
+  }
+
   const fileId = `${crypto.randomUUID()}${cleanExt}`;
   const filePath = path.join(UPLOADS_DIR, fileId);
 
-  // High-performance write stream with 16MB chunk buffer for ultra-fast cloud disk writes
+  let uploadedBytes = 0;
+  let exceededLimit = false;
+
   const fileStream = fs.createWriteStream(filePath, { highWaterMark: 1024 * 1024 * 16 });
+
+  req.on('data', (chunk) => {
+    uploadedBytes += chunk.length;
+    if (uploadedBytes > MAX_UPLOAD_SIZE && !exceededLimit) {
+      exceededLimit = true;
+      req.unpipe(fileStream);
+      fileStream.destroy();
+      fs.unlink(filePath, () => {});
+      return res.status(413).json({ error: 'File size exceeds maximum allowed limit (500MB).' });
+    }
+  });
+
   req.pipe(fileStream);
 
   fileStream.on('finish', () => {
+    if (exceededLimit) return;
     res.json({
       url: `/api/uploads/${fileId}`,
-      name: fileName,
+      name: cleanBaseName || 'video.mp4',
     });
   });
 
   fileStream.on('error', (err) => {
-    res.status(500).json({ error: err.message });
+    if (!exceededLimit) {
+      res.status(500).json({ error: err.message });
+    }
   });
 });
 
 app.get('/api/uploads/:fileId', (req, res) => {
   const fileId = path.basename(req.params.fileId);
+  const cleanExt = path.extname(fileId).toLowerCase();
+  if (!ALLOWED_UPLOAD_EXTS.has(cleanExt) || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+$/.test(fileId)) {
+    return res.status(400).send('Invalid file identifier');
+  }
   const filePath = path.join(UPLOADS_DIR, fileId);
   if (!fs.existsSync(filePath)) return res.status(404).send('File not found');
 
@@ -1357,7 +1456,13 @@ app.get('/api/proxy', async (req, res) => {
 });
 
 const io = new Server(server, {
-  cors: { origin },
+  cors: {
+    origin: (orig, callback) => {
+      if (isAllowedOrigin(orig)) return callback(null, true);
+      return callback(new Error('CORS connection blocked'), false);
+    },
+    credentials: true,
+  },
   maxHttpBufferSize: 1e5,
   pingTimeout: 30000,
   pingInterval: 25000,
@@ -1369,13 +1474,13 @@ const io = new Server(server, {
     if (check.blocked) {
       return cb('Bot connections are strictly forbidden.', false);
     }
-    cb(null, !CLIENT_ORIGIN || !req.headers.origin || origin.includes(req.headers.origin));
+    const originHeader = req.headers.origin;
+    cb(null, isAllowedOrigin(originHeader));
   },
 });
 const rooms = new Map();
 const fresh = () => ({
   pass: null,
-  plainPass: null,
   pin: null,
   users: new Map(),
   hostId: null,
@@ -1457,7 +1562,6 @@ const save = () => {
         if (hasUsers || r.pass || wasRecent || hasHistoryOrQueue) {
           dataToSave[id] = {
             pass: r.pass,
-            plainPass: r.plainPass || null,
             pin: r.pin,
             maxUsers: sanitizeMaxUsers(r.maxUsers),
             media: r.media,
@@ -1645,7 +1749,7 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       watchlist: r.watchlist || [],
       adult: Boolean(r.adult),
       hasPass: Boolean(r.pass),
-      password: r.plainPass || (r.pass ? '(Protected / Hashed)' : null),
+      isPasswordProtected: Boolean(r.pass),
       lock: Boolean(r.lock),
       entryLocked: Boolean(r.entryLocked),
       ambient: r.ambient,
@@ -2048,7 +2152,6 @@ io.on('connection', (socket) => {
       const seatChoice = sanitizeMaxUsers(requestedMax);
       r.maxUsers = seatChoice;
       r.pass = hashPass(p);
-      r.plainPass = p;
       r.entryLocked = false;
       r.createdAt = Date.now();
       r.failedAttempts = 0;
@@ -2076,7 +2179,6 @@ io.on('connection', (socket) => {
         r.lockedUntil = null;
       } else if (p.length >= 4 && p.length <= 64) {
         r.pass = hashPass(p);
-        r.plainPass = p;
         r.createdAt = Date.now();
         rooms.set(roomId, r);
         save();   // user locks it with a passkey
@@ -2531,7 +2633,6 @@ io.on('connection', (socket) => {
       return ack({ error: 'invalid', message: 'Password must be between 4 and 64 characters.' });
     }
     room.pass = hashPass(p);
-    room.plainPass = p;
     room.failedAttempts = 0;
     room.lockedUntil = null;
     save();
