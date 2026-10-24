@@ -2528,89 +2528,95 @@ export default function VideoPlayer({
           </div>
         </div>
 
-        {/* High-Contrast Secondary Action Toolbar */}
-        <div className="flex items-center gap-2 pt-1 text-xs overflow-x-auto no-scrollbar py-2 px-1 rounded-2xl">
+        {/* High-Contrast Vivid Secondary Action Toolbar */}
+        <div className="flex items-center gap-2.5 pt-1.5 text-xs overflow-x-auto no-scrollbar p-2.5 rounded-2xl bg-[#16161D] border-2 border-white/20 shadow-2xl shadow-black/90">
+          {/* Add to queue */}
           <button
             type="button"
             onClick={enqueue}
-            className="px-3.5 py-2 rounded-xl font-black flex items-center gap-1.5 shadow-md transition-all duration-300 cursor-pointer shrink-0 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white hover:border-pink-500/50 hover-lift active:scale-95"
+            className="px-3.5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-black/50 transition-all duration-200 cursor-pointer shrink-0 border-2 border-pink-500/60 bg-[#252533] hover:bg-[#323244] text-white hover:border-pink-400 hover-lift active:scale-95"
             title="Add this link to the Up next list"
           >
             <ListPlus className="h-4 w-4 text-pink-400 stroke-[2.5] shrink-0" />
-            <span>Add to queue</span>
+            <span className="text-white font-black tracking-wide">Add to queue</span>
           </button>
 
+          {/* My file */}
           <label
-            className="px-3.5 py-2 rounded-xl font-black flex items-center gap-1.5 shadow-md transition-all duration-300 cursor-pointer shrink-0 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white hover:border-pink-500/50 hover-lift active:scale-95"
+            className="px-3.5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-black/50 transition-all duration-200 cursor-pointer shrink-0 border-2 border-purple-500/60 bg-[#252533] hover:bg-[#323244] text-white hover:border-purple-400 hover-lift active:scale-95"
             title="Play a movie file from your own device"
           >
-            <FolderOpen className="h-4 w-4 text-pink-400 stroke-[2.5] shrink-0" />
-            <span>My file</span>
+            <FolderOpen className="h-4 w-4 text-purple-400 stroke-[2.5] shrink-0" />
+            <span className="text-white font-black tracking-wide">My file</span>
             <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
           </label>
 
+          {/* Subtitles */}
           <label
-            className="px-3.5 py-2 rounded-xl font-black flex items-center gap-1.5 shadow-md transition-all duration-300 cursor-pointer shrink-0 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white hover:border-pink-500/50 hover-lift active:scale-95"
+            className="px-3.5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-black/50 transition-all duration-200 cursor-pointer shrink-0 border-2 border-amber-500/60 bg-[#252533] hover:bg-[#323244] text-white hover:border-amber-400 hover-lift active:scale-95"
             title="Add .srt or .vtt subtitles"
           >
-            <Captions className="h-4 w-4 text-pink-400 stroke-[2.5] shrink-0" />
-            <span>Subtitles</span>
+            <Captions className="h-4 w-4 text-amber-400 stroke-[2.5] shrink-0" />
+            <span className="text-white font-black tracking-wide">Subtitles</span>
             <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
           </label>
 
+          {/* Recent Bar */}
           {onOpenRecent && (
             <button
               type="button"
               onClick={onOpenRecent}
-              className="px-3.5 py-2 rounded-xl font-black flex items-center gap-1.5 shadow-md transition-all duration-300 cursor-pointer shrink-0 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white hover:border-cyan-400/60 hover-lift active:scale-95"
+              className="px-3.5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-black/50 transition-all duration-200 cursor-pointer shrink-0 border-2 border-cyan-500/60 bg-[#252533] hover:bg-[#323244] text-white hover:border-cyan-400 hover-lift active:scale-95"
               title="Open Recent Plays Bar"
             >
               <History className="h-4 w-4 text-cyan-400 stroke-[2.5] shrink-0" />
-              <span>Recent Bar</span>
+              <span className="text-white font-black tracking-wide">Recent Bar</span>
             </button>
           )}
 
+          {/* Multi-Audio Language Selector */}
           {audioTracks.length > 1 && (
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-[#25252B] px-3 py-2 text-xs font-black shadow-md shrink-0 text-white" title="Audio track / language">
+            <div className="flex items-center gap-2 rounded-xl border-2 border-pink-500/60 bg-[#252533] px-3.5 py-2 text-xs font-black shadow-lg shadow-black/50 shrink-0 text-white" title="Audio track / language">
               <Volume2 className="h-4 w-4 text-pink-400 stroke-[2.5] shrink-0" />
-              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-black">
+              <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-black text-xs">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white">{t.name}</option>)}
               </select>
             </div>
           )}
 
+          {/* Screen Share Button */}
           {screenBy === me ? (
             <button
               type="button"
               onClick={stopShare}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-500 text-white font-black flex items-center gap-1.5 shadow-md transition cursor-pointer shrink-0"
+              className="px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 border-2 border-rose-400 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-rose-900/50 transition cursor-pointer shrink-0 active:scale-95"
             >
-              <MonitorOff className="h-4 w-4 text-rose-400 stroke-[2.5] shrink-0" />
-              <span>Stop sharing</span>
+              <MonitorOff className="h-4 w-4 text-white stroke-[2.5] shrink-0" />
+              <span className="text-white font-black tracking-wide">Stop sharing</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={startShare}
               disabled={!!screenBy}
-              className="px-3.5 py-2 rounded-xl font-black flex items-center gap-1.5 shadow-md transition cursor-pointer disabled:opacity-40 shrink-0 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white hover:border-emerald-400/60"
+              className="px-3.5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-black/50 transition-all duration-200 cursor-pointer disabled:opacity-40 shrink-0 border-2 border-emerald-500/60 bg-[#252533] hover:bg-[#323244] text-white hover:border-emerald-400 active:scale-95"
               title="Show your screen to your partner"
             >
               <MonitorUp className="h-4 w-4 text-emerald-400 stroke-[2.5] shrink-0" />
-              <span>Share screen</span>
+              <span className="text-white font-black tracking-wide">Share screen</span>
             </button>
           )}
 
-          {/* Type Auto Selector */}
-          <div className="flex items-center gap-1.5 rounded-xl border border-white/20 bg-[#25252B] px-3 py-2 text-xs font-black shadow-md shrink-0 text-white" title="Media stream resolver type">
-            <span className="text-pink-400 font-bold">⚡</span>
+          {/* Stream Resolver Type Selector */}
+          <div className="flex items-center gap-2 rounded-xl border-2 border-rose-500/60 bg-[#252533] px-3.5 py-2 text-xs font-black shadow-lg shadow-black/50 shrink-0 text-white" title="Media stream resolver type">
+            <span className="text-rose-400 font-extrabold text-sm">⚡</span>
             <select
               value={force}
               onChange={(e) => setForce(e.target.value)}
-              className="bg-transparent text-white outline-none cursor-pointer font-black"
+              className="bg-transparent text-white outline-none cursor-pointer font-black text-xs pr-1"
             >
               {TYPES.map((t) => (
-                <option key={t} value={t} className="text-black bg-white">
+                <option key={t} value={t} className="text-black bg-white font-bold">
                   {t === 'auto' ? 'Type: Auto ▾' : t.toUpperCase()}
                 </option>
               ))}
@@ -2621,15 +2627,11 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
-                theme?.isLight
-                  ? 'bg-white hover:bg-rose-50 text-slate-800 border-slate-200 hover:border-rose-300'
-                  : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
-              }`}
+              className="px-3.5 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-black/50 transition cursor-pointer shrink-0 border-2 border-pink-500/60 bg-[#252533] hover:bg-[#323244] text-white hover:border-pink-400 active:scale-95"
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 text-rose-500 shrink-0" /> : <Maximize2 className="h-4 w-4 text-rose-500 shrink-0" />}
-              <span>{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-pink-400 stroke-[2.5] shrink-0" /> : <Maximize2 className="h-4 w-4 text-pink-400 stroke-[2.5] shrink-0" />}
+              <span className="text-white font-black tracking-wide">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}
         </div>
