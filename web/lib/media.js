@@ -5,7 +5,7 @@ export const vimeoId = (u) => u.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];
 
 export const isAdultMedia = (u) => {
   if (!u) return false;
-  return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\./i.test(String(u));
+  return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\.|ullu\.|beeg\.|hqporner\.|tube8\.|motherless\.|xbabe\.|stripchat\.|chaturbate\.|bongacams\./i.test(String(u));
 };
 
 export const sanitizeDisplayTitle = (titleOrUrl) => {
@@ -16,7 +16,7 @@ export const sanitizeDisplayTitle = (titleOrUrl) => {
 };
 
 export const isTubeOrEmbedHost = (u) => {
-  return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\.|dood\.|d000d\.|do0od\.|streamtape\.|streamwish\.|wishembed\.|filemoon\.|vidmoly\.|voe\.|mixdrop\.|hdstream4u\.|filefly\./i.test(u);
+  return /pornhub\.|xhamster|xvideos|xnxx|eporner\.|spankbang\.|redtube\.|youporn\.|tnaflix\.|dood\.|d000d\.|do0od\.|streamtape\.|streamwish\.|wishembed\.|filemoon\.|vidmoly\.|voe\.|mixdrop\.|hdstream4u\.|filefly\.|ullu\.|beeg\.|hqporner\.|tube8\.|motherless\.|xbabe\.|stripchat\.|chaturbate\.|bongacams\./i.test(u);
 };
 
 export const OTT_PLATFORMS = [
@@ -24,8 +24,10 @@ export const OTT_PLATFORMS = [
   { id: 'netflix', name: 'Netflix', webUrl: 'https://www.netflix.com', pattern: /netflix\.com/i, icon: '🔴', color: '#18181b' },
   { id: 'prime', name: 'Amazon Prime Video', webUrl: 'https://www.primevideo.com', pattern: /(?:primevideo\.com|amazon\.[a-z.]+\/(?:gp\/video|Amazon-Video))/i, icon: '🔵', color: '#0c4a6e' },
   { id: 'jiocinema', name: 'JioCinema', webUrl: 'https://www.jiocinema.com', pattern: /jiocinema\.com/i, icon: '🟣', color: '#4a044e' },
+  { id: 'mxplayer', name: 'MX Player', webUrl: 'https://www.mxplayer.in', pattern: /(?:mxplayer\.in|mxplayer\.com)/i, icon: '🎬', color: '#0284c7' },
   { id: 'zee5', name: 'Zee5', webUrl: 'https://www.zee5.com', pattern: /zee5\.com/i, icon: '🟠', color: '#3b0764' },
   { id: 'sonyliv', name: 'SonyLIV', webUrl: 'https://www.sonyliv.com', pattern: /sonyliv\.com/i, icon: '🔷', color: '#1e3a8a' },
+  { id: 'ullu', name: 'Ullu', webUrl: 'https://ullu.app', pattern: /(?:ullu\.app|ullu\.club|ullu\.in)/i, icon: '🦉', color: '#dc2626' },
   { id: 'hulu', name: 'Hulu', webUrl: 'https://www.hulu.com', pattern: /hulu\.com/i, icon: '🟢', color: '#064e3b' },
   { id: 'max', name: 'Max (HBO)', webUrl: 'https://www.max.com', pattern: /(?:max\.com|hbomax\.com)/i, icon: '💜', color: '#172554' },
   { id: 'crunchyroll', name: 'Crunchyroll', webUrl: 'https://www.crunchyroll.com', pattern: /crunchyroll\.com/i, icon: '🟧', color: '#7c2d12' },
@@ -150,6 +152,26 @@ export const extractOttTitle = (u) => {
     if (netflixSlugMatch && netflixSlugMatch[1] && isNaN(Number(netflixSlugMatch[1]))) {
       return decodeURIComponent(netflixSlugMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
+
+    // 11. MX Player: mxplayer.in/movie/watch-chhaava-movie-online-12345 or /show/...
+    const mxMatch = s.match(/mxplayer\.(?:in|com)\/(?:movie|show|detail)\/(?:watch-)?([^/?#]+)/i);
+    if (mxMatch && mxMatch[1]) {
+      return decodeURIComponent(mxMatch[1])
+        .replace(/-(?:movie|series|online|full-movie|episode|show).*$/i, '')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .trim();
+    }
+
+    // 12. Ullu: ullu.app/post/1234/watch-title or /video/...
+    const ulluMatch = s.match(/ullu\.(?:app|club|in|media)\/(?:post|video|detail)\/(?:\d+\/)?([^/?#]+)/i);
+    if (ulluMatch && ulluMatch[1]) {
+      return decodeURIComponent(ulluMatch[1])
+        .replace(/-(?:web-series|full-video|part-\d+|episode-\d+).*$/i, '')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+        .trim();
+    }
   } catch {}
   return '';
 };
@@ -175,12 +197,10 @@ export const ytReady = () => window.YT?.Player ? Promise.resolve()
   : new Promise((r) => { window.onYouTubeIframeAPIReady = r; loadScript('https://www.youtube.com/iframe_api'); });
 
 export const toProxyUrl = (src) => {
-  const base = typeof window !== 'undefined' ? serverUrl() : '';
-  return `${base}/api/proxy?url=${encodeURIComponent(src)}`;
+  return `/api/proxy?url=${encodeURIComponent(src)}`;
 };
 export const toStreamProxyUrl = (src) => {
-  const base = typeof window !== 'undefined' ? serverUrl() : '';
-  return `${base}/api/stream?url=${encodeURIComponent(src)}`;
+  return `/api/stream?url=${encodeURIComponent(src)}`;
 };
 
 // Turn share links into unblocked proxy-embedded players (bypasses ISP blocks & X-Frame-Options)
@@ -258,6 +278,32 @@ export const toEmbed = (src) => {
     // 16. Tnaflix
     m = s.match(/tnaflix\.(?:com|net)\/(?:video|embedded)(\d+)/i);
     if (m) return toProxyUrl(`https://player.tnaflix.com/video/${m[1]}`);
+
+    // 17. Beeg
+    m = s.match(/beeg\.(?:com|adult)\/(?:video\/)?([a-zA-Z0-9_-]+)/i);
+    if (m) return toProxyUrl(`https://beeg.com/${m[1]}`);
+
+    // 18. HQPorner
+    m = s.match(/hqporner\.(?:com|co)\/hdpost\/([a-zA-Z0-9_-]+)/i);
+    if (m) return toProxyUrl(`https://hqporner.com/embed/${m[1]}`);
+
+    // 19. Tube8
+    m = s.match(/tube8\.(?:com|es)\/(?:embed\/|\?id=)?([a-zA-Z0-9_-]+)/i);
+    if (m) return toProxyUrl(`https://www.tube8.com/embed/${m[1]}`);
+
+    // 20. Motherless
+    m = s.match(/motherless\.com\/(?:g\/)?([a-zA-Z0-9]+)/i);
+    if (m) return toProxyUrl(`https://motherless.com/embed/${m[1]}`);
+
+    // 21. Live cams (Chaturbate, Stripchat, Bongacams)
+    m = s.match(/chaturbate\.com\/(?:in\/)?([a-zA-Z0-9_-]+)/i);
+    if (m && !['b', 'tags', 'auth', 'terms', 'privacy'].includes(m[1].toLowerCase())) return toProxyUrl(`https://chaturbate.com/in/?tour=SHmA&campaign=embed&track=default&room=${m[1]}`);
+
+    m = s.match(/stripchat\.com\/(?:[a-z]{2}\/)?([a-zA-Z0-9_-]+)/i);
+    if (m && !['explore', 'tags', 'login', 'terms', 'privacy'].includes(m[1].toLowerCase())) return toProxyUrl(`https://stripchat.com/${m[1]}?auto_play=1`);
+
+    m = s.match(/bongacams\.[a-z]+\/([a-zA-Z0-9_-]+)/i);
+    if (m && !['chat', 'terms', 'tags', 'login'].includes(m[1].toLowerCase())) return toProxyUrl(`https://bongacams.com/track?c=embed&room=${m[1]}`);
 
     // Movie & third party hosts
     m = s.match(/hdstream4u\.[a-z]+\/(?:file|embed)\/([a-zA-Z0-9]+)/i);

@@ -1,4 +1,16 @@
 // Free one-command mode: API + web UI behind ONE port, so a free tunnel (cloudflared) can expose it over HTTPS.
+process.on('uncaughtException', (err) => {
+  if (err?.code === 'UND_ERR_SOCKET' || err?.code === 'ECONNRESET' || err?.code === 'EPIPE' || err?.message?.includes('other side closed') || err?.message?.includes('socket closed')) {
+    console.warn('[Local Server Resiliency] Handled transient socket drop:', err?.message || err);
+    return;
+  }
+  console.error('[Local Server Uncaught Exception]:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Local Server Unhandled Rejection]:', reason?.message || reason);
+});
+
 const { spawn } = require('child_process');
 const http = require('http');
 const path = require('path');

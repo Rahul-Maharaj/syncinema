@@ -419,7 +419,7 @@ export default function CouplesOverlay({
 
   useStreamVoiceActivity(mine, setLocalTalking);
 
-  // Bandwidth capping for RTCPeerConnection to keep calls smooth on mobile & low-bandwidth connections
+  // Bandwidth capping & frame rate optimization for RTCPeerConnection (Smooth, fluid 30fps without choking)
   const clampBitrates = (pc) => {
     if (!pc || !pc.getSenders) return;
     try {
@@ -428,10 +428,13 @@ export default function CouplesOverlay({
         const params = sender.getParameters();
         if (!params || !params.encodings || params.encodings.length === 0) return;
         if (sender.track.kind === 'video') {
-          params.encodings[0].maxBitrate = 260000; // ~260 kbps for smooth mobile video
-          params.encodings[0].maxFramerate = 24;
+          params.encodings[0].maxBitrate = 950000; // ~950 kbps for smooth HD video (no stutter/freezing)
+          params.encodings[0].maxFramerate = 30;
+          params.encodings[0].priority = 'high';
+          params.encodings[0].networkPriority = 'high';
         } else if (sender.track.kind === 'audio') {
-          params.encodings[0].maxBitrate = 32000; // 32 kbps Opus crystal clear voice
+          params.encodings[0].maxBitrate = 48000; // 48 kbps Opus clear voice
+          params.encodings[0].priority = 'high';
         }
         sender.setParameters(params).catch(() => {});
       });
@@ -611,6 +614,12 @@ export default function CouplesOverlay({
         } else {
           const partnerId = c.peer;
           const isGhostCaller = Boolean(c.metadata?.isGhost);
+
+          // Cleanly close prior duplicate call from same peer to prevent bandwidth choking
+          if (activeCalls.current.has(partnerId)) {
+            try { activeCalls.current.get(partnerId)?.close(); } catch {}
+            activeCalls.current.delete(partnerId);
+          }
           activeCalls.current.set(partnerId, c);
 
           const answerWithStream = (streamToAnswer) => {

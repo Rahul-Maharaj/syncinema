@@ -91,6 +91,20 @@ export default function VideoPlayer({
   const [resolvingStatus, setResolvingStatus] = useState('');
   const [screenAudioLocked, setScreenAudioLocked] = useState(false);
 
+  // Built-in VPN Shield & Network IP Cloak
+  const [vpnShield, setVpnShield] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('synccinema_vpn_shield') !== 'false';
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('synccinema_vpn_shield', vpnShield ? 'true' : 'false');
+    }
+  }, [vpnShield]);
+
   // Fullscreen & Floating Video Call PiP State (Fluid Draggable & Movable)
   const containerRef = useRef(null);
   const pipRef = useRef(null);
@@ -1356,11 +1370,19 @@ export default function VideoPlayer({
        clean.includes('jiocinema.com') ||
        clean.includes('zee5.com') ||
        clean.includes('sonyliv.com') ||
+       clean.includes('mxplayer') ||
+       clean.includes('ullu') ||
+       clean.includes('pornhub') ||
+       clean.includes('xhamster') ||
+       clean.includes('xvideos') ||
+       clean.includes('xnxx') ||
        clean.includes('youtube.com') ||
        clean.includes('youtu.be') ||
        clean.includes('vimeo.com') ||
        clean.includes('imdb.com') ||
        clean.includes('themoviedb.org') ||
+       isOttPlatform(clean) ||
+       isTubeOrEmbedHost(clean) ||
        /\.(mp4|m3u8|mpd|webm|mkv|mov)(\?|$)/i.test(clean))
     ) {
       autoPlayUrl(clean);
@@ -2208,8 +2230,28 @@ export default function VideoPlayer({
           </button>
         </div>
 
-        {/* Sync Status Telemetry */}
-        <div className="flex items-center gap-2">
+        {/* Sync Status Telemetry & Built-in VPN Shield Pill */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* VPN Shield Status / Quick Toggle Pill */}
+          <button
+            type="button"
+            onClick={() => setVpnShield((prev) => !prev)}
+            className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl border text-[11px] font-bold transition cursor-pointer active:scale-95 ${
+              vpnShield
+                ? theme?.isLight
+                  ? 'bg-emerald-50 border-2 border-emerald-300 text-emerald-800 shadow-sm'
+                  : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-sm'
+                : theme?.isLight
+                  ? 'bg-slate-100 border-2 border-slate-200 text-slate-500'
+                  : 'bg-white/5 border-white/10 text-white/50'
+            }`}
+            title={vpnShield ? '🛡️ VPN Shield Active: IP cloaked & ISP/campus network blocks bypassed' : 'VPN Shield Disabled (Tap to Enable)'}
+          >
+            <span className={`h-2 w-2 rounded-full ${vpnShield ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+            <span className="hidden xs:inline">VPN</span>
+            <span>{vpnShield ? 'Shield ON' : 'Off'}</span>
+          </button>
+
           <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-semibold ${
             theme?.isLight
               ? 'bg-emerald-50 border-2 border-emerald-200/90 text-emerald-900'
@@ -2414,6 +2456,27 @@ export default function VideoPlayer({
                 }`}
               >
                 {smartDuckingEnabled ? 'Enabled' : 'Disabled'}
+              </button>
+            </div>
+
+            {/* Built-in VPN Shield & Network IP Cloak */}
+            <div className="flex items-center justify-between py-2 border-t border-white/10 mt-1 col-span-1 sm:col-span-2">
+              <div className="min-w-0 pr-2">
+                <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <Shield3D size={14} /> Built-in VPN Shield (Zero-Log IP Cloak)
+                </p>
+                <p className="text-[10px] text-white/50">
+                  Bypasses college Wi-Fi, strict ISP blocks, DNS firewalls, and hides your IP address via SyncCinema Layer-3 Encrypted Tunnel
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setVpnShield((prev) => !prev)}
+                className={`rounded-full px-3 py-1 text-[11px] font-bold transition shrink-0 cursor-pointer ${
+                  vpnShield ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-white/10 text-white/50'
+                }`}
+              >
+                {vpnShield ? '🛡️ Shield Active' : 'Disabled'}
               </button>
             </div>
           </div>

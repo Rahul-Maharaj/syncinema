@@ -64,10 +64,24 @@ html, body {
 
 /* Safe Area Notch & Hardware Cutout Utilities for Mobile Phones */
 .safe-top-notch {
-  padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
+  padding-top: max(env(safe-area-inset-top, 0px), 0.75rem);
 }
+
+@media (max-width: 640px) {
+  /* On phones, guarantee generous clearance so all headers, navigation bars, and buttons render safely BELOW the physical camera punch-hole / notch level */
+  .safe-top-notch {
+    padding-top: max(env(safe-area-inset-top, 0px), 2.85rem) !important;
+  }
+}
+
 .safe-bottom-bar {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+
+@media (max-width: 640px) {
+  .safe-bottom-bar {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.25rem) !important;
+  }
 }
 
 /* Remove all vertical and horizontal scrollbars globally */

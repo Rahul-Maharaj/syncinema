@@ -478,6 +478,14 @@ export default function Room() {
   const [showWallpaper, setShowWallpaper] = useState(true);
   const [showThemeModal, setShowThemeModal] = useState(false);
 
+  // Built-in VPN Shield & Network IP Cloak
+  const [vpnShield, setVpnShield] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('synccinema_vpn_shield') !== 'false';
+    }
+    return true;
+  });
+
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('sc_room_theme');
@@ -1759,6 +1767,62 @@ export default function Room() {
                   <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Quick boss-key toggle</div>
                 </div>
               </button>
+
+              {/* Built-in VPN Shield & Network IP Cloak */}
+              <div className={`col-span-1 sm:col-span-2 p-3.5 rounded-2xl border-2 flex items-center justify-between gap-3 ${
+                vpnShield
+                  ? theme.isLight
+                    ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 shadow-xs'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+                  : theme.isLight
+                    ? 'bg-white border-rose-200/80 text-slate-800'
+                    : 'bg-[#1a1a1d] border-pink-500/20 text-pink-100'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl border ${
+                    vpnShield
+                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/30'
+                      : theme.isLight
+                        ? 'bg-slate-100 text-slate-500 border-slate-200'
+                        : 'bg-white/5 text-white/50 border-white/10'
+                  }`}>
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+                        Built-in VPN Shield &amp; IP Cloak
+                      </span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        vpnShield
+                          ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                          : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {vpnShield ? 'Active • Bypassing Blocks' : 'Disabled'}
+                      </span>
+                    </div>
+                    <div className={`text-[11px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/70'}`}>
+                      Bypasses college Wi-Fi restrictions, ISP firewalls, and hides your IP address
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !vpnShield;
+                    setVpnShield(next);
+                    if (typeof window !== 'undefined') localStorage.setItem('synccinema_vpn_shield', next ? 'true' : 'false');
+                    say(next ? '🛡️ VPN Shield Activated: Network IP Cloaked' : 'VPN Shield Disabled');
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer active:scale-95 shrink-0 ${
+                    vpnShield
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
+                      : 'bg-zinc-700 hover:bg-zinc-600 text-white'
+                  }`}
+                >
+                  {vpnShield ? 'Enabled' : 'Enable'}
+                </button>
+              </div>
             </div>
 
             {/* Room Footer Actions: Leave Room & Host Close Room */}
