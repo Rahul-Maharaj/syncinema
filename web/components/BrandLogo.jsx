@@ -5,6 +5,7 @@ export default function BrandLogo({
   size = 'md', // 'sm' | 'md' | 'lg'
   href = '/',
   className = '',
+  hideTextOnMobile = false,
 }) {
   const iconSizes = {
     sm: 'h-8 w-8',
@@ -25,7 +26,7 @@ export default function BrandLogo({
   };
 
   const content = (
-    <div className={`inline-flex items-center gap-2.5 sm:gap-3 group select-none ${className}`}>
+    <div className={`inline-flex items-center gap-2 sm:gap-2.5 group select-none shrink-0 ${className}`}>
       {/* Brand Icon Image (New SC Heart Film Strip) */}
       <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_4px_16px_rgba(236,72,153,0.55)]`}>
         <img
@@ -36,7 +37,7 @@ export default function BrandLogo({
       </div>
 
       {/* Highlighted SynCinema Typography */}
-      <div className="flex items-baseline leading-none">
+      <div className={`items-baseline leading-none ${hideTextOnMobile ? 'hidden sm:flex' : 'flex'}`}>
         <span className={`brand-syn ${synSizes[size]} pr-0.5`}>Syn</span>
         <span className={`brand-cinema ${cinemaSizes[size]}`}>Cinema</span>
       </div>
@@ -45,7 +46,7 @@ export default function BrandLogo({
 
   if (href) {
     return (
-      <Link href={href} className="no-underline inline-block">
+      <Link href={href} className="no-underline inline-block shrink-0">
         {content}
       </Link>
     );

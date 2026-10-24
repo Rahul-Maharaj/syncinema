@@ -1062,7 +1062,7 @@ export default function Room() {
       <header className={`hdr shrink-0 h-14 sm:h-16 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-colors duration-500`}>
         {/* Left: Brand + Status + Capacity Pill */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
-          <BrandLogo size="sm" href="/" />
+          <BrandLogo size="sm" href="/" hideTextOnMobile={true} />
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
 
             {/* Interactive Room Capacity & Live Pill */}
@@ -1099,7 +1099,7 @@ export default function Room() {
         </div>
 
         {/* Right: Consolidated Action Controls */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 overflow-x-auto no-scrollbar py-0.5 max-w-full">
           {/* View Modes Switcher (Theater, Duo Date, Party Grid, Focus) */}
           <div className="hidden xl:flex items-center gap-0.5 bg-[#222222]/95 border border-pink-500/20 p-0.5 rounded-xl">
             {[
@@ -1125,22 +1125,22 @@ export default function Room() {
             ))}
           </div>
 
-          {/* Cinema Plugins Suite Launcher Button (Visible on sm+; mobile uses reaction bar or tabs) */}
+          {/* Cinema Plugins Suite Launcher Button */}
           <button
             type="button"
             onClick={() => setShowPlugins(true)}
-            className="hidden sm:flex h-7 sm:h-8 px-2 sm:px-3 rounded-xl text-xs font-bold items-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
+            className="h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 border border-purple-500/40 text-purple-200 transition shadow-lg shadow-purple-500/10 cursor-pointer active:scale-95 shrink-0"
             title="Open Cinema Plugins (Atmosphere, Keepsakes, Trivia & Intermission)"
           >
             <Sparkles className="h-3.5 w-3.5 text-pink-400 animate-pulse" />
-            <span>Plugins</span>
+            <span className="hidden sm:inline">Plugins</span>
           </button>
 
           {/* Room Themes & Ambiance Launcher */}
           <button
             type="button"
             onClick={() => setShowThemeModal(true)}
-            className={`h-7 sm:h-8 px-2 sm:px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition shadow-lg cursor-pointer active:scale-95 shrink-0 ${theme.themeBtnClass}`}
+            className={`h-8 px-2 sm:px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition shadow-lg cursor-pointer active:scale-95 shrink-0 ${theme.themeBtnClass}`}
             title="Change Room Color Theme & Ambiance"
           >
             <Palette className="h-3.5 w-3.5" />
@@ -1215,7 +1215,7 @@ export default function Room() {
           {/* Primary Quick Invite Button */}
           <button
             onClick={copy}
-            className="btn h-7 sm:h-8 !py-0 !px-2.5 sm:!px-3 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-700 shadow-md hover:opacity-95 shrink-0"
+            className="btn h-8 !py-0 !px-2 sm:!px-2.5 text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-600 to-rose-700 shadow-md hover:opacity-95 shrink-0"
             title="Copy room invite link"
           >
             {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -1238,11 +1238,11 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowMenu(true)}
-            className="hidden sm:flex h-8 px-2.5 sm:px-3 rounded-xl text-xs font-semibold items-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white shrink-0"
+            className="h-8 px-2 sm:px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer bg-white/5 border-white/15 text-white/80 hover:bg-white/10 hover:text-white shrink-0"
             title="Room Controls & Settings"
           >
             <Sliders className="h-3.5 w-3.5 text-rose-400" />
-            <span>Settings</span>
+            <span className="hidden sm:inline">Settings</span>
           </button>
         </div>
       </header>

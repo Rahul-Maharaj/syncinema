@@ -733,7 +733,7 @@ export default function SynCinemaPlatform() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-start">
           
           {/* LEFT SIDE: Text, 3D Art Badges, Live Sync Telemetry & Informational Deck */}
-          <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-1 space-y-3.5 sm:space-y-4 text-center lg:text-left">
+          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-1 space-y-3.5 sm:space-y-4 text-center lg:text-left">
             {/* Kinetic Animated Audience Pill */}
             <RotatingAudienceTicker />
 
@@ -1061,7 +1061,7 @@ export default function SynCinemaPlatform() {
           </div>
 
           {/* RIGHT SIDE: HIGHLIGHTED VIRTUAL CINEMA CONSOLE */}
-          <div className="lg:col-span-6 xl:col-span-6 order-2 lg:order-2 w-full max-w-xl mx-auto lg:mx-0 relative">
+          <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-2 w-full max-w-xl mx-auto lg:mx-0 relative">
             {/* VIBRANT HIGH-TECH EYE-CATCHING CALLOUT BANNER */}
             <div className="flex items-center justify-between mb-3 px-1">
               <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-pink-600/35 via-pink-500/50 to-fuchsia-600/35 border-2 border-pink-300 shadow-[0_0_30px_rgba(236,72,153,0.65)] anim-glow-pulse">
