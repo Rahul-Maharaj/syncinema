@@ -1899,7 +1899,7 @@ export default function VideoPlayer({
               : 'bg-[#222222] text-[#FCE7F3]'
           }`}>
             {/* Sync Telemetry Badge */}
-            <div className={`absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+            <div className={`absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm transition-all duration-300 hover:scale-105 ${
               theme?.isLight
                 ? 'bg-white/90 border border-slate-200/90 text-slate-700'
                 : 'bg-white/10 border border-white/15 text-pink-200'
@@ -1910,13 +1910,13 @@ export default function VideoPlayer({
               <span className="font-mono text-[11px] text-emerald-500 font-bold">131ms</span>
             </div>
 
-            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-pink-500 to-rose-400 shadow-xl shadow-pink-500/30">
-              <Play className="h-8 w-8 fill-white text-white ml-1" />
+            <div className="relative mb-3 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-tr from-pink-500 to-rose-400 shadow-xl shadow-pink-500/30 anim-pulse-glow hover:scale-110 transition-transform duration-300 cursor-pointer">
+              <Play className="h-8 w-8 fill-white text-white ml-1 drop-shadow" />
             </div>
-            <p className={`font-display text-xl sm:text-2xl font-black tracking-wide ${theme?.isLight ? 'text-slate-900' : 'text-white'}`}>
+            <p className={`font-display text-xl sm:text-2xl font-black tracking-wide ${theme?.isLight ? 'text-shimmer-light' : 'text-shimmer'}`}>
               Ready to Stream
             </p>
-            <p className={`text-xs sm:text-sm mt-1 max-w-md ${theme?.isLight ? 'text-slate-500' : 'text-pink-200/80'}`}>
+            <p className={`text-xs sm:text-sm mt-1 max-w-md anim-reveal ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-pink-200/80'}`}>
               Paste a video link below or choose from your watchlist to begin watching together.
             </p>
           </div>
@@ -2119,7 +2119,7 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => seekDelta(-10)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border hover-lift ${
               theme?.isLight
                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80 hover:border-pink-300'
                 : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
@@ -2141,7 +2141,7 @@ export default function VideoPlayer({
                 send('PLAY');
               }
             }}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold shadow-md shadow-pink-500/25 transition cursor-pointer active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold shadow-md shadow-pink-500/25 transition cursor-pointer active:scale-95 hover-lift hover-sheen"
             title={playing.current ? "Pause video for all participants" : "Play video for all participants"}
           >
             {playing.current ? (
@@ -2160,7 +2160,7 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => seekDelta(10)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-95 border hover-lift ${
               theme?.isLight
                 ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200/80 hover:border-pink-300'
                 : 'bg-white/10 hover:bg-white/20 text-white border-white/15 hover:border-pink-500/50'
@@ -2446,9 +2446,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm ${
+              className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm hover-lift ${
                 theme?.isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80'
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 hover:border-pink-300'
                   : 'bg-white/10 hover:bg-white/20 text-white border border-white/25 hover:border-[#EC4899]/60 hover:text-[#FCE7F3] backdrop-blur-md'
               }`}
               title="Paste link from clipboard and play immediately"
@@ -2458,7 +2458,7 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn-pink !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/25 text-white cursor-pointer active:scale-95"
+              className="btn-pink !py-2.5 !px-5 text-xs font-extrabold shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/25 text-white cursor-pointer active:scale-95 hover-lift hover-sheen"
             >
               <Play className="h-3.5 w-3.5 fill-white" />
               <span>Play for All</span>
@@ -2471,9 +2471,9 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={enqueue}
-            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
               theme?.isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
                 : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
             }`}
             title="Add this link to the Up next list"
@@ -2483,9 +2483,9 @@ export default function VideoPlayer({
           </button>
 
           <label
-            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
               theme?.isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
                 : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
             }`}
             title="Play a movie file from your own device"
@@ -2496,9 +2496,9 @@ export default function VideoPlayer({
           </label>
 
           <label
-            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+            className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
               theme?.isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
                 : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-[#EC4899]/60 text-white hover:text-[#FCE7F3] backdrop-blur-md'
             }`}
             title="Add .srt or .vtt subtitles"
@@ -2512,9 +2512,9 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={onOpenRecent}
-              className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0 border ${
+              className={`px-3.5 py-2 rounded-xl font-semibold flex items-center gap-1.5 shadow-sm transition-all duration-300 cursor-pointer shrink-0 border hover-lift active:scale-95 ${
                 theme?.isLight
-                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300'
+                  ? 'bg-white/80 hover:bg-white text-slate-700 border-slate-200/80 hover:border-pink-300 hover:text-pink-600 shadow-sm'
                   : 'bg-white/10 hover:bg-white/20 border-white/25 hover:border-cyan-400/60 text-white hover:text-cyan-300 backdrop-blur-md'
               }`}
               title="Open Recent Plays Bar"

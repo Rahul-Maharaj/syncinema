@@ -538,3 +538,149 @@ body.cinema #video-player-container {
     padding: 1.25rem !important;
   }
 }
+
+/* ==========================================================================
+   ✨ PREMIUM MICRO-ANIMATIONS, TEXT SHIMMER & LUXURY HOVER EFFECTS
+   ========================================================================== */
+
+/* 1. Animated Gradient Text Shimmer */
+@keyframes textShimmerAnim {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, #ec4899 0%, #f472b6 25%, #ffffff 50%, #f472b6 75%, #ec4899 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmerAnim 4s ease-in-out infinite;
+}
+
+.text-shimmer-light {
+  background: linear-gradient(90deg, #be185d 0%, #ec4899 25%, #6366f1 50%, #ec4899 75%, #be185d 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmerAnim 4.5s ease-in-out infinite;
+}
+
+.text-shimmer-gold {
+  background: linear-gradient(90deg, #d97706 0%, #f59e0b 25%, #fef3c7 50%, #f59e0b 75%, #d97706 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmerAnim 3.5s ease-in-out infinite;
+}
+
+/* 2. Soft Ambient Pulse Glow */
+@keyframes softPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.18), 0 0 32px rgba(236, 72, 153, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(236, 72, 153, 0.42), 0 0 55px rgba(236, 72, 153, 0.18);
+  }
+}
+
+.anim-pulse-glow {
+  animation: softPulseGlow 3s ease-in-out infinite;
+}
+
+/* 3. Smooth Floating Bounce */
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3.5px);
+  }
+}
+
+.anim-float {
+  animation: gentleFloat 3.2s ease-in-out infinite;
+}
+
+/* 4. Revealing Fade with Gentle Scale */
+@keyframes revealFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.anim-reveal {
+  animation: revealFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 5. Luxury Hover Sheen Light Sweep Across Buttons */
+.hover-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-sheen::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -70%;
+  width: 45%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+  transform: rotate(25deg);
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.hover-sheen:hover::after {
+  transform: translateX(450%) rotate(25deg);
+}
+
+/* 6. Spring Hover Lift */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.hover-lift:active {
+  transform: translateY(0px) scale(0.97);
+}
+
+/* 7. Hover Card Glass Glow */
+.hover-glow-card {
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+}
+
+.hover-glow-card:hover {
+  border-color: rgba(236, 72, 153, 0.45) !important;
+  box-shadow: 0 14px 40px -10px rgba(236, 72, 153, 0.2), 0 0 20px rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-1.5px);
+}
+
+/* 8. Infinite Gradient Border Glow */
+@keyframes borderGlowPulse {
+  0%, 100% {
+    border-color: rgba(236, 72, 153, 0.3);
+  }
+  50% {
+    border-color: rgba(236, 72, 153, 0.7);
+  }
+}
+
+.anim-border-glow {
+  animation: borderGlowPulse 2.8s ease-in-out infinite;
+}
+

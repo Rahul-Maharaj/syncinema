@@ -413,16 +413,16 @@ export default function MovieNightExtras({
           </div>
 
           {queue.length === 0 ? (
-            <div className={`rounded-2xl border border-dashed p-6 text-center text-xs transition-all ${
+            <div className={`rounded-2xl border border-dashed p-6 text-center text-xs transition-all hover-glow-card ${
               theme?.isLight
                 ? 'border-pink-300/60 bg-pink-50/50 text-slate-600 shadow-sm'
                 : 'border-white/15 bg-white/[0.02] text-white/50'
             }`}>
-              <div className="relative mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-500 mx-auto">
+              <div className="relative mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-500 mx-auto anim-float">
                 <Popcorn className="h-6 w-6 text-pink-500" />
               </div>
-              <p className={`font-bold text-sm mb-1 ${theme?.isLight ? 'text-slate-900' : 'text-white'}`}>Queue is empty</p>
-              <p className="max-w-xs mx-auto">
+              <p className={`font-bold text-sm mb-1 ${theme?.isLight ? 'text-shimmer-light' : 'text-shimmer'}`}>Queue is empty</p>
+              <p className="max-w-xs mx-auto anim-reveal">
                 Add videos using the 'Add to queue' button or paste a link to start building your playlist.
               </p>
             </div>

@@ -602,15 +602,15 @@ export default function SynCinemaPlatform() {
         <div className="absolute top-[75%] right-[35%] w-2 h-2 rounded-full bg-rose-300 anim-star-twinkle" style={{ animationDelay: '2.1s' }} />
       </div>
 
-      {/* Transparent Floating Header with Romantic Hindi Lofi Audio Station */}
-      <header className="relative z-20 px-4 sm:px-8 py-4 sm:py-5 bg-transparent border-none flex items-center justify-between gap-4">
-        {/* Brand */}
+      {/* Transparent Floating Header with Safe Area Hardware Notch Handling */}
+      <header className="relative z-20 safe-top-notch px-3 sm:px-8 py-3 sm:py-5 bg-transparent border-none flex items-center justify-between gap-2 sm:gap-4">
+        {/* Brand with Micro-Rotation & Hover Scale */}
         <BrandLogo size="md" href="/" />
 
         {/* Status Pill & Privacy Security Badge */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Romantic Hindi Lofi Audio Station Pill */}
-          <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222] border border-pink-500/35 backdrop-blur-md shadow-md text-xs">
+          <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/35 backdrop-blur-md shadow-md text-xs hover-lift">
             <button
               type="button"
               onClick={toggleLofi}
@@ -650,23 +650,23 @@ export default function SynCinemaPlatform() {
 
           <InstallPrompt variant="button" />
 
-          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222] border border-pink-500/30 text-pink-200 text-xs font-semibold backdrop-blur-md shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-pink-400 animate-pulse" />
-            <span>0ms Drift Clock Sync Active</span>
+          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/30 text-pink-200 text-xs font-semibold backdrop-blur-md shadow-sm hover-lift">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>0ms Drift Clock Sync</span>
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#222222] border border-pink-500/30 text-pink-200 text-xs font-bold backdrop-blur-md shadow-sm">
-            <Shield3D size={18} />
+          <div className="hover-lift flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-[#222222]/90 border border-pink-500/30 text-pink-200 text-xs font-bold backdrop-blur-md shadow-sm">
+            <Shield3D size={16} />
             <span className="hidden sm:inline">Zero Logins</span>
             <span className="hidden sm:inline">•</span>
-            <span>100% Protected</span>
+            <span>100% Private</span>
           </div>
         </div>
       </header>
 
-      {/* CONTINUOUS LIVE GLOBAL SYNC TELEMETRY TICKER */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-1">
-        <div className="rounded-full bg-[#1A1A1D]/85 border border-pink-500/25 px-4 py-2 backdrop-blur-md shadow-md flex items-center justify-between gap-3 text-xs overflow-hidden">
+      {/* CONTINUOUS LIVE GLOBAL SYNC TELEMETRY TICKER (Desktop / Tablet) */}
+      <div className="hidden sm:block relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-1">
+        <div className="rounded-full bg-[#1A1A1D]/85 border border-pink-500/25 px-4 py-2 backdrop-blur-md shadow-md flex items-center justify-between gap-3 text-xs overflow-hidden hover-glow-card">
           <div className="flex items-center gap-2 shrink-0 font-bold text-pink-200">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1063,29 +1063,28 @@ export default function SynCinemaPlatform() {
 
           {/* RIGHT SIDE: HIGHLIGHTED VIRTUAL CINEMA CONSOLE */}
           <div className="lg:col-span-6 xl:col-span-6 order-1 lg:order-2 w-full max-w-xl mx-auto lg:mx-0 relative">
-            {/* VIBRANT HIGH-TECH EYE-CATCHING CALLOUT BANNER */}
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-pink-600/35 via-pink-500/50 to-fuchsia-600/35 border-2 border-pink-300 shadow-[0_0_30px_rgba(236,72,153,0.65)] anim-glow-pulse">
-                <span className="relative flex h-3 w-3">
+            {/* VIBRANT HIGH-TECH CALLOUT BANNER (Streamlined, Non-crowded) */}
+            <div className="flex items-center justify-between mb-2.5 px-1 anim-reveal">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-600/30 via-pink-500/40 to-rose-600/30 border border-pink-400/60 shadow-lg shadow-pink-500/20 hover-lift">
+                <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-300 opacity-90" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-pink-400 shadow-[0_0_10px_#f472b6]" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-400 shadow-[0_0_8px_#f472b6]" />
                 </span>
-                <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white flex items-center gap-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5 drop-shadow">
                   <span>🍿</span>
-                  <span>CREATE ROOM BOX IS HERE</span>
-                  <span className="text-pink-200 text-[11px] font-bold">• 1-TAP SETUP</span>
+                  <span className="text-shimmer">Create Room</span>
+                  <span className="text-pink-200/90 text-[11px] font-bold">• 1-Tap Instant Setup</span>
                 </span>
               </div>
-              <div className="hidden sm:flex items-center gap-1.5 text-xs font-black text-pink-200 animate-bounce bg-pink-500/25 px-3 py-1 rounded-full border border-pink-400/50 shadow-[0_0_15px_rgba(236,72,153,0.3)]">
-                <span className="text-sm">👇</span>
-                <span className="text-white font-extrabold">Start Cinema Here</span>
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-extrabold text-pink-200 bg-pink-500/20 px-3 py-1 rounded-full border border-pink-400/40 hover-lift shadow-sm">
+                <span>⚡ Zero Drift Sync</span>
               </div>
             </div>
 
             {/* Glowing Ambient Neon Halo behind box */}
-            <div className="absolute -inset-2 bg-gradient-to-r from-pink-600/40 via-fuchsia-600/40 to-pink-500/40 rounded-[32px] blur-2xl opacity-90 pointer-events-none -z-10 animate-pulse" />
+            <div className="absolute -inset-2 bg-gradient-to-r from-pink-600/30 via-fuchsia-600/30 to-pink-500/30 rounded-[32px] blur-2xl opacity-80 pointer-events-none -z-10 animate-pulse" />
 
-            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/80 bg-gradient-to-b from-[#141419] via-[#0f0f14] to-[#09090c] p-4 sm:p-5 lg:p-6 shadow-[0_0_80px_rgba(236,72,153,0.45),0_30px_90px_rgba(0,0,0,0.95)] space-y-3 sm:space-y-3.5 text-left relative ring-2 ring-pink-400/60 backdrop-blur-2xl">
+            <div className="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-500/80 bg-gradient-to-b from-[#141419] via-[#0f0f14] to-[#09090c] p-4 sm:p-5 lg:p-6 shadow-[0_0_80px_rgba(236,72,153,0.35),0_30px_90px_rgba(0,0,0,0.95)] space-y-3 sm:space-y-3.5 text-left relative ring-2 ring-pink-400/50 backdrop-blur-2xl hover-glow-card">
               {/* Ultra-bright top specular accent light */}
               <div className="absolute top-0 inset-x-6 h-[2px] bg-gradient-to-r from-transparent via-pink-300 via-fuchsia-300 to-transparent shadow-[0_0_15px_#f472b6] pointer-events-none" />
 
@@ -1295,9 +1294,9 @@ export default function SynCinemaPlatform() {
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-3.5 sm:py-4 rounded-2xl text-white font-black text-base sm:text-lg shadow-[0_0_45px_rgba(236,72,153,0.65)] flex items-center justify-center gap-3 transition active:scale-98 cursor-pointer tracking-wide hover:shadow-[0_0_65px_rgba(236,72,153,0.95)] hover:scale-[1.01] border-2 border-pink-300/60"
+                    className="btn-pink hover-lift hover-sheen anim-pulse-glow w-full py-3.5 sm:py-4 rounded-2xl text-white font-black text-base sm:text-lg shadow-[0_0_45px_rgba(236,72,153,0.65)] flex items-center justify-center gap-3 transition active:scale-98 cursor-pointer tracking-wide hover:shadow-[0_0_65px_rgba(236,72,153,0.95)] border-2 border-pink-300/60"
                   >
-                    <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <PlusCircle className="h-4 w-4 sm:h-5 sm:w-5 group-hover:rotate-90 transition" />
                     <span>Create &amp; Enter Protected Cinema Room 🔒</span>
                     <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
@@ -1378,7 +1377,7 @@ export default function SynCinemaPlatform() {
 
                   <button
                     type="submit"
-                    className="btn-pink w-full py-2.5 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide"
+                    className="btn-pink hover-lift hover-sheen anim-pulse-glow w-full py-2.5 sm:py-3.5 rounded-xl text-white font-black text-sm sm:text-base shadow-xl flex items-center justify-center gap-2.5 transition active:scale-98 cursor-pointer shadow-pink-500/35 tracking-wide border border-pink-400/40"
                   >
                     <Lock className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span>Unlock &amp; Enter Room 🔓</span>

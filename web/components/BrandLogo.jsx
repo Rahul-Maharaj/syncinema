@@ -27,9 +27,9 @@ export default function BrandLogo({
   };
 
   const content = (
-    <div className={`inline-flex items-center gap-2 sm:gap-2.5 group select-none shrink-0 ${className}`}>
-      {/* Brand Icon Image (New SC Heart Film Strip) */}
-      <div className={`relative ${iconSizes[size]} shrink-0 transition-transform duration-300 group-hover:scale-105 drop-shadow-[0_4px_16px_rgba(236,72,153,0.55)]`}>
+    <div className={`inline-flex items-center gap-2 sm:gap-2.5 group select-none shrink-0 cursor-pointer ${className}`}>
+      {/* Brand Icon Image with smooth hover rotation & glow */}
+      <div className={`relative ${iconSizes[size]} shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:-rotate-3 drop-shadow-[0_4px_16px_rgba(236,72,153,0.55)]`}>
         <img
           src="/logo.png"
           alt="SynCinema Logo Icon"
@@ -37,10 +37,14 @@ export default function BrandLogo({
         />
       </div>
 
-      {/* Highlighted SynCinema Typography */}
-      <div className={`items-baseline leading-none ${hideTextOnMobile ? 'hidden md:flex' : 'flex'}`}>
-        <span className={`${isLight ? 'text-pink-600 font-extrabold font-display' : 'brand-syn'} ${synSizes[size]} pr-0.5`}>Syn</span>
-        <span className={`${isLight ? 'text-[#1e1b4b] font-black' : 'brand-cinema'} ${cinemaSizes[size]}`}>Cinema</span>
+      {/* Highlighted SynCinema Typography with Shimmer & Hover Expansion */}
+      <div className={`items-baseline leading-none transition-all duration-300 ${hideTextOnMobile ? 'hidden sm:flex' : 'flex'}`}>
+        <span className={`${isLight ? 'text-pink-600 font-extrabold font-display group-hover:text-pink-500' : 'brand-syn'} ${synSizes[size]} pr-0.5 transition-all duration-300 group-hover:tracking-wider`}>
+          Syn
+        </span>
+        <span className={`${isLight ? 'text-[#1e1b4b] font-black group-hover:text-pink-600' : 'brand-cinema'} ${cinemaSizes[size]} transition-all duration-300`}>
+          Cinema
+        </span>
       </div>
     </div>
   );

@@ -97,10 +97,11 @@ export default function InstallPrompt({ className = '', variant = 'button' }) {
           type="button"
           onClick={handleInstallClick}
           title="Download SyncCinema Android App (APK 9.6 MB)"
-          className={`glass-btn !px-3 !py-1.5 text-xs font-semibold text-pink-100 hover:border-pink-500/60 hover:bg-pink-500/20 transition flex items-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer ${className}`}
+          className={`glass-btn hover-lift hover-sheen !px-3 !py-1.5 text-xs font-semibold text-pink-100 hover:border-pink-500/60 hover:bg-pink-500/20 transition flex items-center gap-1.5 shadow-md shadow-pink-500/20 cursor-pointer ${className}`}
         >
           <Smartphone className="h-3.5 w-3.5 text-pink-400 shrink-0" />
-          <span>Download App (APK)</span>
+          <span className="hidden sm:inline">Download App (APK)</span>
+          <span className="sm:hidden">Get App</span>
         </button>
       )}
 
