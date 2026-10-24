@@ -39,149 +39,51 @@ import {
 import { detectRealLocation } from '@/lib/locationDetector';
 import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
-// Curated Cinema Color Themes (Cozy Pink Romance & Velvet default matching home-bg.jpg)
+// Curated Cinema Color Themes (Kept ONLY 2 high-contrast dark themes matching home-bg.jpg)
 export const ROOM_THEMES = {
   tangerine: {
     id: 'tangerine',
-    name: 'Cozy Pink Romance',
-    tag: 'Romantic Pink & Cozy Cinema Ambiance',
-    icon: '💕',
-    bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/95 border-pink-500/20 shadow-lg shadow-black/40',
-    asideBg: 'bg-[#222222]/95 border-pink-500/20',
-    tabBg: 'bg-[#222222]',
-    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/65 to-[#222222]/45',
-    ambientGlow: 'bg-pink-500/10',
-    borderColor: 'border-pink-500/25',
-    cardBorder: 'border-pink-500/30 shadow-xl shadow-pink-500/10',
+    name: 'Sunset Cinema',
+    tag: 'Home Velvet & Romantic Rose Ambiance',
+    icon: '🍿',
+    bgClass: 'bg-[#18181C]',
+    wallpaper: '/home-bg.jpg',
+    navBg: 'bg-[#18181C]/95 border-b border-pink-500/30 shadow-xl shadow-black/80 backdrop-blur-2xl text-white',
+    asideBg: 'bg-[#18181C]/95 border-2 border-pink-500/30 shadow-2xl backdrop-blur-2xl text-white',
+    tabBg: 'bg-[#121215] border-b border-pink-500/25',
+    overlayGradient: 'bg-gradient-to-t from-[#18181C] via-[#18181C]/70 to-[#18181C]/40',
+    ambientGlow: 'bg-pink-500/15',
+    borderColor: 'border-pink-500/30',
+    cardBorder: 'border-pink-500/40 shadow-xl shadow-pink-500/10',
     accentGradient: 'from-pink-500 via-rose-500 to-pink-400',
-    accentText: 'text-pink-100',
+    accentText: 'text-pink-100 font-bold',
     accentBg: 'bg-pink-600',
-    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/30',
-    swatches: ['#222222', '#F472B6', '#EC4899', '#FCE7F3'],
+    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/30 font-bold',
+    swatches: ['#18181C', '#F472B6', '#EC4899', '#FCE7F3'],
     showWallpaperDefault: true,
+    isLight: false,
   },
   midnight: {
     id: 'midnight',
-    name: 'Soft Blush Ambiance',
-    tag: 'Cozy Pastel Rose Ambiance',
-    icon: '🌸',
-    bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/90 border-pink-500/20 shadow-lg shadow-black/40',
-    asideBg: 'bg-[#222222]/90 border-pink-500/20',
-    tabBg: 'bg-[#222222]/95',
-    overlayGradient: 'bg-gradient-to-b from-[#222222]/80 via-[#222222]/60 to-[#222222]/85',
-    ambientGlow: 'bg-pink-400/15',
-    borderColor: 'border-pink-500/30',
-    cardBorder: 'border-pink-500/40 shadow-xl shadow-black/50',
-    accentGradient: 'from-pink-400 via-rose-400 to-pink-100',
-    accentText: 'text-pink-100',
-    accentBg: 'bg-pink-500',
-    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/30',
-    swatches: ['#222222', '#F472B6', '#FCE7F3', '#FBCFE8'],
-    showWallpaperDefault: true,
-  },
-  neon: {
-    id: 'neon',
-    name: 'Cyberpunk Neon',
-    tag: 'Electric Auditorium • Cyan & Magenta',
-    icon: '⚡',
-    bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/95 border-pink-500/20',
-    asideBg: 'bg-[#222222]/95 border-pink-500/20',
-    tabBg: 'bg-[#222222]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/80',
-    ambientGlow: 'bg-cyan-500/15',
-    borderColor: 'border-cyan-500/25',
-    cardBorder: 'border-cyan-500/35',
-    accentGradient: 'from-cyan-500 via-purple-600 to-fuchsia-500',
-    accentText: 'text-cyan-400',
-    accentBg: 'bg-cyan-500',
-    themeBtnClass: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25',
-    swatches: ['#222222', '#06b6d4', '#d946ef'],
-    showWallpaperDefault: false,
-  },
-  velvet: {
-    id: 'velvet',
-    name: 'Velvet Lounge',
-    tag: 'Warm Candlelight • Amber & Crimson',
-    icon: '🕯️',
-    bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/95 border-pink-500/20',
-    asideBg: 'bg-[#222222]/95 border-pink-500/20',
-    tabBg: 'bg-[#222222]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/80',
-    ambientGlow: 'bg-amber-500/15',
-    borderColor: 'border-amber-500/25',
-    cardBorder: 'border-amber-500/35',
-    accentGradient: 'from-amber-500 via-rose-600 to-red-700',
-    accentText: 'text-amber-400',
-    accentBg: 'bg-amber-500',
-    themeBtnClass: 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25',
-    swatches: ['#222222', '#f59e0b', '#dc2626'],
-    showWallpaperDefault: false,
-  },
-  aurora: {
-    id: 'aurora',
-    name: 'Emerald Aurora',
-    tag: 'Starlight Cinema • Mint & Forest Teal',
-    icon: '✨',
-    bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/95 border-pink-500/20',
-    asideBg: 'bg-[#222222]/95 border-pink-500/20',
-    tabBg: 'bg-[#222222]/95',
-    overlayGradient: 'bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/80',
-    ambientGlow: 'bg-emerald-500/15',
-    borderColor: 'border-emerald-500/25',
-    cardBorder: 'border-emerald-500/35',
-    accentGradient: 'from-emerald-500 via-teal-500 to-cyan-500',
-    accentText: 'text-emerald-400',
-    accentBg: 'bg-emerald-500',
-    themeBtnClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25',
-    swatches: ['#222222', '#10b981', '#06b6d4'],
-    showWallpaperDefault: false,
-  },
-  obsidian: {
-    id: 'obsidian',
-    name: 'Pure Obsidian',
-    tag: 'OLED Zero Glare • Minimalist Silver',
+    name: 'Midnight Velvet',
+    tag: 'OLED Pure Black & Radiant Violet Glow',
     icon: '🌑',
-    bgClass: 'bg-[#222222]',
-    navBg: 'bg-[#222222]/95 border-pink-500/20',
-    asideBg: 'bg-[#222222]/95 border-pink-500/20',
-    tabBg: 'bg-[#222222]/95',
-    overlayGradient: 'bg-[#222222]/95',
-    ambientGlow: 'bg-transparent',
-    borderColor: 'border-white/10',
-    cardBorder: 'border-pink-500/25',
-    accentGradient: 'from-zinc-600 via-zinc-400 to-white',
-    accentText: 'text-slate-200',
-    accentBg: 'bg-white',
-    themeBtnClass: 'bg-white/10 border-white/15 text-white hover:bg-white/15',
-    swatches: ['#222222', '#71717a', '#ffffff'],
-    showWallpaperDefault: false,
-  },
-  offwhite: {
-    id: 'offwhite',
-    name: 'Sunset Terrace (Light)',
-    tag: 'Penthouse Skyline • Warm Sunset Ivory & Rose',
-    icon: '🌅',
-    bgClass: 'bg-[#faf6f8] text-slate-900',
-    wallpaper: '/sunset-cinema-bg.jpg?v=couple2',
-    navBg: 'bg-white/95 border-b border-rose-200/90 shadow-[0_4px_25px_rgba(244,63,94,0.08)] text-slate-900 backdrop-blur-2xl',
-    asideBg: 'bg-white/95 border-2 border-rose-200/90 shadow-[0_12px_40px_rgba(244,63,94,0.08)] text-slate-900 backdrop-blur-2xl',
-    tabBg: 'bg-rose-50/70 border-b border-rose-200/80 text-slate-800',
-    overlayGradient: 'bg-gradient-to-b from-white/90 via-[#fff8fa]/80 to-rose-50/90 backdrop-blur-[2px]',
-    ambientGlow: 'bg-rose-400/20',
-    borderColor: 'border-rose-200',
-    cardBorder: 'border-2 border-rose-200/90 shadow-[0_10px_35px_rgba(244,63,94,0.08)]',
-    accentGradient: 'from-rose-500 via-pink-600 to-rose-600',
-    accentText: 'text-rose-700 font-bold',
-    accentBg: 'bg-rose-600',
-    themeBtnClass: 'bg-white hover:bg-rose-50 border-2 border-rose-200 text-slate-800 shadow-sm font-semibold',
-    swatches: ['#FFFFFF', '#FDF2F8', '#FB7185', '#E11D48'],
+    bgClass: 'bg-[#0C0C0F]',
+    wallpaper: '/home-bg.jpg',
+    navBg: 'bg-[#0C0C0F]/95 border-b border-white/15 shadow-xl shadow-black/80 backdrop-blur-2xl text-white',
+    asideBg: 'bg-[#101014]/95 border-2 border-purple-500/30 shadow-2xl backdrop-blur-2xl text-white',
+    tabBg: 'bg-[#08080A] border-b border-white/10',
+    overlayGradient: 'bg-gradient-to-t from-[#0C0C0F] via-[#0C0C0F]/80 to-[#0C0C0F]/50',
+    ambientGlow: 'bg-purple-500/15',
+    borderColor: 'border-purple-500/30',
+    cardBorder: 'border-purple-500/40 shadow-xl shadow-black/80',
+    accentGradient: 'from-purple-500 via-indigo-500 to-pink-500',
+    accentText: 'text-purple-200 font-bold',
+    accentBg: 'bg-purple-600',
+    themeBtnClass: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/30 font-bold',
+    swatches: ['#0C0C0F', '#A855F7', '#EC4899', '#FFFFFF'],
     showWallpaperDefault: true,
-    isLight: true,
+    isLight: false,
   },
 };
 
@@ -473,8 +375,8 @@ export default function Room() {
   const [pluginsTab, setPluginsTab] = useState('soundscapes');
   const [duoRightTab, setDuoRightTab] = useState('cam'); // 'cam' | 'chat'
 
-  // Room Color Themes & Ambiance State (Sunset Terrace Light Default)
-  const [currentThemeId, setCurrentThemeId] = useState('offwhite');
+  // Room Color Themes & Ambiance State (Sunset Cinema Dark Default)
+  const [currentThemeId, setCurrentThemeId] = useState('tangerine');
   const [showWallpaper, setShowWallpaper] = useState(true);
   const [showThemeModal, setShowThemeModal] = useState(false);
 
@@ -489,10 +391,11 @@ export default function Room() {
   useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('sc_room_theme');
-      if (savedTheme && savedTheme !== 'obsidian' && ROOM_THEMES[savedTheme]) {
+      if (savedTheme && (savedTheme === 'tangerine' || savedTheme === 'midnight')) {
         setCurrentThemeId(savedTheme);
       } else {
-        setCurrentThemeId('offwhite');
+        setCurrentThemeId('tangerine');
+        try { localStorage.setItem('sc_room_theme', 'tangerine'); } catch {}
       }
       const savedWp = localStorage.getItem('sc_show_wallpaper');
       if (savedWp !== null) {
@@ -515,7 +418,7 @@ export default function Room() {
     }
   };
 
-  const theme = ROOM_THEMES[currentThemeId] || ROOM_THEMES.midnight;
+  const theme = ROOM_THEMES[currentThemeId] || ROOM_THEMES.tangerine;
 
   const peerRef = useRef(null), playerRef = useRef(null), root = useRef();
   const socket = typeof window !== 'undefined' ? getSocket() : null;
@@ -2138,43 +2041,40 @@ export default function Room() {
             )}
 
             {/* Mobile / Tablet Interactive Tabs Deck (Reachable via smooth scroll) */}
-            <div className={`lg:hidden flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl overflow-hidden mt-3 backdrop-blur-xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`lg:hidden flex flex-col rounded-2xl bg-[#18181C]/95 border-2 border-pink-500/30 shadow-2xl overflow-hidden mt-3 backdrop-blur-2xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               {/* Tab Selector Nav Header */}
-              <div className={`shrink-0 flex items-center border-b ${theme.borderColor} ${theme.tabBg} p-1.5 gap-1`}>
+              <div className="shrink-0 flex items-center border-b border-pink-500/25 bg-[#121215] p-1.5 gap-1.5">
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
-                  { id: 'call', label: 'Duo Cam', icon3d: DuoCam3D, activeDot: callCam },
-                  { id: 'gestures', label: 'Love', icon3d: Heart3D },
-                  { id: 'extras', label: 'Extras', icon3d: Popcorn3D },
+                  { id: 'call', label: 'Duo Cam', icon: Video, activeDot: callCam },
+                  { id: 'gestures', label: 'Love', icon: Heart },
+                  { id: 'extras', label: 'Extras', icon: Popcorn },
                 ].map((tab) => {
                   const Icon = tab.icon;
-                  const Icon3D = tab.icon3d;
                   const active = mobileTab === tab.id;
                   return (
                     <button
                       key={tab.id}
                       type="button"
                       onClick={() => setMobileTab(tab.id)}
-                      className={`flex-1 py-2 px-1 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer relative ${
+                      className={`flex-1 py-2 px-1.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer relative shadow-sm ${
                         active
-                          ? 'btn-pink text-white shadow-md shadow-pink-500/30'
-                          : theme.isLight
-                            ? 'text-slate-600 hover:text-slate-900 hover:bg-rose-100/60 font-semibold'
-                            : 'text-pink-200/70 hover:text-pink-100 hover:bg-pink-500/10'
+                          ? 'btn-pink text-white shadow-lg shadow-pink-500/40 border border-pink-300/40'
+                          : 'bg-[#222228] hover:bg-[#2E2E36] text-zinc-200 hover:text-white border border-white/15'
                       }`}
                     >
                       <div className="relative flex items-center">
-                        {Icon3D ? <Icon3D size={18} /> : <Icon className="h-4 w-4" />}
+                        <Icon className={`h-4 w-4 ${active ? 'text-white' : 'text-pink-400'}`} />
                         {tab.badge > 0 && (
-                          <span className="absolute -top-1.5 -right-2 bg-pink-500 text-white text-[9px] font-bold px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center">
+                          <span className="absolute -top-1.5 -right-2 bg-pink-500 text-white text-[9px] font-black px-1 min-w-[13px] h-[13px] rounded-full flex items-center justify-center shadow-sm">
                             {tab.badge > 99 ? '99+' : tab.badge}
                           </span>
                         )}
                         {tab.activeDot !== undefined && (
-                          <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${tab.activeDot ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+                          <span className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ring-1 ring-black ${tab.activeDot ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-rose-500'}`} />
                         )}
                       </div>
-                      <span className="text-[11px] font-medium">{tab.label}</span>
+                      <span className="text-xs font-black">{tab.label}</span>
                     </button>
                   );
                 })}
@@ -2744,42 +2644,34 @@ export default function Room() {
         </div>
       )}
 
-      {/* Room Ambiance & Color Themes Modal */}
+      {/* Room Ambiance & Color Themes Modal (Curated 2 Dark Themes) */}
       {showThemeModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-          <div className={`w-full max-w-xl p-5 sm:p-6 space-y-5 rounded-3xl backdrop-blur-2xl shadow-2xl rise my-auto text-left transition-all ${
-            theme.isLight
-              ? 'bg-white/98 border-2 border-rose-200/90 shadow-[0_20px_60px_rgba(244,63,94,0.12)] text-slate-900'
-              : 'bg-[#222222]/95 border border-pink-500/25 shadow-pink-500/10 text-pink-100'
-          }`}>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="w-full max-w-lg p-5 sm:p-6 space-y-5 rounded-3xl backdrop-blur-2xl shadow-2xl rise my-auto text-left transition-all bg-[#18181C]/98 border-2 border-pink-500/35 shadow-pink-500/20 text-white">
             {/* Header */}
-            <div className={`flex items-center justify-between border-b pb-3 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
+            <div className="flex items-center justify-between border-b border-pink-500/20 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-pink-600 via-rose-500 to-pink-400 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-pink-600 via-rose-500 to-pink-400 flex items-center justify-center shadow-lg shadow-pink-500/30">
                   <Palette className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className={`font-display font-bold text-base sm:text-lg flex items-center gap-2 ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
-                    Room Color Themes &amp; Ambiance
+                  <h3 className="font-display font-black text-base sm:text-lg text-white">
+                    Cinema Themes
                   </h3>
-                  <p className={`text-[11px] font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300'}`}>Transform the auditorium lighting &amp; vibe</p>
+                  <p className="text-xs text-pink-200/80 font-medium">Choose between our 2 curated dark cinema atmospheres</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowThemeModal(false)}
-                className={`h-8 w-8 rounded-full flex items-center justify-center transition cursor-pointer ${
-                  theme.isLight
-                    ? 'bg-rose-50 hover:bg-rose-100 text-slate-700 hover:text-slate-950 border border-rose-200'
-                    : 'bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white'
-                }`}
+                className="h-8 w-8 rounded-full flex items-center justify-center transition cursor-pointer bg-white/10 hover:bg-white/20 text-white"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Themes Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[55vh] overflow-y-auto pr-1">
+            {/* Themes Grid (Exactly 2 Curated Themes) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {Object.values(ROOM_THEMES).map((th) => {
                 const isActive = currentThemeId === th.id;
                 return (
@@ -2787,29 +2679,25 @@ export default function Room() {
                     key={th.id}
                     type="button"
                     onClick={() => selectTheme(th.id)}
-                    className={`p-3.5 rounded-2xl border-2 text-left transition relative cursor-pointer flex flex-col justify-between gap-3 shadow-xs ${
+                    className={`p-4 rounded-2xl border-2 text-left transition relative cursor-pointer flex flex-col justify-between gap-3 shadow-md ${
                       isActive
-                        ? theme.isLight
-                          ? 'bg-rose-50/90 border-rose-400 ring-2 ring-rose-400/30 shadow-md text-slate-900'
-                          : `bg-white/10 ${th.cardBorder} ring-2 ring-pink-500/50 shadow-xl shadow-pink-950/40 text-white`
-                        : theme.isLight
-                          ? 'bg-white hover:bg-rose-50 border-rose-200/80 hover:border-rose-300 text-slate-900'
-                          : 'bg-[#1a1a1a]/70 border-pink-500/20 hover:border-pink-500/40 hover:bg-white/5 text-white'
+                        ? 'bg-[#25252B] border-pink-500 ring-2 ring-pink-500/40 shadow-xl shadow-pink-500/20 text-white'
+                        : 'bg-[#202026] hover:bg-[#282832] border-white/15 text-white'
                     }`}
                   >
                     <div className="flex items-start justify-between w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{th.icon}</span>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-2xl">{th.icon}</span>
                         <div>
-                          <h4 className={`font-bold text-sm flex items-center gap-1.5 ${theme.isLight ? 'text-slate-900' : 'text-white'}`}>
+                          <h4 className="font-black text-sm text-white flex items-center gap-1.5">
                             <span>{th.name}</span>
-                            {th.id === 'midnight' && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-600 dark:text-pink-300 border border-pink-500/30 font-semibold">
-                                Home Look
+                            {th.id === 'tangerine' && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-pink-500/25 text-pink-300 border border-pink-500/40 font-bold">
+                                Home Default
                               </span>
                             )}
                           </h4>
-                          <p className={`text-[10px] font-medium ${theme.isLight ? 'text-slate-600' : 'text-slate-400'}`}>{th.tag}</p>
+                          <p className="text-[11px] font-medium text-zinc-300 mt-0.5">{th.tag}</p>
                         </div>
                       </div>
                       {isActive && (
@@ -2824,7 +2712,7 @@ export default function Room() {
                       {th.swatches.map((color, idx) => (
                         <span
                           key={idx}
-                          className="h-3 flex-1 rounded-full shadow-inner border border-black/10"
+                          className="h-3.5 flex-1 rounded-full shadow-inner border border-white/20"
                           style={{ backgroundColor: color }}
                         />
                       ))}
@@ -2835,17 +2723,15 @@ export default function Room() {
             </div>
 
             {/* Options Strip */}
-            <div className={`pt-2 border-t space-y-3 ${theme.isLight ? 'border-rose-100' : 'border-white/10'}`}>
+            <div className="pt-2 border-t border-white/10 space-y-3">
               {/* Wallpaper Toggle */}
-              <div className={`flex items-center justify-between p-3 rounded-2xl border-2 ${
-                theme.isLight ? 'bg-rose-50/60 border-rose-200/80 shadow-xs' : 'bg-white/5 border-white/10'
-              }`}>
+              <div className="flex items-center justify-between p-3 rounded-2xl border-2 bg-white/5 border-white/10">
                 <div className="space-y-0.5">
-                  <div className={`text-xs font-semibold flex items-center gap-1.5 ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+                  <div className="text-xs font-semibold flex items-center gap-1.5 text-pink-100">
                     <Sparkles className="h-3.5 w-3.5 text-pink-500" />
                     <span>Romantic Ambient Wallpaper</span>
                   </div>
-                  <p className={`text-[11px] font-medium ${theme.isLight ? 'text-slate-600' : 'text-pink-200/70'}`}>Display subtle couple watching background behind the theater</p>
+                  <p className="text-[11px] font-medium text-pink-200/70">Display subtle couple watching background behind the theater</p>
                 </div>
                 <button
                   type="button"
@@ -2855,7 +2741,7 @@ export default function Room() {
                     try { localStorage.setItem('sc_show_wallpaper', next ? '1' : '0'); } catch {}
                   }}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    showWallpaper ? 'bg-pink-600' : theme.isLight ? 'bg-slate-300' : 'bg-white/20'
+                    showWallpaper ? 'bg-pink-600' : 'bg-white/20'
                   }`}
                 >
                   <span
@@ -2871,11 +2757,7 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => selectTheme(currentThemeId, true)}
-                  className={`w-full py-2.5 rounded-2xl font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer border-2 ${
-                    theme.isLight
-                      ? 'bg-white hover:bg-rose-50 border-rose-200/80 text-rose-700 shadow-xs'
-                      : 'bg-white/10 hover:bg-white/15 border-pink-500/20 text-pink-100'
-                  }`}
+                  className="w-full py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer border-2 bg-[#25252B] hover:bg-[#32323A] border-pink-500/30 text-pink-200"
                 >
                   <Crown className="h-3.5 w-3.5 text-pink-500" />
                   <span>Sync &ldquo;{ROOM_THEMES[currentThemeId]?.name}&rdquo; To All Room Members</span>
