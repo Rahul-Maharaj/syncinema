@@ -15,6 +15,7 @@ mobile/android/.idea/
 mobile/android/*.iml
 mobile/android/app/*.iml
 mobile/android/local.properties
+*.aab
 
 # Environment files and credentials (never commit secrets)
 .env

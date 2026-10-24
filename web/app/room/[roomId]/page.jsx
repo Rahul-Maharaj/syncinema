@@ -8,7 +8,7 @@ import {
   Moon, Home as HomeIcon, Eye, EyeOff, Trash2, KeyRound, User,
   Video, VideoOff, Mic, MicOff, Sliders, MessageSquare, MoreHorizontal, ListPlus, Sparkles, Settings,
   Timer, Popcorn, Flame, Shield, Star, QrCode, Smartphone, History, DoorClosed, LogOut, Tv,
-  MonitorPlay, Camera, Music, RefreshCw, Palette, Maximize2, UserX, Volume2, VolumeX
+  MonitorPlay, Camera, Music, RefreshCw, Palette, Maximize2, UserX, Volume2, VolumeX, Download
 } from 'lucide-react';
 import { getSocket, getCid } from '@/lib/socket';
 import { getKey, setKey } from '@/lib/vault';
