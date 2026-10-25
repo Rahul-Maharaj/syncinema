@@ -101,33 +101,33 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4 backdrop-blur-md">
       <div className={`card vault w-full max-w-md space-y-4 p-5 sm:p-6 rounded-3xl backdrop-blur-2xl shadow-2xl rise transition-all ${
         theme?.isLight
           ? 'bg-white/98 border-2 border-rose-200/90 shadow-[0_20px_60px_rgba(244,63,94,0.12)] text-slate-900'
-          : 'bg-[#222222] border border-pink-500/25 shadow-pink-500/10 text-pink-100'
+          : 'bg-[#161622] border-2 border-pink-500/40 shadow-2xl text-white'
       }`}>
         {/* Header */}
-        <div className={`flex items-center justify-between border-b pb-3 ${theme?.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
+        <div className={`flex items-center justify-between border-b-2 pb-3 ${theme?.isLight ? 'border-rose-100' : 'border-pink-500/30'}`}>
           <div className="flex items-center gap-2.5">
             <div className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white shadow-lg shadow-pink-500/30">
               {tab === 'handoff' ? <QrCode className="h-5 w-5" /> : <History className="h-5 w-5" />}
             </div>
             <div>
-              <h3 className={`font-display text-sm sm:text-base font-bold ${theme?.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+              <h3 className={`font-display text-sm sm:text-base font-extrabold ${theme?.isLight ? 'text-slate-900' : 'text-white'}`}>
                 {tab === 'handoff' ? 'QR Phone Handoff' : 'Watch History'}
               </h3>
-              <p className={`text-[11px] font-medium ${theme?.isLight ? 'text-slate-500' : 'text-pink-300/70'}`}>
+              <p className={`text-[11px] font-semibold ${theme?.isLight ? 'text-slate-500' : 'text-pink-200'}`}>
                 {tab === 'handoff' ? 'Scan to seamlessly continue on your phone or tablet' : 'Recently played videos'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-xl transition cursor-pointer ${
+            className={`p-2 rounded-xl border transition cursor-pointer ${
               theme?.isLight
-                ? 'text-slate-500 hover:text-slate-900 hover:bg-rose-50'
-                : 'text-pink-300/60 hover:text-white hover:bg-pink-500/10'
+                ? 'text-slate-500 hover:text-slate-900 hover:bg-rose-50 border-slate-200'
+                : 'text-zinc-200 hover:text-white bg-[#222230] border-white/20'
             }`}
           >
             <X className="h-4 w-4" />
@@ -135,18 +135,18 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
         </div>
 
         {/* Segmented Switcher */}
-        <div className={`flex rounded-2xl p-1 gap-1 ${
-          theme?.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#1a1a1a] border border-pink-500/20'
+        <div className={`flex rounded-2xl p-1 gap-1 border-2 ${
+          theme?.isLight ? 'bg-rose-50/70 border-rose-200 shadow-xs' : 'bg-[#12121A] border-pink-500/30'
         }`}>
           <button
             type="button"
             onClick={() => setTab('handoff')}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
               tab === 'handoff'
-                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                ? 'btn-pink text-white shadow-md shadow-pink-500/30 border-2 border-pink-300'
                 : theme?.isLight
                   ? 'text-slate-600 hover:text-slate-950 hover:bg-rose-100/60'
-                  : 'text-pink-300/70 hover:text-pink-100'
+                  : 'bg-[#222230] text-zinc-100 hover:text-white border border-white/15'
             }`}
           >
             <Smartphone className="h-3.5 w-3.5" />
@@ -155,12 +155,12 @@ export default function WatchHistoryModal({ isOpen, onClose, roomId, roomPass = 
           <button
             type="button"
             onClick={() => setTab('history')}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+            className={`flex-1 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
               tab === 'history'
-                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-500/30'
+                ? 'btn-pink text-white shadow-md shadow-pink-500/30 border-2 border-pink-300'
                 : theme?.isLight
                   ? 'text-slate-600 hover:text-slate-950 hover:bg-rose-100/60'
-                  : 'text-pink-300/70 hover:text-pink-100'
+                  : 'bg-[#222230] text-zinc-100 hover:text-white border border-white/15'
             }`}
           >
             <History className="h-3.5 w-3.5" />

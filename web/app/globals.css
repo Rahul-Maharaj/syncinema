@@ -287,195 +287,49 @@ body.cinema #video-player-container {
   }
 }
 
-/* --- Zero-Lag Hardware-Accelerated Motion Graphics Keyframes --- */
-@keyframes textShimmerWave {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes floatSmoothSlow {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -9px, 0); }
-}
-
-@keyframes floatSmoothReverse {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, 9px, 0); }
-}
-
-@keyframes floatSway {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  50% { transform: translate3d(-4px, -6px, 0) rotate(-3deg); }
-}
-
-@keyframes syncWaveLaser {
-  0% { transform: translate3d(-100%, 0, 0); }
-  100% { transform: translate3d(300%, 0, 0); }
-}
-
-@keyframes heartFlutter {
-  0%, 100% { transform: scale(1); }
-  14% { transform: scale(1.15); }
-  28% { transform: scale(1.04); }
-  42% { transform: scale(1.12); }
-  70% { transform: scale(1); }
-}
-
-@keyframes radarBreathe {
-  0%, 100% { transform: scale(0.95); opacity: 0.2; }
-  50% { transform: scale(1.3); opacity: 0.6; }
-}
+/* --- Hardware-Optimized Clean Static Styling (Zero Continuous Animation Lag) --- */
+/* Infinite continuous CPU/GPU looping animations removed for production responsiveness */
 
 .anim-text-shimmer {
   background: linear-gradient(135deg, #FFFFFF 0%, #FCE7F3 25%, #F472B6 50%, #EC4899 75%, #FFFFFF 100%);
-  background-size: 250% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShimmerWave 6s ease infinite;
-  will-change: background-position;
 }
 
-.anim-float-slow {
-  animation: floatSmoothSlow 4.5s ease-in-out infinite;
-  will-change: transform;
+.anim-float-slow,
+.anim-float-reverse,
+.anim-float-sway,
+.anim-float {
+  transform: none !important;
+  animation: none !important;
 }
 
-.anim-float-reverse {
-  animation: floatSmoothReverse 5s ease-in-out infinite;
-  will-change: transform;
+.anim-heartbeat,
+.anim-sync-laser,
+.anim-radar,
+.anim-radar-ping,
+.anim-eq-bar,
+.anim-bokeh,
+.anim-scan-beam,
+.anim-glow-halo,
+.anim-aurora,
+.anim-sticker-3d,
+.anim-rotate-slow,
+.anim-mesh-glow,
+.anim-border-glow,
+.anim-laser-horizontal,
+.anim-star-twinkle,
+.anim-laser-sync,
+.anim-pulse-glow,
+.anim-projector-beam,
+.anim-shimmer-sweep,
+.anim-audio-bar,
+.anim-celestial-spin,
+.anim-celestial-spin-reverse {
+  animation: none !important;
 }
 
-.anim-float-sway {
-  animation: floatSway 6s ease-in-out infinite;
-  will-change: transform;
-}
-
-.anim-heartbeat {
-  animation: heartFlutter 2.8s ease-in-out infinite;
-  will-change: transform;
-}
-
-.anim-sync-laser {
-  animation: syncWaveLaser 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: transform;
-}
-
-.anim-radar {
-  animation: radarBreathe 3s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes eqBarPulse {
-  0%, 100% { height: 20%; }
-  25% { height: 90%; }
-  50% { height: 45%; }
-  75% { height: 100%; }
-}
-
-@keyframes bokehDrift {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.35; }
-  50% { transform: translate3d(24px, -28px, 0) scale(1.18); opacity: 0.7; }
-}
-
-@keyframes beamScan {
-  0% { transform: translateY(-100%); opacity: 0; }
-  50% { opacity: 0.8; }
-  100% { transform: translateY(200%); opacity: 0; }
-}
-
-.anim-eq-bar {
-  animation: eqBarPulse 1.2s ease-in-out infinite alternate;
-  will-change: height;
-}
-
-.anim-bokeh {
-  animation: bokehDrift 8s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-.anim-scan-beam {
-  animation: beamScan 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes glowHalo {
-  0%, 100% {
-    box-shadow: 0 0 25px rgba(236, 72, 153, 0.25), inset 0 0 15px rgba(236, 72, 153, 0.1);
-  }
-  50% {
-    box-shadow: 0 0 45px rgba(236, 72, 153, 0.45), inset 0 0 25px rgba(236, 72, 153, 0.2);
-  }
-}
-
-@keyframes auroraShift {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  50% { transform: translate3d(30px, -20px, 0) rotate(8deg) scale(1.08); }
-  100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-}
-
-@keyframes floatSticker3D {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  50% { transform: translate3d(0, -8px, 0) rotate(2.5deg); }
-}
-
-.anim-glow-halo {
-  animation: glowHalo 4s ease-in-out infinite;
-}
-
-.anim-aurora {
-  animation: auroraShift 16s ease-in-out infinite;
-  will-change: transform;
-}
-
-.anim-sticker-3d {
-  animation: floatSticker3D 4s ease-in-out infinite;
-  will-change: transform;
-}
-
-@keyframes rotateSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.anim-rotate-slow {
-  animation: rotateSlow 8s linear infinite;
-  will-change: transform;
-}
-
-/* --- Anti-Vibe Coding Precision Motion & Specular Graphics --- */
-@keyframes meshDrift {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.22; }
-  50% { transform: translate3d(-18px, 14px, 0) scale(1.08); opacity: 0.35; }
-}
-
-.anim-mesh-glow {
-  animation: meshDrift 10s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes borderGlowPulse {
-  0%, 100% { border-color: rgba(236, 72, 153, 0.25); box-shadow: 0 0 15px rgba(236, 72, 153, 0.1); }
-  50% { border-color: rgba(236, 72, 153, 0.55); box-shadow: 0 0 35px rgba(236, 72, 153, 0.28); }
-}
-
-.anim-border-glow {
-  animation: borderGlowPulse 4s ease-in-out infinite;
-}
-
-@keyframes laserSweepHorizontal {
-  0% { transform: translate3d(-100%, 0, 0); opacity: 0; }
-  30% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { transform: translate3d(250%, 0, 0); opacity: 0; }
-}
-
-.anim-laser-horizontal {
-  animation: laserSweepHorizontal 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: transform, opacity;
-}
-
-/* Floating Real-Time Reaction Emojis */
+/* Floating Real-Time Reaction Emojis (Single-burst on click, not an infinite loop) */
 @keyframes reactionFloat {
   0% {
     transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
@@ -500,69 +354,6 @@ body.cinema #video-player-container {
   will-change: transform, opacity;
 }
 
-/* Star Twinkle & Cosmic Dust */
-@keyframes starTwinkle {
-  0%, 100% { transform: scale(0.75); opacity: 0.25; }
-  50% { transform: scale(1.25); opacity: 0.95; filter: drop-shadow(0 0 8px rgba(244, 114, 182, 0.8)); }
-}
-
-.anim-star-twinkle {
-  animation: starTwinkle 3.2s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-/* Continuous Live Ticker Marquee */
-@keyframes tickerMarquee {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
-}
-
-.anim-ticker-marquee {
-  display: flex;
-  width: max-content;
-  animation: tickerMarquee 32s linear infinite;
-  will-change: transform;
-}
-
-.anim-ticker-marquee:hover {
-  animation-play-state: paused;
-}
-
-/* --- Anti-Lag Low-End Device Hardware Acceleration --- */
-@media (max-width: 768px), (prefers-reduced-motion: reduce) {
-  .anti-lag-low-spec {
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    contain: layout style paint !important;
-  }
-}
-
-/* 60fps GPU Composited Laser Sync Glow */
-@keyframes laserPulseSync {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(236, 72, 153, 0.25), inset 0 0 6px rgba(236, 72, 153, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(236, 72, 153, 0.65), inset 0 0 14px rgba(236, 72, 153, 0.35);
-  }
-}
-
-.anim-laser-sync {
-  animation: laserPulseSync 2.4s ease-in-out infinite;
-  will-change: box-shadow;
-}
-
-/* Radar Ping Wave */
-@keyframes radarPing {
-  0% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.8; }
-  100% { transform: translate3d(0, 0, 0) scale(1.6); opacity: 0; }
-}
-
-.anim-radar-ping {
-  animation: radarPing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
-  will-change: transform, opacity;
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-blackhole {
@@ -571,90 +362,35 @@ body.cinema #video-player-container {
 }
 
 /* ==========================================================================
-   ✨ PREMIUM MICRO-ANIMATIONS, TEXT SHIMMER & LUXURY HOVER EFFECTS
+   ✨ HIGH-CONTRAST GRADIENTS & LUXURY HOVER EFFECTS (PRESERVED & ENHANCED)
    ========================================================================== */
 
-/* 1. Animated Gradient Text Shimmer */
-@keyframes textShimmerAnim {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
+/* 1. Static High-Contrast Jewel Gradient Typography */
 .text-shimmer {
-  background: linear-gradient(90deg, #ec4899 0%, #f472b6 25%, #ffffff 50%, #f472b6 75%, #ec4899 100%);
-  background-size: 200% auto;
+  background: linear-gradient(90deg, #ec4899 0%, #f472b6 35%, #ffffff 50%, #f472b6 65%, #ec4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShimmerAnim 4s ease-in-out infinite;
 }
 
 .text-shimmer-light {
-  background: linear-gradient(90deg, #9f1239 0%, #be185d 25%, #4338ca 50%, #be185d 75%, #9f1239 100%);
-  background-size: 200% auto;
+  background: linear-gradient(90deg, #9f1239 0%, #be185d 35%, #4338ca 60%, #be185d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShimmerAnim 4.5s ease-in-out infinite;
 }
 
 .text-shimmer-gold {
-  background: linear-gradient(90deg, #d97706 0%, #f59e0b 25%, #fef3c7 50%, #f59e0b 75%, #d97706 100%);
-  background-size: 200% auto;
+  background: linear-gradient(90deg, #d97706 0%, #f59e0b 35%, #fef3c7 55%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShimmerAnim 3.5s ease-in-out infinite;
 }
 
-/* 2. Soft Ambient Pulse Glow */
-@keyframes softPulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 16px rgba(236, 72, 153, 0.18), 0 0 32px rgba(236, 72, 153, 0.08);
-  }
-  50% {
-    box-shadow: 0 0 28px rgba(236, 72, 153, 0.42), 0 0 55px rgba(236, 72, 153, 0.18);
-  }
-}
-
-.anim-pulse-glow {
-  animation: softPulseGlow 3s ease-in-out infinite;
-}
-
-/* 3. Smooth Floating Bounce */
-@keyframes gentleFloat {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-3.5px);
-  }
-}
-
-.anim-float {
-  animation: gentleFloat 3.2s ease-in-out infinite;
-}
-
-/* 4. Revealing Fade with Gentle Scale */
-@keyframes revealFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-    filter: blur(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
+/* 2. Instant Zero-Lag Reveal */
 .anim-reveal {
-  animation: revealFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 1 !important;
+  transform: none !important;
 }
 
-/* 5. Luxury Hover Sheen Light Sweep Across Buttons */
+/* 3. Luxury Hover Sheen Light Sweep Across Buttons */
 .hover-sheen {
   position: relative;
   overflow: hidden;
@@ -677,9 +413,9 @@ body.cinema #video-player-container {
   transform: translateX(450%) rotate(25deg);
 }
 
-/* 6. Spring Hover Lift */
+/* 4. Spring Hover Lift */
 .hover-lift {
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .hover-lift:hover {
@@ -690,95 +426,16 @@ body.cinema #video-player-container {
   transform: translateY(0px) scale(0.97);
 }
 
-/* 7. Hover Card Glass Glow */
+/* 5. Hover Card Glass Glow */
 .hover-glow-card {
-  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+  transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s ease;
 }
 
 .hover-glow-card:hover {
-  border-color: rgba(236, 72, 153, 0.45) !important;
-  box-shadow: 0 14px 40px -10px rgba(236, 72, 153, 0.2), 0 0 20px rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(236, 72, 153, 0.6) !important;
+  box-shadow: 0 14px 40px -10px rgba(236, 72, 153, 0.3), 0 0 20px rgba(255, 255, 255, 0.12) !important;
   transform: translateY(-1.5px);
 }
 
-/* 8. Infinite Gradient Border Glow */
-@keyframes borderGlowPulse {
-  0%, 100% {
-    border-color: rgba(236, 72, 153, 0.3);
-  }
-  50% {
-    border-color: rgba(236, 72, 153, 0.7);
-  }
-}
-
-.anim-border-glow {
-  animation: borderGlowPulse 2.8s ease-in-out infinite;
-}
-
-/* 9. Luxury Projector Light Beam */
-@keyframes projectorLight {
-  0%, 100% {
-    opacity: 0.25;
-    transform: scaleX(0.95) rotate(-0.5deg);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scaleX(1.05) rotate(0.5deg);
-  }
-}
-
-.anim-projector-beam {
-  animation: projectorLight 4.5s ease-in-out infinite;
-  transform-origin: top center;
-}
-
-/* 10. Shimmer Laser Sweep */
-@keyframes shimmerSweep {
-  0% {
-    transform: translateX(-150%);
-  }
-  100% {
-    transform: translateX(250%);
-  }
-}
-
-.anim-shimmer-sweep {
-  animation: shimmerSweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-/* 11. Audio Waveform Bar Bounce */
-@keyframes audioWaveBounce {
-  0%, 100% {
-    transform: scaleY(0.25);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-.anim-audio-bar {
-  animation: audioWaveBounce 1.2s ease-in-out infinite;
-  transform-origin: bottom center;
-}
-
-/* 12. Celestial Orbital Halo Rotation */
-@keyframes celestialSpin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.anim-celestial-spin {
-  animation: celestialSpin 10s linear infinite;
-}
-
-.anim-celestial-spin-reverse {
-  animation: celestialSpin 7s linear infinite reverse;
-}
 
 

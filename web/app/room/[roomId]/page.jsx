@@ -40,27 +40,27 @@ import {
 import { detectRealLocation } from '@/lib/locationDetector';
 import { isRealHumanBrowser, getHumanProofToken } from '@/lib/antiBot';
 
-// Curated Cinema Color Themes (Kept ONLY 2 high-contrast dark themes matching home-bg.jpg)
+// Curated Cinema Color Themes (Vivid, High-Contrast, Zero-Faded Dark Cinema Palette)
 export const ROOM_THEMES = {
   tangerine: {
     id: 'tangerine',
     name: 'Sunset Cinema',
-    tag: 'Home Velvet & Romantic Rose Ambiance',
+    tag: 'Velvet Rose & High-Contrast Cinema Ambiance',
     icon: '🍿',
-    bgClass: 'bg-[#18181C]',
+    bgClass: 'bg-[#121216]',
     wallpaper: '/home-bg.jpg',
-    navBg: 'bg-[#18181C]/95 border-b border-pink-500/30 shadow-xl shadow-black/80 backdrop-blur-2xl text-white',
-    asideBg: 'bg-[#18181C]/95 border-2 border-pink-500/30 shadow-2xl backdrop-blur-2xl text-white',
-    tabBg: 'bg-[#121215] border-b border-pink-500/25',
-    overlayGradient: 'bg-gradient-to-t from-[#18181C] via-[#18181C]/70 to-[#18181C]/40',
-    ambientGlow: 'bg-pink-500/15',
-    borderColor: 'border-pink-500/30',
-    cardBorder: 'border-pink-500/40 shadow-xl shadow-pink-500/10',
+    navBg: 'bg-[#16161F] border-b-2 border-pink-500/35 shadow-xl shadow-black/90 text-white',
+    asideBg: 'bg-[#16161F] border-2 border-pink-500/35 shadow-2xl text-white',
+    tabBg: 'bg-[#0E0E14] border-b-2 border-pink-500/30',
+    overlayGradient: 'bg-gradient-to-t from-[#121216] via-[#121216]/85 to-[#121216]/60',
+    ambientGlow: 'bg-transparent',
+    borderColor: 'border-pink-500/35',
+    cardBorder: 'border-pink-500/40 shadow-xl shadow-black/90',
     accentGradient: 'from-pink-500 via-rose-500 to-pink-400',
-    accentText: 'text-pink-100 font-bold',
+    accentText: 'text-pink-100 font-extrabold',
     accentBg: 'bg-pink-600',
-    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/30 font-bold',
-    swatches: ['#18181C', '#F472B6', '#EC4899', '#FCE7F3'],
+    themeBtnClass: 'btn-pink text-white hover:brightness-110 shadow-md shadow-pink-500/40 font-black',
+    swatches: ['#121216', '#F472B6', '#EC4899', '#FFFFFF'],
     showWallpaperDefault: true,
     isLight: false,
   },
@@ -69,20 +69,20 @@ export const ROOM_THEMES = {
     name: 'Midnight Velvet',
     tag: 'OLED Pure Black & Radiant Violet Glow',
     icon: '🌑',
-    bgClass: 'bg-[#0C0C0F]',
+    bgClass: 'bg-[#0A0A0E]',
     wallpaper: '/home-bg.jpg',
-    navBg: 'bg-[#0C0C0F]/95 border-b border-white/15 shadow-xl shadow-black/80 backdrop-blur-2xl text-white',
-    asideBg: 'bg-[#101014]/95 border-2 border-purple-500/30 shadow-2xl backdrop-blur-2xl text-white',
-    tabBg: 'bg-[#08080A] border-b border-white/10',
-    overlayGradient: 'bg-gradient-to-t from-[#0C0C0F] via-[#0C0C0F]/80 to-[#0C0C0F]/50',
-    ambientGlow: 'bg-purple-500/15',
-    borderColor: 'border-purple-500/30',
-    cardBorder: 'border-purple-500/40 shadow-xl shadow-black/80',
+    navBg: 'bg-[#0E0E15] border-b-2 border-purple-500/35 shadow-xl shadow-black/90 text-white',
+    asideBg: 'bg-[#12121A] border-2 border-purple-500/35 shadow-2xl text-white',
+    tabBg: 'bg-[#08080C] border-b-2 border-purple-500/30',
+    overlayGradient: 'bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/90 to-[#0A0A0E]/70',
+    ambientGlow: 'bg-transparent',
+    borderColor: 'border-purple-500/35',
+    cardBorder: 'border-purple-500/40 shadow-xl shadow-black/90',
     accentGradient: 'from-purple-500 via-indigo-500 to-pink-500',
-    accentText: 'text-purple-200 font-bold',
+    accentText: 'text-purple-200 font-extrabold',
     accentBg: 'bg-purple-600',
-    themeBtnClass: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/30 font-bold',
-    swatches: ['#0C0C0F', '#A855F7', '#EC4899', '#FFFFFF'],
+    themeBtnClass: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/40 font-black',
+    swatches: ['#0A0A0E', '#A855F7', '#EC4899', '#FFFFFF'],
     showWallpaperDefault: true,
     isLight: false,
   },
@@ -148,17 +148,17 @@ function MobileCallTabDeck({
   return (
     <div className="p-3 space-y-3.5">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-pink-500/20 pb-2 px-1">
+      <div className="flex items-center justify-between border-b-2 border-pink-500/30 pb-2 px-1">
         <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="font-bold text-xs sm:text-sm text-pink-100">Live Video &amp; Voice Call</span>
-          <span className="text-[11px] text-pink-200 font-medium">({(users || []).length} connected)</span>
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+          <span className="font-extrabold text-xs sm:text-sm text-white">Live Video &amp; Voice Call</span>
+          <span className="text-[11px] text-pink-200 font-bold">({(users || []).length} connected)</span>
         </div>
         <span
-          className={`text-[10px] px-2.5 py-0.5 rounded-full border font-semibold ${
+          className={`text-[10px] px-2.5 py-0.5 rounded-full border-2 font-bold ${
             callCam
-              ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10'
-              : 'border-pink-500/30 text-pink-200 bg-pink-500/10'
+              ? 'border-emerald-400 text-emerald-300 bg-emerald-500/20 shadow-sm'
+              : 'border-pink-500/40 text-pink-200 bg-pink-500/20'
           }`}
         >
           {callCam ? 'Camera Live' : 'Camera Off'}
@@ -175,7 +175,7 @@ function MobileCallTabDeck({
           {otherUsers.map((partner) => (
             <div
               key={partner?.id || Math.random()}
-              className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#222222] border border-pink-500/25 shadow-xl group"
+              className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#1A1A24] border-2 border-pink-500/40 shadow-xl group"
             >
               <Tile
                 stream={callMedia?.remote?.[partner?.id]}
@@ -192,7 +192,7 @@ function MobileCallTabDeck({
                   type="button"
                   onClick={() => handleKickUser?.(partner.id, partner.name)}
                   title={`Kick ${partner.name}`}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#222222]/90 hover:bg-pink-600 text-pink-100 hover:text-white border border-pink-500/30 transition shadow z-20 cursor-pointer"
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-[#22222E]/95 hover:bg-pink-600 text-white border-2 border-pink-500/40 transition shadow-lg z-20 cursor-pointer"
                 >
                   <UserX className="h-3.5 w-3.5" />
                 </button>
@@ -201,18 +201,18 @@ function MobileCallTabDeck({
           ))}
         </div>
       ) : (
-        <div className="aspect-video w-full rounded-2xl border border-dashed border-pink-500/30 bg-[#1a1a1a]/60 flex flex-col items-center justify-center p-4 text-center space-y-2">
-          <div className="h-10 w-10 rounded-full bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-400">
-            <Heart className="h-5 w-5 animate-pulse text-pink-400" />
+        <div className="aspect-video w-full rounded-2xl border-2 border-dashed border-pink-500/40 bg-[#161622] flex flex-col items-center justify-center p-4 text-center space-y-2.5">
+          <div className="h-11 w-11 rounded-full bg-pink-500/25 border-2 border-pink-400 flex items-center justify-center text-pink-400 shadow-md">
+            <Heart className="h-6 w-6 text-pink-400 fill-pink-500/30" />
           </div>
           <div>
-            <p className="text-xs font-bold text-pink-100">Waiting for partner to join call…</p>
-            <p className="text-[10px] text-pink-200/70">Share room link or invite code to connect</p>
+            <p className="text-sm font-extrabold text-white">Waiting for partner to join call…</p>
+            <p className="text-xs text-zinc-300 font-medium">Share room link or invite code to connect</p>
           </div>
           <button
             type="button"
             onClick={copy}
-            className="btn-pink px-4 py-1.5 rounded-xl text-white text-xs font-bold shadow-lg shadow-pink-500/30 cursor-pointer active:scale-95"
+            className="btn-pink px-5 py-2 rounded-xl text-white text-xs font-black shadow-lg shadow-pink-500/40 cursor-pointer active:scale-95"
           >
             Copy Room Invite 💌
           </button>
@@ -220,11 +220,11 @@ function MobileCallTabDeck({
       )}
 
       {/* Local User Preview & Controls Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-2xl bg-[#222222]/95 border border-pink-500/20 shadow-lg">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#1A1A26] border-2 border-pink-500/40 shadow-xl">
         {/* Local Pip */}
         {!isGhost ? (
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <div className="h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden bg-[#222222] border border-pink-500/25 shrink-0 shadow-md">
+            <div className="h-12 w-16 sm:h-14 sm:w-20 rounded-xl overflow-hidden bg-[#14141E] border-2 border-pink-500/35 shrink-0 shadow-md">
               <Tile
                 stream={callMedia?.mine}
                 name="You"
@@ -238,18 +238,18 @@ function MobileCallTabDeck({
               />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-pink-100 truncate">You (Your Camera)</div>
-              <div className="text-[10px] text-pink-200/70">
+              <div className="text-xs font-black text-white truncate">You (Your Camera)</div>
+              <div className="text-[11px] text-zinc-300 font-medium">
                 {callCam ? 'Hardware streaming' : 'Hardware released'}
               </div>
             </div>
           </div>
         ) : (
           <div className="text-center sm:text-left py-1">
-            <span className="text-xs text-purple-300 font-bold flex items-center gap-1.5">
+            <span className="text-xs text-purple-300 font-black flex items-center gap-1.5">
               👻 Stealth Mode Active
             </span>
-            <span className="text-[10px] text-purple-400/80">0 camera/mic used &bull; 100% invisible</span>
+            <span className="text-[10px] text-purple-300 font-medium">0 camera/mic used &bull; 100% invisible</span>
           </div>
         )}
 
@@ -265,14 +265,14 @@ function MobileCallTabDeck({
                   console.warn('toggleMic error:', err);
                 }
               }}
-              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-black border-2 flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-md ${
                 callMic
-                  ? 'bg-white/10 hover:bg-white/15 border-white/15 text-pink-100'
-                  : 'bg-pink-500/20 border-pink-500/40 text-pink-100 shadow-md shadow-pink-500/20'
+                  ? 'bg-[#252536] hover:bg-[#323246] border-white/20 text-white'
+                  : 'bg-rose-500/25 border-rose-400 text-rose-200 shadow-rose-950/40'
               }`}
               title={callMic ? 'Mute microphone' : 'Unmute microphone'}
             >
-              {callMic ? <Mic className="h-4 w-4 text-emerald-400" /> : <MicOff className="h-4 w-4 text-pink-400" />}
+              {callMic ? <Mic className="h-4 w-4 text-emerald-400" /> : <MicOff className="h-4 w-4 text-rose-400" />}
               <span>{callMic ? 'Mic: ON' : 'MUTED'}</span>
             </button>
 
@@ -285,14 +285,14 @@ function MobileCallTabDeck({
                   console.warn('toggleCam error:', err);
                 }
               }}
-              className={`flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-black border-2 flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-md ${
                 callCam
-                  ? 'bg-emerald-500/20 hover:bg-emerald-500/25 border-emerald-500/40 text-emerald-300'
-                  : 'bg-pink-500/20 border-pink-500/40 text-pink-100 shadow-md shadow-pink-500/20'
+                  ? 'bg-emerald-500/25 hover:bg-emerald-500/35 border-emerald-400 text-emerald-200 shadow-emerald-950/40'
+                  : 'bg-rose-500/25 border-rose-400 text-rose-200 shadow-rose-950/40'
               }`}
               title={callCam ? 'Turn off camera' : 'Turn on camera'}
             >
-              {callCam ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4 text-pink-400" />}
+              {callCam ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4 text-rose-400" />}
               <span>{callCam ? 'Cam: ON' : 'Cam: OFF'}</span>
             </button>
 
@@ -305,10 +305,10 @@ function MobileCallTabDeck({
                   console.warn('toggleVoiceOnly error:', err);
                 }
               }}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold border-2 flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-md ${
                 callMedia?.voiceOnly
-                  ? 'btn-pink text-white shadow-md shadow-pink-500/30'
-                  : 'bg-white/10 border-white/15 text-pink-200/80 hover:text-pink-100'
+                  ? 'btn-pink text-white shadow-pink-500/40 border-pink-300'
+                  : 'bg-[#252536] hover:bg-[#323246] border-white/20 text-white'
               }`}
               title="Toggle Voice-Only Mode (saves bandwidth)"
             >
@@ -1010,15 +1010,12 @@ export default function Room() {
       {/* Theme Vignette Gradient Overlay */}
       <div className={`fixed inset-0 z-0 pointer-events-none transition-all duration-700 ${theme.overlayGradient} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
 
-      {/* Soft Ambient Glow Lighting Orb (Hardware-friendly: hidden on mobile) */}
-      <div className={`hidden md:block fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-all duration-700 ${theme.ambientGlow} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
-
       {/* 🎬 Floating Exit Cinema Lights Pill (Appears when Cinema Mode is active) */}
       {cinema && (
         <button
           type="button"
           onClick={toggleCinema}
-          className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-black/90 hover:bg-black text-white/90 hover:text-white border border-pink-500/50 shadow-2xl text-xs font-bold transition hover:scale-105 cursor-pointer animate-pulse"
+          className="fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#121218] hover:bg-black text-white border-2 border-pink-500 shadow-2xl text-xs font-black transition cursor-pointer"
           title="Exit Cinema Lights and restore room controls"
         >
           <Film className="h-4 w-4 text-pink-400" />
@@ -1028,15 +1025,14 @@ export default function Room() {
 
       {/* 👻 Stealth Aurelia Ghost Monitor Banner */}
       {isGhost && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#222222]/95 border border-purple-500/40 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-xl flex items-center gap-2 pointer-events-none">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#1A1A24] border-2 border-purple-500/50 px-4 py-1.5 text-xs font-bold text-purple-200 shadow-xl flex items-center gap-2 pointer-events-none">
           <span className="text-base">👻</span>
           <span>Aurelia Stealth Monitor Active (Invisible to Host &amp; Members)</span>
         </div>
       )}
 
       {/* Responsive Top Header (100% Notch-Free, Safe Hardware Cutout Area) */}
-      {/* Modern De-Cluttered Unified Cinema Navbar */}
-      <header className={`hdr shrink-0 safe-top-notch min-h-14 sm:min-h-16 h-auto px-2 sm:px-4 py-2 flex items-center justify-between gap-2 border-b ${theme.navBg} backdrop-blur-xl z-20 transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 translate-y-0'}`}>
+      <header className={`hdr shrink-0 safe-top-notch min-h-14 sm:min-h-16 h-auto px-2 sm:px-4 py-2 flex items-center justify-between gap-2 border-b-2 ${theme.navBg} z-20 transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none -translate-y-4' : 'opacity-100 translate-y-0'}`}>
         {/* Left: Brand + Interactive Capacity Pill */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink-0">
           <BrandLogo size="sm" href="/" hideTextOnMobile={true} isLight={theme.isLight} />
@@ -1052,25 +1048,25 @@ export default function Room() {
                 say(`Room Capacity: ${users.length} of ${maxSeats} members (Host can increase up to 30)`);
               }
             }}
-            className={`hover-lift inline-flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 py-1 text-xs font-semibold border transition shrink-0 ${
+            className={`hover-lift inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black border-2 transition shrink-0 ${
               theme.isLight
                 ? me === hostId
-                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200/90 text-slate-800 cursor-pointer active:scale-95 shadow-sm'
-                  : 'bg-slate-100 border-slate-200/80 text-slate-700 cursor-default'
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800 cursor-pointer active:scale-95 shadow-sm'
+                  : 'bg-slate-100 border-slate-300 text-slate-700 cursor-default'
                 : me === hostId
-                  ? 'bg-white/10 hover:bg-rose-500/20 border-white/15 hover:border-rose-500/40 text-white cursor-pointer active:scale-95 shadow-sm'
-                  : 'bg-white/5 border-white/10 text-white/80 cursor-default'
+                  ? 'bg-[#1E1E2A] hover:bg-[#2A2A3A] border-pink-500/40 text-white cursor-pointer active:scale-95 shadow-md'
+                  : 'bg-[#1A1A24] border-pink-500/30 text-white cursor-default'
             }`}
             title={me === hostId ? `Capacity: ${users.length}/${maxSeats} members. Click to change (2 to 30 seats)` : `Capacity: ${users.length}/${maxSeats} members`}
           >
-            <span className={`h-2 w-2 rounded-full shrink-0 ${online ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
-            <Users className="h-3 w-3 text-pink-500 shrink-0" />
+            <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${online ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+            <Users className="h-3.5 w-3.5 text-pink-400 shrink-0" />
             <span className="font-mono">{users.length}/{maxSeats}</span>
-            {me === hostId && <span className={`text-[10px] hidden xs:inline ${theme.isLight ? 'text-slate-500' : 'text-white/60'}`}>⚙️</span>}
+            {me === hostId && <span className={`text-[10px] hidden xs:inline ${theme.isLight ? 'text-slate-500' : 'text-pink-300 font-bold'}`}>⚙️</span>}
           </button>
 
           {entryLocked && (
-            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] bg-amber-500/20 border border-amber-500/40 text-amber-500 dark:text-amber-300 font-semibold" title="Host locked this room from new entries">
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] bg-amber-500/20 border-2 border-amber-400 text-amber-300 font-black" title="Host locked this room from new entries">
               <Lock className="h-3 w-3" />
               <span className="hidden md:inline">Locked</span>
             </span>
@@ -1078,8 +1074,8 @@ export default function Room() {
         </div>
 
         {/* Center: Sleek View Modes Capsule (Desktop) */}
-        <div className={`hidden lg:flex items-center gap-0.5 p-1 rounded-2xl border shadow-sm ${
-          theme.isLight ? 'bg-white/70 border-slate-200/80 backdrop-blur-md' : 'bg-black/30 border-white/10 backdrop-blur-md'
+        <div className={`hidden lg:flex items-center gap-1 p-1 rounded-2xl border-2 shadow-md ${
+          theme.isLight ? 'bg-white border-slate-200' : 'bg-[#181822] border-pink-500/35'
         }`}>
           {[
             { id: 'theater', label: 'Theater', icon: <MonitorPlay className="h-3.5 w-3.5" /> },
@@ -1090,12 +1086,12 @@ export default function Room() {
               key={m.id}
               type="button"
               onClick={() => changeViewMode(m.id)}
-              className={`hover-lift h-7 px-3 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`hover-lift h-7 px-3 rounded-xl text-xs font-black flex items-center gap-1.5 transition cursor-pointer ${
                 viewMode === m.id
-                  ? 'btn-pink text-white shadow-sm'
+                  ? 'btn-pink text-white shadow-md'
                   : theme.isLight
-                    ? 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-zinc-200 hover:text-white hover:bg-[#252534]'
               }`}
               title={`Switch to ${m.label} Mode`}
             >
@@ -1106,56 +1102,56 @@ export default function Room() {
         </div>
 
         {/* Right: Streamlined Action Controls (De-Cluttered for Clean Mobile & Desktop Layout) */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0 py-0.5">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 py-0.5">
           {/* Active Snack Break Indicator */}
           {timer?.running && (
             <button
               type="button"
               onClick={() => { setShowPlugins(true); setPluginsTab('intermission'); }}
-              className="anim-float flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300 text-xs font-mono hover:bg-emerald-500/30 shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#14261B] border-2 border-emerald-400 text-emerald-300 text-xs font-mono font-bold shrink-0 shadow-md"
               title="Synchronized snack break in progress (Click to view)"
             >
-              <Timer className="h-3 w-3" />
+              <Timer className="h-3.5 w-3.5 text-emerald-400" />
               <span>🍿 {Math.floor(Math.max(0, (timer.endsAt - Date.now()) / 1000) / 60)}:{(Math.floor(Math.max(0, (timer.endsAt - Date.now()) / 1000) % 60) + '').padStart(2, '0')}</span>
             </button>
           )}
 
-          {/* Quick AV Capsule: Cam & Mic Toggles (Compact, Clean, Touch-friendly) */}
+          {/* Quick AV Capsule: Cam & Mic Toggles (Solid, Crisp, Touch-friendly) */}
           {!isGhost && (
-            <div className={`flex items-center gap-0.5 p-0.5 rounded-xl shrink-0 border shadow-sm ${
-              theme.isLight ? 'bg-white/80 border-slate-200/90' : 'bg-black/30 border-white/10'
+            <div className={`flex items-center gap-1 p-0.5 rounded-xl shrink-0 border-2 shadow-md ${
+              theme.isLight ? 'bg-white border-slate-200' : 'bg-[#181822] border-pink-500/35'
             }`}>
               <button
                 type="button"
                 onClick={async () => {
                   try { await callControlsRef.current?.toggleCam?.(); } catch (err) { console.warn('toggleCam error:', err); }
                 }}
-                className={`hover-lift h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition ${
+                className={`hover-lift h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition ${
                   callCam
                     ? theme.isLight
-                      ? 'bg-emerald-500/15 text-emerald-800 border border-emerald-300/80'
-                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                      : 'bg-emerald-500/25 text-emerald-300 border border-emerald-400'
+                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
                 }`}
                 title={callCam ? 'Camera is ON (Tap to turn OFF)' : 'Camera is OFF (Tap to turn ON)'}
               >
-                {callCam ? <Video className="h-3.5 w-3.5 text-emerald-500" /> : <VideoOff className="h-3.5 w-3.5 text-rose-500" />}
+                {callCam ? <Video className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
                 <span className="hidden sm:inline">{callCam ? 'Cam' : 'Off'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => callControlsRef.current?.toggleMic?.()}
-                className={`hover-lift h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition ${
+                className={`hover-lift h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition ${
                   callMic
                     ? theme.isLight
-                      ? 'bg-sky-500/15 text-sky-800 border border-sky-300/80'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                      ? 'bg-sky-50 text-sky-800 border border-sky-300'
+                      : 'bg-[#252536] text-white border border-white/20'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-400'
                 }`}
                 title={callMic ? 'Mic Live (Tap to Mute)' : 'Mic Muted (Tap to Unmute)'}
               >
-                {callMic ? <Mic className="h-3.5 w-3.5 text-sky-500" /> : <MicOff className="h-3.5 w-3.5 text-amber-500" />}
+                {callMic ? <Mic className="h-3.5 w-3.5 text-sky-400" /> : <MicOff className="h-3.5 w-3.5 text-amber-400" />}
                 <span className="hidden sm:inline">{callMic ? 'Mic' : 'Muted'}</span>
               </button>
             </div>
@@ -1164,10 +1160,10 @@ export default function Room() {
           {/* Quick Invite Button */}
           <button
             onClick={copy}
-            className={`hover-lift hover-sheen h-7 sm:h-8 !py-0 px-2.5 sm:px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0 border ${
+            className={`hover-lift hover-sheen h-7 sm:h-8 !py-0 px-3 sm:px-3.5 text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer shrink-0 border-2 ${
               theme.isLight
-                ? 'border-pink-300 bg-white/90 hover:bg-pink-50 text-pink-600 shadow-sm'
-                : 'btn-pink text-white shadow-md shadow-pink-500/20'
+                ? 'border-pink-300 bg-white hover:bg-pink-50 text-pink-600 shadow-sm'
+                : 'btn-pink text-white shadow-lg shadow-pink-500/40 border-pink-300'
             }`}
             title="Copy room invite link"
           >
@@ -1179,10 +1175,10 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowThemeModal(true)}
-            className={`hidden md:flex hover-lift h-8 px-2.5 rounded-xl text-xs font-semibold items-center justify-center gap-1.5 border transition cursor-pointer shrink-0 ${theme.themeBtnClass}`}
+            className={`hidden md:flex hover-lift h-8 px-3 rounded-xl text-xs font-black items-center justify-center gap-1.5 border-2 transition cursor-pointer shrink-0 shadow-md ${theme.themeBtnClass}`}
             title="Change Room Color Theme & Ambiance"
           >
-            <Palette className="h-3.5 w-3.5 text-pink-500" />
+            <Palette className="h-3.5 w-3.5 text-pink-300" />
             <span className="hidden lg:inline">Themes</span>
           </button>
 
@@ -1190,14 +1186,14 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowPlugins(true)}
-            className={`hidden xl:flex hover-lift h-8 px-2.5 rounded-xl text-xs font-bold items-center justify-center gap-1.5 border transition shadow-sm cursor-pointer shrink-0 ${
+            className={`hidden xl:flex hover-lift h-8 px-3 rounded-xl text-xs font-black items-center justify-center gap-1.5 border-2 transition shadow-md cursor-pointer shrink-0 ${
               theme.isLight
-                ? 'bg-white/80 hover:bg-white border-slate-200/90 text-slate-700'
-                : 'bg-white/5 hover:bg-white/10 border-white/15 text-pink-200'
+                ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800'
+                : 'bg-[#20202E] hover:bg-[#2C2C3E] border-pink-500/35 text-white'
             }`}
             title="Open Cinema Plugins (Atmosphere, Keepsakes, Trivia & Intermission)"
           >
-            <Sparkles className="h-3.5 w-3.5 text-pink-500" />
+            <Sparkles className="h-3.5 w-3.5 text-pink-400" />
             <span>Plugins</span>
           </button>
 
@@ -1205,14 +1201,14 @@ export default function Room() {
           <button
             type="button"
             onClick={() => setShowMenu(true)}
-            className={`hover-lift h-7 sm:h-8 px-2 sm:px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer shrink-0 shadow-sm ${
+            className={`hover-lift h-7 sm:h-8 px-2.5 sm:px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 border-2 transition cursor-pointer shrink-0 shadow-md ${
               theme.isLight
-                ? 'bg-white/80 hover:bg-white border-slate-200/90 text-slate-700'
-                : 'bg-white/5 hover:bg-white/10 border-white/15 text-white/90'
+                ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-800'
+                : 'bg-[#20202E] hover:bg-[#2C2C3E] border-pink-500/40 text-white'
             }`}
             title="Room Controls, Layouts & Settings"
           >
-            <Sliders className="h-3.5 w-3.5 text-rose-400" />
+            <Sliders className="h-3.5 w-3.5 text-pink-400" />
             <span className="hidden sm:inline">Settings</span>
           </button>
         </div>
@@ -1739,16 +1735,16 @@ export default function Room() {
             </div>
 
             {/* Room Footer Actions: Leave Room & Host Close Room */}
-            <div className={`pt-2 border-t flex items-center gap-2 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
+            <div className={`pt-3 border-t-2 flex items-center gap-2.5 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/30'}`}>
               <Link
                 href="/"
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs font-bold transition cursor-pointer hover-lift ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs font-black transition cursor-pointer hover-lift shadow-md ${
                   theme.isLight
-                    ? 'text-slate-800 bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 shadow-xs'
-                    : 'text-zinc-300 bg-white/5 border border-white/10 hover:bg-white/10'
+                    ? 'text-slate-800 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 shadow-xs'
+                    : 'text-white bg-[#222230] hover:bg-[#2C2C3D] border-2 border-white/20'
                 }`}
               >
-                <LogOut className={`h-4 w-4 ${theme.isLight ? 'text-slate-600' : 'text-zinc-400'}`} />
+                <LogOut className={`h-4 w-4 ${theme.isLight ? 'text-slate-600' : 'text-zinc-300'}`} />
                 <span>Leave Room</span>
               </Link>
               {me === hostId && (
@@ -1771,13 +1767,13 @@ export default function Room() {
                     }
                     setShowMenu(false);
                   }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs font-bold transition cursor-pointer hover-lift ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-xs font-black transition cursor-pointer hover-lift shadow-md ${
                     theme.isLight
-                      ? 'text-rose-700 bg-rose-50 hover:bg-rose-100 border-2 border-rose-200 shadow-xs'
-                      : 'text-rose-300 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20'
+                      ? 'text-rose-700 bg-rose-50 hover:bg-rose-100 border-2 border-rose-300 shadow-xs'
+                      : 'text-rose-200 bg-rose-950/40 border-2 border-rose-500/50 hover:bg-rose-900/60'
                   }`}
                 >
-                  <DoorClosed className="h-4 w-4 text-rose-500" />
+                  <DoorClosed className="h-4 w-4 text-rose-400" />
                   <span>Close Room</span>
                 </button>
               )}
@@ -1804,20 +1800,20 @@ export default function Room() {
           {/* Main Cinema Auditorium (Left / Center) */}
           <section className="flex-1 flex flex-col min-w-0 space-y-3 pb-24 lg:pb-12">
             {users.length < maxSeats && !hideWaitingBanner && (
-              <div className={`anim-reveal flex items-center justify-between gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl w-full text-xs shadow-sm backdrop-blur-xl transition-all duration-300 ${
+              <div className={`flex items-center justify-between gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl w-full text-xs shadow-md transition-all duration-300 ${
                 theme.isLight
                   ? 'bg-white/95 border-2 border-rose-200/90 shadow-[0_8px_30px_rgba(244,63,94,0.06)] text-slate-900'
-                  : 'bg-[#1a1a1d]/90 border border-pink-500/25 text-pink-100'
+                  : 'bg-[#181824] border-2 border-pink-500/35 text-white shadow-xl'
               }`}>
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 anim-pulse-glow ${theme.isLight ? 'bg-rose-100 text-rose-600' : 'bg-pink-500/20 text-pink-400'}`}>
-                    <Heart className="h-3.5 w-3.5 fill-current" />
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${theme.isLight ? 'bg-rose-100 text-rose-600' : 'bg-pink-500/25 border border-pink-400/50 text-pink-400'}`}>
+                    <Heart className="h-4 w-4 fill-current" />
                   </div>
                   <div className="min-w-0">
-                    <div className={`font-bold text-xs truncate ${theme.isLight ? 'text-slate-900 font-extrabold' : 'text-white'}`}>
+                    <div className={`font-black text-xs sm:text-sm truncate ${theme.isLight ? 'text-slate-900 font-black' : 'text-white'}`}>
                       Waiting for your partner to join...
                     </div>
-                    <div className={`text-[11px] truncate hidden sm:block ${theme.isLight ? 'text-slate-600 font-medium' : 'text-pink-300/70'}`}>
+                    <div className={`text-[11px] truncate hidden sm:block ${theme.isLight ? 'text-slate-600 font-medium' : 'text-pink-200 font-semibold'}`}>
                       Share your room invite link or code to start watching in sync.
                     </div>
                   </div>
@@ -1825,7 +1821,7 @@ export default function Room() {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={copy}
-                    className="btn-pink hover-lift hover-sheen !py-1.5 !px-3 text-xs font-bold flex items-center gap-1 rounded-xl text-white shadow-sm cursor-pointer"
+                    className="btn-pink hover-lift hover-sheen !py-1.5 !px-3 text-xs font-black flex items-center gap-1 rounded-xl text-white shadow-md cursor-pointer border border-pink-300"
                   >
                     {copied ? <Check className="h-3 w-3 text-white" /> : <Copy className="h-3 w-3" />}
                     <span>{copied ? 'Copied' : 'Invite'}</span>
@@ -1833,7 +1829,7 @@ export default function Room() {
                   <button
                     type="button"
                     onClick={() => setHideWaitingBanner(true)}
-                    className="h-7 w-7 rounded-xl flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 text-slate-500 dark:text-zinc-400 transition cursor-pointer"
+                    className="h-7 w-7 rounded-xl flex items-center justify-center hover:bg-black/20 text-zinc-300 hover:text-white transition cursor-pointer"
                     title="Dismiss banner"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -2050,9 +2046,9 @@ export default function Room() {
             )}
 
             {/* Mobile / Tablet Interactive Tabs Deck (Reachable via smooth scroll) */}
-            <div className={`lg:hidden flex flex-col rounded-2xl bg-[#18181C]/95 border-2 border-pink-500/30 shadow-2xl overflow-hidden mt-3 backdrop-blur-2xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`lg:hidden flex flex-col rounded-2xl bg-[#16161F] border-2 border-pink-500/40 shadow-2xl overflow-hidden mt-3 backdrop-blur-2xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               {/* Tab Selector Nav Header */}
-              <div className="shrink-0 flex items-center border-b border-pink-500/25 bg-[#121215] p-1.5 gap-1.5">
+              <div className="shrink-0 flex items-center border-b-2 border-pink-500/30 bg-[#0E0E14] p-2 gap-2">
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare, badge: chat.length },
                   { id: 'call', label: 'Duo Cam', icon: Video, activeDot: callCam },
@@ -2066,10 +2062,10 @@ export default function Room() {
                       key={tab.id}
                       type="button"
                       onClick={() => setMobileTab(tab.id)}
-                      className={`flex-1 py-2 px-1.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer relative shadow-sm ${
+                      className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer relative shadow-sm ${
                         active
-                          ? 'btn-pink text-white shadow-lg shadow-pink-500/40 border border-pink-300/40'
-                          : 'bg-[#222228] hover:bg-[#2E2E36] text-zinc-200 hover:text-white border border-white/15'
+                          ? 'btn-pink text-white shadow-lg shadow-pink-500/40 border-2 border-pink-300'
+                          : 'bg-[#22222E] hover:bg-[#2C2C3A] text-zinc-100 hover:text-white border-2 border-white/20'
                       }`}
                     >
                       <div className="relative flex items-center">
@@ -2152,9 +2148,9 @@ export default function Room() {
 
           {/* Desktop Right Column: Interactive Deck */}
           {viewMode !== 'focus' && (
-            <aside className={`hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl ${theme.asideBg} border ${theme.borderColor} shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden backdrop-blur-xl transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <aside className={`hidden lg:flex w-80 xl:w-96 shrink-0 flex flex-col rounded-2xl bg-[#16161F] border-2 border-pink-500/35 shadow-2xl sticky top-20 h-[calc(100vh-6rem)] overflow-hidden transition-all duration-500 ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               {/* Tab Selector Header */}
-              <div className={`shrink-0 flex items-center border-b ${theme.borderColor} p-1.5 gap-1 ${theme.tabBg}`}>
+              <div className={`shrink-0 flex items-center border-b-2 border-pink-500/30 p-2 gap-1.5 bg-[#0E0E14]`}>
                 {[
                   { id: 'chat', label: 'Chat', icon: MessageSquare },
                   { id: 'duo', label: 'Duo Cam', icon3d: Heart3D },
@@ -2169,12 +2165,12 @@ export default function Room() {
                       key={t.id}
                       type="button"
                       onClick={() => setDesktopTab(t.id)}
-                      className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer ${
                         active
-                          ? 'btn-pink text-white shadow-md shadow-pink-500/25'
+                          ? 'btn-pink text-white shadow-md shadow-pink-500/30 border-2 border-pink-300'
                           : theme.isLight
-                            ? 'text-slate-700 hover:text-slate-950 hover:bg-rose-100/60 font-bold'
-                            : 'text-pink-200/70 hover:text-pink-100 hover:bg-pink-500/10'
+                            ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 font-bold'
+                            : 'bg-[#22222E] hover:bg-[#2C2C3A] text-zinc-100 hover:text-white border border-white/20'
                       }`}
                     >
                       {Icon3D ? <Icon3D size={16} /> : <Icon className="h-3.5 w-3.5" />}
@@ -2232,8 +2228,8 @@ export default function Room() {
                     {users.filter(u => u.id !== me).length > 0 ? (
                       <div className={`grid gap-2.5 ${users.filter(u => u.id !== me).length === 1 ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
                         {users.filter(u => u.id !== me).map((partner) => (
-                          <div key={partner.id} className={`relative aspect-video w-full overflow-hidden rounded-xl border group shadow-md ${
-                            theme.isLight ? 'bg-white/80 border-slate-200/90' : 'bg-[#222222] border-pink-500/25 shadow-inner'
+                          <div key={partner.id} className={`relative aspect-video w-full overflow-hidden rounded-xl border-2 group shadow-md ${
+                            theme.isLight ? 'bg-white/80 border-slate-200/90' : 'bg-[#181822] border-pink-500/35 shadow-inner'
                           }`}>
                             <Tile
                               stream={callMedia?.remote?.[partner?.id]}
@@ -2259,14 +2255,14 @@ export default function Room() {
                         ))}
                       </div>
                     ) : (
-                      <div className={`aspect-video rounded-xl border border-dashed flex flex-col items-center justify-center p-3 text-center space-y-1.5 ${
+                      <div className={`aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-3 text-center space-y-1.5 ${
                         theme.isLight
                           ? 'border-pink-300 bg-pink-50/50 text-slate-700'
-                          : 'border-pink-500/30 bg-[#1a1a1a]/60 text-pink-200'
+                          : 'border-pink-500/40 bg-[#181824] text-pink-100'
                       }`}>
-                        <Heart className="h-6 w-6 text-pink-500 animate-pulse" />
-                        <p className={`text-[11px] font-semibold ${theme.isLight ? 'text-slate-800' : 'text-pink-200'}`}>Waiting for your partner to join…</p>
-                        <button onClick={copy} className="btn-pink !py-1 !px-2.5 text-[11px]">
+                        <Heart className="h-6 w-6 text-pink-400" />
+                        <p className={`text-[11px] font-bold ${theme.isLight ? 'text-slate-800' : 'text-white'}`}>Waiting for your partner to join…</p>
+                        <button onClick={copy} className="btn-pink !py-1 !px-2.5 text-[11px] font-black">
                           Copy Invite 💌
                         </button>
                       </div>
@@ -2274,10 +2270,10 @@ export default function Room() {
 
                     {/* Local User Preview Pip / Ghost Indicator */}
                     {!isGhost ? (
-                      <div className={`flex items-center justify-between p-2 rounded-xl border ${
+                      <div className={`flex items-center justify-between p-2 rounded-xl border-2 ${
                         theme.isLight
                           ? 'bg-white/90 border-slate-200/90 shadow-sm text-slate-800'
-                          : 'bg-[#222222]/90 border-pink-500/20 text-white'
+                          : 'bg-[#1C1C26] border-pink-500/35 text-white'
                       }`}>
                         <div className="flex items-center gap-2">
                           <div className={`h-8 w-12 rounded-lg overflow-hidden border shrink-0 ${theme.isLight ? 'bg-slate-100 border-slate-200' : 'bg-[#222222] border-pink-500/25'}`}>

@@ -1542,29 +1542,29 @@ export default function VideoPlayer({
             : 'aspect-video rounded-3xl'
         }`}
       >
-        {/* Top-Left Status Cluster: Sync Status + Live Stream (Only rendered when video is actively loaded) */}
+        {/* Top-Left Status Cluster: Sync Status + Live Stream (Always visible on mobile & desktop) */}
         {T !== 'none' && (
           <div
             className={`absolute top-3 left-3 z-30 flex items-center gap-2 transition-opacity duration-300 pointer-events-auto ${
               isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
           >
-            <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md shadow-lg ${
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-xl border-2 ${
               theme?.isLight
-                ? 'bg-white/90 border border-slate-200 text-slate-800'
-                : 'bg-[#222222]/90 border border-pink-500/20 text-white/90'
+                ? 'bg-white border-slate-300 text-slate-800 font-extrabold'
+                : 'bg-[#181824] border-pink-500/40 text-white font-black'
             }`}>
-              <span className={`h-2 w-2 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-[#EC4899]'}`} />
-              <span className="font-medium">{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
+              <span className={`h-2.5 w-2.5 rounded-full ${syncStatus === 'in_sync' ? 'bg-emerald-400' : syncStatus === 'syncing' ? 'bg-amber-400' : 'bg-pink-500'}`} />
+              <span>{syncStatus === 'in_sync' ? `In sync • ${syncLatency}ms` : syncStatus === 'syncing' ? 'Fine-tuning…' : 'Syncing'}</span>
               {syncOffset !== 0 && (
-                <span className="text-[10px] text-[#F472B6] font-mono ml-0.5">
+                <span className="text-[10px] text-pink-300 font-mono ml-0.5">
                   ({syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`})
                 </span>
               )}
             </div>
 
             {isLiveStream && (
-              <div className="btn-pink flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-[#FCE7F3] border border-white/20 shadow-lg backdrop-blur-md">
+              <div className="btn-pink flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black text-white border-2 border-white/30 shadow-xl">
                 <Radio className="h-3 w-3" />
                 <span>LIVE</span>
                 <button
@@ -1586,16 +1586,13 @@ export default function VideoPlayer({
         {/* Screensharing Active Header & Full Screen Toggle */}
         {stream && (
           <div
-            className={`absolute top-3 inset-x-3 z-30 flex items-center justify-between gap-2 p-2 rounded-xl bg-[#222222]/90 backdrop-blur-md border border-white/15 transition-opacity duration-300 ${
+            className={`absolute top-3 inset-x-3 z-30 flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-[#161622] border-2 border-pink-500/40 shadow-2xl transition-opacity duration-300 ${
               isFullscreen && !showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100'
             }`}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EC4899] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EC4899]"></span>
-              </span>
-              <span className="text-xs font-semibold text-[#FCE7F3] truncate">
+              <span className="h-2.5 w-2.5 rounded-full bg-pink-500 shrink-0" />
+              <span className="text-xs font-black text-white truncate">
                 {screenBy === me
                   ? '🖥️ You are sharing your screen'
                   : `🖥️ ${users.find((u) => u.id === screenBy)?.name || 'Partner'} is sharing screen`}
@@ -1606,7 +1603,7 @@ export default function VideoPlayer({
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="btn-pink !py-1 !px-3 text-xs flex items-center gap-1.5 text-[#FCE7F3] border-0 shadow-md font-semibold cursor-pointer"
+                className="btn-pink !py-1.5 !px-3.5 text-xs flex items-center gap-1.5 text-white border-2 border-pink-300 shadow-md font-black cursor-pointer"
                 title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
               >
                 {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -1616,10 +1613,10 @@ export default function VideoPlayer({
                 <button
                   type="button"
                   onClick={stopShare}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EC4899]/20 hover:bg-[#EC4899]/30 text-[#FCE7F3] border border-[#EC4899]/30 text-xs font-medium cursor-pointer transition"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-pink-500/25 hover:bg-pink-500/40 text-pink-200 border-2 border-pink-500/50 text-xs font-black cursor-pointer transition"
                   title="Stop sharing your screen"
                 >
-                  <MonitorOff className="h-3.5 w-3.5 text-[#F472B6]" />
+                  <MonitorOff className="h-3.5 w-3.5 text-pink-400" />
                   <span className="hidden sm:inline">Stop</span>
                 </button>
               )}
@@ -1627,68 +1624,65 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Regular Video Mode: Top-Right Toolbar (Full Screen + Sync & Audio) */}
+        {/* Regular Video Mode: Top-Right Toolbar (Full Screen + Sync & Audio) - 100% Permanently Visible */}
         {!stream && (
           <div
-            className={`absolute top-3 right-3 z-20 flex items-center gap-2 transition-all duration-300 ${
+            className={`absolute top-3 right-3 z-20 flex items-center gap-1.5 sm:gap-2 transition-all duration-300 pointer-events-auto ${
               isFullscreen
                 ? (!showOverlayControls ? 'opacity-0 pointer-events-none' : 'opacity-100')
-                : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:opacity-100 focus-within:opacity-100 pointer-events-auto'
+                : 'opacity-100'
             }`}
           >
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
                 isFullscreen
-                  ? 'btn-pink text-[#FCE7F3] border-white/30'
-                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FCE7F3]/90 hover:text-[#FCE7F3] border-white/20 hover:border-white/40'
+                  ? 'btn-pink text-white border-pink-300'
+                  : 'bg-[#181824] hover:bg-[#252536] text-white border-pink-500/40 hover:border-pink-400'
               }`}
               title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
             >
-              {isFullscreen ? <Minimize2 className="h-3 w-3 text-[#FCE7F3]" /> : <Maximize2 className="h-3 w-3 text-[#F472B6]" />}
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-white" /> : <Maximize2 className="h-3.5 w-3.5 text-pink-400" />}
               <span className="hidden sm:inline">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowAudioVisualizer(!showAudioVisualizer)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
                 showAudioVisualizer
-                  ? 'btn-pink text-[#FCE7F3] border-white/30'
-                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FCE7F3]/80 hover:text-[#FCE7F3] border-white/10 hover:border-white/30'
+                  ? 'btn-pink text-white border-pink-300'
+                  : 'bg-[#181824] hover:bg-[#252536] text-white border-pink-500/40 hover:border-pink-400'
               }`}
               title="Toggle Dynamic In-Room Cinema Audio Spectrum Visualizer"
             >
-              <Volume2 className="h-3 w-3 text-[#F472B6]" />
+              <Volume2 className="h-3.5 w-3.5 text-pink-400" />
               <span className="hidden sm:inline">Visualizer</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition cursor-pointer shadow-lg backdrop-blur-md ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
                 showSettings
-                  ? 'btn-pink text-[#FCE7F3] border-white/30'
-                  : 'bg-[#222222]/90 hover:bg-[#222222] text-[#FCE7F3]/80 hover:text-[#FCE7F3] border-white/10 hover:border-white/30'
+                  ? 'btn-pink text-white border-pink-300'
+                  : 'bg-[#181824] hover:bg-[#252536] text-white border-pink-500/40 hover:border-pink-400'
               }`}
               title="Precision Sync, Speed & Audio Settings"
             >
-              <Sliders className="h-3 w-3 text-[#F472B6]" />
+              <Sliders className="h-3.5 w-3.5 text-pink-400" />
               <span className="hidden sm:inline">Sync & Audio</span>
             </button>
           </div>
         )}
 
-        {/* Synchronized Buffer Hold Overlay with Luxury Dynamic Cinema Visualizer */}
+        {/* Synchronized Buffer Hold Overlay (Clean, Solid, No Heavy Animations) */}
         {bufferHold?.active && (
-          <div className="absolute inset-0 z-35 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl pointer-events-auto select-none anim-reveal">
-            <div className="max-w-md w-full p-6 rounded-3xl bg-[#14141B]/98 border-2 border-pink-500/50 text-center shadow-[0_20px_60px_rgba(236,72,153,0.35)] space-y-4">
-              <div className="relative mx-auto h-20 w-20 grid place-items-center">
-                <div className="absolute inset-0 rounded-full border-2 border-dashed border-pink-500/40 anim-celestial-spin" />
-                <div className="absolute inset-2 rounded-full border border-purple-400/50 anim-celestial-spin-reverse" />
-                <div className="absolute inset-3 rounded-full bg-pink-500/20 blur-md animate-pulse" />
-                <Popcorn3D size={42} className="relative z-10 drop-shadow-[0_4px_12px_rgba(236,72,153,0.6)]" />
+          <div className="absolute inset-0 z-35 flex items-center justify-center p-4 bg-black/90 pointer-events-auto select-none">
+            <div className="max-w-md w-full p-6 rounded-3xl bg-[#161622] border-2 border-pink-500/60 text-center shadow-2xl space-y-4">
+              <div className="relative mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-pink-500/20 border-2 border-pink-400">
+                <Popcorn3D size={42} className="relative z-10" />
               </div>
 
               <div className="space-y-1">
@@ -1702,22 +1696,20 @@ export default function VideoPlayer({
                     <span><strong className="text-pink-300 font-black">{bufferHold.name}</strong> is buffering… Playback paused smoothly for both.</span>
                   )}
                 </p>
-                <p className="text-xs text-pink-200/80 font-medium">
+                <p className="text-xs text-pink-200/90 font-medium">
                   ⚡ Auto-playing in 0ms lock the moment buffer recovers • Autonomous auto-fixer handles everything.
                 </p>
               </div>
 
-              {/* 16-Bar Luxury Audio-Visual Equalizer */}
-              <div className="flex items-end justify-center gap-1.5 h-10 py-1">
+              {/* 16-Bar Luxury Static Equalizer Spectrum Indicator */}
+              <div className="flex items-end justify-center gap-1.5 h-8 py-1">
                 {[35, 70, 50, 95, 60, 100, 75, 85, 45, 90, 65, 80, 50, 95, 70, 40].map((h, i) => (
                   <span
                     key={i}
-                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 via-rose-400 to-white anim-audio-bar"
+                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 via-rose-400 to-white"
                     style={{
                       height: `${h}%`,
-                      animationDelay: `${i * 80}ms`,
-                      animationDuration: '1.1s',
-                      boxShadow: '0 0 10px rgba(236,72,153,0.6)'
+                      boxShadow: '0 0 6px rgba(236,72,153,0.5)'
                     }}
                   />
                 ))}
@@ -1725,7 +1717,7 @@ export default function VideoPlayer({
 
               <div className="pt-2 flex items-center justify-center gap-4">
                 <span className="text-xs text-emerald-400 font-extrabold flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 inline-block" />
                   Auto-Fixer Active
                 </span>
                 <button
@@ -1734,7 +1726,7 @@ export default function VideoPlayer({
                     setBufferHold(null);
                     api.current?.play();
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-pink-500/25 hover:bg-pink-500/40 border border-pink-500/50 text-xs font-bold text-pink-200 hover:text-white transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-pink-500/25 hover:bg-pink-500/40 border-2 border-pink-500/50 text-xs font-black text-white transition cursor-pointer"
                 >
                   Resume anyway
                 </button>
@@ -2185,28 +2177,25 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => setShowFsPip(true)}
-            className={`absolute z-40 flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#222222]/95 backdrop-blur-md border border-white/20 text-[#FCE7F3] text-xs hover:border-[#EC4899] transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
+            className={`absolute z-40 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#181824] border-2 border-pink-500/40 text-white text-xs font-black hover:border-pink-400 transition shadow-2xl cursor-pointer ${cornerClasses[pipCorner]}`}
             title="Show Video Call PiP"
           >
-            <Video className="h-3.5 w-3.5 text-[#F472B6]" />
+            <Video className="h-3.5 w-3.5 text-pink-400" />
             <span>Show Call</span>
             {(callMedia?.localTalking || Object.values(callMedia?.remoteTalking || {}).some(Boolean)) && (
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 inline-block" />
             )}
           </button>
         )}
       </div>
 
       {/* Instant Multi-User Playback Sync Controls Bar (Fast-Seek, Zero-Drift Play/Pause & Forward/Rewind) */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl border-2 border-pink-500/30 bg-[#16161A]/95 shadow-2xl shadow-black/80 text-xs my-1.5 backdrop-blur-2xl transition-colors duration-300">
+      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl border-2 border-pink-500/35 bg-[#161622] shadow-2xl text-xs my-2 transition-colors duration-300">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => seekDelta(-10)}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-black transition cursor-pointer active:scale-95 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white shadow-md hover-lift"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-black transition cursor-pointer active:scale-95 border-2 border-white/20 bg-[#222230] hover:bg-[#2C2C3E] text-white shadow-md hover-lift"
             title="Rewind 10 seconds (Synced for all participants)"
           >
             <RotateCcw className="h-3.5 w-3.5 text-pink-400 stroke-[2.5]" />
@@ -2224,12 +2213,12 @@ export default function VideoPlayer({
                 send('PLAY');
               }
             }}
-            className="btn-pink flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-xl text-white font-black shadow-lg shadow-pink-500/40 transition cursor-pointer active:scale-95 hover-lift hover-sheen text-xs sm:text-sm"
+            className="btn-pink flex items-center gap-2 px-5 py-2 rounded-xl text-white font-black shadow-lg shadow-pink-500/40 transition cursor-pointer active:scale-95 hover-lift hover-sheen text-xs sm:text-sm border-2 border-pink-300"
             title={playing.current ? "Pause video for all participants" : "Play video for all participants"}
           >
             {playing.current ? (
               <>
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm" />
                 <span>Pause</span>
               </>
             ) : (
@@ -2243,7 +2232,7 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => seekDelta(10)}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-black transition cursor-pointer active:scale-95 border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white shadow-md hover-lift"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-black transition cursor-pointer active:scale-95 border-2 border-white/20 bg-[#222230] hover:bg-[#2C2C3E] text-white shadow-md hover-lift"
             title="Forward 10 seconds (Synced for all participants)"
           >
             <span className="font-mono text-xs">+10s</span>
@@ -2257,28 +2246,28 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => setVpnShield((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border-2 text-[11px] sm:text-xs font-black transition cursor-pointer active:scale-95 shadow-md ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-[11px] sm:text-xs font-black transition cursor-pointer active:scale-95 shadow-md ${
               vpnShield
                 ? 'bg-[#14261B] border-emerald-400 text-emerald-300 shadow-emerald-950/60'
-                : 'bg-[#25252B] border-white/20 text-zinc-300'
+                : 'bg-[#222230] border-white/20 text-zinc-300'
             }`}
             title={vpnShield ? '🛡️ VPN Shield Active: IP cloaked & ISP/campus network blocks bypassed' : 'VPN Shield Disabled (Tap to Enable)'}
           >
-            <span className={`h-2.5 w-2.5 rounded-full ${vpnShield ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+            <span className={`h-2.5 w-2.5 rounded-full ${vpnShield ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
             <span className="hidden xs:inline">VPN</span>
             <span>{vpnShield ? 'Shield ON' : 'Off'}</span>
           </button>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/40 bg-[#25252B] text-white text-[11px] font-bold shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-emerald-400/60 bg-[#16221A] text-white text-[11px] font-bold shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
             <span className="font-mono font-black text-emerald-300">0.0ms</span>
-            <span className="text-zinc-300">Drift Lock</span>
+            <span className="text-zinc-200">Drift Lock</span>
           </div>
 
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="p-2 rounded-xl transition border border-white/20 bg-[#25252B] hover:bg-[#32323A] text-white shadow-md cursor-pointer hover:border-pink-500/50"
+            className="p-2.5 rounded-xl transition border-2 border-white/20 bg-[#222230] hover:bg-[#2C2C3E] text-white shadow-md cursor-pointer hover:border-pink-500/50"
             title="Toggle Cinema Fullscreen"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4 text-pink-400" /> : <Maximize2 className="h-4 w-4 text-pink-400" />}
@@ -2330,33 +2319,38 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Precision Sync & Audio Drawer */}
+      {/* Precision Sync & Audio Drawer (Vivid High Contrast & Complete Visibility) */}
       {showSettings && (
-        <div className="card p-4 !bg-[#222222] border border-white/10 space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <span className="text-xs font-bold text-[#FCE7F3] uppercase tracking-wider flex items-center gap-1.5">
-              <Sliders className="h-4 w-4 text-[#F472B6]" /> Precision Sync &amp; Audio Controls
+        <div className="card p-5 !bg-[#161622] border-2 border-pink-500/40 rounded-2xl shadow-2xl space-y-4 text-white">
+          <div className="flex items-center justify-between border-b-2 border-pink-500/30 pb-3">
+            <span className="text-xs font-black text-pink-100 uppercase tracking-wider flex items-center gap-1.5">
+              <Sliders className="h-4 w-4 text-pink-400" /> Precision Sync &amp; Audio Controls
             </span>
-            <button onClick={() => setShowSettings(false)} className="text-xs opacity-60 hover:opacity-100">✕ Close</button>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="text-xs px-3 py-1 rounded-xl bg-rose-500/25 hover:bg-rose-500/40 border-2 border-rose-400 text-rose-200 font-black cursor-pointer transition"
+            >
+              ✕ Close
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             {/* Playback Speed (Synced) */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-white/80">
-                <span className="font-semibold flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-[#F472B6]" /> Shared Speed</span>
-                <span className="font-mono text-[#FCE7F3]">{sharedSpeed}x</span>
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#1E1E2C] border-2 border-pink-500/25">
+              <div className="flex justify-between text-white font-extrabold">
+                <span className="flex items-center gap-1"><FastForward className="h-3.5 w-3.5 text-pink-400" /> Shared Speed</span>
+                <span className="font-mono text-pink-200 font-black">{sharedSpeed}x</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 {SPEEDS.map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => changeSharedSpeed(s)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer ${
                       sharedSpeed === s
-                        ? 'btn-pink text-white shadow-md'
-                        : 'bg-white/10 text-white/70 hover:bg-white/20'
+                        ? 'btn-pink text-white shadow-md border-2 border-pink-300'
+                        : 'bg-[#28283A] hover:bg-[#34344E] text-zinc-100 hover:text-white border border-white/20'
                     }`}
                   >
                     {s}x
@@ -2366,10 +2360,10 @@ export default function VideoPlayer({
             </div>
 
             {/* Local Audio Boost (Independent) */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-white/80">
-                <span className="font-semibold flex items-center gap-1"><Volume2 className="h-3.5 w-3.5 text-emerald-400" /> Local Audio Boost</span>
-                <span className="font-mono text-emerald-300">{audioBoost}%</span>
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#1E1E2C] border-2 border-emerald-500/25">
+              <div className="flex justify-between text-white font-extrabold">
+                <span className="flex items-center gap-1"><Volume2 className="h-3.5 w-3.5 text-emerald-400" /> Local Audio Boost</span>
+                <span className="font-mono text-emerald-300 font-black">{audioBoost}%</span>
               </div>
               <input
                 type="range"
@@ -2378,18 +2372,18 @@ export default function VideoPlayer({
                 step="5"
                 value={audioBoost}
                 onChange={(e) => handleAudioBoost(e.target.value)}
-                className="w-full accent-emerald-500 cursor-pointer"
+                className="w-full accent-emerald-400 cursor-pointer"
               />
-              <p className="text-[10px] text-white/50">Boosts volume up to 200% for quiet phone/laptop speakers without affecting your partner.</p>
+              <p className="text-[11px] text-zinc-300 font-medium">Boosts volume up to 200% for quiet phone/laptop speakers without affecting your partner.</p>
             </div>
 
             {/* Manual Sync Offset */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-white/80">
-                <span className="font-semibold flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5 text-amber-400" /> Manual Sync Offset</span>
-                <span className="font-mono text-amber-300">{syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`}</span>
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#1E1E2C] border-2 border-amber-500/25">
+              <div className="flex justify-between text-white font-extrabold">
+                <span className="flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5 text-amber-400" /> Manual Sync Offset</span>
+                <span className="font-mono text-amber-300 font-black">{syncOffset > 0 ? `+${syncOffset}s` : `${syncOffset}s`}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pt-1">
                 <input
                   type="range"
                   min="-2.0"
@@ -2397,71 +2391,71 @@ export default function VideoPlayer({
                   step="0.05"
                   value={syncOffset}
                   onChange={(e) => setSyncOffset(+e.target.value)}
-                  className="w-full accent-[#EC4899] cursor-pointer"
+                  className="w-full accent-pink-500 cursor-pointer"
                 />
                 <button
                   type="button"
                   onClick={() => setSyncOffset(0)}
-                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] shrink-0"
+                  className="px-3 py-1 rounded-xl bg-[#28283A] hover:bg-[#34344E] text-white border border-white/20 text-xs font-bold shrink-0 cursor-pointer"
                   title="Reset to 0s"
                 >
                   Reset
                 </button>
               </div>
-              <p className="text-[10px] text-white/50">Compensate for personal Bluetooth headphones or wireless speaker delay.</p>
+              <p className="text-[11px] text-zinc-300 font-medium">Compensate for personal Bluetooth headphones or wireless speaker delay.</p>
             </div>
 
             {/* Subtitle Appearance */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-white/80">
-                <span className="font-semibold flex items-center gap-1"><Captions className="h-3.5 w-3.5 text-indigo-400" /> Subtitles Style</span>
-                <span className="text-[10px] text-white/60">Independent</span>
+            <div className="space-y-1.5 p-3 rounded-xl bg-[#1E1E2C] border-2 border-purple-500/25">
+              <div className="flex justify-between text-white font-extrabold">
+                <span className="flex items-center gap-1"><Captions className="h-3.5 w-3.5 text-purple-400" /> Subtitles Style</span>
+                <span className="text-[11px] text-purple-300 font-bold">Independent</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pt-1">
                 <select
                   value={subStyle.size}
                   onChange={(e) => setSubStyle({ ...subStyle, size: e.target.value })}
-                  className="bg-white/10 rounded px-2 py-1 text-xs text-white border border-white/10"
+                  className="bg-[#28283A] rounded-xl px-2.5 py-1.5 text-xs text-white border-2 border-white/20 font-bold outline-none cursor-pointer"
                 >
-                  <option value="sm" className="text-black">Small text</option>
-                  <option value="md" className="text-black">Normal text</option>
-                  <option value="lg" className="text-black">Large text</option>
+                  <option value="sm" className="text-black bg-white">Small text</option>
+                  <option value="md" className="text-black bg-white">Normal text</option>
+                  <option value="lg" className="text-black bg-white">Large text</option>
                 </select>
                 <select
                   value={subStyle.color}
                   onChange={(e) => setSubStyle({ ...subStyle, color: e.target.value })}
-                  className="bg-white/10 rounded px-2 py-1 text-xs text-white border border-white/10"
+                  className="bg-[#28283A] rounded-xl px-2.5 py-1.5 text-xs text-white border-2 border-white/20 font-bold outline-none cursor-pointer"
                 >
-                  <option value="#ffffff" className="text-black">White text</option>
-                  <option value="#ffd700" className="text-black">Yellow text</option>
-                  <option value="#00e5ff" className="text-black">Cyan text</option>
-                  <option value="#fb7185" className="text-black">Rose text</option>
+                  <option value="#ffffff" className="text-black bg-white">White text</option>
+                  <option value="#ffd700" className="text-black bg-white">Yellow text</option>
+                  <option value="#00e5ff" className="text-black bg-white">Cyan text</option>
+                  <option value="#fb7185" className="text-black bg-white">Rose text</option>
                 </select>
                 <select
                   value={subStyle.bg}
                   onChange={(e) => setSubStyle({ ...subStyle, bg: e.target.value })}
-                  className="bg-white/10 rounded px-2 py-1 text-xs text-white border border-white/10"
+                  className="bg-[#28283A] rounded-xl px-2.5 py-1.5 text-xs text-white border-2 border-white/20 font-bold outline-none cursor-pointer"
                 >
-                  <option value="transparent" className="text-black">No Box</option>
-                  <option value="rgba(0,0,0,0.5)" className="text-black">Semi-Dark</option>
-                  <option value="rgba(0,0,0,0.85)" className="text-black">Dark Box</option>
+                  <option value="transparent" className="text-black bg-white">No Box</option>
+                  <option value="rgba(0,0,0,0.5)" className="text-black bg-white">Semi-Dark</option>
+                  <option value="rgba(0,0,0,0.85)" className="text-black bg-white">Dark Box</option>
                 </select>
               </div>
             </div>
 
             {/* Smart Voice Ducking & Slowdown */}
-            <div className="flex items-center justify-between py-2 border-t border-white/10 mt-1">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#1E1E2C] border-2 border-pink-500/25 mt-1">
               <div className="min-w-0 pr-2">
-                <p className="text-xs font-semibold text-white flex items-center gap-1.5">
-                  <Mic className="h-3.5 w-3.5 text-[#F472B6]" /> Smart Voice Ducking
+                <p className="text-xs font-black text-white flex items-center gap-1.5">
+                  <Mic className="h-3.5 w-3.5 text-pink-400" /> Smart Voice Ducking
                 </p>
-                <p className="text-[10px] text-white/50">Auto-slows video (0.82x) and lowers movie volume when anyone speaks</p>
+                <p className="text-[11px] text-zinc-300 font-medium pt-0.5">Auto-slows video (0.82x) and lowers movie volume when anyone speaks</p>
               </div>
               <button
                 type="button"
                 onClick={() => setSmartDuckingEnabled((prev) => !prev)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition shrink-0 ${
-                  smartDuckingEnabled ? 'btn-pink text-white shadow-md' : 'bg-white/10 text-white/50'
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-black transition shrink-0 cursor-pointer ${
+                  smartDuckingEnabled ? 'btn-pink text-white shadow-md' : 'bg-[#28283A] text-zinc-300 border border-white/20 hover:text-white'
                 }`}
               >
                 {smartDuckingEnabled ? 'Enabled' : 'Disabled'}
@@ -2469,20 +2463,20 @@ export default function VideoPlayer({
             </div>
 
             {/* Built-in VPN Shield & Network IP Cloak */}
-            <div className="flex items-center justify-between py-2 border-t border-white/10 mt-1 col-span-1 sm:col-span-2">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#1E1E2C] border-2 border-emerald-500/25 mt-1 col-span-1 sm:col-span-2">
               <div className="min-w-0 pr-2">
-                <p className="text-xs font-semibold text-white flex items-center gap-1.5">
-                  <Shield3D size={14} /> Built-in VPN Shield (Zero-Log IP Cloak)
+                <p className="text-xs font-black text-white flex items-center gap-1.5">
+                  <Shield3D size={16} /> Built-in VPN Shield (Zero-Log IP Cloak)
                 </p>
-                <p className="text-[10px] text-white/50">
+                <p className="text-[11px] text-zinc-300 font-medium pt-0.5">
                   Bypasses college Wi-Fi, strict ISP blocks, DNS firewalls, and hides your IP address via SyncCinema Layer-3 Encrypted Tunnel
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setVpnShield((prev) => !prev)}
-                className={`rounded-full px-3 py-1 text-[11px] font-bold transition shrink-0 cursor-pointer ${
-                  vpnShield ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-white/10 text-white/50'
+                className={`rounded-xl px-4 py-2 text-xs font-black transition shrink-0 cursor-pointer ${
+                  vpnShield ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30' : 'bg-[#28283A] text-zinc-300 border border-white/20 hover:text-white'
                 }`}
               >
                 {vpnShield ? '🛡️ Shield Active' : 'Disabled'}
@@ -2493,20 +2487,20 @@ export default function VideoPlayer({
       )}
 
       {uploading && (
-        <div className="card flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 !bg-[#222222] border border-pink-500/40 text-xs text-white shadow-xl rounded-2xl">
+        <div className="card flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 !bg-[#161622] border-2 border-pink-500/40 text-xs text-white shadow-2xl rounded-2xl">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <span className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="h-3 w-3 rounded-full bg-emerald-400 shrink-0" />
             <div className="truncate text-left">
-              <span className="font-bold text-pink-100 block truncate">
+              <span className="font-extrabold text-white block truncate">
                 ⚡ Fast Cloud Stream: <b>{uploading.name}</b>
               </span>
-              <span className="text-[11px] text-pink-300/80 font-mono">
+              <span className="text-[11px] text-pink-200 font-mono font-bold">
                 {uploading.speed ? `${uploading.speed} MB/s` : 'Buffering stream'} • {uploading.progress}% • {uploading.eta ? `${uploading.eta}s remaining` : 'Accelerated'}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-            <div className="h-2.5 w-full sm:w-36 bg-white/15 rounded-full overflow-hidden shrink-0">
+            <div className="h-2.5 w-full sm:w-36 bg-[#252536] border border-white/20 rounded-full overflow-hidden shrink-0">
               <div
                 className="h-full bg-gradient-to-r from-pink-500 via-rose-400 to-emerald-400 transition-all duration-200"
                 style={{ width: `${uploading.progress}%` }}
@@ -2526,14 +2520,13 @@ export default function VideoPlayer({
 
       <form onSubmit={load} className="flex flex-col gap-2">
         {resolvingStatus && (
-          <div className="relative overflow-hidden flex items-center gap-3 text-xs font-black py-2.5 px-4 rounded-2xl bg-[#1D1426] border-2 border-pink-500 text-pink-100 shadow-xl shadow-pink-950/60 anim-reveal">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-pink-500/25 to-transparent anim-shimmer-sweep pointer-events-none" />
-            <div className="h-2 w-2 rounded-full bg-pink-400 animate-ping shrink-0" />
-            <Sparkles className="h-4 w-4 text-pink-400 shrink-0 animate-pulse" />
-            <span className="relative z-10 tracking-wide drop-shadow-sm">{resolvingStatus}</span>
+          <div className="flex items-center gap-3 text-xs font-black py-2.5 px-4 rounded-2xl bg-[#1D1426] border-2 border-pink-500 text-pink-100 shadow-xl">
+            <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shrink-0" />
+            <Sparkles className="h-4 w-4 text-pink-400 shrink-0" />
+            <span className="tracking-wide drop-shadow-sm">{resolvingStatus}</span>
           </div>
         )}
-        <div className="p-2 sm:p-2.5 rounded-2xl bg-[#16161A]/95 border-2 border-pink-500/30 shadow-2xl shadow-black/80 flex flex-col sm:flex-row gap-2">
+        <div className="p-2 sm:p-2.5 rounded-2xl bg-[#161622] border-2 border-pink-500/40 shadow-2xl shadow-black/80 flex flex-col sm:flex-row gap-2">
           <div className="relative min-w-0 flex-1">
             <Link2 className="absolute left-3 top-3.5 h-4 w-4 text-pink-400" />
             <input
@@ -2541,14 +2534,14 @@ export default function VideoPlayer({
               onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
               placeholder="Paste any video or movie link (YouTube, HLS, MP4, Prime, Netflix) - Auto plays in sync..."
-              className="w-full !pl-9 !py-2.5 text-xs sm:text-sm rounded-xl outline-none font-bold bg-[#222228] border border-white/20 text-white placeholder:text-zinc-400 focus:border-pink-500 shadow-inner"
+              className="w-full !pl-9 !py-2.5 text-xs sm:text-sm rounded-xl outline-none font-bold bg-[#1E1E2C] border-2 border-pink-500/30 text-white placeholder:text-zinc-400 focus:border-pink-400 shadow-inner"
             />
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover-lift bg-[#25252B] hover:bg-[#32323A] text-white border border-pink-500/40 active:scale-95"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover-lift bg-[#252536] hover:bg-[#34344A] text-white border-2 border-pink-500/40 active:scale-95"
               title="Paste link from clipboard and play immediately"
             >
               <span>📋</span>
@@ -2556,7 +2549,7 @@ export default function VideoPlayer({
             </button>
             <button
               type="submit"
-              className="btn-pink !py-2.5 !px-5 text-xs font-black shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/40 text-white cursor-pointer active:scale-95 hover-lift hover-sheen"
+              className="btn-pink !py-2.5 !px-5 text-xs font-black shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/40 text-white cursor-pointer active:scale-95 hover-lift hover-sheen border-2 border-pink-300"
             >
               <Play className="h-3.5 w-3.5 fill-white stroke-[2]" />
               <span>Play for All</span>

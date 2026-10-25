@@ -199,26 +199,26 @@ export default function MovieNightExtras({
     <div className={`p-3 sm:p-4 overflow-hidden rounded-2xl transition-all ${
       theme?.isLight
         ? 'bg-white/98 backdrop-blur-2xl border-2 border-rose-200/90 shadow-[0_12px_40px_rgba(244,63,94,0.08)] text-slate-900'
-        : 'card text-pink-100 !bg-[#222222] border border-pink-500/20'
+        : 'card text-white !bg-[#161622] border-2 border-pink-500/35 shadow-2xl'
     }`}>
       {/* Top Tabs */}
       {/* Modern Curated Extra Tabs Bar */}
-      <div className={`flex items-center gap-2 border-b pb-2.5 mb-3 overflow-x-auto no-scrollbar ${theme?.isLight ? 'border-rose-200/80' : 'border-white/10'}`}>
+      <div className={`flex items-center gap-2 border-b-2 pb-2.5 mb-3 overflow-x-auto no-scrollbar ${theme?.isLight ? 'border-rose-200/80' : 'border-pink-500/30'}`}>
         <button
           type="button"
           onClick={() => setActiveTab('queue')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black whitespace-nowrap transition cursor-pointer border-2 ${
             activeTab === 'queue'
-              ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white border-rose-500 shadow-md shadow-rose-500/25'
+              ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
-                ? 'bg-white text-slate-700 hover:text-slate-950 border-2 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
+                ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
+                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
           }`}
         >
           <Film className="h-3.5 w-3.5" />
           <span>Queue</span>
           {queue.length > 0 && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${theme?.isLight ? 'bg-rose-100 text-rose-800 font-bold' : 'bg-white/20'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${theme?.isLight ? 'bg-rose-100 text-rose-800' : 'bg-pink-500/30 text-white'}`}>
               {queue.length}
             </span>
           )}
@@ -227,18 +227,18 @@ export default function MovieNightExtras({
         <button
           type="button"
           onClick={() => setActiveTab('watchlist')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black whitespace-nowrap transition cursor-pointer border-2 ${
             activeTab === 'watchlist'
-              ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white border-rose-500 shadow-md shadow-rose-500/25'
+              ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
-                ? 'bg-white text-slate-700 hover:text-slate-950 border-2 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
+                ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
+                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
           }`}
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
           <span>Watchlist</span>
           {watchlist.length > 0 && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${theme?.isLight ? 'bg-rose-100 text-rose-800 font-bold' : 'bg-white/20'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${theme?.isLight ? 'bg-rose-100 text-rose-800' : 'bg-pink-500/30 text-white'}`}>
               {watchlist.length}
             </span>
           )}
@@ -247,18 +247,18 @@ export default function MovieNightExtras({
         <button
           type="button"
           onClick={() => setActiveTab('timer')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black whitespace-nowrap transition cursor-pointer border-2 ${
             activeTab === 'timer'
-              ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white border-rose-500 shadow-md shadow-rose-500/25'
+              ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
-                ? 'bg-white text-slate-700 hover:text-slate-950 border-2 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
+                ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
+                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
           }`}
         >
-          <Timer className="h-3.5 w-3.5 text-emerald-500" />
+          <Timer className="h-3.5 w-3.5 text-emerald-400" />
           <span>Timer</span>
           {timer?.running && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono font-bold">
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/30 text-emerald-300 font-mono font-bold">
               {formatTime(timeLeft)}
             </span>
           )}
@@ -267,18 +267,18 @@ export default function MovieNightExtras({
         <button
           type="button"
           onClick={() => setActiveTab('ready')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black whitespace-nowrap transition cursor-pointer border-2 ${
             activeTab === 'ready'
-              ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white border-rose-500 shadow-md shadow-rose-500/25'
+              ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
-                ? 'bg-white text-slate-700 hover:text-slate-950 border-2 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
+                ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
+                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
           }`}
         >
-          <CheckCircle2 className="h-3.5 w-3.5 text-rose-500 dark:text-rose-300" />
+          <CheckCircle2 className="h-3.5 w-3.5 text-pink-400" />
           <span>Ready Check</span>
           {readyCheck?.active && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-rose-500/30 text-rose-700 dark:text-rose-200 font-mono font-bold">
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-pink-500/30 text-white font-mono font-bold">
               {readyCount}/{totalUsers}
             </span>
           )}
@@ -287,18 +287,18 @@ export default function MovieNightExtras({
         <button
           type="button"
           onClick={() => setActiveTab('reviews')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black whitespace-nowrap transition cursor-pointer border-2 ${
             activeTab === 'reviews'
-              ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white border-rose-500 shadow-md shadow-rose-500/25'
+              ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
-                ? 'bg-white text-slate-700 hover:text-slate-950 border-2 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-white/5 text-white/70 hover:text-white border-white/10 hover:border-white/20'
+                ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
+                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
           }`}
         >
-          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
           <span>Memories</span>
           {reviews.length > 0 && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${theme?.isLight ? 'bg-rose-100 text-rose-800 font-bold' : 'bg-white/20'}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black ${theme?.isLight ? 'bg-rose-100 text-rose-800' : 'bg-pink-500/30 text-white'}`}>
               {reviews.length}
             </span>
           )}
@@ -310,10 +310,10 @@ export default function MovieNightExtras({
         <div className="space-y-3">
           {/* Currently Playing Card */}
           {currentMedia && currentMedia.type !== 'none' && (
-            <div className={`rounded-xl border p-3 flex gap-3 items-center ${
+            <div className={`rounded-2xl border-2 p-3.5 flex gap-3 items-center shadow-lg ${
               theme?.isLight
                 ? 'bg-white/90 border-pink-200 shadow-sm text-slate-800'
-                : 'border-pink-500/40 bg-[#1a1a1d] text-white'
+                : 'border-pink-500/40 bg-[#1E1E2C] text-white'
             }`}>
               {currentMedia.poster ? (
                 <img src={currentMedia.poster} alt="" className="h-14 w-10 rounded-md object-cover border border-white/20 shrink-0" />
@@ -323,24 +323,24 @@ export default function MovieNightExtras({
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-pink-600 dark:text-rose-400">Now Playing</span>
-                <p className="font-semibold text-sm truncate flex items-center gap-1.5">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-pink-400">Now Playing</span>
+                <p className="font-extrabold text-sm truncate flex items-center gap-1.5 text-white">
                   {isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) && <Lock className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
                   <span>{isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) ? '🔒 Private Stream' : (currentMedia.title || currentMedia.name || 'Untitled Video')}</span>
                 </p>
-                {currentMedia.desc && !isAdultMedia(currentMedia.src) && <p className={`text-xs line-clamp-1 ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>{currentMedia.desc}</p>}
+                {currentMedia.desc && !isAdultMedia(currentMedia.src) && <p className={`text-xs line-clamp-1 ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-300 font-medium'}`}>{currentMedia.desc}</p>}
               </div>
               <button
                 type="button"
                 onClick={() => setShowReviewModal(true)}
-                className={`!px-2.5 !py-1 text-xs shrink-0 flex items-center gap-1 rounded-xl border transition ${
+                className={`!px-3 !py-1.5 text-xs shrink-0 flex items-center gap-1 rounded-xl border-2 transition font-black ${
                   theme?.isLight
                     ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
-                    : 'glass-btn'
+                    : 'bg-[#282838] hover:bg-[#34344A] text-white border-pink-500/40 shadow-sm'
                 }`}
                 title="Rate this movie"
               >
-                <Star className="h-3.5 w-3.5 text-amber-400" />
+                <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
                 <span>Rate</span>
               </button>
             </div>
@@ -348,7 +348,7 @@ export default function MovieNightExtras({
 
           {/* Up Next List Header with Export, Import, and Clear */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className={`text-xs font-bold uppercase tracking-wider ${theme?.isLight ? 'text-slate-800' : 'text-white/60'}`}>
+            <span className={`text-xs font-black uppercase tracking-wider ${theme?.isLight ? 'text-slate-800' : 'text-pink-300'}`}>
               UP NEXT IN QUEUE
             </span>
             <div className="flex items-center gap-2 text-[11px]">
@@ -376,7 +376,7 @@ export default function MovieNightExtras({
                     onClick={() => {
                       if (confirm('Clear the entire queue?')) socket.emit('queue:clear');
                     }}
-                    className="text-rose-500 hover:text-rose-600 flex items-center gap-1 font-semibold"
+                    className="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-bold"
                     title="Clear queue"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -384,7 +384,7 @@ export default function MovieNightExtras({
                   </button>
                 </>
               )}
-              <label className="text-pink-600 hover:text-pink-700 font-bold hover:underline cursor-pointer flex items-center gap-1" title="Import JSON playlist">
+              <label className="text-pink-400 hover:text-pink-300 font-extrabold hover:underline cursor-pointer flex items-center gap-1" title="Import JSON playlist">
                 <Upload className="h-3 w-3" />
                 <span>Import</span>
                 <input
@@ -408,21 +408,21 @@ export default function MovieNightExtras({
                   hidden
                 />
               </label>
-              <span className={`text-xs ${theme?.isLight ? 'text-slate-600 font-bold' : 'text-pink-200 font-bold'}`}>({queue.length})</span>
+              <span className={`text-xs font-black ${theme?.isLight ? 'text-slate-600' : 'text-pink-300'}`}>({queue.length})</span>
             </div>
           </div>
 
           {queue.length === 0 ? (
-            <div className={`rounded-2xl border-2 border-dashed p-6 text-center text-xs transition-all hover-glow-card ${
+            <div className={`rounded-2xl border-2 border-dashed p-6 text-center text-xs transition-all ${
               theme?.isLight
                 ? 'border-rose-300 bg-rose-50/70 text-slate-700 shadow-sm'
-                : 'border-white/15 bg-white/[0.02] text-white/50'
+                : 'border-pink-500/40 bg-[#1A1A24] text-zinc-300'
             }`}>
-              <div className="relative mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-rose-500/15 border-2 border-rose-300 text-rose-600 mx-auto anim-float">
-                <Popcorn className="h-6 w-6 text-rose-600" />
+              <div className="relative mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-pink-500/20 border-2 border-pink-400 text-pink-400 mx-auto">
+                <Popcorn className="h-6 w-6 text-pink-400" />
               </div>
-              <p className={`font-black text-base mb-1 ${theme?.isLight ? 'text-slate-950 font-black' : 'text-shimmer'}`}>Queue is empty</p>
-              <p className={`max-w-xs mx-auto anim-reveal ${theme?.isLight ? 'text-slate-600 font-medium' : ''}`}>
+              <p className={`font-black text-base mb-1 ${theme?.isLight ? 'text-slate-950' : 'text-white'}`}>Queue is empty</p>
+              <p className={`max-w-xs mx-auto ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-300 font-medium'}`}>
                 Add videos using the 'Add to queue' button or paste a link to start building your playlist.
               </p>
             </div>
@@ -431,13 +431,13 @@ export default function MovieNightExtras({
               {queue.map((item, index) => (
                 <div
                   key={item.id}
-                  className={`rounded-xl border p-2.5 flex items-center gap-2.5 transition ${
+                  className={`rounded-xl border-2 p-3 flex items-center gap-2.5 transition shadow-sm ${
                     theme?.isLight
                       ? 'border-slate-200/90 bg-white/90 shadow-sm text-slate-800 hover:border-pink-300'
-                      : 'border-white/10 bg-white/5 hover:border-white/25 text-white'
+                      : 'border-pink-500/30 bg-[#1E1E2C] hover:border-pink-500/60 text-white'
                   }`}
                 >
-                  <span className={`text-xs font-bold w-4 text-center ${theme?.isLight ? 'text-slate-600' : 'text-pink-300 font-bold'}`}>{index + 1}</span>
+                  <span className={`text-xs font-black w-4 text-center ${theme?.isLight ? 'text-slate-600' : 'text-pink-300'}`}>{index + 1}</span>
                   {item.poster ? (
                     <img src={item.poster} alt="" className="h-11 w-8 rounded object-cover shrink-0 border border-slate-200/60" />
                   ) : (
@@ -446,12 +446,12 @@ export default function MovieNightExtras({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-semibold truncate flex items-center gap-1 ${theme?.isLight ? 'text-slate-800' : 'text-white'}`}>
+                    <p className={`text-xs font-bold truncate flex items-center gap-1 ${theme?.isLight ? 'text-slate-800' : 'text-white'}`}>
                       {isAdultMedia(item.src || item.title) && <Lock className="h-3 w-3 text-rose-500 shrink-0" />}
                       <span>{isAdultMedia(item.src || item.title) ? '🔒 Private Stream' : (item.title || item.src.replace(/^https?:\/\//, ''))}</span>
                     </p>
-                    {item.desc && !isAdultMedia(item.src) && <p className={`text-[10px] truncate ${theme?.isLight ? 'text-slate-600' : 'text-zinc-200 font-medium'}`}>{item.desc}</p>}
-                    <div className="flex items-center gap-2 text-[9px] text-pink-600 font-medium">
+                    {item.desc && !isAdultMedia(item.src) && <p className={`text-[10px] truncate ${theme?.isLight ? 'text-slate-600' : 'text-zinc-300 font-medium'}`}>{item.desc}</p>}
+                    <div className="flex items-center gap-2 text-[10px] text-pink-400 font-bold">
                       {item.addedBy && <span>Queued by {item.addedBy}</span>}
                     </div>
                   </div>
@@ -547,51 +547,51 @@ export default function MovieNightExtras({
           </div>
 
           {watchlist.length === 0 ? (
-            <div className={`rounded-xl border border-dashed p-6 text-center text-xs ${
-              theme?.isLight ? 'border-slate-200 bg-pink-50/40 text-slate-500' : 'border-pink-500/30 bg-[#1E1E26] text-zinc-100 font-medium'
+            <div className={`rounded-2xl border-2 border-dashed p-6 text-center text-xs ${
+              theme?.isLight ? 'border-slate-300 bg-pink-50/40 text-slate-700' : 'border-pink-500/40 bg-[#1A1A24] text-zinc-200 font-bold'
             }`}>
-              <Sparkles className="h-8 w-8 mx-auto mb-2 text-amber-400 opacity-60" />
+              <Sparkles className="h-8 w-8 mx-auto mb-2 text-amber-400" />
               <p>Your wishlist is empty. Add romantic movies, series, or YouTube shows for future movie nights!</p>
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 max-h-72 overflow-y-auto pr-1">
+            <div className="grid gap-2.5 sm:grid-cols-2 max-h-72 overflow-y-auto pr-1">
               {watchlist.map((item) => (
                 <div
                   key={item.id}
-                  className={`rounded-xl border p-2.5 flex gap-2.5 items-start transition group ${
+                  className={`rounded-xl border-2 p-3 flex gap-2.5 items-start transition group shadow-md ${
                     theme?.isLight
                       ? 'border-slate-200/90 bg-white/90 shadow-sm text-slate-800 hover:border-pink-300'
-                      : 'border-white/10 bg-white/5 hover:border-rose-500/40 text-white'
+                      : 'border-pink-500/35 bg-[#1E1E2C] hover:border-pink-500/60 text-white'
                   }`}
                 >
                   {item.poster ? (
                     <img src={item.poster} alt="" className="h-16 w-12 rounded object-cover border border-slate-200/60 shrink-0" />
                   ) : (
-                    <div className={`h-16 w-12 rounded grid place-items-center shrink-0 ${theme?.isLight ? 'bg-pink-50 text-pink-500 border border-pink-200/60' : 'bg-white/5 border border-white/10 text-white/40'}`}>
+                    <div className={`h-16 w-12 rounded grid place-items-center shrink-0 ${theme?.isLight ? 'bg-pink-50 text-pink-500 border border-pink-200/60' : 'bg-[#252536] border border-white/20 text-pink-300'}`}>
                       <Film className="h-5 w-5" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className={`font-semibold text-xs truncate group-hover:text-pink-600 transition ${theme?.isLight ? 'text-slate-800' : 'text-white'}`}>{item.title}</p>
-                    {item.desc && <p className={`text-[10px] line-clamp-2 mt-0.5 ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>{item.desc}</p>}
-                    <span className={`text-[9px] mt-1 block ${theme?.isLight ? 'text-slate-400' : 'text-white/40'}`}>Added by {item.addedBy}</span>
+                    <p className={`font-black text-xs truncate group-hover:text-pink-400 transition ${theme?.isLight ? 'text-slate-800' : 'text-white'}`}>{item.title}</p>
+                    {item.desc && <p className={`text-[10px] line-clamp-2 mt-0.5 ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-300 font-medium'}`}>{item.desc}</p>}
+                    <span className={`text-[10px] mt-1 block font-bold ${theme?.isLight ? 'text-slate-500' : 'text-pink-300'}`}>Added by {item.addedBy}</span>
                     
                     <div className="flex items-center gap-1.5 mt-2">
                       <button
                         onClick={() => socket.emit('watchlist:to_queue', item.id)}
-                        className={`!px-2 !py-0.5 text-[10px] flex items-center gap-1 rounded-lg border transition ${
+                        className={`!px-2.5 !py-1 text-[10px] font-black flex items-center gap-1 rounded-xl border-2 transition ${
                           theme?.isLight
                             ? 'bg-pink-50 hover:bg-pink-100 text-pink-600 border-pink-200'
-                            : 'glass-btn'
+                            : 'btn-pink text-white border-pink-300 shadow-sm'
                         }`}
                       >
                         <Plus className="h-3 w-3" /> Queue
                       </button>
                       <button
                         onClick={() => socket.emit('watchlist:remove', item.id)}
-                        className={`p-1 transition ${theme?.isLight ? 'text-slate-400 hover:text-rose-600' : 'text-white/40 hover:text-rose-400'}`}
+                        className={`p-1.5 rounded-lg transition ${theme?.isLight ? 'text-slate-400 hover:text-rose-600' : 'text-zinc-300 hover:text-rose-400 hover:bg-white/10'}`}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>

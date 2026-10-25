@@ -101,27 +101,27 @@ export default function ChatPanel({
       className={`vault flex flex-col p-2.5 sm:p-4 h-full flex-1 min-h-0 rounded-2xl overflow-hidden transition-all ${
         theme?.isLight
           ? 'bg-white/98 backdrop-blur-2xl border-2 border-rose-200/90 shadow-[0_12px_40px_rgba(244,63,94,0.08)] text-slate-900'
-          : 'card border border-pink-500/20 !bg-[#222222]/95 shadow-xl text-pink-100'
+          : 'card border-2 border-pink-500/35 !bg-[#161620] shadow-2xl text-white'
       }`}
     >
       {/* Header: User Presence & Roster */}
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-        <span className={`flex items-center gap-1 text-xs ${theme?.isLight ? 'text-slate-600 font-semibold' : 'text-pink-200 font-bold'}`}>
-          <Users className="h-3.5 w-3.5" />
+        <span className={`flex items-center gap-1 text-xs font-black ${theme?.isLight ? 'text-slate-700' : 'text-pink-300'}`}>
+          <Users className="h-3.5 w-3.5 text-pink-400" />
           {users.length} here
         </span>
         {users.map((u) => (
           <span
             key={u.id}
-            className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border ${
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs border-2 shadow-sm ${
               theme?.isLight
-                ? 'bg-slate-50 border-2 border-slate-200/90 text-slate-800 font-bold shadow-xs'
-                : 'bg-[#1E1E26] border border-pink-500/30 text-white font-bold shadow-sm'
+                ? 'bg-slate-50 border-slate-300 text-slate-800 font-bold'
+                : 'bg-[#222230] border-pink-500/40 text-white font-extrabold'
             }`}
           >
             <i className="h-2 w-2 rounded-full" style={{ background: u.color || '#f43f5e' }} />
             <span className="truncate max-w-[80px] sm:max-w-[110px]">{u.name}</span>
-            {u.id === hostId && <Crown className="h-3 w-3 text-amber-500" title="Room Host" />}
+            {u.id === hostId && <Crown className="h-3 w-3 text-amber-400" title="Room Host" />}
             {me === hostId && u.id !== me && (
               <button
                 type="button"
@@ -156,8 +156,8 @@ export default function ChatPanel({
       <div ref={listRef} className="flex-1 space-y-2.5 overflow-y-auto pr-1 select-text">
         {chat.length === 0 && (
           <div className="mt-8 text-center text-sm px-4">
-            <p className={theme?.isLight ? 'text-slate-800 font-bold' : 'text-white'}>No messages yet.</p>
-            <p className={`mt-1 text-xs ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-semibold'}`}>Say hi 👋 or tap 💬 for a conversation starter.</p>
+            <p className={theme?.isLight ? 'text-slate-800 font-bold' : 'text-white font-bold'}>No messages yet.</p>
+            <p className={`mt-1 text-xs ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-300 font-semibold'}`}>Say hi 👋 or tap 💬 for a conversation starter.</p>
           </div>
         )}
         {chat.map((m, idx) => {
@@ -177,10 +177,10 @@ export default function ChatPanel({
                       say?.(`Jumped to ${fmt(m.vt)} ⏱️`);
                     }}
                     title="Jump to this video moment"
-                    className={`rounded px-1.5 py-0.5 text-[10px] font-mono font-bold transition ${
+                    className={`rounded-lg px-2 py-0.5 text-[10px] font-mono font-bold transition border ${
                       theme?.isLight
-                        ? 'bg-rose-100 text-rose-800 hover:bg-rose-200'
-                        : 'bg-pink-500/15 text-pink-300 hover:bg-pink-500/30'
+                        ? 'bg-rose-100 text-rose-800 hover:bg-rose-200 border-rose-300'
+                        : 'bg-pink-500/20 text-pink-200 hover:bg-pink-500/35 border-pink-500/40'
                     }`}
                   >
                     {fmt(m.vt)}
@@ -190,10 +190,10 @@ export default function ChatPanel({
               <p
                 className={`max-w-[85%] break-words rounded-2xl px-3.5 py-1.5 text-sm ${
                   mine
-                    ? 'rounded-tr-sm bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 text-white shadow-md shadow-rose-500/20 font-medium'
+                    ? 'rounded-tr-sm bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 text-white shadow-md shadow-rose-500/20 font-semibold'
                     : theme?.isLight
                       ? 'rounded-tl-sm bg-slate-50 text-slate-900 border-2 border-slate-200/90 shadow-sm font-medium'
-                      : 'rounded-tl-sm bg-[#222222] text-pink-100 border border-pink-500/20'
+                      : 'rounded-tl-sm bg-[#222230] text-white border-2 border-pink-500/30 font-medium shadow-md'
                 }`}
               >
                 {m.text}
@@ -204,7 +204,7 @@ export default function ChatPanel({
       </div>
 
       {/* Quick Reactions & Action Helpers */}
-      <div className={`my-2 flex items-center justify-between gap-1 border-t pt-2 ${theme?.isLight ? 'border-slate-200' : 'border-pink-500/20'}`}>
+      <div className={`my-2 flex items-center justify-between gap-1 border-t-2 pt-2.5 ${theme?.isLight ? 'border-slate-200' : 'border-pink-500/30'}`}>
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {EMOJI.map((e) => (
             <button
@@ -226,10 +226,10 @@ export default function ChatPanel({
             type="button"
             onClick={attachTimestamp}
             title="Attach current video timestamp"
-            className={`rounded-lg text-[11px] px-2 py-1 font-mono font-bold transition flex items-center gap-1 border ${
+            className={`rounded-xl text-[11px] px-2.5 py-1 font-mono font-black transition flex items-center gap-1 border-2 ${
               theme?.isLight
                 ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-                : 'text-pink-300 bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/30'
+                : 'text-white bg-pink-500/20 hover:bg-pink-500/35 border-pink-400'
             }`}
           >
             <span>⏱️</span>
@@ -261,10 +261,10 @@ export default function ChatPanel({
             }
           }}
           placeholder="Say something sweet…"
-          className={`flex-1 text-sm rounded-xl outline-none transition px-3 py-2.5 ${
+          className={`flex-1 text-sm rounded-xl outline-none transition px-3.5 py-2.5 ${
             theme?.isLight
               ? 'bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-rose-500 font-medium shadow-inner'
-              : 'bg-[#1A1A1D] border border-pink-500/25 focus:border-pink-500 text-pink-100 placeholder:text-zinc-400 font-medium'
+              : 'bg-[#1E1E2A] border-2 border-pink-500/40 focus:border-pink-400 text-white placeholder:text-zinc-400 font-bold shadow-inner'
           }`}
           autoComplete="off"
           maxLength={1000}
@@ -272,7 +272,7 @@ export default function ChatPanel({
         <button
           type="submit"
           disabled={!text.trim()}
-          className="btn-pink !px-3.5 !py-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-pink-500/30"
+          className="btn-pink !px-4 !py-2.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-pink-500/40 border-2 border-pink-300"
           aria-label="Send message"
         >
           <Send className="h-4 w-4 text-white" />
