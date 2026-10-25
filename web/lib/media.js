@@ -85,8 +85,9 @@ export const extractOttTitle = (u) => {
       return decodeURIComponent(tmdbMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
 
-    // 1. Disney+ Hotstar: /movies/chhaava/12345 or /shows/title/12345
-    const hotstarMatch = s.match(/hotstar\.com\/[^/]+\/(?:movies|shows|clips)\/([^/]+)/i);
+    // 1. Disney+ Hotstar: /movies/chhaava/12345 or /shows/title/12345 or /sports/cricket/12345
+    const hotstarMatch = s.match(/hotstar\.com\/[^/]+\/(?:movies|shows|clips|sports|live|channels|cricket|video)\/([^/?#]+)/i)
+      || s.match(/hotstar\.com\/(?:in|us|gb|ca)?\/(?:movies|shows|clips|sports|live|channels|cricket|video)\/([^/?#]+)/i);
     if (hotstarMatch && hotstarMatch[1]) {
       return decodeURIComponent(hotstarMatch[1]).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).trim();
     }
@@ -218,6 +219,21 @@ export const toEmbed = (src) => {
     if (u.hostname === 'open.spotify.com' && !u.pathname.startsWith('/embed')) return 'https://open.spotify.com/embed' + u.pathname;
     if (u.hostname.endsWith('soundcloud.com') && !u.hostname.startsWith('w.')) return 'https://w.soundcloud.com/player/?auto_play=true&url=' + encodeURIComponent(src);
     if (/dailymotion\.com$/.test(u.hostname) && u.pathname.startsWith('/video/')) return 'https://www.dailymotion.com/embed' + u.pathname;
+
+    // Live Streaming platforms (Twitch, Kick)
+    if (/twitch\.tv$/i.test(u.hostname)) {
+      const channelMatch = u.pathname.match(/^\/([a-zA-Z0-9_]+)/);
+      if (channelMatch && channelMatch[1] && !['directory', 'videos', 'settings', 'p'].includes(channelMatch[1])) {
+        const parentHost = typeof window !== 'undefined' ? window.location.hostname : 'syncinema.site';
+        return `https://player.twitch.tv/?channel=${channelMatch[1]}&parent=${parentHost}&muted=false`;
+      }
+    }
+    if (/kick\.com$/i.test(u.hostname)) {
+      const channelMatch = u.pathname.match(/^\/([a-zA-Z0-9_]+)/);
+      if (channelMatch && channelMatch[1] && !['categories', 'video', 'search'].includes(channelMatch[1])) {
+        return `https://player.kick.com/${channelMatch[1]}`;
+      }
+    }
 
     // Adult & Tube sites (Proxied through /api/proxy to bypass ISP blocks and X-Frame-Options)
     // 1. Pornhub (all domains, mobile, www, international)

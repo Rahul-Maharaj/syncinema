@@ -17,7 +17,15 @@ import { Tile } from './CouplesOverlay';
 import { autoFixEngine } from '@/lib/autoFixEngine';
 import { Popcorn3D, SparkleStar3D, SyncBolt3D, Shield3D } from '@/components/Icons3D';
 
-const TYPES = ['auto', 'hybrid', 'file', 'hls', 'dash', 'embed', 'proxy'];
+const TYPES = [
+  { id: 'auto', label: '⚡ Auto Detect' },
+  { id: 'proxy', label: '🛡️ Stream Proxy (CORS Bypass)' },
+  { id: 'embed', label: '🖼️ Iframe Embed (Web Player)' },
+  { id: 'hls', label: '🔴 Live / HLS (.m3u8)' },
+  { id: 'dash', label: '📺 DASH (.mpd)' },
+  { id: 'file', label: '🎬 Direct Video (MP4/MKV)' },
+  { id: 'hybrid', label: '🍿 OTT Cloud Mirrors' },
+];
 const SPEEDS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
 export default function VideoPlayer({
@@ -81,7 +89,12 @@ export default function VideoPlayer({
   const bufferHoldTimer = useRef(null);
   const [autoHealBadge, setAutoHealBadge] = useState('');
   const [remoteUpload, setRemoteUpload] = useState(null);
-  const [showAudioVisualizer, setShowAudioVisualizer] = useState(false);
+  const [showAudioVisualizer, setShowAudioVisualizer] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sc_audio_visualizer') === 'true';
+    }
+    return false;
+  });
   const [audioMode, setAudioMode] = useState('dolby');
   const [isLiveStream, setIsLiveStream] = useState(false);
   const [audioBoost, setAudioBoost] = useState(100); // 100% to 200%
@@ -351,8 +364,6 @@ export default function VideoPlayer({
             if (wasPlayingBeforeBuffer.current) {
               api.current?.play();
               wasPlayingBeforeBuffer.current = false;
-              setAutoHealBadge('⏱️ Autonomous buffer hold recovery executed');
-              setTimeout(() => setAutoHealBadge(''), 2500);
             }
           }, 12000);
         } else {
@@ -363,8 +374,6 @@ export default function VideoPlayer({
           if (wasPlayingBeforeBuffer.current) {
             api.current?.play();
             wasPlayingBeforeBuffer.current = false;
-            setAutoHealBadge('✨ Synced • Resumed playback together');
-            setTimeout(() => setAutoHealBadge(''), 2500);
           }
         }
       }
@@ -426,26 +435,22 @@ export default function VideoPlayer({
     return () => window.removeEventListener('paste', onGlobalPaste);
   }, []);
 
-  // Autonomous AutoFix & Self-Healing Engine Listener
+  // Autonomous AutoFix & Self-Healing Engine Listener (Quiet background resilience)
   useEffect(() => {
     const unsub = autoFixEngine.onFix((event) => {
-      if (event?.type === 'video_healing_start') {
-        setAutoHealBadge('🛡️ Auto-Healing Stream Playback…');
-      } else if (event?.type === 'video_healing_success') {
-        setAutoHealBadge('✨ Stream Auto-Healed Successfully');
-        setTimeout(() => setAutoHealBadge(''), 2500);
+      // Heal quietly in background without flashing badges on video screen
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Stream auto-fix engine active:', event?.type);
       }
     });
     return () => unsub();
   }, []);
 
-  // Autonomous Drift Self-Healer: automatically resolves stream drift with zero clicks
+  // Autonomous Drift Self-Healer: automatically resolves stream drift silently
   useEffect(() => {
     if (syncStatus === 'desync' && st.current) {
       const timer = setTimeout(() => {
         correct(st.current.time, st.current.playing);
-        setAutoHealBadge('⚡ Autonomous Drift Correction Active (0ms Sync)');
-        setTimeout(() => setAutoHealBadge(''), 2500);
       }, 120);
       return () => clearTimeout(timer);
     }
@@ -772,7 +777,7 @@ export default function VideoPlayer({
           if (prev?.active && !prev.isLocal) return prev;
           return { active: true, name: 'You', isLocal: true, time: v.currentTime };
         });
-      }, 850);
+      }, 2600);
     };
     const onResume = () => {
       clearTimeout(waitTimer);
@@ -1221,6 +1226,57 @@ export default function VideoPlayer({
 
     const isAdult = isAdultMedia(src);
 
+    // Explicit User Mode Override from Mode Selector
+    if (force === 'proxy') {
+      const isDirectStream = /\.(m3u8|mpd|mp4|webm|mkv|mov|ts)(\?|$)/i.test(src) || src.includes('.m3u8');
+      if (isDirectStream) {
+        return {
+          type: 'hls',
+          src: toStreamProxyUrl(src),
+          origSrc: src,
+          title: 'Live Proxy Stream',
+        };
+      }
+      return {
+        type: 'proxy',
+        src: `/api/proxy?url=${encodeURIComponent(src)}`,
+        origSrc: src,
+        title: 'Proxy Web Stream',
+      };
+    }
+    if (force === 'embed') {
+      return {
+        type: 'embed',
+        src: toEmbed(src),
+        origSrc: src,
+        title: 'Embedded Stream',
+      };
+    }
+    if (force === 'hls') {
+      return {
+        type: 'hls',
+        src: toStreamProxyUrl(src),
+        origSrc: src,
+        title: 'Live HLS Stream',
+      };
+    }
+    if (force === 'dash') {
+      return {
+        type: 'dash',
+        src,
+        origSrc: src,
+        title: 'Live DASH Stream',
+      };
+    }
+    if (force === 'file') {
+      return {
+        type: 'file',
+        src: toStreamProxyUrl(src),
+        origSrc: src,
+        title: 'Direct Video Stream',
+      };
+    }
+
     // 0. OTT platforms (Disney+ Hotstar, Netflix, Prime Video, JioCinema, Zee5, SonyLIV, Apple TV+, Hulu, Max, etc.)
     // Streams directly for all devices with high-definition multi-server cloud mirrors
     const ott = getOttPlatform(src);
@@ -1649,16 +1705,22 @@ export default function VideoPlayer({
 
             <button
               type="button"
-              onClick={() => setShowAudioVisualizer(!showAudioVisualizer)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
+              onClick={() => {
+                setShowAudioVisualizer((prev) => {
+                  const next = !prev;
+                  try { localStorage.setItem('sc_audio_visualizer', String(next)); } catch {}
+                  return next;
+                });
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-bold transition cursor-pointer shadow-md ${
                 showAudioVisualizer
                   ? 'btn-pink text-white border-pink-300'
-                  : 'bg-[#2D2340] hover:bg-[#3D3056] text-white border-pink-400 hover:border-pink-300'
+                  : 'bg-[#252233] hover:bg-[#322C44] text-[#EDE8F5] border-pink-500/30'
               }`}
-              title="Toggle Dynamic In-Room Cinema Audio Spectrum Visualizer"
+              title="Turn Dynamic Audio Spectrum ON or OFF"
             >
               <Volume2 className="h-3.5 w-3.5 text-pink-300 stroke-[2.5]" />
-              <span className="hidden sm:inline">Visualizer</span>
+              <span>Spectrum: {showAudioVisualizer ? 'ON' : 'OFF'}</span>
             </button>
 
             <button
@@ -1677,60 +1739,12 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Synchronized Buffer Hold Overlay (Clean, Solid, No Heavy Animations) */}
+        {/* Non-Intrusive Centered Buffering Indicator */}
         {bufferHold?.active && (
-          <div className="absolute inset-0 z-35 flex items-center justify-center p-4 bg-black/90 pointer-events-auto select-none">
-            <div className="max-w-md w-full p-6 rounded-3xl bg-[#161622] border-2 border-pink-500/60 text-center shadow-2xl space-y-4">
-              <div className="relative mx-auto h-16 w-16 grid place-items-center rounded-2xl bg-pink-500/20 border-2 border-pink-400">
-                <Popcorn3D size={42} className="relative z-10" />
-              </div>
-
-              <div className="space-y-1">
-                <span className="inline-block px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/50 text-[11px] font-black text-pink-300 uppercase tracking-widest">
-                  VIP Sync Buffer Hold
-                </span>
-                <p className="text-sm font-bold text-white pt-1">
-                  {bufferHold.isLocal ? (
-                    <span>Buffering stream… Holding playback so you stay 100% in sync with your partner.</span>
-                  ) : (
-                    <span><strong className="text-pink-300 font-black">{bufferHold.name}</strong> is buffering… Playback paused smoothly for both.</span>
-                  )}
-                </p>
-                <p className="text-xs text-pink-200/90 font-medium">
-                  ⚡ Auto-playing in 0ms lock the moment buffer recovers • Autonomous auto-fixer handles everything.
-                </p>
-              </div>
-
-              {/* 16-Bar Luxury Static Equalizer Spectrum Indicator */}
-              <div className="flex items-end justify-center gap-1.5 h-8 py-1">
-                {[35, 70, 50, 95, 60, 100, 75, 85, 45, 90, 65, 80, 50, 95, 70, 40].map((h, i) => (
-                  <span
-                    key={i}
-                    className="w-1.5 rounded-full bg-gradient-to-t from-pink-500 via-rose-400 to-white"
-                    style={{
-                      height: `${h}%`,
-                      boxShadow: '0 0 6px rgba(236,72,153,0.5)'
-                    }}
-                  />
-                ))}
-              </div>
-
-              <div className="pt-2 flex items-center justify-center gap-4">
-                <span className="text-xs text-emerald-400 font-extrabold flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 inline-block" />
-                  Auto-Fixer Active
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBufferHold(null);
-                    api.current?.play();
-                  }}
-                  className="px-4 py-2 rounded-xl bg-pink-500/25 hover:bg-pink-500/40 border-2 border-pink-500/50 text-xs font-black text-white transition cursor-pointer"
-                >
-                  Resume anyway
-                </button>
-              </div>
+          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none select-none bg-black/40 backdrop-blur-[2px]">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#161420]/90 border border-pink-500/40 text-white text-xs font-bold shadow-2xl backdrop-blur-md">
+              <div className="h-4 w-4 rounded-full border-2 border-transparent border-t-pink-400 border-r-pink-400 animate-spin" />
+              <span>{bufferHold.isLocal ? 'Buffering stream…' : `${bufferHold.name || 'Partner'} buffering…`}</span>
             </div>
           </div>
         )}
@@ -1841,15 +1855,6 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Autonomous Auto-Heal & Self-Healing Toast Badge */}
-        {autoHealBadge && (
-          <div className="absolute bottom-16 inset-x-4 z-30 mx-auto max-w-sm pointer-events-none flex justify-center">
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1A1A1D]/95 border border-emerald-500/40 text-emerald-200 text-xs font-semibold shadow-2xl backdrop-blur-md">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>{autoHealBadge}</span>
-            </div>
-          </div>
-        )}
 
         <video
           ref={shareEl}
@@ -2636,17 +2641,17 @@ export default function VideoPlayer({
             </button>
           )}
 
-          {/* Stream Resolver Type Selector */}
-          <div className="btn-action-type flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shrink-0 text-white relative z-10" title="Media stream resolver type">
-            <span className="text-white font-black text-sm">⚡</span>
+          {/* Stream Resolver Mode Selector */}
+          <div className="btn-action-type flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold shrink-0 text-white relative z-10" title="Choose video stream resolver mode: Auto, Proxy, Embed, Live HLS, etc.">
+            <span className="text-pink-300 font-bold text-xs">Mode:</span>
             <select
               value={force}
               onChange={(e) => setForce(e.target.value)}
-              className="bg-transparent text-white outline-none cursor-pointer font-black text-xs pr-1"
+              className="bg-transparent text-white outline-none cursor-pointer font-bold text-xs pr-1"
             >
               {TYPES.map((t) => (
-                <option key={t} value={t} className="text-black bg-white font-bold">
-                  {t === 'auto' ? 'Type: Auto ▾' : t.toUpperCase()}
+                <option key={t.id} value={t.id} className="text-black bg-white font-bold">
+                  {t.label}
                 </option>
               ))}
             </select>
