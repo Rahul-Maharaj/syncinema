@@ -179,23 +179,58 @@ const fail = (ip) => {
   fails.set(ip, f);
 };
 
-// High-Grade Stealth Admin Gate: Decoy 404 response on unauthorized queries to prevent route discovery
+// --- HIGH-SECURITY SINGLE ACTIVE ADMIN SESSION ENGINE ---
+// Strictly enforces ONE active administrator session worldwide.
+// When an admin logs in, any previous session is immediately invalidated.
+let activeAdminSession = null;
+const ADMIN_SESSION_TIMEOUT = 24 * 60 * 60_000; // 24 hours idle timeout
+
+const validateAdminAuth = (req) => {
+  const token = req.get('x-admin-token') || req.query.adminToken || req.body?.adminToken;
+  const key = req.get('x-admin-key') || req.query.adminKey || req.body?.adminKey;
+
+  // 1. Session Token Validation (Primary, High-Security Single Session)
+  if (token) {
+    if (!activeAdminSession || activeAdminSession.token !== token) {
+      return { ok: false, reason: 'session_expired', message: 'Admin session terminated: Another administrator logged in or session expired.' };
+    }
+    if (Date.now() - activeAdminSession.lastActive > ADMIN_SESSION_TIMEOUT) {
+      activeAdminSession = null;
+      return { ok: false, reason: 'session_timeout', message: 'Admin session timed out due to inactivity.' };
+    }
+    activeAdminSession.lastActive = Date.now();
+    return { ok: true, session: activeAdminSession };
+  }
+
+  // 2. Direct Master Key Fallback (e.g. initial login / system calls)
+  if (key && adminKeyOk(key)) {
+    return { ok: true, isKeyAuth: true };
+  }
+
+  return { ok: false, reason: 'invalid_credentials' };
+};
+
+// High-Grade Stealth Admin Gate
 const adminGate = (req, res, next) => {
   const ip = ipOf(req);
   if (blockedIps.has(ip) || locked(ip)) {
-    // Decoy 404: Scanners and blocked bots believe the admin endpoint does not exist
     return res.status(404).send('Not Found');
   }
-  const k = req.get('x-admin-key') || req.query.adminKey || req.body?.adminKey;
-  if (!adminKeyOk(k)) {
+
+  const auth = validateAdminAuth(req);
+  if (!auth.ok) {
     fail(ip);
-    // Tarpit delay (deliberate 750ms throttle) to exhaust automated brute-force tools
+    if (auth.reason === 'session_expired' || auth.reason === 'session_timeout') {
+      return res.status(401).json({ error: auth.reason, message: auth.message });
+    }
     setTimeout(() => {
       res.status(404).send('Not Found');
-    }, 750);
+    }, 500);
     return;
   }
+
   fails.delete(ip);
+  req.adminSession = auth.session;
   next();
 };
 
@@ -1904,6 +1939,92 @@ const isVideoBlocked = (url) => {
 
 app.use('/api/admin', express.json());
 
+// High-Security Single Session Admin Login ("One login at a time of admin")
+app.post('/api/admin/login', (req, res) => {
+  const ip = ipOf(req);
+  if (blockedIps.has(ip) || locked(ip)) {
+    return res.status(404).send('Not Found');
+  }
+
+  const { key, username } = req.body || {};
+  if (!adminKeyOk(key)) {
+    fail(ip);
+    const f = fails.get(ip) || { n: 0 };
+    return res.status(401).json({
+      error: 'invalid_credentials',
+      message: `Invalid master security cipher (${Math.max(0, 4 - f.n)} attempt(s) remaining).`,
+    });
+  }
+
+  fails.delete(ip);
+
+  // Terminate any previous active session so only ONE admin can be active at a time
+  if (activeAdminSession) {
+    console.warn(`[Admin Security] Terminating previous session (${activeAdminSession.id}) due to new login from ${ip}`);
+    io.emit('admin:session_revoked', {
+      reason: 'new_login',
+      message: 'Your administrator session has ended because another administrator logged in from another device/browser.',
+    });
+  }
+
+  // Generate cryptographically secure single-session token
+  const token = crypto.randomBytes(32).toString('hex');
+  activeAdminSession = {
+    token,
+    ip,
+    userAgent: req.headers['user-agent'] || 'Unknown',
+    username: String(username || 'Master Administrator').slice(0, 32),
+    loginTime: Date.now(),
+    lastActive: Date.now(),
+    id: 'adm_sess_' + crypto.randomBytes(6).toString('hex'),
+  };
+
+  console.log(`[Admin Security] Single Admin session established: ${activeAdminSession.id} from ${ip}`);
+
+  res.json({
+    ok: true,
+    token,
+    session: {
+      id: activeAdminSession.id,
+      loginTime: activeAdminSession.loginTime,
+      ip: activeAdminSession.ip,
+      username: activeAdminSession.username,
+    },
+    message: 'High-security single administrator session established.',
+  });
+});
+
+// Admin Logout
+app.post('/api/admin/logout', (req, res) => {
+  activeAdminSession = null;
+  res.json({ ok: true, message: 'Administrator session destroyed successfully.' });
+});
+
+// Admin Session Status Check
+app.get('/api/admin/session', adminGate, (req, res) => {
+  res.json({
+    ok: true,
+    session: {
+      id: activeAdminSession?.id,
+      loginTime: activeAdminSession?.loginTime,
+      lastActive: activeAdminSession?.lastActive,
+      ip: activeAdminSession?.ip,
+    },
+  });
+});
+
+// Export all recorded visitor logs
+app.get('/api/admin/visitors/export', adminGate, (req, res) => {
+  const visitorsData = getAdminVisitorsData();
+  res.json({
+    ok: true,
+    exportedAt: new Date().toISOString(),
+    totalRecorded: visitorsData.summary?.totalRecorded || 0,
+    totalUnique: visitorsData.summary?.totalUnique || 0,
+    visitors: visitorsData.recent || [],
+  });
+});
+
 app.post('/api/admin/verify', adminGate, (req, res) => {
   res.json({ ok: true, message: 'Authenticated' });
 });
@@ -2261,6 +2382,17 @@ app.post('/api/admin/room/alert', adminGate, (req, res) => {
 io.on('connection', (socket) => {
   let rid, room, user, n = 0, t = Date.now();
   const ip = ipOf(socket.handshake);
+  const qCid = socket.handshake.query?.cid;
+  const qRoomId = socket.handshake.query?.roomId;
+  const ua = socket.handshake.headers['user-agent'] || '';
+
+  // Persistently record all incoming socket connections as genuine visitors
+  recordVisit(ip, qCid, ua, {
+    path: qRoomId ? `/room/${qRoomId}` : '/',
+    inRoom: qRoomId || null,
+    ref: socket.handshake.headers['referer'] || 'WebSocket App',
+  });
+
   socket.on('error', () => {});
   socket.use((_, next) => { if (Date.now() - t > 1000) { n = 0; t = Date.now(); } ++n <= 30 ? next() : next(new Error('rate')); });
   const joined = () => room && user;
@@ -2910,9 +3042,10 @@ io.on('connection', (socket) => {
   });
 
   // 👻 Admin Stealth Ghost Join directly from Admin Command Center
-  socket.on('admin:ghost_join', ({ roomId, adminKey } = {}, ack) => {
+  socket.on('admin:ghost_join', ({ roomId, adminKey, adminToken } = {}, ack) => {
     if (typeof ack !== 'function') return;
-    if (!adminKeyOk(adminKey)) return ack({ error: 'unauthorized', message: 'Invalid admin credentials' });
+    const isAuth = (adminToken && activeAdminSession && activeAdminSession.token === adminToken) || adminKeyOk(adminKey);
+    if (!isAuth) return ack({ error: 'unauthorized', message: 'Invalid admin credentials or session expired' });
     const r = rooms.get(roomId);
     if (!r) return ack({ error: 'not_found', message: 'Room not found' });
 

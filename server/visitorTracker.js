@@ -350,7 +350,7 @@ try {
     const raw = fs.readFileSync(VISITORS_LOG_FILE, 'utf8');
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      recentVisitors = parsed.slice(0, 300);
+      recentVisitors = parsed.slice(0, 2500);
       // Pre-fill activeVisitors map from recent visitors
       recentVisitors.forEach((v) => {
         if (v && v.sessionKey) {
@@ -383,8 +383,8 @@ function persistStats() {
       };
       await fs.promises.writeFile(STATS_FILE, JSON.stringify(payload), 'utf8');
 
-      // Persist recent visitors log (capped at 300)
-      const logsPayload = recentVisitors.slice(0, 300);
+      // Persist recent visitors log (capped at 2500)
+      const logsPayload = recentVisitors.slice(0, 2500);
       await fs.promises.writeFile(VISITORS_LOG_FILE, JSON.stringify(logsPayload), 'utf8');
     } catch (e) {
       console.warn('Failed to save visitor logs:', e.message);
@@ -500,13 +500,13 @@ async function recordVisit(ip, clientId, userAgent = '', clientMeta = {}) {
     if (location && location.countryCode) visitor.location = location;
   }
 
-  // 5. Update recentVisitors list (capped at 300)
+  // 5. Update recentVisitors list (capped at 2500)
   const existingIdx = recentVisitors.findIndex((v) => v.sessionKey === sessionKey);
   if (existingIdx !== -1) {
     recentVisitors[existingIdx] = { ...visitor };
   } else {
     recentVisitors.unshift({ ...visitor });
-    if (recentVisitors.length > 300) recentVisitors.pop();
+    if (recentVisitors.length > 2500) recentVisitors.pop();
   }
 
   // 6. Record all-time and daily counters

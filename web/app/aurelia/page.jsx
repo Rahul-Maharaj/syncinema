@@ -1085,13 +1085,10 @@ export default function AdminPage() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef();
 
-  // Stealth Camouflage Decoy State:
-  // Shows an authentic 404 Not Found error to any unauthorized visitors, bots, or scrapers.
-  // Can be unlocked by:
-  // 1) URL parameter ?access=1, ?vault=1, or ?adm=1
-  // 2) Keyboard cipher shortcut: Ctrl + Shift + A (or Cmd + Shift + A)
-  // 3) Clicking the "404" header 3 times
-  const [showDecoy404, setShowDecoy404] = useState(true);
+  // High-Security Single Active Admin Session Portal:
+  // Strictly enforces ONE active administrator session worldwide.
+  const [showDecoy404, setShowDecoy404] = useState(false);
+  const [adminToken, setAdminToken] = useState(() => (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_token') || '' : ''));
   const [secretClicks, setSecretClicks] = useState(0);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(0);
@@ -1140,7 +1137,7 @@ export default function AdminPage() {
     setGhostModal({ open: true, roomId, data: null });
     const sock = getSocket();
     if (!sock.connected) sock.connect();
-    sock.emit('admin:ghost_join', { roomId, adminKey }, (res) => {
+    sock.emit('admin:ghost_join', { roomId, adminKey, adminToken }, (res) => {
       if (res?.ok) {
         setGhostSyncState(res);
         setGhostChat(res.chat || []);
@@ -1245,6 +1242,29 @@ export default function AdminPage() {
     });
   };
 
+  const adminHeaders = useCallback(() => {
+    const tok = adminToken || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_token') || '' : '');
+    const key = adminKey || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_key') || '' : '');
+    return {
+      'Content-Type': 'application/json',
+      'x-admin-token': tok,
+      'x-admin-key': key,
+    };
+  }, [adminToken, adminKey]);
+
+  // Listen for single-session revocation (when another admin logs in)
+  useEffect(() => {
+    const sock = getSocket();
+    const onRevoked = (data) => {
+      alert(data?.message || 'Admin session terminated: Another administrator has logged in.');
+      handleLogout();
+    };
+    sock.on('admin:session_revoked', onRevoked);
+    return () => {
+      sock.off('admin:session_revoked', onRevoked);
+    };
+  }, []);
+
   const verifyKey = async (k) => {
     if (Date.now() < lockedUntil) {
       setAuthError('SECURITY LOCKOUT: Gateway locked for protection. Try again shortly.');
@@ -1253,20 +1273,24 @@ export default function AdminPage() {
     setLoading(true);
     setAuthError('');
     try {
-      const res = await fetch(serverUrl() + '/api/admin/verify', {
+      const res = await fetch(serverUrl() + '/api/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': k.trim(),
         },
+        body: JSON.stringify({ key: k.trim() }),
       });
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
         setAuthed(true);
         setShowDecoy404(false);
         setFailedAttempts(0);
+        sessionStorage.setItem('sc_admin_token', data.token);
         sessionStorage.setItem('sc_admin_key', k.trim());
+        setAdminToken(data.token);
         setAdminKey(k.trim());
-        fetchOverview(k.trim());
+        say('🔒 Single Administrator Session Established');
+        fetchOverview(data.token, k.trim());
       } else {
         setAuthed(false);
         const nextFails = failedAttempts + 1;
@@ -1275,7 +1299,7 @@ export default function AdminPage() {
           setLockedUntil(Date.now() + 5 * 60_000);
           setAuthError('SECURITY LOCKOUT: Maximum attempts exceeded. Access locked for 5 minutes.');
         } else {
-          setAuthError(`Invalid administrator credentials (${3 - nextFails} attempt${3 - nextFails === 1 ? '' : 's'} remaining).`);
+          setAuthError(data.message || `Invalid master security cipher (${3 - nextFails} attempt${3 - nextFails === 1 ? '' : 's'} remaining).`);
         }
       }
     } catch (e) {
@@ -1292,18 +1316,31 @@ export default function AdminPage() {
   };
 
   const handleLogout = () => {
+    const tok = adminToken || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_token') || '' : '');
+    if (tok) {
+      fetch(serverUrl() + '/api/admin/logout', {
+        method: 'POST',
+        headers: { 'x-admin-token': tok },
+      }).catch(() => {});
+    }
+    sessionStorage.removeItem('sc_admin_token');
     sessionStorage.removeItem('sc_admin_key');
     setAuthed(false);
+    setAdminToken('');
     setAdminKey('');
     setKeyInput('');
-    setShowDecoy404(true);
   };
 
-  const fetchOverview = useCallback(async (k = adminKey) => {
-    if (!k) return;
+  const fetchOverview = useCallback(async (token = adminToken, k = adminKey) => {
+    const tok = token || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_token') : '') || '';
+    const key = k || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sc_admin_key') : '') || '';
+    if (!tok && !key) return;
     try {
       const res = await fetch(serverUrl() + '/api/admin/overview', {
-        headers: { 'x-admin-key': k },
+        headers: {
+          'x-admin-token': tok,
+          'x-admin-key': key,
+        },
         cache: 'no-store',
       });
       if (res.ok) {
@@ -1317,13 +1354,43 @@ export default function AdminPage() {
           setVisitorsData(json.visitors);
         }
       } else if (res.status === 401) {
-        setAuthed(false);
-        sessionStorage.removeItem('sc_admin_key');
+        const json = await res.json().catch(() => ({}));
+        if (json.error === 'session_expired') {
+          alert('Administrator Session Terminated:\n\nAnother administrator has logged in from another browser/device, or your single session timed out.');
+        }
+        handleLogout();
       }
     } catch (e) {
       // offline / quiet
     }
-  }, [adminKey]);
+  }, [adminToken, adminKey]);
+
+  // Export full visitor logs as JSON
+  const handleExportVisitors = async () => {
+    try {
+      say('Preparing full visitor audit export…', 'info');
+      const res = await fetch(serverUrl() + '/api/admin/visitors/export', {
+        headers: adminHeaders(),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `syncinema_visitors_export_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        say('Visitor audit export downloaded successfully! 📁');
+      } else {
+        say('Failed to export visitor audit log', 'error');
+      }
+    } catch {
+      say('Export error occurred', 'error');
+    }
+  };
 
   // Admin ban visitor IP from Live Visitors telemetry
   const handleBlockVisitorIp = async (ip, reason = 'Blocked by administrator from Live Visitors panel') => {
@@ -1332,10 +1399,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/visitors/block', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ ip, reason }),
       });
       if (res.ok) {
@@ -1362,10 +1426,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/video/control', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ roomId, action, payload }),
       });
       if (res.ok) {
@@ -1384,10 +1445,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/room/block', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ roomId, reason: 'Closed by administrator for security' }),
       });
       if (res.ok) {
@@ -1403,10 +1461,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/room/unblock', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ roomId }),
       });
       if (res.ok) {
@@ -1423,9 +1478,7 @@ export default function AdminPage() {
     setDeepInspectModal({ open: true, loading: true, roomId, data: null });
     try {
       const res = await fetch(serverUrl() + `/api/admin/room/inspect/${encodeURIComponent(roomId)}`, {
-        headers: {
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
       });
       if (res.ok) {
         const json = await res.json();
@@ -1446,10 +1499,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/room/alert', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ roomId, message: msg.trim(), type: 'toast' }),
       });
       if (res.ok) {
@@ -1468,10 +1518,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/user/block', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ cid: user.cid, ip: user.ip, roomId, reason }),
       });
       if (res.ok) {
@@ -1487,10 +1534,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/user/unblock', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ cid: u.cid, ip: u.ip }),
       });
       if (res.ok) {
@@ -1508,10 +1552,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/video/control', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ roomId: 'global', action: 'block', payload: { src: url } }),
       });
       if (res.ok) {
@@ -1528,10 +1569,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/video/unblock', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ src }),
       });
       if (res.ok) {
@@ -1549,10 +1587,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/video/override', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({
           roomId: overrideModal.roomId,
           media: {
@@ -1577,10 +1612,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/queue/clear', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ roomId }),
       });
       if (res.ok) {
@@ -1598,10 +1630,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(serverUrl() + '/api/admin/broadcast', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
-        },
+        headers: adminHeaders(),
         body: JSON.stringify({ message: broadcastMsg.trim() }),
       });
       if (res.ok) {
@@ -1733,6 +1762,15 @@ export default function AdminPage() {
               <p className="mt-1 text-xs text-white/60">
                 Surveillance &amp; Cinema Defense Command
               </p>
+              <div className="mt-3 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-200 text-xs text-center space-y-1">
+                <div className="font-bold flex items-center justify-center gap-1.5 text-rose-300">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  <span>Single-Session Security Active</span>
+                </div>
+                <p className="text-[10px] text-white/60">
+                  Strictly 1 active administrator session allowed. Logging in here will terminate any other active admin sessions.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -3716,14 +3754,24 @@ export default function AdminPage() {
 
             {/* Visitors List Grid */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                   <span>Logged Visitors</span>
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-mono text-cyan-300">
                     {filteredVisitors.length} of {visitorsData?.recent?.length || 0}
                   </span>
                 </h3>
-                <span className="text-xs text-white/40">Auto-updating every 3s via heartbeat</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExportVisitors}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-600/25 hover:bg-cyan-600/40 border border-cyan-400/40 text-cyan-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                    title="Export complete persistent visitor database as JSON"
+                  >
+                    <span>📥 Export All Saved Visitors (.JSON)</span>
+                  </button>
+                  <span className="text-xs text-white/40">Auto-updating every 3s via heartbeat</span>
+                </div>
               </div>
 
               {filteredVisitors.length === 0 ? (
