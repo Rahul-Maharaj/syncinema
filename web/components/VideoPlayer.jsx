@@ -2190,7 +2190,7 @@ export default function VideoPlayer({
       </div>
 
       {/* Instant Multi-User Playback Sync Controls Bar (Fast-Seek, Zero-Drift Play/Pause & Forward/Rewind) */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border-2 border-pink-500/50 bg-[#1A1A28] shadow-2xl text-xs my-2.5 transition-colors duration-300 relative z-10">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border border-pink-500/30 bg-[#191724] shadow-xl text-xs my-2.5 transition-colors duration-300 relative z-10">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -2534,22 +2534,22 @@ export default function VideoPlayer({
               onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
               placeholder="Paste any video or movie link (YouTube, HLS, MP4, Prime, Netflix) - Auto plays in sync..."
-              className="w-full !pl-10 !pr-3 !py-2.5 text-xs sm:text-sm rounded-xl outline-none font-extrabold bg-[#222232] border-2 border-pink-500/40 focus:border-pink-400 text-white placeholder:text-zinc-300 shadow-inner relative z-10"
+              className="w-full !pl-10 !pr-3 !py-2.5 text-xs sm:text-sm rounded-xl outline-none font-bold bg-[#1C1A27] border border-pink-500/30 focus:border-pink-400 text-white placeholder:text-zinc-400 shadow-inner relative z-10"
             />
           </div>
           <div className="flex items-center gap-2 shrink-0 relative z-10">
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="btn-paste-play flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition cursor-pointer shadow-xl hover-lift active:scale-95 relative z-10"
+              className="btn-paste-play flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-md hover-lift active:scale-95 relative z-10"
               title="Paste link from clipboard and play immediately"
             >
               <span className="text-white text-sm">📋</span>
-              <span className="font-black text-white tracking-wide">Paste &amp; Play</span>
+              <span className="font-bold text-white tracking-wide">Paste &amp; Play</span>
             </button>
             <button
               type="submit"
-              className="btn-pink !py-2.5 !px-6 text-xs font-black shrink-0 flex items-center justify-center gap-2 rounded-xl shadow-xl shadow-pink-500/50 text-white cursor-pointer active:scale-95 hover-lift hover-sheen border-2 border-pink-200 relative z-10"
+              className="btn-pink !py-2.5 !px-5 text-xs font-bold shrink-0 flex items-center justify-center gap-2 rounded-xl shadow-md text-white cursor-pointer active:scale-95 hover-lift relative z-10"
             >
               <Play className="h-4 w-4 fill-white stroke-[2]" />
               <span className="tracking-wide">Play for All</span>
@@ -2557,8 +2557,8 @@ export default function VideoPlayer({
           </div>
         </div>
 
-        {/* Ultra-Vivid Jewel-Toned High-Contrast Action Toolbar */}
-        <div className="flex items-center gap-2.5 pt-1 text-xs overflow-x-auto no-scrollbar p-3.5 rounded-2xl bg-[#1A1A28] border-2 border-pink-500/50 shadow-2xl relative z-10">
+        {/* Soft, Elegant, Premium High-Contrast Action Toolbar */}
+        <div className="flex items-center gap-2.5 pt-1 text-xs overflow-x-auto no-scrollbar p-3.5 rounded-2xl bg-[#191724] border border-pink-500/30 shadow-xl relative z-10">
           {/* Add to queue */}
           <button
             type="button"

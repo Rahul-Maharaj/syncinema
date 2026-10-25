@@ -138,48 +138,50 @@ body {
     box-shadow: 0 20px 50px -15px rgba(236, 72, 153, 0.3) !important;
   }
 
-  /* Romantic Pink Primary Button (matching home-bg glowing screen) */
+  /* Romantic Rose Primary Button (Soft, elegant contrast) */
   .btn,
   .btn-pink,
   .btn-tangerine {
     @apply relative inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all duration-200 cursor-pointer active:scale-[.97] disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #F472B6 0%, #EC4899 50%, #DB2777 100%) !important;
-    box-shadow: 0 4px 20px 0 rgba(236, 72, 153, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    background: linear-gradient(135deg, #BE3A6E 0%, #A62F5E 100%) !important;
+    border: 1.5px solid rgba(251, 182, 206, 0.4) !important;
+    box-shadow: 0 4px 14px 0 rgba(190, 58, 110, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
   }
   .btn:hover,
   .btn-pink:hover,
   .btn-tangerine:hover {
-    background: linear-gradient(135deg, #F9A8D4 0%, #F472B6 50%, #EC4899 100%) !important;
-    box-shadow: 0 6px 28px 0 rgba(236, 72, 153, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+    background: linear-gradient(135deg, #CE487C 0%, #B53669 100%) !important;
+    border-color: rgba(251, 182, 206, 0.65) !important;
+    box-shadow: 0 6px 18px 0 rgba(190, 58, 110, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
     transform: translateY(-1px);
   }
 
-  /* Soft Pink Ghost Button - High Contrast & Solid */
+  /* Soft Ghost Button - Clean & Solid */
   .ghost,
   .btn-ghost-linen {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-pink-500/40 bg-[#1E1E2C] px-3.5 py-2 text-sm text-white font-bold transition-all duration-200 hover:bg-[#2A2A3E] hover:border-pink-400 active:scale-[.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-pink-500/30 bg-[#1E1C28] px-3.5 py-2 text-sm text-pink-100 font-bold transition-all duration-200 hover:bg-[#282436] hover:border-pink-400/50 active:scale-[.98];
   }
   .ghost:hover,
   .btn-ghost-linen:hover {
-    border-color: #EC4899 !important;
+    border-color: rgba(244, 114, 182, 0.6) !important;
     color: #FFFFFF !important;
   }
 
   /* Form Input Field */
   .field {
-    @apply w-full rounded-xl border-2 px-3.5 py-2.5 text-sm text-white placeholder-zinc-300 outline-none transition-all duration-200 font-bold;
-    background: #1C1C28 !important;
-    border-color: rgba(236, 72, 153, 0.45) !important;
+    @apply w-full rounded-xl border px-3.5 py-2.5 text-sm text-white placeholder-zinc-400 outline-none transition-all duration-200 font-semibold;
+    background: #1C1A27 !important;
+    border-color: rgba(244, 114, 182, 0.35) !important;
   }
   .field:focus {
-    border-color: #EC4899 !important;
-    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.3) !important;
+    border-color: #BE3A6E !important;
+    box-shadow: 0 0 0 3px rgba(190, 58, 110, 0.25) !important;
   }
 
   /* Frosted Glass Panels */
   .glass {
     @apply rounded-3xl border text-pink-100 backdrop-blur-2xl;
-    background: #222222 !important;
+    background: #1C1A26 !important;
     border-color: rgba(244, 114, 182, 0.2) !important;
   }
   .glass-btn {
@@ -188,257 +190,278 @@ body {
   }
   .field-d {
     @apply w-full rounded-xl border border-white/15 px-3.5 py-2.5 text-sm text-pink-100 placeholder-pink-300/40 outline-none transition-all duration-200;
-    background: #222222 !important;
+    background: #1C1A26 !important;
     border-color: rgba(244, 114, 182, 0.2) !important;
   }
 
-  /* Ultra-Vivid Jewel-Toned High-Contrast Room Controls (Anti-Fade & High Stacking Priority) */
+  /* Soft, Elegant, Premium High-Contrast Room Controls (Anti-Fade & Easy on the Eyes) */
   .btn-seek-step {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #818CF8 0%, #6366F1 50%, #4F46E5 100%) !important;
-    border: 2px solid #C7D2FE !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #252233 !important;
+    border: 1.5px solid rgba(165, 154, 214, 0.4) !important;
+    color: #EDE8F5 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-seek-step:hover {
-    background: linear-gradient(135deg, #A5B4FC 0%, #818CF8 50%, #6366F1 100%) !important;
-    border-color: #EEF2FF !important;
-    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #312D42 !important;
+    border-color: rgba(165, 154, 214, 0.7) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   }
 
   .btn-vpn-shield-on {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%) !important;
-    border: 2px solid #A7F3D0 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #1B2B24 !important;
+    border: 1.5px solid rgba(52, 211, 153, 0.4) !important;
+    color: #D1FAE5 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+  .btn-vpn-shield-on:hover {
+    background: #22372E !important;
+    border-color: rgba(52, 211, 153, 0.7) !important;
   }
   .btn-vpn-shield-off {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%) !important;
-    border: 2px solid #D1D5DB !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
+    background: #25252E !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+    color: #A1A1AA !important;
+    font-weight: 700 !important;
   }
 
   .btn-drift-pill {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #2DD4BF 0%, #14B8A6 50%, #0D9488 100%) !important;
-    border: 2px solid #99F6E4 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(20, 184, 166, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #192A2C !important;
+    border: 1.5px solid rgba(45, 212, 191, 0.4) !important;
+    color: #CCFBF1 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
 
   .btn-paste-play {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #F43F5E 0%, #EC4899 50%, #D946EF 100%) !important;
-    border: 2px solid #FCE7F3 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 20px rgba(236, 72, 153, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #361F2E !important;
+    border: 1.5px solid rgba(244, 114, 182, 0.45) !important;
+    color: #FCE7F3 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-paste-play:hover {
-    background: linear-gradient(135deg, #FB7185 0%, #F472B6 50%, #E879F9 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 26px rgba(236, 72, 153, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #46283C !important;
+    border-color: rgba(244, 114, 182, 0.75) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-action-queue {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #E879F9 0%, #D946EF 50%, #A21CAF 100%) !important;
-    border: 2px solid #FAE8FF !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(217, 70, 239, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #2F1E38 !important;
+    border: 1.5px solid rgba(216, 112, 219, 0.4) !important;
+    color: #F5DDF7 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-action-queue:hover {
-    background: linear-gradient(135deg, #F0ABFC 0%, #E879F9 50%, #C026D3 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 24px rgba(217, 70, 239, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #3D2748 !important;
+    border-color: rgba(216, 112, 219, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-action-file {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 50%, #6D28D9 100%) !important;
-    border: 2px solid #EDE9FE !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #26213D !important;
+    border: 1.5px solid rgba(167, 139, 250, 0.4) !important;
+    color: #EDE9FE !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-action-file:hover {
-    background: linear-gradient(135deg, #C4B5FD 0%, #A78BFA 50%, #7C3AED 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #332B52 !important;
+    border-color: rgba(167, 139, 250, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-action-sub {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%) !important;
-    border: 2px solid #FEF3C7 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #31261B !important;
+    border: 1.5px solid rgba(245, 158, 11, 0.4) !important;
+    color: #FEF3C7 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-action-sub:hover {
-    background: linear-gradient(135deg, #FCD34D 0%, #FBBF24 50%, #B45309 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 24px rgba(245, 158, 11, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #423324 !important;
+    border-color: rgba(245, 158, 11, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-action-recent {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 50%, #0284C7 100%) !important;
-    border: 2px solid #E0F2FE !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(14, 165, 233, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #1C2736 !important;
+    border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+    color: #E0F2FE !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-action-recent:hover {
-    background: linear-gradient(135deg, #7DD3FC 0%, #38BDF8 50%, #0369A1 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 24px rgba(14, 165, 233, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #243346 !important;
+    border-color: rgba(56, 189, 248, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-action-share {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%) !important;
-    border: 2px solid #D1FAE5 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #1A2B23 !important;
+    border: 1.5px solid rgba(52, 211, 153, 0.4) !important;
+    color: #D1FAE5 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-action-share:hover {
-    background: linear-gradient(135deg, #6EE7B7 0%, #34D399 50%, #047857 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.65) !important;
+    background: #233B30 !important;
+    border-color: rgba(52, 211, 153, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-action-type {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #FB7185 0%, #F43F5E 50%, #E11D48 100%) !important;
-    border: 2px solid #FFE4E6 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 18px rgba(244, 63, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #331D26 !important;
+    border: 1.5px solid rgba(244, 63, 94, 0.4) !important;
+    color: #FFE4E6 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-action-type:hover {
-    background: linear-gradient(135deg, #FDA4AF 0%, #FB7185 50%, #BE123C 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 24px rgba(244, 63, 94, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #442633 !important;
+    border-color: rgba(244, 63, 94, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-room-rx {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #A855F7 0%, #8B5CF6 50%, #6D28D9 100%) !important;
-    border: 2px solid #EDE9FE !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    background: #291D33 !important;
+    border: 1.5px solid rgba(192, 132, 252, 0.35) !important;
+    color: #F3E8FF !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
   }
   .btn-room-rx:hover {
-    background: linear-gradient(135deg, #C4B5FD 0%, #A855F7 50%, #7C3AED 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+    background: #382746 !important;
+    border-color: rgba(192, 132, 252, 0.65) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-room-mode {
     position: relative !important;
     z-index: 2 !important;
-    background: #3B2B5C !important;
-    border: 2px solid #C084FC !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+    background: #231F33 !important;
+    border: 1.5px solid rgba(165, 154, 214, 0.3) !important;
+    color: #D4CEE5 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
   }
   .btn-room-mode:hover {
-    background: #50397D !important;
-    border-color: #E9D5FF !important;
+    background: #2E2942 !important;
+    border-color: rgba(165, 154, 214, 0.6) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-room-plugin {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%) !important;
-    border: 2px solid #DDD6FE !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #2A1F3D !important;
+    border: 1.5px solid rgba(167, 139, 250, 0.4) !important;
+    color: #EDE9FE !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-room-plugin:hover {
-    background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 50%, #7C3AED 100%) !important;
-    border-color: #FFFFFF !important;
+    background: #382952 !important;
+    border-color: rgba(167, 139, 250, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-room-cinema {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #B45309 100%) !important;
-    border: 2px solid #FEF3C7 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #332314 !important;
+    border: 1.5px solid rgba(245, 158, 11, 0.4) !important;
+    color: #FEF3C7 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-room-cinema:hover {
-    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%) !important;
-    border-color: #FFFFFF !important;
+    background: #442F1B !important;
+    border-color: rgba(245, 158, 11, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-room-theme {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #9333EA 0%, #DB2777 50%, #E11D48 100%) !important;
-    border: 2px solid #FBCFE8 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 16px rgba(219, 39, 119, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #381E32 !important;
+    border: 1.5px solid rgba(236, 72, 153, 0.4) !important;
+    color: #FCE7F3 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-room-theme:hover {
-    background: linear-gradient(135deg, #A855F7 0%, #EC4899 50%, #F43F5E 100%) !important;
-    border-color: #FFFFFF !important;
+    background: #482640 !important;
+    border-color: rgba(236, 72, 153, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
   .btn-room-fullscreen {
     position: relative !important;
     z-index: 2 !important;
-    background: linear-gradient(135deg, #DB2777 0%, #E11D48 50%, #7C3AED 100%) !important;
-    border: 2px solid #FBCFE8 !important;
-    color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 4px 16px rgba(225, 29, 72, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    background: #381E27 !important;
+    border: 1.5px solid rgba(244, 63, 94, 0.4) !important;
+    color: #FFE4E6 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   }
   .btn-room-fullscreen:hover {
-    background: linear-gradient(135deg, #F43F5E 0%, #FB7185 50%, #8B5CF6 100%) !important;
-    border-color: #FFFFFF !important;
+    background: #482632 !important;
+    border-color: rgba(244, 63, 94, 0.7) !important;
+    color: #FFFFFF !important;
   }
 
+  /* Compact Floating Pill: Show Video Call */
   .btn-show-call {
-    position: relative !important;
-    z-index: 2 !important;
-    background: linear-gradient(135deg, #A855F7 0%, #9333EA 50%, #C026D3 100%) !important;
-    border: 2px solid #F0ABFC !important;
+    position: fixed !important;
+    bottom: 1rem !important;
+    left: 1rem !important;
+    z-index: 50 !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: fit-content !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    background: #281D38 !important;
+    border: 1.5px solid rgba(192, 132, 252, 0.45) !important;
     color: #FFFFFF !important;
-    font-weight: 900 !important;
-    box-shadow: 0 6px 22px rgba(147, 51, 234, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    font-weight: 700 !important;
+    border-radius: 9999px !important;
+    padding: 0.5rem 1rem !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
   }
   .btn-show-call:hover {
-    background: linear-gradient(135deg, #C084FC 0%, #A855F7 50%, #D946EF 100%) !important;
-    border-color: #FFFFFF !important;
-    box-shadow: 0 8px 28px rgba(168, 85, 247, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+    background: #36264C !important;
+    border-color: rgba(192, 132, 252, 0.7) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
   }
 }
 
