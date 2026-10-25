@@ -74,16 +74,21 @@ const {
   METERED_STATIC_CRED,
 } = process.env;
 
-// Admin Key Security: Disallow default 'admin123' and generate cryptographically secure fallback if unset
-let resolvedAdminKey = (process.env.ADMIN_KEY || '').trim();
-if (!resolvedAdminKey || resolvedAdminKey === 'admin123' || resolvedAdminKey.length < 8) {
+// Admin Key Security: Support ADMIN_KEY, ADMIN_PASSWORD, ADMINKEY or ADMIN_SECRET from Render/environment
+let rawAdminKey = (process.env.ADMIN_KEY || process.env.ADMIN_PASSWORD || process.env.ADMINKEY || process.env.ADMIN_SECRET || '').trim();
+if ((rawAdminKey.startsWith('"') && rawAdminKey.endsWith('"')) || (rawAdminKey.startsWith("'") && rawAdminKey.endsWith("'"))) {
+  rawAdminKey = rawAdminKey.slice(1, -1).trim();
+}
+
+let resolvedAdminKey = rawAdminKey;
+if (!resolvedAdminKey) {
   const generatedSecret = crypto.randomBytes(24).toString('hex');
   resolvedAdminKey = generatedSecret;
   console.warn('\n============================================================');
-  console.warn('⚠️  [SECURITY NOTICE] Insecure or missing ADMIN_KEY detected in environment!');
+  console.warn('⚠️  [SECURITY NOTICE] No ADMIN_KEY detected in environment!');
   console.warn('An ephemeral cryptographically strong ADMIN_KEY has been generated for this session:');
   console.warn('  ' + generatedSecret);
-  console.warn('Set a strong ADMIN_KEY in your .env file to persist your credentials.');
+  console.warn('Set ADMIN_KEY in your Render environment variables to persist your credentials.');
   console.warn('============================================================\n');
 }
 const ADMIN_KEY = resolvedAdminKey;
@@ -153,8 +158,21 @@ setInterval(() => {
 
 const adminKeyOk = (k) => {
   if (!k) return false;
-  const a = Buffer.from(String(k).trim()), b = Buffer.from(String(ADMIN_KEY).trim());
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  let input = String(k).trim();
+  if ((input.startsWith('"') && input.endsWith('"')) || (input.startsWith("'") && input.endsWith("'"))) {
+    input = input.slice(1, -1).trim();
+  }
+  let actual = String(ADMIN_KEY).trim();
+  if ((actual.startsWith('"') && actual.endsWith('"')) || (actual.startsWith("'") && actual.endsWith("'"))) {
+    actual = actual.slice(1, -1).trim();
+  }
+  if (input === actual) return true;
+  try {
+    const a = Buffer.from(input), b = Buffer.from(actual);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 };
 
 const ipOf = (r) => {
