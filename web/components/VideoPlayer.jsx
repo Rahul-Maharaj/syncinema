@@ -630,11 +630,13 @@ export default function VideoPlayer({
     setError('');
     if (!['file', 'hls', 'dash', 'local'].includes(T)) { v.pause(); v.removeAttribute('src'); v.load(); return; }
     if (T === 'local' && !localUrl) { v.removeAttribute('src'); v.load(); return; }
+    let isCancelled = false;
     let dispose = () => {};
     setAudioTracks([]);
 
-    if (T === 'hls' && !v.canPlayType('application/vnd.apple.mpegurl'))
+    if (T === 'hls' && !v.canPlayType('application/vnd.apple.mpegurl')) {
       import('hls.js').then(({ default: H }) => {
+        if (isCancelled) return;
         const h = new H({
           enableWorker: true,
           lowLatencyMode: false,
@@ -652,12 +654,17 @@ export default function VideoPlayer({
           fragLoadingRetryDelay: 1000,
           startFragPrefetch: true,
         });
+        if (isCancelled) {
+          h.destroy();
+          return;
+        }
         hlsRef.current = h;
         h.loadSource(media.src);
         h.attachMedia(v);
         dispose = () => { hlsRef.current = null; h.destroy(); };
 
         h.on(H.Events.MANIFEST_PARSED, () => {
+          if (isCancelled) return;
           setError('');
           if (h.audioTracks && h.audioTracks.length > 0) {
             setAudioTracks(h.audioTracks.map((t, idx) => ({ id: idx, name: t.name || t.lang || `Track ${idx + 1}` })));
@@ -670,17 +677,21 @@ export default function VideoPlayer({
           }
         });
         h.on(H.Events.FRAG_LOADED, () => {
+          if (isCancelled) return;
           setError('');
         });
         h.on(H.Events.AUDIO_TRACKS_UPDATED, (_, data) => {
+          if (isCancelled) return;
           if (data.audioTracks && data.audioTracks.length > 0) {
             setAudioTracks(data.audioTracks.map((t, idx) => ({ id: idx, name: t.name || t.lang || `Track ${idx + 1}` })));
           }
         });
         h.on(H.Events.AUDIO_TRACK_SWITCHED, (_, data) => {
+          if (isCancelled) return;
           setCurAudio(data.id);
         });
         h.on(H.Events.ERROR, (_, d) => {
+          if (isCancelled) return;
           if (d.fatal) {
             if (d.type === H.ErrorTypes.MEDIA_ERROR) {
               h.recoverMediaError();
@@ -696,8 +707,20 @@ export default function VideoPlayer({
           }
         });
       });
-    else if (T === 'dash') import('dashjs').then(({ MediaPlayer }) => { const d = MediaPlayer().create(); d.initialize(v, media.src, false); dispose = () => d.reset(); });
-    else v.src = (T === 'local' || (localUrl && media?.uploaderId === me)) ? localUrl : media.src;
+    } else if (T === 'dash') {
+      import('dashjs').then(({ MediaPlayer }) => {
+        if (isCancelled) return;
+        const d = MediaPlayer().create();
+        if (isCancelled) {
+          d.reset();
+          return;
+        }
+        d.initialize(v, media.src, false);
+        dispose = () => d.reset();
+      });
+    } else {
+      v.src = (T === 'local' || (localUrl && media?.uploaderId === me)) ? localUrl : media.src;
+    }
 
     api.current = {
       time: () => v.currentTime,
@@ -780,11 +803,18 @@ export default function VideoPlayer({
       correct(st.current.time, st.current.playing);
     };
     return () => {
+      isCancelled = true;
       evs.forEach((o) => o());
       clearTimeout(waitTimer);
       v.removeEventListener('waiting', onWait);
       v.removeEventListener('canplay', onResume);
       v.removeEventListener('playing', onResume);
+      v.onplaying = null;
+      v.oncanplay = null;
+      v.onloadeddata = null;
+      v.onended = null;
+      v.onerror = null;
+      v.onloadedmetadata = null;
       dispose();
     };
   }, [media, localUrl]);

@@ -9,8 +9,8 @@ export default function manifest() {
     display: 'standalone',
     display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
     orientation: 'any',
-    background_color: '#090514',
-    theme_color: '#f43f5e',
+    background_color: '#222222',
+    theme_color: '#EC4899',
     categories: ['entertainment', 'video', 'social', 'music'],
     prefer_related_applications: false,
     icons: [

@@ -197,10 +197,16 @@ export const ytReady = () => window.YT?.Player ? Promise.resolve()
   : new Promise((r) => { window.onYouTubeIframeAPIReady = r; loadScript('https://www.youtube.com/iframe_api'); });
 
 export const toProxyUrl = (src) => {
-  return `/api/proxy?url=${encodeURIComponent(src)}`;
+  if (!src || typeof src !== 'string') return '';
+  const s = src.trim();
+  if (s.startsWith('/api/proxy?') || s.startsWith('blob:') || s.startsWith('data:')) return s;
+  return `/api/proxy?url=${encodeURIComponent(s)}`;
 };
 export const toStreamProxyUrl = (src) => {
-  return `/api/stream?url=${encodeURIComponent(src)}`;
+  if (!src || typeof src !== 'string') return '';
+  const s = src.trim();
+  if (s.startsWith('/api/stream?') || s.startsWith('blob:') || s.startsWith('data:')) return s;
+  return `/api/stream?url=${encodeURIComponent(s)}`;
 };
 
 // Turn share links into unblocked proxy-embedded players (bypasses ISP blocks & X-Frame-Options)

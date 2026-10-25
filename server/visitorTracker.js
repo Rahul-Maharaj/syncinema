@@ -37,6 +37,18 @@ let recentVisitors = [];
 
 // Geolocation memory cache
 const geoCache = new Map();
+const MAX_GEO_CACHE = 5000;
+const setGeoCache = (ip, geo) => {
+  if (geoCache.size >= MAX_GEO_CACHE) {
+    const it = geoCache.keys();
+    for (let i = 0; i < 500; i++) {
+      const next = it.next();
+      if (next.done) break;
+      geoCache.delete(next.value);
+    }
+  }
+  geoCache.set(ip, geo);
+};
 
 // Normalize IP address
 function normalizeIp(ip) {
@@ -268,7 +280,7 @@ async function getGeoForIp(ip) {
           isp: data.isp || 'Broadband ISP',
           ip: data.query || ip,
         };
-        geoCache.set(ip, geo);
+        setGeoCache(ip, geo);
         return geo;
       }
     }
@@ -286,7 +298,7 @@ async function getGeoForIp(ip) {
     isp: 'Broadband',
     ip,
   };
-  geoCache.set(ip, fallback);
+  setGeoCache(ip, fallback);
   return fallback;
 }
 
@@ -500,8 +512,12 @@ async function recordVisit(ip, clientId, userAgent = '', clientMeta = {}) {
   // 6. Record all-time and daily counters
   const fp = makeFingerprint(normIp, clientId);
   if (!stats.uniqueVisitorsSet.has(fp)) {
+    if (stats.uniqueVisitorsSet.size >= 25000) {
+      const arr = Array.from(stats.uniqueVisitorsSet).slice(-15000);
+      stats.uniqueVisitorsSet = new Set(arr);
+    }
     stats.uniqueVisitorsSet.add(fp);
-    stats.totalVisitors = stats.uniqueVisitorsSet.size;
+    stats.totalVisitors = Math.max(stats.totalVisitors + 1, stats.uniqueVisitorsSet.size);
   }
   if (!stats.todayVisitorsSet.has(fp)) {
     stats.todayVisitorsSet.add(fp);
@@ -612,12 +628,34 @@ function endSession(ip, clientId) {
 
 // Clean stale sessions (inactive for > 45 seconds)
 function cleanStaleSessions() {
-  const cutoff = Date.now() - 45 * 1000;
+  const now = Date.now();
+  const cutoff = now - 45 * 1000;
   for (const [id, ts] of stats.activeSessions.entries()) {
     if (ts < cutoff) {
       stats.activeSessions.delete(id);
       const v = activeVisitors.get(id);
       if (v) v.isOnline = false;
+    }
+  }
+
+  // Prune long-inactive visitors from activeVisitors map to prevent unbounded memory growth
+  if (activeVisitors.size > 1000) {
+    const offlineCutoff = now - 24 * 60 * 60 * 1000; // 24 hours
+    for (const [key, v] of activeVisitors.entries()) {
+      if ((v.lastActive || 0) < offlineCutoff && !stats.activeSessions.has(key)) {
+        activeVisitors.delete(key);
+      }
+    }
+    if (activeVisitors.size > 2000) {
+      const excess = activeVisitors.size - 2000;
+      let removed = 0;
+      for (const [key] of activeVisitors.entries()) {
+        if (!stats.activeSessions.has(key)) {
+          activeVisitors.delete(key);
+          removed++;
+          if (removed >= excess) break;
+        }
+      }
     }
   }
 }

@@ -85,7 +85,12 @@ const defaultOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:4000',
-  'http://127.0.0.1:4000'
+  'http://127.0.0.1:4000',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+  'capacitor://localhost',
+  'http://localhost',
+  'https://localhost',
 ];
 const allowedOrigins = CLIENT_ORIGIN
   ? [...new Set([...CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean), ...defaultOrigins])]
@@ -94,6 +99,7 @@ const allowedOrigins = CLIENT_ORIGIN
 const isAllowedOrigin = (orig) => {
   if (!orig) return true; // non-browser or server-to-server
   if (allowedOrigins.includes(orig)) return true;
+  if (orig.startsWith('capacitor://') || orig.startsWith('ionic://')) return true;
   if (process.env.NODE_ENV !== 'production' && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(orig)) {
     return true;
   }
@@ -118,6 +124,20 @@ const keyOk = (k) => true;
 const blockedUsers = new Map();  // cid -> { reason, at, ip }
 const blockedIps = new Set();    // IP firewall blacklist
 const fails = new Map();         // brute-force lockout & progressive throttle
+
+// Auto-clean expired brute-force lockouts every 5 minutes to prevent memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of fails.entries()) {
+    if (entry.until && entry.until < now) {
+      fails.delete(ip);
+    }
+  }
+  if (fails.size > 5000) {
+    const keysToRemove = Array.from(fails.keys()).slice(0, 1000);
+    keysToRemove.forEach((k) => fails.delete(k));
+  }
+}, 5 * 60 * 1000).unref();
 
 const adminKeyOk = (k) => {
   if (!k) return false;
@@ -169,6 +189,18 @@ const adminGate = (req, res, next) => {
 
 // --- IP Geolocation Resolver & Cache for Member Locations ---
 const geoCache = new Map();
+const MAX_GEO_CACHE = 5000;
+const setGeoCache = (ip, geo) => {
+  if (geoCache.size >= MAX_GEO_CACHE) {
+    const it = geoCache.keys();
+    for (let i = 0; i < 500; i++) {
+      const next = it.next();
+      if (next.done) break;
+      geoCache.delete(next.value);
+    }
+  }
+  geoCache.set(ip, geo);
+};
 const getGeoForIp = async (ip) => {
   if (!ip || isLocalIp(ip)) {
     return {
@@ -211,7 +243,7 @@ const getGeoForIp = async (ip) => {
           isp: data.isp || 'Broadband ISP',
           ip: data.query || ip,
         };
-        geoCache.set(ip, geo);
+        setGeoCache(ip, geo);
         return geo;
       }
     }
@@ -229,7 +261,7 @@ const getGeoForIp = async (ip) => {
     isp: 'Broadband',
     ip,
   };
-  geoCache.set(ip, fallback);
+  setGeoCache(ip, fallback);
   return fallback;
 };
 
@@ -449,6 +481,18 @@ app.get('/api/rooms', adminGate, (req, res) => {
 
 // High-Speed OTT & Cinema Title Resolver (Converts Movie / Series Titles to Verified IMDb IDs)
 const ottResolveCache = new Map();
+const MAX_OTT_CACHE = 2000;
+const setOttCache = (k, v) => {
+  if (ottResolveCache.size >= MAX_OTT_CACHE) {
+    const it = ottResolveCache.keys();
+    for (let i = 0; i < 200; i++) {
+      const next = it.next();
+      if (next.done) break;
+      ottResolveCache.delete(next.value);
+    }
+  }
+  ottResolveCache.set(k, v);
+};
 const KNOWN_SERVER_TITLES = {
   'animal': { imdbId: 'tt13751694', isTv: false, title: 'Animal', year: '2023' },
   'chhaava': { imdbId: 'tt27922706', isTv: false, title: 'Chhaava', year: '2025' },
@@ -639,7 +683,7 @@ app.get('/api/ott/resolve', async (req, res) => {
 
   if (KNOWN_SERVER_TITLES[key]) {
     const val = KNOWN_SERVER_TITLES[key];
-    ottResolveCache.set(key, val);
+    setOttCache(key, val);
     return res.json(val);
   }
 
@@ -661,7 +705,7 @@ app.get('/api/ott/resolve', async (req, res) => {
           isTv: true,
           poster: top.poster || '',
         };
-        ottResolveCache.set(key, resolved);
+        setOttCache(key, resolved);
         return res.json(resolved);
       }
     }
@@ -681,7 +725,7 @@ app.get('/api/ott/resolve', async (req, res) => {
           isTv: false,
           poster: top.poster || '',
         };
-        ottResolveCache.set(key, resolved);
+        setOttCache(key, resolved);
         return res.json(resolved);
       }
     }
@@ -708,7 +752,7 @@ app.get('/api/ott/resolve', async (req, res) => {
           isTv,
           poster: match.i?.imageUrl || '',
         };
-        ottResolveCache.set(key, resolved);
+        setOttCache(key, resolved);
         return res.json(resolved);
       }
     }
@@ -1611,10 +1655,14 @@ try {
 } catch {}
 let saveT;                                          // persist rooms so "our room" survives restarts
 let isSavingRooms = false;
+let pendingSave = false;
 const save = () => {
   clearTimeout(saveT);
   saveT = setTimeout(async () => {
-    if (isSavingRooms) return;
+    if (isSavingRooms) {
+      pendingSave = true;
+      return;
+    }
     isSavingRooms = true;
     try {
       await fs.promises.mkdir(path.dirname(DATA_FILE), { recursive: true });
@@ -1646,11 +1694,17 @@ const save = () => {
         }
       }
       dataToSave.__globalOttLogins = globalOttLogins;
-      await fs.promises.writeFile(DATA_FILE, JSON.stringify(dataToSave), 'utf8');
+      const tmpFile = `${DATA_FILE}.tmp.${Date.now()}`;
+      await fs.promises.writeFile(tmpFile, JSON.stringify(dataToSave), 'utf8');
+      await fs.promises.rename(tmpFile, DATA_FILE);
     } catch (e) {
       console.error('save failed', e.message);
     } finally {
       isSavingRooms = false;
+      if (pendingSave) {
+        pendingSave = false;
+        save();
+      }
     }
   }, 1500);
 };
