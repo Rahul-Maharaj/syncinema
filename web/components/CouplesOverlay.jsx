@@ -1072,16 +1072,16 @@ export default function CouplesOverlay({
         <button
           type="button"
           onClick={() => setHide(false)}
-          className={`hidden lg:flex fixed bottom-3 left-4 z-30 items-center gap-2 rounded-full border-2 px-3.5 py-2 text-xs font-black transition shadow-2xl cursor-pointer ${
+          className={`hidden lg:flex fixed bottom-3 left-4 z-30 items-center gap-2.5 rounded-2xl border-2 px-4 py-2.5 text-xs font-black transition shadow-2xl cursor-pointer hover-lift ${
             theme?.isLight
-              ? 'bg-white hover:bg-rose-50 border-rose-300 text-slate-800 shadow-[0_4px_20px_rgba(244,63,94,0.12)]'
-              : 'border-pink-500/40 bg-[#161622] text-white hover:border-pink-400'
+              ? 'bg-white hover:bg-rose-50 border-rose-300 text-slate-900 shadow-[0_4px_20px_rgba(244,63,94,0.15)]'
+              : 'btn-show-call shadow-xl shadow-black/80'
           }`}
           title="Show floating video call window"
         >
-          <Video className="h-3.5 w-3.5 text-pink-400" />
-          <span>Show Video Call</span>
-          {isAnyoneTalking && <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />}
+          <Video className="h-4 w-4 text-pink-300 stroke-[2.5]" />
+          <span className="font-black text-white text-xs tracking-wide">Show Video Call</span>
+          <span className={`h-2.5 w-2.5 rounded-full ${isAnyoneTalking ? 'bg-emerald-400 shadow-[0_0_8px_#34D399]' : 'bg-pink-400'}`} />
         </button>
       ) : (
         <div ref={box} className={`hidden lg:block fixed bottom-28 left-6 z-40 rounded-3xl border-2 p-3.5 transition-all shadow-2xl ${
@@ -1101,7 +1101,7 @@ export default function CouplesOverlay({
                 className={`rounded-xl px-2.5 py-1 transition text-[11px] font-black border ${
                   theme?.isLight
                     ? 'bg-white hover:bg-rose-50 text-slate-800 border-2 border-slate-200 hover:border-rose-300'
-                    : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20'
+                    : 'bg-[#2E243F] text-white hover:bg-[#3E3154] border-2 border-pink-400/40'
                 }`}
               >
                 {layout === 'floating' ? 'Side-by-side' : 'Stack'}
@@ -1113,10 +1113,10 @@ export default function CouplesOverlay({
                 className={`rounded-xl p-1.5 transition ${
                   theme?.isLight
                     ? 'text-slate-600 hover:bg-rose-50 hover:text-rose-700'
-                    : 'bg-[#222230] text-zinc-200 hover:text-white border border-white/20'
+                    : 'bg-[#2E243F] text-white hover:bg-[#3E3154] border-2 border-pink-400/40'
                 }`}
               >
-                <EyeOff className="h-3.5 w-3.5" />
+                <EyeOff className="h-3.5 w-3.5 text-pink-300" />
               </button>
             </div>
           </div>

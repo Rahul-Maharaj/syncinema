@@ -1636,42 +1636,42 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
                 isFullscreen
                   ? 'btn-pink text-white border-pink-300'
-                  : 'bg-[#181824] hover:bg-[#252536] text-white border-pink-500/40 hover:border-pink-400'
+                  : 'bg-[#2D2340] hover:bg-[#3D3056] text-white border-pink-400 hover:border-pink-300'
               }`}
               title={isFullscreen ? 'Exit Full Screen (F)' : 'Full Screen (F)'}
             >
-              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-white" /> : <Maximize2 className="h-3.5 w-3.5 text-pink-400" />}
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 text-white" /> : <Maximize2 className="h-3.5 w-3.5 text-pink-300 stroke-[2.5]" />}
               <span className="hidden sm:inline">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowAudioVisualizer(!showAudioVisualizer)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
                 showAudioVisualizer
                   ? 'btn-pink text-white border-pink-300'
-                  : 'bg-[#181824] hover:bg-[#252536] text-white border-pink-500/40 hover:border-pink-400'
+                  : 'bg-[#2D2340] hover:bg-[#3D3056] text-white border-pink-400 hover:border-pink-300'
               }`}
               title="Toggle Dynamic In-Room Cinema Audio Spectrum Visualizer"
             >
-              <Volume2 className="h-3.5 w-3.5 text-pink-400" />
+              <Volume2 className="h-3.5 w-3.5 text-pink-300 stroke-[2.5]" />
               <span className="hidden sm:inline">Visualizer</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowSettings(!showSettings)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 text-[11px] font-black transition cursor-pointer shadow-xl ${
                 showSettings
                   ? 'btn-pink text-white border-pink-300'
-                  : 'bg-[#181824] hover:bg-[#252536] text-white border-pink-500/40 hover:border-pink-400'
+                  : 'bg-[#2D2340] hover:bg-[#3D3056] text-white border-pink-400 hover:border-pink-300'
               }`}
               title="Precision Sync, Speed & Audio Settings"
             >
-              <Sliders className="h-3.5 w-3.5 text-pink-400" />
+              <Sliders className="h-3.5 w-3.5 text-pink-300 stroke-[2.5]" />
               <span className="hidden sm:inline">Sync & Audio</span>
             </button>
           </div>
@@ -1972,19 +1972,19 @@ export default function VideoPlayer({
               <button
                 type="button"
                 onClick={() => autoPlayUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md active:scale-95 ${
                   theme?.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200 text-slate-800 hover:border-rose-400'
-                    : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white'
+                    : 'btn-seek-step'
                 }`}
               >
                 <span>🍿 Demo Film</span>
               </button>
               <label
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer ${
                   theme?.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200 text-slate-800 hover:border-rose-400'
-                    : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white'
+                    : 'btn-seek-step'
                 }`}
               >
                 <span>📁 Open My File</span>
@@ -1993,7 +1993,7 @@ export default function VideoPlayer({
               <button
                 type="button"
                 onClick={handleClipboardPasteAndPlay}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md active:scale-95 ${
                   theme?.isLight
                     ? 'bg-rose-50 hover:bg-rose-100 border-2 border-rose-200 text-rose-800'
                     : 'btn-pink text-white'
@@ -2190,16 +2190,16 @@ export default function VideoPlayer({
       </div>
 
       {/* Instant Multi-User Playback Sync Controls Bar (Fast-Seek, Zero-Drift Play/Pause & Forward/Rewind) */}
-      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl border-2 border-pink-500/35 bg-[#161622] shadow-2xl text-xs my-2 transition-colors duration-300">
-        <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border-2 border-pink-500/50 bg-[#1A1A28] shadow-2xl text-xs my-2.5 transition-colors duration-300 relative z-10">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => seekDelta(-10)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-black transition cursor-pointer active:scale-95 border-2 border-white/20 bg-[#222230] hover:bg-[#2C2C3E] text-white shadow-md hover-lift"
+            className="btn-seek-step flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-black text-xs transition cursor-pointer active:scale-95 hover-lift relative z-10"
             title="Rewind 10 seconds (Synced for all participants)"
           >
-            <RotateCcw className="h-3.5 w-3.5 text-pink-400 stroke-[2.5]" />
-            <span className="font-mono text-xs">-10s</span>
+            <RotateCcw className="h-4 w-4 text-white stroke-[3]" />
+            <span className="font-mono text-xs font-black text-white tracking-wide">-10s</span>
           </button>
 
           <button
@@ -2213,18 +2213,18 @@ export default function VideoPlayer({
                 send('PLAY');
               }
             }}
-            className="btn-pink flex items-center gap-2 px-5 py-2 rounded-xl text-white font-black shadow-lg shadow-pink-500/40 transition cursor-pointer active:scale-95 hover-lift hover-sheen text-xs sm:text-sm border-2 border-pink-300"
+            className="btn-pink flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black shadow-xl shadow-pink-500/50 transition cursor-pointer active:scale-95 hover-lift hover-sheen text-xs sm:text-sm border-2 border-pink-200 relative z-10"
             title={playing.current ? "Pause video for all participants" : "Play video for all participants"}
           >
             {playing.current ? (
               <>
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm" />
-                <span>Pause</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
+                <span className="tracking-wide">Pause</span>
               </>
             ) : (
               <>
-                <Play className="h-3.5 w-3.5 fill-white stroke-[2]" />
-                <span>Play</span>
+                <Play className="h-4 w-4 fill-white stroke-[2]" />
+                <span className="tracking-wide">Play</span>
               </>
             )}
           </button>
@@ -2232,45 +2232,45 @@ export default function VideoPlayer({
           <button
             type="button"
             onClick={() => seekDelta(10)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-black transition cursor-pointer active:scale-95 border-2 border-white/20 bg-[#222230] hover:bg-[#2C2C3E] text-white shadow-md hover-lift"
+            className="btn-seek-step flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-black text-xs transition cursor-pointer active:scale-95 hover-lift relative z-10"
             title="Forward 10 seconds (Synced for all participants)"
           >
-            <span className="font-mono text-xs">+10s</span>
-            <FastForward className="h-3.5 w-3.5 text-pink-400 stroke-[2.5]" />
+            <span className="font-mono text-xs font-black text-white tracking-wide">+10s</span>
+            <FastForward className="h-4 w-4 text-white stroke-[3]" />
           </button>
         </div>
 
         {/* Sync Status Telemetry & Built-in VPN Shield Pill */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-2">
           {/* VPN Shield Status / Quick Toggle Pill */}
           <button
             type="button"
             onClick={() => setVpnShield((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-[11px] sm:text-xs font-black transition cursor-pointer active:scale-95 shadow-md ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer active:scale-95 relative z-10 ${
               vpnShield
-                ? 'bg-[#14261B] border-emerald-400 text-emerald-300 shadow-emerald-950/60'
-                : 'bg-[#222230] border-white/20 text-zinc-300'
+                ? 'btn-vpn-shield-on'
+                : 'btn-vpn-shield-off'
             }`}
             title={vpnShield ? '🛡️ VPN Shield Active: IP cloaked & ISP/campus network blocks bypassed' : 'VPN Shield Disabled (Tap to Enable)'}
           >
-            <span className={`h-2.5 w-2.5 rounded-full ${vpnShield ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
-            <span className="hidden xs:inline">VPN</span>
-            <span>{vpnShield ? 'Shield ON' : 'Off'}</span>
+            <span className={`h-2.5 w-2.5 rounded-full ${vpnShield ? 'bg-emerald-200 shadow-[0_0_8px_#A7F3D0]' : 'bg-zinc-400'}`} />
+            <span className="hidden xs:inline text-white font-black">VPN</span>
+            <span className="font-black text-white">{vpnShield ? 'Shield ON' : 'Off'}</span>
           </button>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 border-emerald-400/60 bg-[#16221A] text-white text-[11px] font-bold shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="font-mono font-black text-emerald-300">0.0ms</span>
-            <span className="text-zinc-200">Drift Lock</span>
+          <div className="btn-drift-pill hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-white text-xs font-black relative z-10">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-200 shadow-[0_0_8px_#A7F3D0]" />
+            <span className="font-mono font-black text-white">0.0ms</span>
+            <span className="text-white font-black">Drift Lock</span>
           </div>
 
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="p-2.5 rounded-xl transition border-2 border-white/20 bg-[#222230] hover:bg-[#2C2C3E] text-white shadow-md cursor-pointer hover:border-pink-500/50"
+            className="btn-seek-step p-2.5 rounded-xl transition cursor-pointer relative z-10"
             title="Toggle Cinema Fullscreen"
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4 text-pink-400" /> : <Maximize2 className="h-4 w-4 text-pink-400" />}
+            {isFullscreen ? <Minimize2 className="h-4 w-4 text-white stroke-[2.5]" /> : <Maximize2 className="h-4 w-4 text-white stroke-[2.5]" />}
           </button>
         </div>
       </div>
@@ -2526,67 +2526,67 @@ export default function VideoPlayer({
             <span className="tracking-wide drop-shadow-sm">{resolvingStatus}</span>
           </div>
         )}
-        <div className="p-2 sm:p-2.5 rounded-2xl bg-[#161622] border-2 border-pink-500/40 shadow-2xl shadow-black/80 flex flex-col sm:flex-row gap-2">
-          <div className="relative min-w-0 flex-1">
-            <Link2 className="absolute left-3 top-3.5 h-4 w-4 text-pink-400" />
+        <div className="p-2.5 sm:p-3 rounded-2xl bg-[#1A1A26] border-2 border-pink-500/50 shadow-2xl shadow-black/80 flex flex-col sm:flex-row gap-2.5">
+          <div className="relative min-w-0 flex-1 z-10">
+            <Link2 className="absolute left-3.5 top-3.5 h-4 w-4 text-pink-400 stroke-[2.5]" />
             <input
               value={url}
               onChange={handleUrlChange}
               onPaste={handlePasteAndPlay}
               placeholder="Paste any video or movie link (YouTube, HLS, MP4, Prime, Netflix) - Auto plays in sync..."
-              className="w-full !pl-9 !py-2.5 text-xs sm:text-sm rounded-xl outline-none font-bold bg-[#1E1E2C] border-2 border-pink-500/30 text-white placeholder:text-zinc-400 focus:border-pink-400 shadow-inner"
+              className="w-full !pl-10 !pr-3 !py-2.5 text-xs sm:text-sm rounded-xl outline-none font-extrabold bg-[#222232] border-2 border-pink-500/40 focus:border-pink-400 text-white placeholder:text-zinc-300 shadow-inner relative z-10"
             />
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 relative z-10">
             <button
               type="button"
               onClick={handleClipboardPasteAndPlay}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md hover-lift bg-[#252536] hover:bg-[#34344A] text-white border-2 border-pink-500/40 active:scale-95"
+              className="btn-paste-play flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition cursor-pointer shadow-xl hover-lift active:scale-95 relative z-10"
               title="Paste link from clipboard and play immediately"
             >
-              <span>📋</span>
-              <span>Paste &amp; Play</span>
+              <span className="text-white text-sm">📋</span>
+              <span className="font-black text-white tracking-wide">Paste &amp; Play</span>
             </button>
             <button
               type="submit"
-              className="btn-pink !py-2.5 !px-5 text-xs font-black shrink-0 flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-pink-500/40 text-white cursor-pointer active:scale-95 hover-lift hover-sheen border-2 border-pink-300"
+              className="btn-pink !py-2.5 !px-6 text-xs font-black shrink-0 flex items-center justify-center gap-2 rounded-xl shadow-xl shadow-pink-500/50 text-white cursor-pointer active:scale-95 hover-lift hover-sheen border-2 border-pink-200 relative z-10"
             >
-              <Play className="h-3.5 w-3.5 fill-white stroke-[2]" />
-              <span>Play for All</span>
+              <Play className="h-4 w-4 fill-white stroke-[2]" />
+              <span className="tracking-wide">Play for All</span>
             </button>
           </div>
         </div>
 
         {/* Ultra-Vivid Jewel-Toned High-Contrast Action Toolbar */}
-        <div className="flex items-center gap-2.5 pt-1 text-xs overflow-x-auto no-scrollbar p-3 rounded-2xl bg-[#121218] border-2 border-pink-500/40 shadow-2xl shadow-black">
+        <div className="flex items-center gap-2.5 pt-1 text-xs overflow-x-auto no-scrollbar p-3.5 rounded-2xl bg-[#1A1A28] border-2 border-pink-500/50 shadow-2xl relative z-10">
           {/* Add to queue */}
           <button
             type="button"
             onClick={enqueue}
-            className="px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-pink-950/40 transition-all duration-200 cursor-pointer shrink-0 border-2 border-pink-500 bg-[#251525] hover:bg-[#381B34] text-white hover:border-pink-300 hover-lift active:scale-95"
+            className="btn-action-queue px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all duration-200 cursor-pointer shrink-0 hover-lift active:scale-95 relative z-10"
             title="Add this link to the Up next list"
           >
-            <ListPlus className="h-4 w-4 text-pink-400 stroke-[3] shrink-0" />
-            <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Add to queue</span>
+            <ListPlus className="h-4 w-4 text-white stroke-[3] shrink-0" />
+            <span className="text-white font-black tracking-wide">Add to queue</span>
           </button>
 
           {/* My file */}
           <label
-            className="px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-purple-950/40 transition-all duration-200 cursor-pointer shrink-0 border-2 border-purple-500 bg-[#201530] hover:bg-[#301E4A] text-white hover:border-purple-300 hover-lift active:scale-95"
+            className="btn-action-file px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all duration-200 cursor-pointer shrink-0 hover-lift active:scale-95 relative z-10"
             title="Play a movie file from your own device"
           >
-            <FolderOpen className="h-4 w-4 text-purple-400 stroke-[3] shrink-0" />
-            <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">My file</span>
+            <FolderOpen className="h-4 w-4 text-white stroke-[3] shrink-0" />
+            <span className="text-white font-black tracking-wide">My file</span>
             <input type="file" accept="video/*,audio/*,.mkv" onChange={pickLocal} hidden />
           </label>
 
           {/* Subtitles */}
           <label
-            className="px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-950/40 transition-all duration-200 cursor-pointer shrink-0 border-2 border-amber-500 bg-[#261E10] hover:bg-[#3D2E14] text-white hover:border-amber-300 hover-lift active:scale-95"
+            className="btn-action-sub px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all duration-200 cursor-pointer shrink-0 hover-lift active:scale-95 relative z-10"
             title="Add .srt or .vtt subtitles"
           >
-            <Captions className="h-4 w-4 text-amber-400 stroke-[3] shrink-0" />
-            <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Subtitles</span>
+            <Captions className="h-4 w-4 text-white stroke-[3] shrink-0" />
+            <span className="text-white font-black tracking-wide">Subtitles</span>
             <input type="file" accept=".srt,.vtt" onChange={pickSub} hidden />
           </label>
 
@@ -2595,18 +2595,18 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={onOpenRecent}
-              className="px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-cyan-950/40 transition-all duration-200 cursor-pointer shrink-0 border-2 border-cyan-500 bg-[#10222B] hover:bg-[#153444] text-white hover:border-cyan-300 hover-lift active:scale-95"
+              className="btn-action-recent px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all duration-200 cursor-pointer shrink-0 hover-lift active:scale-95 relative z-10"
               title="Open Recent Plays Bar"
             >
-              <History className="h-4 w-4 text-cyan-400 stroke-[3] shrink-0" />
-              <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Recent Bar</span>
+              <History className="h-4 w-4 text-white stroke-[3] shrink-0" />
+              <span className="text-white font-black tracking-wide">Recent Bar</span>
             </button>
           )}
 
           {/* Multi-Audio Language Selector */}
           {audioTracks.length > 1 && (
-            <div className="flex items-center gap-2 rounded-xl border-2 border-pink-500 bg-[#251525] px-4 py-2.5 text-xs font-black shadow-lg shadow-pink-950/40 shrink-0 text-white" title="Audio track / language">
-              <Volume2 className="h-4 w-4 text-pink-400 stroke-[3] shrink-0" />
+            <div className="btn-action-queue flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shrink-0 text-white relative z-10" title="Audio track / language">
+              <Volume2 className="h-4 w-4 text-white stroke-[3] shrink-0" />
               <select value={curAudio} onChange={(e) => switchAudio(+e.target.value)} aria-label="Audio language" className="bg-transparent text-white outline-none cursor-pointer font-black text-xs">
                 {audioTracks.map((t) => <option key={t.id} value={t.id} className="text-black bg-white font-bold">{t.name}</option>)}
               </select>
@@ -2618,27 +2618,27 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={stopShare}
-              className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 border-2 border-rose-300 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-rose-900/50 transition cursor-pointer shrink-0 active:scale-95"
+              className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 border-2 border-rose-300 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-rose-900/60 transition cursor-pointer shrink-0 active:scale-95 relative z-10"
             >
               <MonitorOff className="h-4 w-4 text-white stroke-[3] shrink-0" />
-              <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Stop sharing</span>
+              <span className="text-white font-black tracking-wide">Stop sharing</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={startShare}
               disabled={!!screenBy}
-              className="px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-950/40 transition-all duration-200 cursor-pointer disabled:opacity-40 shrink-0 border-2 border-emerald-500 bg-[#102619] hover:bg-[#163B25] text-white hover:border-emerald-300 active:scale-95"
+              className="btn-action-share px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-40 shrink-0 hover-lift active:scale-95 relative z-10"
               title="Show your screen to your partner"
             >
-              <MonitorUp className="h-4 w-4 text-emerald-400 stroke-[3] shrink-0" />
-              <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Share screen</span>
+              <MonitorUp className="h-4 w-4 text-white stroke-[3] shrink-0" />
+              <span className="text-white font-black tracking-wide">Share screen</span>
             </button>
           )}
 
           {/* Stream Resolver Type Selector */}
-          <div className="flex items-center gap-2 rounded-xl border-2 border-rose-500 bg-[#2A1520] px-4 py-2.5 text-xs font-black shadow-lg shadow-rose-950/40 shrink-0 text-white" title="Media stream resolver type">
-            <span className="text-rose-400 font-black text-sm">⚡</span>
+          <div className="btn-action-type flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black shrink-0 text-white relative z-10" title="Media stream resolver type">
+            <span className="text-white font-black text-sm">⚡</span>
             <select
               value={force}
               onChange={(e) => setForce(e.target.value)}
@@ -2656,11 +2656,11 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg shadow-pink-950/40 transition cursor-pointer shrink-0 border-2 border-pink-500 bg-[#251525] hover:bg-[#381B34] text-white hover:border-pink-300 active:scale-95"
+              className="btn-action-queue px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition cursor-pointer shrink-0 active:scale-95 relative z-10"
               title="Full Screen Screenshare"
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4 text-pink-400 stroke-[3] shrink-0" /> : <Maximize2 className="h-4 w-4 text-pink-400 stroke-[3] shrink-0" />}
-              <span className="text-white font-black tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+              {isFullscreen ? <Minimize2 className="h-4 w-4 text-white stroke-[3] shrink-0" /> : <Maximize2 className="h-4 w-4 text-white stroke-[3] shrink-0" />}
+              <span className="text-white font-black tracking-wide">{isFullscreen ? 'Exit Full Screen' : 'Full Screen'}</span>
             </button>
           )}
         </div>

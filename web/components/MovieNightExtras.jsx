@@ -212,7 +212,7 @@ export default function MovieNightExtras({
               ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
                 ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
+                : 'bg-[#28213D] text-white hover:text-white border-2 border-pink-400/40 hover:border-pink-400 font-black'
           }`}
         >
           <Film className="h-3.5 w-3.5" />
@@ -232,7 +232,7 @@ export default function MovieNightExtras({
               ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
                 ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
+                : 'bg-[#28213D] text-white hover:text-white border-2 border-pink-400/40 hover:border-pink-400 font-black'
           }`}
         >
           <Sparkles className="h-3.5 w-3.5 text-amber-400" />
@@ -252,7 +252,7 @@ export default function MovieNightExtras({
               ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
                 ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
+                : 'bg-[#28213D] text-white hover:text-white border-2 border-pink-400/40 hover:border-pink-400 font-black'
           }`}
         >
           <Timer className="h-3.5 w-3.5 text-emerald-400" />
@@ -272,7 +272,7 @@ export default function MovieNightExtras({
               ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
                 ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
+                : 'bg-[#28213D] text-white hover:text-white border-2 border-pink-400/40 hover:border-pink-400 font-black'
           }`}
         >
           <CheckCircle2 className="h-3.5 w-3.5 text-pink-400" />
@@ -292,7 +292,7 @@ export default function MovieNightExtras({
               ? 'btn-pink text-white border-pink-300 shadow-md shadow-pink-500/30'
               : theme?.isLight
                 ? 'bg-white text-slate-700 hover:text-slate-950 border-slate-200 hover:border-rose-300 hover:bg-rose-50'
-                : 'bg-[#222230] text-zinc-100 hover:text-white border-white/20 hover:border-pink-500/40'
+                : 'bg-[#28213D] text-white hover:text-white border-2 border-pink-400/40 hover:border-pink-400 font-black'
           }`}
         >
           <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />

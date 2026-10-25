@@ -1865,14 +1865,14 @@ export default function Room() {
               />
             </div>
 
-            {/* Quick Synchronized Floating Reaction Bar */}
-            <div className={`my-1 flex items-center justify-between gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-2xl ${
+            {/* Quick Synchronized Floating Reaction Bar & Control Toolbar */}
+            <div className={`my-1.5 flex flex-wrap items-center justify-between gap-2.5 p-2.5 sm:px-3 sm:py-3 rounded-2xl relative z-10 ${
               theme.isLight
-                ? 'bg-white/95 border-2 border-rose-200/90 shadow-[0_8px_30px_rgba(244,63,94,0.08)]'
-                : `${theme.navBg} border ${theme.borderColor}`
-            } backdrop-blur-xl shadow-lg transition-all duration-500 overflow-x-auto no-scrollbar ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
-                <span className={`text-[10px] font-bold uppercase tracking-wider hidden xs:inline shrink-0 mr-1 ${theme.isLight ? 'text-slate-700 font-extrabold' : 'text-pink-300 font-extrabold'}`}>
+                ? 'bg-white border-2 border-rose-300 shadow-xl'
+                : 'bg-[#1E192E] border-2 border-pink-500/60 shadow-2xl shadow-black'
+            } transition-all duration-300 overflow-x-auto no-scrollbar ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0 relative z-10">
+                <span className={`text-[11px] font-black uppercase tracking-wider hidden xs:inline shrink-0 mr-1 ${theme.isLight ? 'text-slate-800' : 'text-pink-300'}`}>
                   Reactions:
                 </span>
                 {[
@@ -1889,23 +1889,23 @@ export default function Room() {
                     key={rx.emoji}
                     type="button"
                     onClick={() => triggerReaction(rx.emoji)}
-                    className={`px-2.5 py-1 rounded-xl transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1 shadow-sm ${
+                    className={`px-3.5 py-1.5 rounded-xl transition active:scale-125 cursor-pointer shrink-0 flex items-center gap-1.5 shadow-md relative z-10 ${
                       theme.isLight
-                        ? 'bg-rose-50/80 hover:bg-rose-100 border border-rose-200 text-slate-900 font-semibold shadow-sm'
-                        : 'bg-[#222222]/90 hover:bg-pink-600/25 border border-pink-500/20 text-pink-100'
+                        ? 'bg-rose-50 hover:bg-rose-100 border-2 border-rose-200 text-slate-900 font-black'
+                        : 'btn-room-rx'
                     }`}
                     title={`Send ${rx.label} reaction to room`}
                   >
-                    <span>{rx.emoji}</span>
-                    <span className={`text-[10px] hidden sm:inline font-bold ${theme.isLight ? 'text-slate-700' : 'text-pink-200/80'}`}>{rx.label}</span>
+                    <span className="text-sm">{rx.emoji}</span>
+                    <span className="text-[11px] hidden sm:inline font-black text-white">{rx.label}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+              <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0 ml-auto relative z-10">
                 {/* View UI Mode Selector Pill */}
-                <div className={`hidden sm:flex items-center gap-0.5 p-0.5 rounded-xl border ${
-                  theme.isLight ? 'bg-white border-2 border-rose-200/90 shadow-sm' : 'bg-[#181822] border-2 border-pink-500/30'
+                <div className={`hidden sm:flex items-center gap-1 p-1 rounded-xl border-2 relative z-10 ${
+                  theme.isLight ? 'bg-white border-rose-300 shadow-sm' : 'bg-[#281F3B] border-pink-400 shadow-md'
                 }`}>
                   {[
                     { id: 'theater', label: 'Theater' },
@@ -1917,15 +1917,15 @@ export default function Room() {
                       key={m.id}
                       type="button"
                       onClick={() => changeViewMode(m.id)}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer relative z-10 ${
                         viewMode === m.id
-                          ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm'
+                          ? 'btn-pink text-white shadow-md border-2 border-pink-200'
                           : theme.isLight
-                            ? 'text-slate-700 hover:text-slate-950 font-bold hover:bg-rose-50'
-                            : 'text-zinc-200 hover:text-white font-bold'
+                            ? 'text-slate-700 hover:text-slate-950 font-black hover:bg-rose-50'
+                            : 'btn-room-mode'
                       }`}
                     >
-                      {m.label}
+                      <span className="text-white font-black">{m.label}</span>
                     </button>
                   ))}
                 </div>
@@ -1934,51 +1934,51 @@ export default function Room() {
                 <button
                   type="button"
                   onClick={() => setShowThemeModal(true)}
-                  className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-semibold transition cursor-pointer shadow-sm ${theme.themeBtnClass}`}
+                  className="btn-room-theme shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-white text-xs font-black transition cursor-pointer shadow-md hover-lift relative z-10"
                   title="Change Room Color Theme & Ambiance"
                 >
-                  <Palette className="h-3.5 w-3.5" />
-                  <span className="text-[11px] font-bold hidden sm:inline">{theme.name}</span>
+                  <Palette className="h-4 w-4 text-white stroke-[2.5]" />
+                  <span className="text-xs font-black hidden sm:inline text-white">{theme.name}</span>
                 </button>
 
                 {/* Quick Plugins Button inside Reaction Ribbon */}
                 <button
                   type="button"
                   onClick={() => setShowPlugins(true)}
-                  className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                  className={`btn-room-plugin shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border-2 text-xs font-black transition cursor-pointer shadow-md hover-lift relative z-10 ${
                     theme.isLight
-                      ? 'bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 shadow-sm font-semibold'
-                      : 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-purple-500/40 text-purple-200 hover:from-purple-600/50 hover:to-pink-600/50'
+                      ? 'bg-purple-50 hover:bg-purple-100 border-purple-300 text-purple-900'
+                      : 'btn-room-plugin'
                   }`}
                   title="Open Cinema Plugins"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-pink-500" />
-                  <span className="text-[11px] hidden sm:inline font-bold">Plugins</span>
+                  <Sparkles className="h-4 w-4 text-white stroke-[2.5]" />
+                  <span className="text-xs font-black hidden sm:inline text-white">Plugins</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={toggleCinema}
-                  className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs transition cursor-pointer ${
+                  className={`btn-room-cinema shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border-2 text-xs font-black transition cursor-pointer shadow-md hover-lift relative z-10 ${
                     theme.isLight
-                      ? 'bg-white hover:bg-rose-50 border border-rose-200 text-slate-800 hover:text-amber-700 shadow-sm font-semibold'
-                      : 'bg-[#181822] border border-amber-500/40 hover:border-amber-400 text-amber-200 hover:text-amber-100 font-bold'
+                      ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
+                      : 'btn-room-cinema'
                   }`}
                   title="Toggle Cinema Lights"
                 >
-                  <Film className="h-3.5 w-3.5 text-amber-500" />
-                  <span className="text-[11px] hidden sm:inline font-semibold">Cinema</span>
+                  <Film className="h-4 w-4 text-white stroke-[2.5]" />
+                  <span className="text-xs font-black hidden sm:inline text-white">Cinema</span>
                 </button>
 
                 {/* Full Screen Theater Mode with Movable Video Call */}
                 <button
                   type="button"
                   onClick={() => playerRef.current?.toggleFullscreen?.()}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white text-xs font-bold transition cursor-pointer shadow-md shadow-pink-900/30 active:scale-95 border border-pink-400/40"
+                  className="btn-room-fullscreen shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-xs font-black transition cursor-pointer shadow-lg active:scale-95 border-2 hover-lift relative z-10"
                   title="Full Screen Theater Mode (Movable Video Call)"
                 >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                  <span className="text-[11px] hidden sm:inline">Full Screen</span>
+                  <Maximize2 className="h-4 w-4 stroke-[2.5] text-white" />
+                  <span className="text-xs font-black hidden sm:inline text-white">Full Screen</span>
                 </button>
               </div>
             </div>
