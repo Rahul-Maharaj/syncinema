@@ -9,6 +9,8 @@ export function isSearchBot() {
 
 export function isRealHumanBrowser() {
   if (typeof window === 'undefined') return true;
+  // Permit local automated testing on localhost and 127.0.0.1
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return true;
 
   // Search engine crawlers (Googlebot, Bingbot, etc.) are strictly excluded from human visitor tracking
   if (isSearchBot()) {

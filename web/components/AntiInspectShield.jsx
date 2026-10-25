@@ -21,6 +21,20 @@ export default function AntiInspectShield() {
     // Allow local development and Playwright UI testing on localhost/127.0.0.1
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
 
+    // Detect if running on mobile device, touchscreen, or native Android WebView
+    const isMobileDevice =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
+      (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) ||
+      ('ontouchstart' in window && window.innerWidth < 1024);
+
+    // On mobile devices, there are NO docked desktop developer tools.
+    // Screen height deltas (outerHeight - innerHeight) on phones are caused by physical notches,
+    // Android navigation bars, browser URL bars, and virtual keyboards.
+    // DevTools inspection heuristics MUST NOT run on mobile to prevent false-positive lockouts, touch freezes, and lag!
+    if (isMobileDevice) {
+      return;
+    }
+
     // 1. SILENCE CONSOLE: Neutralize all console logging so no codes, passwords or data are exposed
     const originalConsole = {
       log: console.log,

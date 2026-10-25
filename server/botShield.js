@@ -195,16 +195,18 @@ function isBotRequest(req) {
     return { blocked: true, reason: 'Missing or empty browser User-Agent' };
   }
 
-  // 6. Check for known malicious bot signatures
-  for (const pattern of BOT_UA_PATTERNS) {
-    if (pattern.test(ua)) {
-      return { blocked: true, reason: 'Automated bot or scraper detected' };
+  // 6. Check for known malicious bot signatures (Allow localhost / private network for local automated testing)
+  if (!isPrivateIp(ip)) {
+    for (const pattern of BOT_UA_PATTERNS) {
+      if (pattern.test(ua)) {
+        return { blocked: true, reason: 'Automated bot or scraper detected' };
+      }
     }
-  }
 
-  // 7. Generic crawler catch-all (Exclude social previews and legit search engines)
-  if (/\b(bot|crawler|spider|scraper)\b/i.test(ua)) {
-    return { blocked: true, reason: 'Generic crawler or bot detected' };
+    // 7. Generic crawler catch-all (Exclude social previews and legit search engines)
+    if (/\b(bot|crawler|spider|scraper)\b/i.test(ua)) {
+      return { blocked: true, reason: 'Generic crawler or bot detected' };
+    }
   }
 
   return { blocked: false };

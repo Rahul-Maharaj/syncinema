@@ -995,7 +995,7 @@ export default function Room() {
 
 
   return (
-    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${cinema ? '!bg-black' : theme.bgClass} ${theme.isLight && !cinema ? 'text-zinc-900' : 'text-pink-100'} font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden overflow-y-auto relative transition-colors duration-500`}>
+    <div ref={root} className={`min-h-screen min-h-[100dvh] w-full max-w-[1920px] mx-auto flex flex-col ${cinema ? '!bg-black' : theme.bgClass} ${theme.isLight && !cinema ? 'text-zinc-900' : 'text-pink-100'} font-sans selection:bg-pink-500 selection:text-white antialiased overflow-x-hidden relative transition-colors duration-500`}>
       {/* Dynamic Ambient Cinema Background */}
       {showWallpaper && (
         <div 
@@ -1010,8 +1010,8 @@ export default function Room() {
       {/* Theme Vignette Gradient Overlay */}
       <div className={`fixed inset-0 z-0 pointer-events-none transition-all duration-700 ${theme.overlayGradient} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
 
-      {/* Soft Ambient Glow Lighting Orb */}
-      <div className={`fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-all duration-700 ${theme.ambientGlow} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
+      {/* Soft Ambient Glow Lighting Orb (Hardware-friendly: hidden on mobile) */}
+      <div className={`hidden md:block fixed top-1/4 left-1/2 -translate-x-1/2 w-[750px] h-[350px] rounded-full blur-[140px] pointer-events-none transition-all duration-700 ${theme.ambientGlow} ${cinema ? 'opacity-0' : 'opacity-100'}`} />
 
       {/* 🎬 Floating Exit Cinema Lights Pill (Appears when Cinema Mode is active) */}
       {cinema && (
@@ -1224,17 +1224,17 @@ export default function Room() {
           <div className={`card w-full max-w-lg p-5 sm:p-6 space-y-5 rounded-3xl backdrop-blur-2xl shadow-2xl rise my-auto transition-all ${
             theme.isLight
               ? 'bg-white/98 border-2 border-rose-200/90 shadow-[0_20px_60px_rgba(244,63,94,0.12)] text-slate-900'
-              : 'bg-[#222222] border border-pink-500/25 shadow-pink-500/10 text-pink-100'
+              : 'bg-[#18181C] border-2 border-pink-500/35 shadow-2xl shadow-pink-500/20 text-white'
           }`}>
             {/* Header */}
-            <div className={`flex items-center justify-between border-b pb-3 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
+            <div className={`flex items-center justify-between border-b pb-3 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/25'}`}>
               <div className="flex items-center gap-2.5">
                 <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
                   <Sliders className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className={`font-display font-bold text-base sm:text-lg ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Room Controls &amp; Settings</h3>
-                  <p className={`text-[11px] font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/70'}`}>Manage security, capacity, sync mode &amp; viewing options</p>
+                  <h3 className={`font-display font-black text-base sm:text-lg ${theme.isLight ? 'text-slate-900' : 'text-white'}`}>Room Controls &amp; Settings</h3>
+                  <p className={`text-xs font-semibold ${theme.isLight ? 'text-slate-600' : 'text-pink-200'}`}>Manage security, capacity, sync mode &amp; viewing options</p>
                 </div>
               </div>
               <button
@@ -1243,7 +1243,7 @@ export default function Room() {
                 className={`h-8 w-8 rounded-full flex items-center justify-center transition cursor-pointer ${
                   theme.isLight
                     ? 'bg-rose-50 hover:bg-rose-100 text-slate-700 hover:text-slate-950 border border-rose-200'
-                    : 'bg-pink-500/10 hover:bg-pink-500/20 text-pink-300 hover:text-white'
+                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
                 }`}
               >
                 <X className="h-4 w-4" />
@@ -1252,39 +1252,39 @@ export default function Room() {
 
             {/* Quick Status Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div className={`p-2.5 rounded-2xl ${theme.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#1a1a1d] border border-pink-500/20'}`}>
-                <span className={`text-[10px] block font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Room ID:</span>
-                <span className={`font-mono font-bold truncate block ${theme.isLight ? 'text-rose-700' : 'text-pink-300'}`}>{roomId}</span>
+              <div className={`p-2.5 rounded-2xl ${theme.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#22222B] border-2 border-pink-500/30 shadow-md'}`}>
+                <span className={`text-[11px] block font-black uppercase tracking-wider ${theme.isLight ? 'text-slate-600' : 'text-pink-300'}`}>Room ID</span>
+                <span className={`font-mono font-black truncate block text-sm mt-0.5 ${theme.isLight ? 'text-rose-700' : 'text-white'}`}>{roomId}</span>
               </div>
-              <div className={`p-2.5 rounded-2xl ${theme.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#1a1a1d] border border-pink-500/20'}`}>
-                <span className={`text-[10px] block font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Capacity:</span>
-                <span className={`font-bold block ${theme.isLight ? 'text-emerald-700' : 'text-emerald-400'}`}>{users.length} / {maxSeats} Members</span>
+              <div className={`p-2.5 rounded-2xl ${theme.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#22222B] border-2 border-pink-500/30 shadow-md'}`}>
+                <span className={`text-[11px] block font-black uppercase tracking-wider ${theme.isLight ? 'text-slate-600' : 'text-pink-300'}`}>Capacity</span>
+                <span className={`font-black block text-sm mt-0.5 ${theme.isLight ? 'text-emerald-700' : 'text-emerald-300'}`}>{users.length} / {maxSeats} Members</span>
               </div>
-              <div className={`p-2.5 rounded-2xl col-span-2 sm:col-span-1 ${theme.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#1a1a1d] border border-pink-500/20'}`}>
-                <span className={`text-[10px] block font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Sync Mode:</span>
-                <span className={`font-bold block ${theme.isLight ? 'text-rose-600' : 'text-pink-400'}`}>{lock ? '🔒 Host Sync' : '🔓 Free Sync'}</span>
+              <div className={`p-2.5 rounded-2xl col-span-2 sm:col-span-1 ${theme.isLight ? 'bg-rose-50/70 border-2 border-rose-200/80 shadow-xs' : 'bg-[#22222B] border-2 border-pink-500/30 shadow-md'}`}>
+                <span className={`text-[11px] block font-black uppercase tracking-wider ${theme.isLight ? 'text-slate-600' : 'text-pink-300'}`}>Sync Mode</span>
+                <span className={`font-black block text-sm mt-0.5 ${theme.isLight ? 'text-rose-600' : 'text-pink-200'}`}>{lock ? '🔒 Host Sync' : '🔓 Free Sync'}</span>
               </div>
             </div>
 
             {/* Main Action Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
               {/* Viewing Layout Switcher */}
-              <div className={`col-span-1 sm:col-span-2 p-3 rounded-2xl space-y-2 ${
-                theme.isLight ? 'bg-rose-50/60 border-2 border-rose-200/80 shadow-xs' : 'bg-[#1a1a1d] border border-pink-500/20'
+              <div className={`col-span-1 sm:col-span-2 p-3 rounded-2xl space-y-2.5 ${
+                theme.isLight ? 'bg-rose-50/60 border-2 border-rose-200/80 shadow-xs' : 'bg-[#22222B] border-2 border-pink-500/30 shadow-md'
               }`}>
-                <div className={`text-xs font-bold flex items-center justify-between ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+                <div className={`text-xs font-black flex items-center justify-between ${theme.isLight ? 'text-slate-900' : 'text-white'}`}>
                   <div className="flex items-center gap-1.5">
                     <MonitorPlay className={`h-4 w-4 ${theme.isLight ? 'text-rose-600' : 'text-pink-400'}`} />
-                    <span>Cinema View Layout</span>
+                    <span className="text-sm">Cinema View Layout</span>
                   </div>
-                  <span className={`text-[10px] font-normal ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Active: {viewMode.toUpperCase()}</span>
+                  <span className={`text-[11px] font-bold ${theme.isLight ? 'text-slate-600' : 'text-pink-200'}`}>Active: {viewMode.toUpperCase()}</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { id: 'theater', label: 'Theater', icon: <MonitorPlay className="h-3.5 w-3.5" /> },
-                    { id: 'duo', label: 'Duo Date', icon: <Heart className="h-3.5 w-3.5" /> },
-                    { id: 'party', label: 'Party Grid', icon: <Users className="h-3.5 w-3.5" /> },
-                    { id: 'focus', label: 'Focus Mode', icon: <Eye className="h-3.5 w-3.5" /> },
+                    { id: 'theater', label: 'Theater', icon: <MonitorPlay className="h-4 w-4" /> },
+                    { id: 'duo', label: 'Duo Date', icon: <Heart className="h-4 w-4" /> },
+                    { id: 'party', label: 'Party Grid', icon: <Users className="h-4 w-4" /> },
+                    { id: 'focus', label: 'Focus Mode', icon: <Eye className="h-4 w-4" /> },
                   ].map((m) => (
                     <button
                       key={m.id}
@@ -1293,12 +1293,12 @@ export default function Room() {
                         changeViewMode(m.id);
                         setShowMenu(false);
                       }}
-                      className={`py-2 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer hover-lift ${
+                      className={`py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition cursor-pointer hover-lift ${
                         viewMode === m.id
-                          ? 'btn-pink text-white shadow-md shadow-pink-500/30'
+                          ? 'btn-pink text-white shadow-lg shadow-pink-500/40 border border-pink-300'
                           : theme.isLight
                             ? 'bg-white hover:bg-rose-100/80 text-slate-700 hover:text-slate-950 border border-rose-200/90'
-                            : 'bg-white/5 hover:bg-white/10 text-pink-200/80'
+                            : 'bg-[#18181F] hover:bg-[#2C2C38] text-zinc-100 hover:text-white border border-white/20'
                       }`}
                     >
                       {m.icon}
@@ -1315,25 +1315,25 @@ export default function Room() {
                   setShowPlugins(true);
                   setShowMenu(false);
                 }}
-                className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
+                className={`p-3.5 rounded-2xl text-left flex items-start gap-3 transition group cursor-pointer hover-lift ${
                   theme.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                    : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                    : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
-                <div className={`p-2 rounded-xl group-hover:scale-105 transition ${
+                <div className={`p-2.5 rounded-xl group-hover:scale-105 transition shrink-0 ${
                   theme.isLight
                     ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                    : 'bg-pink-500/10 text-pink-400 border border-pink-500/20'
+                    : 'bg-pink-500/20 text-pink-300 border border-pink-500/40'
                 }`}>
-                  <Sparkles className="h-4 w-4" />
+                  <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className={`font-bold flex items-center gap-1.5 ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+                  <div className={`font-black text-sm flex items-center gap-1.5 ${theme.isLight ? 'text-slate-900' : 'text-white'}`}>
                     <span>Cinema Plugins</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-600 dark:text-pink-300 font-mono font-bold">NEW</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 font-mono font-black border border-pink-500/50">NEW</span>
                   </div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Atmosphere, trivia, intermission &amp; soundscapes</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Atmosphere, trivia, intermission &amp; soundscapes</div>
                 </div>
               </button>
 
@@ -1341,21 +1341,21 @@ export default function Room() {
               <a
                 href="/syncinema.apk"
                 download="SyncCinema.apk"
-                className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
+                className={`p-3.5 rounded-2xl text-left flex items-start gap-3 transition group cursor-pointer hover-lift ${
                   theme.isLight
                     ? 'bg-white hover:bg-emerald-50/60 border-2 border-rose-200/80 hover:border-emerald-300 shadow-xs'
-                    : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                    : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-emerald-500/35 hover:border-emerald-400 shadow-md'
                 }`}
               >
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition">
-                  <Download className="h-4 w-4" />
+                <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 group-hover:scale-105 transition shrink-0">
+                  <Download className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className={`font-bold flex items-center gap-1.5 ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+                  <div className={`font-black text-sm flex items-center gap-1.5 ${theme.isLight ? 'text-slate-900' : 'text-white'}`}>
                     <span>Android APK</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono font-bold">v1.2</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 font-mono font-black border border-emerald-500/40">v1.2</span>
                   </div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Install lightweight native phone app</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Install lightweight native phone app</div>
                 </div>
               </a>
 
@@ -1373,7 +1373,7 @@ export default function Room() {
                       : 'bg-emerald-500/10 border-emerald-500/30'
                     : theme.isLight
                       ? 'bg-white hover:bg-rose-50 border-rose-200/80 hover:border-rose-300'
-                      : 'bg-[#1a1a1d] hover:bg-[#252528] border-pink-500/20'
+                      : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl border ${
@@ -1386,8 +1386,8 @@ export default function Room() {
                   {showCall ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>{showCall ? 'Video Call Active' : 'Video Call Hidden'}</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Toggle live camera video call overlay</div>
+                  <div className={`font-black text-sm ${theme.isLight ? 'text-slate-900' : 'text-white'}`}>{showCall ? 'Video Call Active' : 'Video Call Hidden'}</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Toggle live camera video call overlay</div>
                 </div>
               </button>
 
@@ -1403,7 +1403,7 @@ export default function Room() {
                 className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
                   theme.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                    : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                    : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl group-hover:scale-105 transition ${
@@ -1414,8 +1414,8 @@ export default function Room() {
                   <Lock className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Room Password</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>View or edit passcode</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>Room Password</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>View or edit passcode</div>
                 </div>
               </button>
 
@@ -1429,7 +1429,7 @@ export default function Room() {
                 className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
                   theme.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                    : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                    : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl group-hover:scale-105 transition ${
@@ -1440,8 +1440,8 @@ export default function Room() {
                   <Palette className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Ambiance &amp; Themes</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Switch room colors &amp; vibe</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>Ambiance &amp; Themes</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Switch room colors &amp; vibe</div>
                 </div>
               </button>
 
@@ -1457,7 +1457,7 @@ export default function Room() {
                   className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
                     theme.isLight
                       ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                      : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                      : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                   }`}
                 >
                   <div className={`p-2 rounded-xl group-hover:scale-105 transition ${
@@ -1468,8 +1468,8 @@ export default function Room() {
                     <Users className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Room Capacity</div>
-                    <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Expand up to 30 seats</div>
+                    <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>Room Capacity</div>
+                    <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Expand up to 30 seats</div>
                   </div>
                 </button>
               ) : (
@@ -1482,8 +1482,8 @@ export default function Room() {
                     <Users className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className={`font-bold ${theme.isLight ? 'text-slate-700' : 'text-pink-200/50'}`}>Room Capacity</div>
-                    <div className={`text-[10px] mt-0.5 ${theme.isLight ? 'text-slate-500' : 'text-pink-300/40'}`}>{maxSeats} seats (Host only)</div>
+                    <div className={`font-bold ${theme.isLight ? 'text-slate-800 font-bold' : 'text-zinc-200 font-bold'}`}>Room Capacity</div>
+                    <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>{maxSeats} seats (Host only)</div>
                   </div>
                 </div>
               )}
@@ -1504,7 +1504,7 @@ export default function Room() {
                         : 'bg-pink-500/15 border-pink-500/40 text-pink-200'
                       : theme.isLight
                         ? 'bg-white hover:bg-rose-50 border-rose-200/80 hover:border-rose-300'
-                        : 'bg-[#1a1a1d] hover:bg-[#252528] border-pink-500/20 hover:border-pink-500/40'
+                        : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 shadow-md hover:border-pink-500/40'
                   }`}
                 >
                   <div className={`p-2 rounded-xl border ${
@@ -1517,8 +1517,8 @@ export default function Room() {
                     {entryLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                   </div>
                   <div>
-                    <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>{entryLocked ? 'Entry Locked' : 'Entry Open'}</div>
-                    <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>{entryLocked ? 'Click to allow joins' : 'Click to lock joins'}</div>
+                    <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>{entryLocked ? 'Entry Locked' : 'Entry Open'}</div>
+                    <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>{entryLocked ? 'Click to allow joins' : 'Click to lock joins'}</div>
                   </div>
                 </button>
               )}
@@ -1531,7 +1531,7 @@ export default function Room() {
                   className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
                     theme.isLight
                       ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                      : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                      : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                   }`}
                 >
                   <div className={`p-2 rounded-xl border ${
@@ -1542,8 +1542,8 @@ export default function Room() {
                     {lock ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                   </div>
                   <div>
-                    <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>{lock ? 'Host-Only Control' : 'Everyone Control'}</div>
-                    <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Toggle seek &amp; pause lock</div>
+                    <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>{lock ? 'Host-Only Control' : 'Everyone Control'}</div>
+                    <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Toggle seek &amp; pause lock</div>
                   </div>
                 </button>
               )}
@@ -1558,7 +1558,7 @@ export default function Room() {
                 className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
                   theme.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                    : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                    : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl group-hover:scale-105 transition ${
@@ -1569,8 +1569,8 @@ export default function Room() {
                   <Smartphone className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>QR Phone Handoff</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Scan to move to phone</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>QR Phone Handoff</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Scan to move to phone</div>
                 </div>
               </button>
 
@@ -1585,7 +1585,7 @@ export default function Room() {
                       : 'bg-pink-500/15 border-pink-500/40 text-pink-200'
                     : theme.isLight
                       ? 'bg-white hover:bg-rose-50 border-rose-200/80 hover:border-rose-300'
-                      : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                      : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl border ${
@@ -1598,8 +1598,8 @@ export default function Room() {
                   <Moon className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>{sleep ? `Sleep in ${sleep}m` : 'Sleep Timer'}</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Auto-pause movie timer</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>{sleep ? `Sleep in ${sleep}m` : 'Sleep Timer'}</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Auto-pause movie timer</div>
                 </div>
               </button>
 
@@ -1624,8 +1624,8 @@ export default function Room() {
                   <Maximize2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Full Screen Cinema</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/80'}`}>Theater with movable video call</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>Full Screen Cinema</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Theater with movable video call</div>
                 </div>
               </button>
 
@@ -1636,7 +1636,7 @@ export default function Room() {
                 className={`p-3 rounded-2xl text-left flex items-start gap-2.5 transition group cursor-pointer hover-lift ${
                   theme.isLight
                     ? 'bg-white hover:bg-rose-50 border-2 border-rose-200/80 hover:border-rose-300 shadow-xs'
-                    : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                    : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl group-hover:scale-105 transition ${
@@ -1647,8 +1647,8 @@ export default function Room() {
                   <Film className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>Cinema Lights</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Dim background lights</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>Cinema Lights</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Dim background lights</div>
                 </div>
               </button>
 
@@ -1663,7 +1663,7 @@ export default function Room() {
                       : 'bg-pink-500/15 border-pink-500/40 text-pink-200'
                     : theme.isLight
                       ? 'bg-white hover:bg-rose-50 border-rose-200/80 hover:border-rose-300'
-                      : 'bg-[#1a1a1d] hover:bg-[#252528] border border-pink-500/20 hover:border-pink-500/40'
+                      : 'bg-[#22222B] hover:bg-[#2C2C38] border-2 border-pink-500/30 hover:border-pink-400 shadow-md'
                 }`}
               >
                 <div className={`p-2 rounded-xl border ${
@@ -1676,8 +1676,8 @@ export default function Room() {
                   {hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </div>
                 <div>
-                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>{hidden ? 'Screen Hidden' : 'Hide Screen'}</div>
-                  <div className={`text-[10px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/60'}`}>Quick boss-key toggle</div>
+                  <div className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>{hidden ? 'Screen Hidden' : 'Hide Screen'}</div>
+                  <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>Quick boss-key toggle</div>
                 </div>
               </button>
 
@@ -1703,7 +1703,7 @@ export default function Room() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+                      <span className={`font-bold ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>
                         Built-in VPN Shield &amp; IP Cloak
                       </span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
@@ -1714,7 +1714,7 @@ export default function Room() {
                         {vpnShield ? 'Active • Bypassing Blocks' : 'Disabled'}
                       </span>
                     </div>
-                    <div className={`text-[11px] mt-0.5 font-medium ${theme.isLight ? 'text-slate-500' : 'text-pink-300/70'}`}>
+                    <div className={`text-xs mt-0.5 font-semibold ${theme.isLight ? 'text-slate-600' : 'text-zinc-200'}`}>
                       Bypasses college Wi-Fi restrictions, ISP firewalls, and hides your IP address
                     </div>
                   </div>
@@ -1876,7 +1876,7 @@ export default function Room() {
                 : `${theme.navBg} border ${theme.borderColor}`
             } backdrop-blur-xl shadow-lg transition-all duration-500 overflow-x-auto no-scrollbar ${cinema ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 min-w-0">
-                <span className={`text-[10px] font-bold uppercase tracking-wider hidden xs:inline shrink-0 mr-1 ${theme.isLight ? 'text-slate-700 font-extrabold' : 'text-slate-400'}`}>
+                <span className={`text-[10px] font-bold uppercase tracking-wider hidden xs:inline shrink-0 mr-1 ${theme.isLight ? 'text-slate-700 font-extrabold' : 'text-pink-300 font-extrabold'}`}>
                   Reactions:
                 </span>
                 {[
@@ -1909,7 +1909,7 @@ export default function Room() {
               <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                 {/* View UI Mode Selector Pill */}
                 <div className={`hidden sm:flex items-center gap-0.5 p-0.5 rounded-xl border ${
-                  theme.isLight ? 'bg-white border-2 border-rose-200/90 shadow-sm' : 'bg-[#0d0e24] border-slate-800'
+                  theme.isLight ? 'bg-white border-2 border-rose-200/90 shadow-sm' : 'bg-[#181822] border-2 border-pink-500/30'
                 }`}>
                   {[
                     { id: 'theater', label: 'Theater' },
@@ -1925,8 +1925,8 @@ export default function Room() {
                         viewMode === m.id
                           ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm'
                           : theme.isLight
-                            ? 'text-slate-600 hover:text-slate-900 hover:bg-rose-50'
-                            : 'text-slate-400 hover:text-white'
+                            ? 'text-slate-700 hover:text-slate-950 font-bold hover:bg-rose-50'
+                            : 'text-zinc-200 hover:text-white font-bold'
                       }`}
                     >
                       {m.label}
@@ -1966,7 +1966,7 @@ export default function Room() {
                   className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs transition cursor-pointer ${
                     theme.isLight
                       ? 'bg-white hover:bg-rose-50 border border-rose-200 text-slate-800 hover:text-amber-700 shadow-sm font-semibold'
-                      : 'bg-[#0d0e24] border-slate-800 hover:border-amber-400/50 text-slate-200 hover:text-amber-300'
+                      : 'bg-[#181822] border border-amber-500/40 hover:border-amber-400 text-amber-200 hover:text-amber-100 font-bold'
                   }`}
                   title="Toggle Cinema Lights"
                 >
@@ -2432,7 +2432,7 @@ export default function Room() {
               : 'border border-pink-500/25 !bg-[#222222] shadow-pink-500/10 text-pink-100'
           }`}>
             <div className={`flex items-center justify-between border-b pb-3 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
-              <h3 className={`font-display font-bold text-base flex items-center gap-2 ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+              <h3 className={`font-display font-bold text-base flex items-center gap-2 ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>
                 <Users className={`h-5 w-5 ${theme.isLight ? 'text-rose-600' : 'text-pink-400'}`} />
                 <span>Room Capacity Settings</span>
               </h3>
@@ -2543,7 +2543,7 @@ export default function Room() {
               : 'border border-pink-500/25 !bg-[#222222] shadow-pink-500/10 text-pink-100'
           }`}>
             <div className={`flex items-center justify-between border-b pb-2 ${theme.isLight ? 'border-rose-100' : 'border-pink-500/15'}`}>
-              <h3 className={`font-display font-semibold text-base flex items-center gap-2 ${theme.isLight ? 'text-slate-900' : 'text-pink-100'}`}>
+              <h3 className={`font-display font-semibold text-base flex items-center gap-2 ${theme.isLight ? 'text-slate-900' : 'text-white font-black'}`}>
                 <Lock className={`h-4 w-4 ${theme.isLight ? 'text-rose-600' : 'text-pink-400'}`} /> Room Password
               </h3>
               <button

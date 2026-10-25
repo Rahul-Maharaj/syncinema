@@ -106,7 +106,7 @@ export default function ChatPanel({
     >
       {/* Header: User Presence & Roster */}
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-        <span className={`flex items-center gap-1 text-xs ${theme?.isLight ? 'text-slate-600 font-semibold' : 'opacity-60'}`}>
+        <span className={`flex items-center gap-1 text-xs ${theme?.isLight ? 'text-slate-600 font-semibold' : 'text-pink-200 font-bold'}`}>
           <Users className="h-3.5 w-3.5" />
           {users.length} here
         </span>
@@ -116,7 +116,7 @@ export default function ChatPanel({
             className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs border ${
               theme?.isLight
                 ? 'bg-slate-50 border-2 border-slate-200/90 text-slate-800 font-bold shadow-xs'
-                : 'border-white/10 bg-white/5 text-white/90'
+                : 'bg-[#1E1E26] border border-pink-500/30 text-white font-bold shadow-sm'
             }`}
           >
             <i className="h-2 w-2 rounded-full" style={{ background: u.color || '#f43f5e' }} />
@@ -131,7 +131,7 @@ export default function ChatPanel({
                     say?.(`Handed host controls to ${u.name}`);
                   }
                 }}
-                className={`p-0.5 ml-0.5 transition ${theme?.isLight ? 'text-slate-500 hover:text-amber-600' : 'opacity-40 hover:opacity-100 hover:text-amber-400'}`}
+                className={`p-0.5 ml-0.5 transition ${theme?.isLight ? 'text-slate-500 hover:text-amber-600' : 'text-amber-400 hover:text-amber-300'}`}
                 title={`Transfer host controls to ${u.name}`}
               >
                 <Crown className="h-2.5 w-2.5" />
@@ -145,7 +145,7 @@ export default function ChatPanel({
             onClick={handleClearChat}
             title="Delete chat history"
             aria-label="Delete chat history"
-            className={`ml-auto rounded-lg p-1 transition ${theme?.isLight ? 'text-slate-400 hover:text-rose-600' : 'text-white/40 hover:text-pink-400'}`}
+            className={`ml-auto rounded-lg p-1 transition ${theme?.isLight ? 'text-slate-400 hover:text-rose-600' : 'text-pink-300 hover:text-white'}`}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -157,7 +157,7 @@ export default function ChatPanel({
         {chat.length === 0 && (
           <div className="mt-8 text-center text-sm px-4">
             <p className={theme?.isLight ? 'text-slate-800 font-bold' : 'text-white'}>No messages yet.</p>
-            <p className={`mt-1 text-xs ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-white/40'}`}>Say hi 👋 or tap 💬 for a conversation starter.</p>
+            <p className={`mt-1 text-xs ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-semibold'}`}>Say hi 👋 or tap 💬 for a conversation starter.</p>
           </div>
         )}
         {chat.map((m, idx) => {
@@ -204,7 +204,7 @@ export default function ChatPanel({
       </div>
 
       {/* Quick Reactions & Action Helpers */}
-      <div className={`my-2 flex items-center justify-between gap-1 border-t pt-2 ${theme?.isLight ? 'border-slate-200' : 'border-white/5'}`}>
+      <div className={`my-2 flex items-center justify-between gap-1 border-t pt-2 ${theme?.isLight ? 'border-slate-200' : 'border-pink-500/20'}`}>
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {EMOJI.map((e) => (
             <button
@@ -264,7 +264,7 @@ export default function ChatPanel({
           className={`flex-1 text-sm rounded-xl outline-none transition px-3 py-2.5 ${
             theme?.isLight
               ? 'bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-rose-500 font-medium shadow-inner'
-              : 'bg-[#1A1A1D] border border-pink-500/25 focus:border-pink-500 text-pink-100 placeholder-pink-300/40'
+              : 'bg-[#1A1A1D] border border-pink-500/25 focus:border-pink-500 text-pink-100 placeholder:text-zinc-400 font-medium'
           }`}
           autoComplete="off"
           maxLength={1000}

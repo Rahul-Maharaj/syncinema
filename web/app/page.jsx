@@ -222,7 +222,7 @@ function LiveLockstepSimulator({ onStickerClick }) {
               <Film className="h-4 w-4 text-pink-400 shrink-0" />
               <div className="text-right">
                 <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
-                <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
+                <p className="text-[9px] text-pink-200 font-bold">Frame #{simFrame.toLocaleString()}</p>
               </div>
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
                 <div
@@ -259,7 +259,7 @@ function LiveLockstepSimulator({ onStickerClick }) {
               <Film className="h-4 w-4 text-pink-400 shrink-0" />
               <div className="text-right">
                 <p className="text-[11px] font-mono font-bold text-pink-100">{formatSimTime(simSeconds)}</p>
-                <p className="text-[8px] text-pink-300/70 font-semibold">Frame #{simFrame.toLocaleString()}</p>
+                <p className="text-[9px] text-pink-200 font-bold">Frame #{simFrame.toLocaleString()}</p>
               </div>
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-pink-500/20">
                 <div
@@ -329,19 +329,19 @@ function LiveLockstepSimulator({ onStickerClick }) {
       {/* Real-Time Live Telemetry Metrics */}
       <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-mono pt-1">
         <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-          <span className="text-pink-300/60 block text-[9px]">CLOCK DRIFT</span>
+          <span className="text-pink-200 block text-[9px] font-bold">CLOCK DRIFT</span>
           <span className="text-emerald-400 font-bold">0.00 ms</span>
         </div>
         <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-          <span className="text-pink-300/60 block text-[9px]">AUDIO PHASE</span>
+          <span className="text-pink-200 block text-[9px] font-bold">AUDIO PHASE</span>
           <span className="text-pink-200 font-bold">100% Locked</span>
         </div>
         <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-          <span className="text-pink-300/60 block text-[9px]">TRANSPORT</span>
+          <span className="text-pink-200 block text-[9px] font-bold">TRANSPORT</span>
           <span className="text-pink-200 font-bold">WebRTC P2P</span>
         </div>
         <div className="p-2 rounded-xl bg-[#1A1A1D]/90 border border-pink-500/15">
-          <span className="text-pink-300/60 block text-[9px]">AUTO-HEAL</span>
+          <span className="text-pink-200 block text-[9px] font-bold">AUTO-HEAL</span>
           <span className="text-emerald-400 font-bold">Active 24/7</span>
         </div>
       </div>
@@ -587,10 +587,10 @@ export default function SynCinemaPlatform() {
       <div className="fixed inset-0 z-0 bg-gradient-to-t from-[#222222] via-[#222222]/60 to-[#222222]/35 pointer-events-none" />
 
       {/* Soft Ambient Romantic Pink Glow & Floating Cinema Bokeh Orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-pink-500/20 rounded-full blur-[140px] pointer-events-none" />
-      <div className="fixed top-1/4 left-1/4 w-[480px] h-[300px] bg-pink-600/15 rounded-full blur-[130px] pointer-events-none anim-bokeh" />
-      <div className="fixed top-1/2 right-1/4 w-[450px] h-[350px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none anim-bokeh" style={{ animationDelay: '-4s' }} />
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[250px] bg-pink-500/10 rounded-full blur-[150px] pointer-events-none anim-bokeh" style={{ animationDelay: '-2s' }} />
+      <div className="hidden md:block absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-pink-500/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="hidden md:block fixed top-1/4 left-1/4 w-[480px] h-[300px] bg-pink-600/15 rounded-full blur-[130px] pointer-events-none anim-bokeh" />
+      <div className="hidden md:block fixed top-1/2 right-1/4 w-[450px] h-[350px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none anim-bokeh" style={{ animationDelay: '-4s' }} />
+      <div className="hidden md:block fixed bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[250px] bg-pink-500/10 rounded-full blur-[150px] pointer-events-none anim-bokeh" style={{ animationDelay: '-2s' }} />
 
       {/* Ambient Cosmic Star Dust (Zero-Lag Hardware Accelerated) */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -829,7 +829,7 @@ export default function SynCinemaPlatform() {
                   className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                     infoTab === 'security'
                       ? 'btn-pink text-white shadow-md shadow-pink-500/30'
-                      : 'text-pink-300/70 hover:text-white hover:bg-white/5'
+                      : 'text-zinc-200 hover:text-white hover:bg-white/10 font-semibold'
                   }`}
                 >
                   <Shield3D size={16} />
@@ -841,7 +841,7 @@ export default function SynCinemaPlatform() {
                   className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                     infoTab === 'media'
                       ? 'btn-pink text-white shadow-md shadow-pink-500/30'
-                      : 'text-pink-300/70 hover:text-white hover:bg-white/5'
+                      : 'text-zinc-200 hover:text-white hover:bg-white/10 font-semibold'
                   }`}
                 >
                   <Ticket3D size={16} />
@@ -853,7 +853,7 @@ export default function SynCinemaPlatform() {
                   className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                     infoTab === 'intimacy'
                       ? 'btn-pink text-white shadow-md shadow-pink-500/30'
-                      : 'text-pink-300/70 hover:text-white hover:bg-white/5'
+                      : 'text-zinc-200 hover:text-white hover:bg-white/10 font-semibold'
                   }`}
                 >
                   <Heart3D size={16} />
@@ -889,7 +889,7 @@ export default function SynCinemaPlatform() {
                         <span className="h-2 w-2 rounded-full bg-pink-400" />
                         <span>Direct Peer-to-Peer Encryption</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Camera and mic feeds stream point-to-point directly between your browsers via WebRTC DTLS/SRTP. No video or voice data is ever recorded or routed to external media servers.
                       </p>
                     </div>
@@ -899,7 +899,7 @@ export default function SynCinemaPlatform() {
                         <span className="h-2 w-2 rounded-full bg-rose-400" />
                         <span>Hardware Sensor Killswitch</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         When you switch Camera or Mic off, device hardware media tracks are fully terminated in your browser—the physical green/red indicator LED on your camera shuts off completely.
                       </p>
                     </div>
@@ -909,7 +909,7 @@ export default function SynCinemaPlatform() {
                         <span className="h-2 w-2 rounded-full bg-fuchsia-400" />
                         <span>Zero Logins &amp; Ephemeral Keys</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         No email address, login accounts, or tracking cookies required. Every room is guarded by a bcrypt-hashed passcode known exclusively to you and your invited guest.
                       </p>
                     </div>
@@ -919,7 +919,7 @@ export default function SynCinemaPlatform() {
                         <span className="h-2 w-2 rounded-full bg-pink-300" />
                         <span>10-Minute Inactivity Auto-Destruct</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Once all members leave or if the room remains idle for 10 minutes, the room code, chat memory, and sync session automatically self-destruct from active memory.
                       </p>
                     </div>
@@ -955,7 +955,7 @@ export default function SynCinemaPlatform() {
                         <Film className="h-3.5 w-3.5 text-pink-400" />
                         <span>YouTube Clean Playback</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Paste any YouTube video or livestream URL. SynCinema synchronizes playback states down to the exact frame across all phones, tablets, and PCs.
                       </p>
                     </div>
@@ -965,7 +965,7 @@ export default function SynCinemaPlatform() {
                         <Radio className="h-3.5 w-3.5 text-rose-400" />
                         <span>Direct MP4 &amp; HLS (.m3u8)</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Paste direct video links or live IPTV streams. The integrated adaptive bitrate engine dynamically adjusts quality to eliminate buffering pauses.
                       </p>
                     </div>
@@ -975,7 +975,7 @@ export default function SynCinemaPlatform() {
                         <Laptop className="h-3.5 w-3.5 text-fuchsia-400" />
                         <span>P2P Local File Player (0MB Upload)</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Pick any video stored on your hard drive. It streams peer-to-peer to your partner through encrypted browser data channels without uploading to any server.
                       </p>
                     </div>
@@ -985,7 +985,7 @@ export default function SynCinemaPlatform() {
                         <Zap className="h-3.5 w-3.5 text-pink-300" />
                         <span>Auto-Healing Video Watchdog</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         If a network blip or browser decoder hiccup pauses the video, our background watchdog auto-restores playback in under 2 seconds without refreshing.
                       </p>
                     </div>
@@ -1021,7 +1021,7 @@ export default function SynCinemaPlatform() {
                         <Heart className="h-3.5 w-3.5 text-pink-400" />
                         <span>Touch Hugs &amp; Screen Pulses</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Tap &ldquo;Send Hug&rdquo; to pulse your partner's cinema screen with warm romantic vibrations, glowing rose lighting, and floating heart physics.
                       </p>
                     </div>
@@ -1031,7 +1031,7 @@ export default function SynCinemaPlatform() {
                         <Camera className="h-3.5 w-3.5 text-rose-400" />
                         <span>Live Polaroid Keepsakes</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Capture authentic vintage date polaroids blending the movie scene and your video call selfies into a downloadable high-resolution photo keepsake.
                       </p>
                     </div>
@@ -1041,7 +1041,7 @@ export default function SynCinemaPlatform() {
                         <Volume2 className="h-3.5 w-3.5 text-fuchsia-400" />
                         <span>Rain &amp; Fireplace Soundscapes</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Layer cozy background ambiance behind the movie audio: soft rain on window glass, crackling warm fireplace, lofi vinyl hiss, and cosmic drones.
                       </p>
                     </div>
@@ -1051,7 +1051,7 @@ export default function SynCinemaPlatform() {
                         <Clock className="h-3.5 w-3.5 text-pink-300" />
                         <span>Cozy Sleep Timer</span>
                       </div>
-                      <p className="text-[11px] text-pink-200/80 leading-relaxed">
+                      <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
                         Watching in bed? Set a 30m, 60m, or 90m sleep timer. SynCinema gently fades out volume and pauses the movie when you both drift off to sleep.
                       </p>
                     </div>

@@ -328,7 +328,7 @@ export default function MovieNightExtras({
                   {isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) && <Lock className="h-3.5 w-3.5 text-rose-400 shrink-0" />}
                   <span>{isAdultMedia(currentMedia.src || currentMedia.title || currentMedia.name) ? '🔒 Private Stream' : (currentMedia.title || currentMedia.name || 'Untitled Video')}</span>
                 </p>
-                {currentMedia.desc && !isAdultMedia(currentMedia.src) && <p className={`text-xs line-clamp-1 ${theme?.isLight ? 'text-slate-500' : 'text-white/60'}`}>{currentMedia.desc}</p>}
+                {currentMedia.desc && !isAdultMedia(currentMedia.src) && <p className={`text-xs line-clamp-1 ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>{currentMedia.desc}</p>}
               </div>
               <button
                 type="button"
@@ -365,7 +365,7 @@ export default function MovieNightExtras({
                       dlAnchor.remove();
                       say?.('Playlist exported!');
                     }}
-                    className={`flex items-center gap-1 transition ${theme?.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-white/65 hover:text-white'}`}
+                    className={`flex items-center gap-1 transition ${theme?.isLight ? 'text-slate-600 hover:text-slate-900' : 'text-zinc-200 hover:text-white font-bold'}`}
                     title="Export queue as JSON playlist"
                   >
                     <Download className="h-3 w-3" />
@@ -408,7 +408,7 @@ export default function MovieNightExtras({
                   hidden
                 />
               </label>
-              <span className={`text-xs ${theme?.isLight ? 'text-slate-500 font-semibold' : 'text-white/40'}`}>({queue.length})</span>
+              <span className={`text-xs ${theme?.isLight ? 'text-slate-600 font-bold' : 'text-pink-200 font-bold'}`}>({queue.length})</span>
             </div>
           </div>
 
@@ -437,11 +437,11 @@ export default function MovieNightExtras({
                       : 'border-white/10 bg-white/5 hover:border-white/25 text-white'
                   }`}
                 >
-                  <span className={`text-xs font-bold w-4 text-center ${theme?.isLight ? 'text-slate-400' : 'opacity-40'}`}>{index + 1}</span>
+                  <span className={`text-xs font-bold w-4 text-center ${theme?.isLight ? 'text-slate-600' : 'text-pink-300 font-bold'}`}>{index + 1}</span>
                   {item.poster ? (
                     <img src={item.poster} alt="" className="h-11 w-8 rounded object-cover shrink-0 border border-slate-200/60" />
                   ) : (
-                    <div className={`h-11 w-8 rounded grid place-items-center shrink-0 ${theme?.isLight ? 'bg-pink-50 text-pink-500 border border-pink-200/60' : 'bg-white/10 opacity-50'}`}>
+                    <div className={`h-11 w-8 rounded grid place-items-center shrink-0 ${theme?.isLight ? 'bg-pink-50 text-pink-500 border border-pink-200/60' : 'bg-pink-500/20 text-pink-300 border border-pink-500/30'}`}>
                       <Film className="h-4 w-4" />
                     </div>
                   )}
@@ -450,7 +450,7 @@ export default function MovieNightExtras({
                       {isAdultMedia(item.src || item.title) && <Lock className="h-3 w-3 text-rose-500 shrink-0" />}
                       <span>{isAdultMedia(item.src || item.title) ? '🔒 Private Stream' : (item.title || item.src.replace(/^https?:\/\//, ''))}</span>
                     </p>
-                    {item.desc && !isAdultMedia(item.src) && <p className={`text-[10px] truncate ${theme?.isLight ? 'text-slate-500' : 'text-white/50'}`}>{item.desc}</p>}
+                    {item.desc && !isAdultMedia(item.src) && <p className={`text-[10px] truncate ${theme?.isLight ? 'text-slate-600' : 'text-zinc-200 font-medium'}`}>{item.desc}</p>}
                     <div className="flex items-center gap-2 text-[9px] text-pink-600 font-medium">
                       {item.addedBy && <span>Queued by {item.addedBy}</span>}
                     </div>
@@ -535,7 +535,7 @@ export default function MovieNightExtras({
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-xs font-bold ${theme?.isLight ? 'text-slate-800' : 'text-white/80'}`}>Couples Movie Wishlist</p>
-              <p className={`text-[11px] ${theme?.isLight ? 'text-slate-500' : 'text-white/50'}`}>Movies you two want to watch together on future dates</p>
+              <p className={`text-[11px] ${theme?.isLight ? 'text-slate-600' : 'text-zinc-200 font-medium'}`}>Movies you two want to watch together on future dates</p>
             </div>
             <button
               onClick={() => setShowAddModal(true)}
@@ -548,7 +548,7 @@ export default function MovieNightExtras({
 
           {watchlist.length === 0 ? (
             <div className={`rounded-xl border border-dashed p-6 text-center text-xs ${
-              theme?.isLight ? 'border-slate-200 bg-pink-50/40 text-slate-500' : 'border-white/15 text-white/50'
+              theme?.isLight ? 'border-slate-200 bg-pink-50/40 text-slate-500' : 'border-pink-500/30 bg-[#1E1E26] text-zinc-100 font-medium'
             }`}>
               <Sparkles className="h-8 w-8 mx-auto mb-2 text-amber-400 opacity-60" />
               <p>Your wishlist is empty. Add romantic movies, series, or YouTube shows for future movie nights!</p>
@@ -573,7 +573,7 @@ export default function MovieNightExtras({
                   )}
                   <div className="min-w-0 flex-1">
                     <p className={`font-semibold text-xs truncate group-hover:text-pink-600 transition ${theme?.isLight ? 'text-slate-800' : 'text-white'}`}>{item.title}</p>
-                    {item.desc && <p className={`text-[10px] line-clamp-2 mt-0.5 ${theme?.isLight ? 'text-slate-500' : 'text-white/60'}`}>{item.desc}</p>}
+                    {item.desc && <p className={`text-[10px] line-clamp-2 mt-0.5 ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>{item.desc}</p>}
                     <span className={`text-[9px] mt-1 block ${theme?.isLight ? 'text-slate-400' : 'text-white/40'}`}>Added by {item.addedBy}</span>
                     
                     <div className="flex items-center gap-1.5 mt-2">
@@ -621,7 +621,7 @@ export default function MovieNightExtras({
               {formatTime(timeLeft)}
             </div>
             {timer?.startedBy && (
-              <p className={`text-xs ${theme?.isLight ? 'text-slate-500' : 'text-white/60'}`}>Started by {timer.startedBy}</p>
+              <p className={`text-xs ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>Started by {timer.startedBy}</p>
             )}
           </div>
 
@@ -716,7 +716,7 @@ export default function MovieNightExtras({
         <div className="space-y-4 py-2">
           <div className="text-center">
             <h3 className={`font-display text-lg font-bold mb-1 ${theme?.isLight ? 'text-slate-900' : 'text-white'}`}>“Ready to Watch?” Check-In</h3>
-            <p className={`text-xs ${theme?.isLight ? 'text-slate-500' : 'text-white/60'}`}>Both partners confirm they have snacks and are cozy before the movie starts!</p>
+            <p className={`text-xs ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>Both partners confirm they have snacks and are cozy before the movie starts!</p>
           </div>
 
           {/* Partner Status Display */}
@@ -769,7 +769,7 @@ export default function MovieNightExtras({
                   <p className="text-xs text-emerald-500 font-semibold">You’re ready! Waiting for partner to click ready…</p>
                 )}
                 <div>
-                  <button onClick={() => socket.emit('ready:cancel')} className={`text-xs hover:underline ${theme?.isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                  <button onClick={() => socket.emit('ready:cancel')} className={`text-xs hover:underline ${theme?.isLight ? 'text-slate-600' : 'text-zinc-200 font-medium'}`}>
                     Cancel check
                   </button>
                 </div>
@@ -785,7 +785,7 @@ export default function MovieNightExtras({
           <div className="flex items-center justify-between">
             <div>
               <p className={`text-xs font-bold ${theme?.isLight ? 'text-slate-800' : 'text-white/80'}`}>Date-Night Movie Log</p>
-              <p className={`text-[11px] ${theme?.isLight ? 'text-slate-500' : 'text-white/50'}`}>Your ratings, favorite scenes, and memories together</p>
+              <p className={`text-[11px] ${theme?.isLight ? 'text-slate-600' : 'text-zinc-200 font-medium'}`}>Your ratings, favorite scenes, and memories together</p>
             </div>
             <button
               onClick={() => setShowReviewModal(true)}
@@ -798,7 +798,7 @@ export default function MovieNightExtras({
 
           {reviews.length === 0 ? (
             <div className={`rounded-xl border border-dashed p-6 text-center text-xs ${
-              theme?.isLight ? 'border-slate-200 bg-pink-50/40 text-slate-500' : 'border-white/15 text-white/50'
+              theme?.isLight ? 'border-slate-200 bg-pink-50/40 text-slate-500' : 'border-pink-500/30 bg-[#1E1E26] text-zinc-100 font-medium'
             }`}>
               <Star className="h-8 w-8 mx-auto mb-2 text-amber-400 opacity-60" />
               <p>No movie memories logged yet. When you finish a movie, tap &ldquo;Log Movie&rdquo; to save your ratings and favorite moments!</p>
@@ -831,7 +831,7 @@ export default function MovieNightExtras({
                           {r.vibe}
                         </span>
                         {r.moment && (
-                          <p className={`text-[11px] italic ${theme?.isLight ? 'text-slate-500' : 'text-white/60'}`}>&ldquo;{r.moment}&rdquo;</p>
+                          <p className={`text-[11px] italic ${theme?.isLight ? 'text-slate-600 font-medium' : 'text-zinc-200 font-medium'}`}>&ldquo;{r.moment}&rdquo;</p>
                         )}
                       </div>
                     ))}

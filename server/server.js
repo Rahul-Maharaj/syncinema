@@ -2143,7 +2143,7 @@ io.on('connection', (socket) => {
     if (locked(ip)) return ack({ error: 'locked' });
 
     // Anti-Bot & Scraper Guard on Room Join
-    const botCheck = isBotRequest({ headers: socket.handshake?.headers || {}, url: socket.handshake?.url || '' });
+    const botCheck = isBotRequest({ headers: socket.handshake?.headers || {}, url: socket.handshake?.url || '', socket: { remoteAddress: ip } });
     if (botCheck.blocked) {
       return ack({ error: 'bot_detected' });
     }

@@ -71,8 +71,9 @@ export function middleware(request) {
     });
   }
 
-  // 6. Block known malicious bot signatures
-  if (BOT_UA_REGEX.test(ua)) {
+  // 6. Block known malicious bot signatures (Allow local development & automated testing)
+  const isLocal = request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1';
+  if (!isLocal && BOT_UA_REGEX.test(ua)) {
     return new NextResponse('Access Denied: Automated bots, crawlers, and scrapers are strictly prohibited on SyncCinema.', {
       status: 403,
       headers: {
@@ -83,7 +84,7 @@ export function middleware(request) {
   }
 
   // 7. Generic crawler catch-all (excludes social preview crawlers and search indexers)
-  if (/\b(bot|crawler|spider|scraper)\b/i.test(ua) && !SOCIAL_PREVIEW_REGEX.test(ua) && !LEGIT_SEARCH_ENGINES.test(ua)) {
+  if (!isLocal && /\b(bot|crawler|spider|scraper)\b/i.test(ua) && !SOCIAL_PREVIEW_REGEX.test(ua) && !LEGIT_SEARCH_ENGINES.test(ua)) {
     return new NextResponse('Access Denied: Automated bot detected.', {
       status: 403,
       headers: { 'X-Bot-Shield': 'Access-Denied' },

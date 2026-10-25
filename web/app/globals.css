@@ -48,18 +48,36 @@
 }
 
 /* Base Body Styling: Dark Black Hole #222222 with Soft Romantic Pink Palette */
-html, body {
+html {
   background: #222222 !important;
   color: #FCE7F3;
   font-family: 'Plus Jakarta Sans', var(--font-body), sans-serif;
-  min-height: 100vh;
+  min-height: 100% !important;
+  height: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: auto;
+  touch-action: pan-y pinch-zoom;
+}
+
+body {
+  background: #222222 !important;
+  color: #FCE7F3;
+  font-family: 'Plus Jakarta Sans', var(--font-body), sans-serif;
+  min-height: 100% !important;
+  height: auto !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
   width: 100% !important;
   max-width: 100% !important;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior-y: auto;
 }
 
 /* Safe Area Notch & Hardware Cutout Utilities for Mobile Phones */
