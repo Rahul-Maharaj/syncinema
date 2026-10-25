@@ -43,8 +43,11 @@ public class MainActivity extends BridgeActivity {
         if (this.bridge != null && this.bridge.getWebView() != null) {
             WebView webView = this.bridge.getWebView();
             
-            // 🚀 Maximum Hardware Acceleration for Budget & Older Android Devices (Mali/Adreno GPUs)
-            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            // 🚀 Smooth Native 60FPS Touch & Scroll Handling for Android WebView
+            webView.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
+            webView.setVerticalScrollBarEnabled(false);
+            webView.setHorizontalScrollBarEnabled(false);
+            
             WebSettings settings = webView.getSettings();
             settings.setMediaPlaybackRequiresUserGesture(false);
             settings.setDomStorageEnabled(true);

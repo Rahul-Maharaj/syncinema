@@ -2090,9 +2090,9 @@ export default function Room() {
               </div>
 
               {/* Mobile Tab Content Body */}
-              <div className="p-2 sm:p-3 min-h-[420px] max-h-[600px] overflow-y-auto">
+              <div className="p-2 sm:p-3 min-h-[380px]">
                 {mobileTab === 'chat' && (
-                  <div className="h-[460px]">
+                  <div className="h-[480px]">
                     <ChatPanel
                       socket={socket}
                       me={me}
