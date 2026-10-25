@@ -60,7 +60,19 @@ try {
   }
 } catch (e) {}
 
-const { PORT = 4000, CLIENT_ORIGIN, TURN_URL, TURN_SECRET, ACCESS_KEY, DATA_FILE = './data/rooms.json' } = process.env;
+const {
+  PORT = 4000,
+  CLIENT_ORIGIN,
+  TURN_URL,
+  TURN_SECRET,
+  ACCESS_KEY,
+  DATA_FILE = './data/rooms.json',
+  METERED_DOMAIN,
+  METERED_SECRET_KEY,
+  METERED_API_KEY,
+  METERED_STATIC_USER,
+  METERED_STATIC_CRED,
+} = process.env;
 
 // Admin Key Security: Disallow default 'admin123' and generate cryptographically secure fallback if unset
 let resolvedAdminKey = (process.env.ADMIN_KEY || '').trim();
@@ -788,7 +800,73 @@ app.get('/api/stats/visitors', (req, res) => {
   res.json(getVisitorStats(activeRoomsCount));
 });
 
-app.get('/api/ice', (req, res) => {
+let meteredIceCache = null;
+let meteredIceExpiry = 0;
+
+const getMeteredIceServers = async () => {
+  const domain = (process.env.METERED_DOMAIN || METERED_DOMAIN || '').trim();
+  const secretKey = (process.env.METERED_SECRET_KEY || METERED_SECRET_KEY || '').trim();
+  const apiKey = (process.env.METERED_API_KEY || METERED_API_KEY || '').trim();
+  const staticUser = (process.env.METERED_STATIC_USER || METERED_STATIC_USER || '').trim();
+  const staticCred = (process.env.METERED_STATIC_CRED || METERED_STATIC_CRED || '').trim();
+
+  if (!domain && !staticUser) return [];
+  if (meteredIceCache && Date.now() < meteredIceExpiry) return meteredIceCache;
+
+  if (domain && (secretKey || apiKey)) {
+    try {
+      let keyToUse = apiKey;
+      if (!keyToUse && secretKey) {
+        const genRes = await fetch(`https://${domain}/api/v1/turn/credential?secretKey=${encodeURIComponent(secretKey)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ label: 'synccinema-webrtc' }),
+          signal: AbortSignal.timeout(4500),
+        });
+        if (genRes.ok) {
+          const genData = await genRes.json();
+          if (genData?.apiKey) {
+            keyToUse = genData.apiKey;
+          }
+        }
+      }
+
+      if (keyToUse) {
+        const credRes = await fetch(`https://${domain}/api/v1/turn/credentials?apiKey=${encodeURIComponent(keyToUse)}`, {
+          signal: AbortSignal.timeout(4500),
+        });
+        if (credRes.ok) {
+          const servers = await credRes.json();
+          if (Array.isArray(servers) && servers.length > 0) {
+            meteredIceCache = servers;
+            meteredIceExpiry = Date.now() + 6 * 3600 * 1000; // cache for 6 hours
+            return servers;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[Metered ICE Relay] Remote fetch failed, falling back to static config:', err.message);
+    }
+  }
+
+  // Fallback to static credentials if provided
+  if (staticUser && staticCred) {
+    const staticServers = [
+      { urls: 'stun:stun.relay.metered.ca:80' },
+      { urls: 'turn:global.relay.metered.ca:80', username: staticUser, credential: staticCred },
+      { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: staticUser, credential: staticCred },
+      { urls: 'turn:global.relay.metered.ca:443', username: staticUser, credential: staticCred },
+      { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: staticUser, credential: staticCred },
+    ];
+    meteredIceCache = staticServers;
+    meteredIceExpiry = Date.now() + 3600 * 1000;
+    return staticServers;
+  }
+
+  return meteredIceCache || [];
+};
+
+app.get('/api/ice', async (req, res) => {
   const iceServers = [
     { urls: 'stun:stun.cloudflare.com:3478' },
     { urls: 'stun:stun.l.google.com:19302' },
@@ -807,6 +885,14 @@ app.get('/api/ice', (req, res) => {
       credential: 'openrelayproject',
     },
   ];
+
+  try {
+    const meteredServers = await getMeteredIceServers();
+    if (meteredServers && meteredServers.length > 0) {
+      iceServers.unshift(...meteredServers);
+    }
+  } catch {}
+
   if (TURN_URL && TURN_SECRET) {
     const username = `${Math.floor(Date.now() / 1000) + 86400}:synccinema`;
     const credential = crypto.createHmac('sha1', TURN_SECRET).update(username).digest('base64');
