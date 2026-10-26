@@ -2354,9 +2354,12 @@ app.post('/api/admin/room/camera', adminGate, (req, res) => {
 
   const willAllow = Boolean(enabled);
   r.cameraDisabled = !willAllow;
+  if (willAllow && r.blockedCameras) {
+    r.blockedCameras.clear();
+  }
 
   const msg = willAllow
-    ? (reason || 'Camera access has been restored by Administrator.')
+    ? (reason || 'Camera access has been activated by Administrator.')
     : (reason || 'Camera access has been disabled by Administrator for security compliance.');
 
   // Emit policy update to all clients in the room
@@ -2413,13 +2416,17 @@ app.post('/api/admin/user/camera', adminGate, (req, res) => {
 
   if (willAllow) {
     r.blockedCameras.delete(cid);
+    // If room-wide camera was previously marked disabled, lift it so this user's camera works
+    if (r.cameraDisabled) {
+      r.cameraDisabled = false;
+    }
   } else {
     r.blockedCameras.add(cid);
   }
 
   const u = r.users?.get(cid);
   const msg = willAllow
-    ? (reason || 'Your camera access has been restored by Administrator.')
+    ? (reason || 'Your camera access has been activated by Administrator.')
     : (reason || 'Your camera access has been disabled by Administrator for security purposes.');
 
   if (u?.sid) {

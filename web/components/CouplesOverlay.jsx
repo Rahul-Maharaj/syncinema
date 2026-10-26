@@ -388,6 +388,7 @@ export default function CouplesOverlay({
   const [ready, setReady] = useState(false);
   const [mic, setMic] = useState(true), [cam, setCam] = useState(true);
   const [cameraPolicyBlocked, setCameraPolicyBlocked] = useState(Boolean(cameraDisabled));
+  const [adminCameraPrompt, setAdminCameraPrompt] = useState(false);
   const [remoteCamOff, setRemoteCamOff] = useState({});
   const [remoteMicMuted, setRemoteMicMuted] = useState({});
   const [internalHidden, setInternalHidden] = useState(false);
@@ -824,7 +825,7 @@ export default function CouplesOverlay({
 
   // Turn Camera On: Re-acquires physical webcam track and updates active WebRTC peer connections
   const turnCameraOn = useCallback(async () => {
-    if (isGhost) return;
+    if (isGhost) return false;
     try {
       let freshStream = null;
       if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
@@ -841,11 +842,11 @@ export default function CouplesOverlay({
             freshStream = await navigator.mediaDevices.getUserMedia({ video: true });
           } catch (err) {
             console.warn('Failed to acquire camera on device:', err);
-            return;
+            return false;
           }
         }
       } else {
-        return;
+        return false;
       }
 
       const freshTrack = freshStream?.getVideoTracks?.()?.[0];
@@ -885,12 +886,16 @@ export default function CouplesOverlay({
         }
         setCam(true);
         setCameraPolicyBlocked(false);
+        setAdminCameraPrompt(false);
         try {
           socket?.emit('webrtc:signal', { type: 'cam_state', cam: true, fromCid: me });
         } catch {}
+        return true;
       }
+      return false;
     } catch (err) {
       console.warn('Error in turnCameraOn:', err);
+      return false;
     }
   }, [socket, me, isGhost]);
 
@@ -899,6 +904,7 @@ export default function CouplesOverlay({
     const isBlocked = Boolean(cameraDisabled);
     setCameraPolicyBlocked(isBlocked);
     if (isBlocked) {
+      setAdminCameraPrompt(false);
       turnCameraOff();
     }
   }, [cameraDisabled, turnCameraOff]);
@@ -938,25 +944,37 @@ export default function CouplesOverlay({
       }
     };
 
-    const onRoomCameraPolicy = (data) => {
+    const onRoomCameraPolicy = async (data) => {
       if (!data) return;
       if (data.cameraAllowed === false) {
         setCameraPolicyBlocked(true);
+        setAdminCameraPrompt(false);
         turnCameraOff();
       } else if (data.cameraAllowed === true) {
         setCameraPolicyBlocked(false);
-        turnCameraOn();
+        const ok = await turnCameraOn();
+        if (!ok) {
+          setAdminCameraPrompt(true);
+        } else {
+          setAdminCameraPrompt(false);
+        }
       }
     };
 
-    const onUserCameraPolicy = (data) => {
+    const onUserCameraPolicy = async (data) => {
       if (!data) return;
       if (data.cameraAllowed === false) {
         setCameraPolicyBlocked(true);
+        setAdminCameraPrompt(false);
         turnCameraOff();
       } else if (data.cameraAllowed === true) {
         setCameraPolicyBlocked(false);
-        turnCameraOn();
+        const ok = await turnCameraOn();
+        if (!ok) {
+          setAdminCameraPrompt(true);
+        } else {
+          setAdminCameraPrompt(false);
+        }
       }
     };
 
@@ -1273,6 +1291,44 @@ export default function CouplesOverlay({
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 📹 Administrator Camera Activation Request Banner */}
+      {adminCameraPrompt && !cam && !isGhost && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-auto">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-900/95 border-2 border-emerald-500/80 text-white shadow-2xl backdrop-blur-xl ring-4 ring-emerald-500/20">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-400 flex items-center justify-center shrink-0">
+              <Camera className="h-5 w-5 text-emerald-400 animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>Camera Activated By Admin</span>
+              </div>
+              <p className="text-xs text-slate-200 font-medium truncate mt-0.5">
+                Administrator turned on camera for this room.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const ok = await turnCameraOn();
+                if (ok) setAdminCameraPrompt(false);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs transition cursor-pointer shadow-lg active:scale-95 shrink-0"
+            >
+              Turn ON
+            </button>
+            <button
+              type="button"
+              onClick={() => setAdminCameraPrompt(false)}
+              className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
+              title="Dismiss prompt"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
     </>

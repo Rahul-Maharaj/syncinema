@@ -87,7 +87,7 @@ const getSharedAudioContext = () => {
 };
 
 // Stealth Video & Voice Tile for Admin Monitor (Hearable Voice Call + Video) - High Performance & Low Latency
-function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamera }) {
+function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamera, onSetUserCamera }) {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const [hasVideo, setHasVideo] = useState(false);
@@ -400,21 +400,40 @@ function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamer
             <span className="hidden sm:inline">{effectiveAudio ? 'Sound ON' : 'Muted'}</span>
           </button>
 
-          {/* Admin 1-Click User Camera Moderation Toggle */}
-          {onToggleUserCamera && (
-            <button
-              type="button"
-              onClick={() => onToggleUserCamera(roomId, user?.cid || user?.id, user?.cameraBlocked)}
-              className={`p-1 rounded transition cursor-pointer flex items-center gap-1 text-[9px] font-bold ${
-                user?.cameraBlocked
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-400'
-                  : 'bg-rose-600/80 hover:bg-rose-600 text-white shadow-sm'
-              }`}
-              title={user?.cameraBlocked ? 'Turn ON / Restore this user camera' : 'Cut / Turn OFF this user camera for security'}
-            >
-              {user?.cameraBlocked ? <Camera className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
-              <span className="hidden sm:inline">{user?.cameraBlocked ? 'Turn ON Cam' : 'Cut Cam'}</span>
-            </button>
+          {/* Admin Explicit Turn ON / Cut User Camera Controls */}
+          {(onSetUserCamera || onToggleUserCamera) && (
+            <div className="flex items-center gap-0.5 bg-black/80 p-0.5 rounded border border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSetUserCamera) {
+                    onSetUserCamera(roomId, user?.cid || user?.id, true);
+                  } else {
+                    onToggleUserCamera(roomId, user?.cid || user?.id, true);
+                  }
+                }}
+                className="px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-0.5 text-[9px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"
+                title="Force Turn ON this user camera"
+              >
+                <Camera className="h-2.5 w-2.5 text-emerald-200" />
+                <span>ON</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSetUserCamera) {
+                    onSetUserCamera(roomId, user?.cid || user?.id, false);
+                  } else {
+                    onToggleUserCamera(roomId, user?.cid || user?.id, false);
+                  }
+                }}
+                className="px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-0.5 text-[9px] font-bold bg-rose-600/80 hover:bg-rose-600 text-white shadow-sm"
+                title="Cut / Turn OFF this user camera"
+              >
+                <VideoOff className="h-2.5 w-2.5 text-rose-200" />
+                <span>CUT</span>
+              </button>
+            </div>
           )}
 
           {/* Screenshot / Snapshot Frame */}
@@ -446,7 +465,7 @@ function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamer
 }
 
 // Stealth Call Monitor for Aurelia Admin Panel
-function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, onToggleUserCamera }) {
+function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, onToggleUserCamera, onSetUserCamera }) {
   const [remoteStreams, setRemoteStreams] = useState({});
   const [listenAudio, setListenAudio] = useState(externalListenAudio !== false);
   const [connecting, setConnecting] = useState(true);
@@ -712,6 +731,7 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, on
                 listenAudio={listenAudio}
                 roomId={roomId}
                 onToggleUserCamera={onToggleUserCamera}
+                onSetUserCamera={onSetUserCamera}
               />
             );
           })}
@@ -1536,22 +1556,22 @@ export default function AdminPage() {
     }
   };
 
-  // Toggle Camera Access for Room (Admin Security Moderation)
-  const handleToggleRoomCamera = async (roomId, currentDisabled) => {
-    const willEnable = Boolean(currentDisabled);
+  // Set Camera Access for Room (Admin Explicit Action: true = Turn ON, false = Cut)
+  const handleSetRoomCamera = async (roomId, enabled) => {
+    const willEnable = Boolean(enabled);
     try {
-      say(willEnable ? `Restoring camera access in #${roomId}…` : `Disabling camera access in #${roomId} for security…`, 'info');
+      say(willEnable ? `Turning ON camera for room #${roomId}…` : `Cutting camera feed in #${roomId}…`, 'info');
       const res = await fetch(serverUrl() + '/api/admin/room/camera', {
         method: 'POST',
         headers: adminHeaders(),
         body: JSON.stringify({
           roomId,
           enabled: willEnable,
-          reason: willEnable ? 'Camera access restored by administrator' : 'Camera access disabled by administrator for security compliance',
+          reason: willEnable ? 'Camera access activated by administrator' : 'Camera access disabled by administrator for security compliance',
         }),
       });
       if (res.ok) {
-        say(willEnable ? `Camera access enabled for room #${roomId}` : `Camera access disabled for room #${roomId}`);
+        say(willEnable ? `🟢 Camera turned ON for room #${roomId}` : `🔴 Camera cut & disabled for room #${roomId}`);
         fetchOverview();
       } else {
         say('Failed to update room camera policy', 'error');
@@ -1561,11 +1581,15 @@ export default function AdminPage() {
     }
   };
 
-  // Toggle Camera Access for Individual Participant
-  const handleToggleUserCamera = async (roomId, cid, currentBlocked) => {
-    const willEnable = Boolean(currentBlocked);
+  const handleToggleRoomCamera = async (roomId, currentDisabled) => {
+    return handleSetRoomCamera(roomId, Boolean(currentDisabled));
+  };
+
+  // Set Camera Access for Individual Participant (true = Turn ON, false = Cut)
+  const handleSetUserCamera = async (roomId, cid, enabled) => {
+    const willEnable = Boolean(enabled);
     try {
-      say(willEnable ? `Restoring participant camera…` : `Cutting participant camera feed for security…`, 'info');
+      say(willEnable ? `Turning ON participant camera…` : `Cutting participant camera feed…`, 'info');
       const res = await fetch(serverUrl() + '/api/admin/user/camera', {
         method: 'POST',
         headers: adminHeaders(),
@@ -1573,11 +1597,11 @@ export default function AdminPage() {
           roomId,
           cid,
           enabled: willEnable,
-          reason: willEnable ? 'Your camera access has been restored by administrator' : 'Your camera access has been disabled by administrator for security',
+          reason: willEnable ? 'Your camera access has been activated by administrator' : 'Your camera access has been disabled by administrator for security',
         }),
       });
       if (res.ok) {
-        say(willEnable ? `Participant camera restored` : `Participant camera cut & disabled`);
+        say(willEnable ? `🟢 Participant camera activated` : `🔴 Participant camera cut & disabled`);
         fetchOverview();
       } else {
         say('Failed to moderate user camera', 'error');
@@ -1585,6 +1609,10 @@ export default function AdminPage() {
     } catch {
       say('Network error moderating user camera', 'error');
     }
+  };
+
+  const handleToggleUserCamera = async (roomId, cid, currentBlocked) => {
+    return handleSetUserCamera(roomId, cid, Boolean(currentBlocked));
   };
 
 
@@ -2411,19 +2439,31 @@ export default function AdminPage() {
                             <span>{expandedCallRooms[room.roomId] ? 'Hide Video Call' : '📹 Live Video Call'}</span>
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleToggleRoomCamera(room.roomId, room.cameraDisabled)}
-                            className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
-                              room.cameraDisabled
-                                ? 'bg-emerald-600/30 hover:bg-emerald-600/50 border-emerald-500/60 text-emerald-200 shadow-emerald-600/20'
-                                : 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-200'
-                            }`}
-                            title={room.cameraDisabled ? 'Camera access is cut by admin. Click to Turn ON cameras for all users in this room' : 'Security moderation: Click to Cut / disable cameras for all users in this room'}
-                          >
-                            {room.cameraDisabled ? <Camera className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-                            <span>{room.cameraDisabled ? 'Turn ON Cam' : 'Cut Room Cam'}</span>
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSetRoomCamera(room.roomId, true)}
+                              className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
+                                room.cameraDisabled
+                                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400 shadow-emerald-600/30 ring-1 ring-emerald-400'
+                                  : 'bg-emerald-500/20 hover:bg-emerald-500/35 border-emerald-500/40 text-emerald-200'
+                              }`}
+                              title="Force Turn ON cameras for all users in this room"
+                            >
+                              <Camera className="h-3.5 w-3.5 text-emerald-400" />
+                              <span>Turn ON Cam</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleSetRoomCamera(room.roomId, false)}
+                              className="rounded-lg border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/35 px-2.5 py-1 text-xs font-semibold text-rose-200 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                              title="Security moderation: Cut / disable cameras for all users in this room"
+                            >
+                              <VideoOff className="h-3.5 w-3.5 text-rose-400" />
+                              <span>Cut Cam</span>
+                            </button>
+                          </div>
 
                           <button
                             type="button"
@@ -2482,6 +2522,7 @@ export default function AdminPage() {
                               users={room.users || []}
                               externalListenAudio={globalListenAudio}
                               onToggleUserCamera={handleToggleUserCamera}
+                              onSetUserCamera={handleSetUserCamera}
                             />
                           </CallErrorBoundary>
                         </div>
@@ -2936,16 +2977,26 @@ export default function AdminPage() {
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
-                            onClick={() => handleToggleRoomCamera(room.roomId, room.cameraDisabled)}
+                            onClick={() => handleSetRoomCamera(room.roomId, true)}
                             className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
                               room.cameraDisabled
-                                ? 'bg-emerald-600/30 hover:bg-emerald-600/50 border-emerald-500/60 text-emerald-200'
-                                : 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-200'
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400 shadow-md ring-1 ring-emerald-400'
+                                : 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/40 text-emerald-200'
                             }`}
-                            title={room.cameraDisabled ? 'Camera access is cut by admin. Click to Turn ON cameras in this room' : 'Security moderation: Click to Cut / disable cameras in this room'}
+                            title="Force Turn ON cameras for all participants in this room"
                           >
-                            {room.cameraDisabled ? <Camera className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-                            <span>{room.cameraDisabled ? 'Turn ON Cam' : 'Cut Room Cam'}</span>
+                            <Camera className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>Turn ON Cam</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSetRoomCamera(room.roomId, false)}
+                            className="rounded-lg border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/30 px-2.5 py-1.5 text-xs font-semibold text-rose-200 transition flex items-center gap-1 cursor-pointer"
+                            title="Security moderation: Cut cameras in this room"
+                          >
+                            <VideoOff className="h-3.5 w-3.5 text-rose-400" />
+                            <span>Cut Cam</span>
                           </button>
 
                           <button
@@ -3011,6 +3062,7 @@ export default function AdminPage() {
                               users={roomUsers}
                               externalListenAudio={globalListenAudio}
                               onToggleUserCamera={handleToggleUserCamera}
+                              onSetUserCamera={handleSetUserCamera}
                             />
                           </CallErrorBoundary>
                         </div>
@@ -3066,19 +3118,28 @@ export default function AdminPage() {
                         <span className="font-mono font-bold text-white">{room.roomId}</span>
                         <span className="text-[10px] text-purple-300 font-semibold">{room.users?.length || 0} Callers</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => handleToggleRoomCamera(room.roomId, room.cameraDisabled)}
+                          onClick={() => handleSetRoomCamera(room.roomId, true)}
                           className={`text-[10px] px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 cursor-pointer ${
                             room.cameraDisabled
-                              ? 'bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 border border-emerald-500/40'
-                              : 'bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 border border-rose-500/40'
+                              ? 'bg-emerald-600 text-white border border-emerald-400 shadow-sm'
+                              : 'bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 border border-emerald-500/40'
                           }`}
-                          title={room.cameraDisabled ? 'Turn ON cameras in this room' : 'Cut cameras in this room'}
+                          title="Force Turn ON cameras in this room"
                         >
-                          {room.cameraDisabled ? <Camera className="h-3 w-3 text-emerald-400" /> : <VideoOff className="h-3 w-3 text-rose-400" />}
-                          <span>{room.cameraDisabled ? 'Turn ON' : 'Cut Cam'}</span>
+                          <Camera className="h-3 w-3 text-emerald-400" />
+                          <span>ON</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSetRoomCamera(room.roomId, false)}
+                          className="text-[10px] px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 cursor-pointer bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 border border-rose-500/40"
+                          title="Cut cameras in this room"
+                        >
+                          <VideoOff className="h-3 w-3 text-rose-400" />
+                          <span>CUT</span>
                         </button>
                       </div>
                     </div>
@@ -3088,6 +3149,7 @@ export default function AdminPage() {
                         users={room.users || []}
                         externalListenAudio={globalListenAudio}
                         onToggleUserCamera={handleToggleUserCamera}
+                        onSetUserCamera={handleSetUserCamera}
                       />
                     </CallErrorBoundary>
                   </div>
@@ -4404,22 +4466,37 @@ export default function AdminPage() {
                       <span>📢 Send Room Alert</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await handleToggleRoomCamera(deepInspectModal.roomId, deepInspectModal.data.cameraDisabled);
-                        handleInspectRoom(deepInspectModal.roomId);
-                      }}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1.5 ${
-                        deepInspectModal.data.cameraDisabled
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'
-                          : 'bg-rose-600/25 hover:bg-rose-600/40 border border-rose-500/40 text-rose-200'
-                      }`}
-                      title={deepInspectModal.data.cameraDisabled ? 'Turn ON / Restore room camera access' : 'Security moderation: Cut room camera access'}
-                    >
-                      {deepInspectModal.data.cameraDisabled ? <Camera className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5" />}
-                      <span>{deepInspectModal.data.cameraDisabled ? 'Turn ON Room Cam' : 'Cut Room Cam'}</span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleSetRoomCamera(deepInspectModal.roomId, true);
+                          handleInspectRoom(deepInspectModal.roomId);
+                        }}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer ${
+                          deepInspectModal.data.cameraDisabled
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-emerald-400'
+                            : 'bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/40 text-emerald-200'
+                        }`}
+                        title="Force Turn ON cameras for all users in this room"
+                      >
+                        <Camera className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>Turn ON Room Cam</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleSetRoomCamera(deepInspectModal.roomId, false);
+                          handleInspectRoom(deepInspectModal.roomId);
+                        }}
+                        className="rounded-lg bg-rose-600/25 hover:bg-rose-600/40 border border-rose-500/40 px-3 py-1.5 text-xs text-rose-200 font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                        title="Security moderation: Cut room camera access"
+                      >
+                        <VideoOff className="h-3.5 w-3.5 text-rose-400" />
+                        <span>Cut Room Cam</span>
+                      </button>
+                    </div>
 
                     <button
                       type="button"
@@ -4469,6 +4546,7 @@ export default function AdminPage() {
                           users={deepInspectModal.data.users || []}
                           externalListenAudio={globalListenAudio}
                           onToggleUserCamera={handleToggleUserCamera}
+                          onSetUserCamera={handleSetUserCamera}
                         />
                       </CallErrorBoundary>
                     </div>
@@ -4535,18 +4613,26 @@ export default function AdminPage() {
                                   <button
                                     type="button"
                                     onClick={async () => {
-                                      await handleToggleUserCamera(deepInspectModal.roomId, u.cid, u.cameraBlocked);
+                                      await handleSetUserCamera(deepInspectModal.roomId, u.cid, true);
                                       handleInspectRoom(deepInspectModal.roomId);
                                     }}
-                                    className={`rounded px-2.5 py-1 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                                      u.cameraBlocked
-                                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
-                                        : 'bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200'
-                                    }`}
-                                    title={u.cameraBlocked ? 'Turn ON participant camera' : 'Security moderation: Cut participant camera'}
+                                    className="rounded px-2.5 py-1 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200"
+                                    title="Force Turn ON participant camera"
                                   >
-                                    {u.cameraBlocked ? <Camera className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
-                                    <span>{u.cameraBlocked ? 'Turn ON Cam' : 'Cut Cam'}</span>
+                                    <Camera className="h-3 w-3 text-emerald-400" />
+                                    <span>Turn ON</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      await handleSetUserCamera(deepInspectModal.roomId, u.cid, false);
+                                      handleInspectRoom(deepInspectModal.roomId);
+                                    }}
+                                    className="rounded px-2.5 py-1 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200"
+                                    title="Cut participant camera for security"
+                                  >
+                                    <VideoOff className="h-3 w-3 text-rose-400" />
+                                    <span>Cut Cam</span>
                                   </button>
                                   <button
                                     type="button"
