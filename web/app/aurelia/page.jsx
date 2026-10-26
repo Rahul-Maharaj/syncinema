@@ -1209,6 +1209,8 @@ export default function AdminPage() {
   const [visitorDeviceFilter, setVisitorDeviceFilter] = useState('all'); // 'all' | 'mobile' | 'desktop' | 'tablet'
   const [visitorSearch, setVisitorSearch] = useState('');
   const [selectedVisitorModal, setSelectedVisitorModal] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncedTime, setLastSyncedTime] = useState(null);
 
   const say = (msg, type = 'success') => {
     setToast({ msg, type, n: Date.now() });
@@ -1436,6 +1438,7 @@ export default function AdminPage() {
         if (json.visitors) {
           setVisitorsData(json.visitors);
         }
+        setLastSyncedTime(new Date());
       } else if (res.status === 401) {
         const json = await res.json().catch(() => ({}));
         if (json.error === 'session_expired') {
@@ -1447,6 +1450,24 @@ export default function AdminPage() {
       // offline / quiet
     }
   }, [adminToken, adminKey]);
+
+  // 🔄 Master Non-Destructive Refresh Function: re-queries all live rooms, participants, visitor history & telemetry without formatting or deleting any records
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await fetchOverview();
+      if (deepInspectModal.open && deepInspectModal.roomId) {
+        await handleInspectRoom(deepInspectModal.roomId);
+      }
+      setLastSyncedTime(new Date());
+      say('✨ All live telemetry, rooms & visitor records refreshed (0 data formatted or deleted)', 'success');
+    } catch {
+      say('Network error refreshing telemetry', 'error');
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   // Export full visitor logs as JSON
   const handleExportVisitors = async () => {
@@ -2020,10 +2041,31 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* 🔄 Master Non-Destructive Refresh Button */}
+            <button
+              type="button"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold border transition flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 ${
+                isRefreshing
+                  ? 'bg-pink-600/30 border-pink-500/60 text-pink-200 shadow-pink-600/20'
+                  : 'bg-gradient-to-r from-pink-600/20 via-purple-600/20 to-cyan-600/20 hover:from-pink-600/35 hover:to-purple-600/35 border-pink-500/40 text-pink-100 hover:text-white shadow-pink-900/30 ring-1 ring-pink-500/30'
+              }`}
+              title="Instantly refresh all live rooms, participants, visitor history & surveillance without formatting or deleting any data"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-pink-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Refreshing All…' : '🔄 Refresh All'}</span>
+              {lastSyncedTime && (
+                <span className="hidden md:inline text-[10px] text-pink-300/80 font-mono font-normal">
+                  ({lastSyncedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})
+                </span>
+              )}
+            </button>
+
             <button
               type="button"
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium border transition flex items-center gap-1.5 ${
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium border transition flex items-center gap-1.5 cursor-pointer ${
                 autoRefresh
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                   : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
@@ -2036,17 +2078,8 @@ export default function AdminPage() {
 
             <button
               type="button"
-              onClick={() => fetchOverview()}
-              className="rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 p-2 text-white/70 hover:text-white transition"
-              title="Refresh overview immediately"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-
-            <button
-              type="button"
               onClick={handleLogout}
-              className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-3 py-1.5 text-xs text-rose-300 transition flex items-center gap-1.5"
+              className="rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 px-3 py-1.5 text-xs text-rose-300 transition flex items-center gap-1.5 cursor-pointer"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Logout</span>
@@ -2244,32 +2277,35 @@ export default function AdminPage() {
           </div>
 
           {(activeTab === 'rooms' || activeTab === 'locations' || activeTab === 'videocalls' || activeTab === 'visitors') && (
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
-              <input
-                type="text"
-                value={activeTab === 'visitors' ? visitorSearch : search}
-                onChange={(e) => activeTab === 'visitors' ? setVisitorSearch(e.target.value) : setSearch(e.target.value)}
-                placeholder={
-                  activeTab === 'visitors'
-                    ? 'Search device, IP, model, city, path…'
-                    : activeTab === 'locations'
-                    ? 'Search city, country, IP, user…'
-                    : activeTab === 'videocalls'
-                    ? 'Search caller, room ID, IP…'
-                    : 'Search room ID, media, or user…'
-                }
-                className="w-full rounded-xl bg-white/5 border border-white/10 pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:border-cyan-500 focus:outline-none transition"
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={
-                  activeTab === 'locations'
-                    ? 'Search city, country, IP, user…'
-                    : activeTab === 'videocalls'
-                    ? 'Search caller, room ID, IP…'
-                    : 'Search room ID, media, or user…'
-                }
-                className="w-full rounded-xl bg-white/5 border border-white/10 pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:border-[#d9467a] focus:outline-none transition"
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-72">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-white/40" />
+                <input
+                  type="text"
+                  value={activeTab === 'visitors' ? visitorSearch : search}
+                  onChange={(e) => (activeTab === 'visitors' ? setVisitorSearch(e.target.value) : setSearch(e.target.value))}
+                  placeholder={
+                    activeTab === 'visitors'
+                      ? 'Search device, IP, model, city, path…'
+                      : activeTab === 'locations'
+                      ? 'Search city, country, IP, user…'
+                      : activeTab === 'videocalls'
+                      ? 'Search caller, room ID, IP…'
+                      : 'Search room ID, media, or user…'
+                  }
+                  className="w-full rounded-xl bg-white/5 border border-white/10 pl-9 pr-3 py-1.5 text-xs text-white placeholder-white/40 focus:border-cyan-500 focus:outline-none transition"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="rounded-xl px-2.5 py-1.5 text-xs font-semibold border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer active:scale-95"
+                title="Refresh live data immediately without deleting any data"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Sync</span>
+              </button>
             </div>
           )}
         </div>
@@ -2284,6 +2320,16 @@ export default function AdminPage() {
                 <p className="text-xs text-white/50 max-w-sm mx-auto">
                   {search ? 'No rooms match your search query.' : 'There are currently no active couches running on the platform.'}
                 </p>
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-600/25 hover:bg-pink-600/40 border border-pink-500/40 text-pink-200 text-xs font-bold transition cursor-pointer active:scale-95 shadow-sm"
+                  title="Refresh live rooms without deleting any data"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>🔄 Check Again / Refresh Rooms</span>
+                </button>
               </div>
             ) : (
               <div className="grid gap-4 lg:grid-cols-2">
@@ -2897,8 +2943,18 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="text-[11px] text-slate-400">
-                Mode: <strong className="text-white capitalize">{surveillanceMode} Matrix</strong> &bull; Videos Default Muted 🔇
+              <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
+                <span>Mode: <strong className="text-white capitalize">{surveillanceMode} Matrix</strong> &bull; Videos Default Muted 🔇</span>
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  disabled={isRefreshing}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white font-medium flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                  title="Refresh video surveillance feeds without deleting data"
+                >
+                  <RefreshCw className={`h-3 w-3 text-pink-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh Matrix</span>
+                </button>
               </div>
             </div>
 
@@ -4088,7 +4144,17 @@ export default function AdminPage() {
                     {filteredVisitors.length} of {sourceVisitorsList.length}
                   </span>
                 </h3>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-white/90 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                    title="Refresh all persistent visitor records & activity without deleting or formatting any data"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>🔄 Refresh Visitors</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleExportVisitors}
@@ -4389,10 +4455,11 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => handleInspectRoom(deepInspectModal.roomId)}
-                  className="rounded-lg bg-white/10 hover:bg-white/20 p-2 text-white/70 hover:text-white transition"
-                  title="Refresh room telemetry"
+                  className="rounded-lg bg-white/10 hover:bg-white/20 px-2.5 py-1.5 text-xs font-semibold text-white/80 hover:text-white transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                  title="Refresh room telemetry without data deletion"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className={`h-3.5 w-3.5 ${deepInspectModal.loading ? 'animate-spin text-cyan-400' : ''}`} />
+                  <span>Refresh</span>
                 </button>
                 <button
                   type="button"
