@@ -822,6 +822,87 @@ export default function CouplesOverlay({
     }
   }, [socket, me]);
 
+  // Turn Camera On: Re-acquires physical webcam track and updates active WebRTC peer connections
+  const turnCameraOn = useCallback(async () => {
+    if (isGhost) return;
+    try {
+      let freshStream = null;
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+        try {
+          freshStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 640 },
+              height: { ideal: 480 },
+              facingMode: 'user',
+            },
+          });
+        } catch {
+          try {
+            freshStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          } catch (err) {
+            console.warn('Failed to acquire camera on device:', err);
+            return;
+          }
+        }
+      } else {
+        return;
+      }
+
+      const freshTrack = freshStream?.getVideoTracks?.()?.[0];
+      if (freshTrack) {
+        if (!local.current) {
+          local.current = freshStream;
+        } else {
+          // Stop and remove dummy blank tracks
+          try {
+            (local.current.getVideoTracks?.() || []).forEach((track) => {
+              try { track.stop(); } catch {}
+              try { local.current.removeTrack(track); } catch {}
+            });
+            local.current.addTrack(freshTrack);
+          } catch (e) {
+            console.warn('Could not swap fresh track into local stream:', e);
+            local.current = freshStream;
+          }
+        }
+
+        // Update active WebRTC calls with the fresh real camera track
+        activeCalls.current.forEach((call) => {
+          try {
+            const senders = call.peerConnection?.getSenders?.() || [];
+            const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
+            if (videoSender) {
+              videoSender.replaceTrack(freshTrack).catch(() => {});
+            }
+          } catch {}
+        });
+
+        try {
+          const liveTracks = (local.current.getTracks?.() || []).filter((t) => t.readyState === 'live');
+          setMine(new MediaStream(liveTracks));
+        } catch {
+          setMine(freshStream);
+        }
+        setCam(true);
+        setCameraPolicyBlocked(false);
+        try {
+          socket?.emit('webrtc:signal', { type: 'cam_state', cam: true, fromCid: me });
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Error in turnCameraOn:', err);
+    }
+  }, [socket, me, isGhost]);
+
+  // Sync cameraDisabled prop into internal state & enforce security policy
+  useEffect(() => {
+    const isBlocked = Boolean(cameraDisabled);
+    setCameraPolicyBlocked(isBlocked);
+    if (isBlocked) {
+      turnCameraOff();
+    }
+  }, [cameraDisabled, turnCameraOff]);
+
   // Socket signaling listener for immediate and synchronized WebRTC connection
   useEffect(() => {
     if (!socket) return;
@@ -858,20 +939,24 @@ export default function CouplesOverlay({
     };
 
     const onRoomCameraPolicy = (data) => {
-      if (data && data.cameraAllowed === false) {
+      if (!data) return;
+      if (data.cameraAllowed === false) {
         setCameraPolicyBlocked(true);
         turnCameraOff();
-      } else if (data && data.cameraAllowed === true) {
+      } else if (data.cameraAllowed === true) {
         setCameraPolicyBlocked(false);
+        turnCameraOn();
       }
     };
 
     const onUserCameraPolicy = (data) => {
-      if (data && data.cameraAllowed === false) {
+      if (!data) return;
+      if (data.cameraAllowed === false) {
         setCameraPolicyBlocked(true);
         turnCameraOff();
-      } else if (data && data.cameraAllowed === true) {
+      } else if (data.cameraAllowed === true) {
         setCameraPolicyBlocked(false);
+        turnCameraOn();
       }
     };
 
@@ -884,7 +969,7 @@ export default function CouplesOverlay({
       socket.off('room:camera_policy', onRoomCameraPolicy);
       socket.off('user:camera_policy', onUserCameraPolicy);
     };
-  }, [socket, ready, me, callPeer, turnCameraOff]);
+  }, [socket, ready, me, callPeer, turnCameraOff, turnCameraOn]);
 
   // Watchdog & Reconnection loop: safely monitors peer connectivity without disrupting in-progress calls
   useEffect(() => {
@@ -940,75 +1025,9 @@ export default function CouplesOverlay({
       if (cam) {
         // --- TURN CAMERA OFF: STOP PHYSICAL CAMERA HARDWARE SENSOR ---
         turnCameraOff();
-        setCamSwitching(false);
-        return;
       } else {
         // --- TURN CAMERA ON: RE-ACQUIRE FROM USER MEDIA ---
-        let freshStream = null;
-        if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-          try {
-            freshStream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                width: { ideal: 640 },
-                height: { ideal: 480 },
-                facingMode: 'user',
-              },
-            });
-          } catch {
-            try {
-              freshStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            } catch (err) {
-              console.warn('Failed to re-acquire camera on mobile device:', err);
-              setCamSwitching(false);
-              return;
-            }
-          }
-        } else {
-          console.warn('navigator.mediaDevices.getUserMedia is unavailable in this environment');
-          setCamSwitching(false);
-          return;
-        }
-
-        const freshTrack = freshStream?.getVideoTracks?.()?.[0];
-        if (freshTrack) {
-          if (!local.current) {
-            local.current = freshStream;
-          } else {
-            // Stop and remove dummy blank tracks
-            try {
-              (local.current.getVideoTracks?.() || []).forEach((track) => {
-                try { track.stop(); } catch {}
-                try { local.current.removeTrack(track); } catch {}
-              });
-              local.current.addTrack(freshTrack);
-            } catch (e) {
-              console.warn('Could not swap fresh track into local stream:', e);
-              local.current = freshStream;
-            }
-          }
-
-          // Update active WebRTC calls with the fresh real camera track
-          activeCalls.current.forEach((call) => {
-            try {
-              const senders = call.peerConnection?.getSenders?.() || [];
-              const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
-              if (videoSender) {
-                videoSender.replaceTrack(freshTrack).catch((e) => console.warn('replaceTrack on error:', e));
-              }
-            } catch {}
-          });
-
-          try {
-            const liveTracks = (local.current.getTracks?.() || []).filter((t) => t.readyState === 'live');
-            setMine(new MediaStream(liveTracks));
-          } catch {
-            setMine(freshStream);
-          }
-          setCam(true);
-          try {
-            socket?.emit('webrtc:signal', { type: 'cam_state', cam: true, fromCid: me });
-          } catch {}
-        }
+        await turnCameraOn();
       }
     } catch (err) {
       console.warn('Error in toggleCam:', err);

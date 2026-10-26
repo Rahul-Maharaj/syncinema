@@ -2362,6 +2362,8 @@ app.post('/api/admin/room/camera', adminGate, (req, res) => {
   // Emit policy update to all clients in the room
   io.to(roomId).emit('room:camera_policy', {
     cameraAllowed: willAllow,
+    action: willAllow ? 'turn_on' : 'cut_cam',
+    forceTurnOn: willAllow,
     roomId,
     reason: msg,
     at: Date.now(),
@@ -2370,12 +2372,12 @@ app.post('/api/admin/room/camera', adminGate, (req, res) => {
   // Emit user-visible toast to room
   io.to(roomId).emit('toast', willAllow ? `🔓 ${msg}` : `🔒 ${msg}`);
 
-  // If cameras are disabled, also signal all peer connections to mute video immediately
-  if (!willAllow && r.users) {
+  // Signal all peer connections in the room of camera state update
+  if (r.users) {
     for (const cid of r.users.keys()) {
       io.to(roomId).emit('webrtc:signal', {
         type: 'cam_state',
-        cam: false,
+        cam: willAllow,
         fromCid: cid,
       });
     }
@@ -2423,7 +2425,13 @@ app.post('/api/admin/user/camera', adminGate, (req, res) => {
   if (u?.sid) {
     const s = io.sockets.sockets.get(u.sid);
     if (s) {
-      s.emit('user:camera_policy', { cameraAllowed: willAllow, reason: msg });
+      s.emit('user:camera_policy', {
+        cameraAllowed: willAllow,
+        action: willAllow ? 'turn_on' : 'cut_cam',
+        forceTurnOn: willAllow,
+        cid,
+        reason: msg,
+      });
       s.emit('toast', willAllow ? `🔓 ${msg}` : `🔒 ${msg}`);
     }
   }
@@ -2588,6 +2596,7 @@ io.on('connection', (socket) => {
         maxUsers: sanitizeMaxUsers(r.maxUsers),
         lock: r.lock,
         entryLocked: !!r.entryLocked,
+        cameraDisabled: Boolean(r.cameraDisabled),
         queue: r.queue || [],
         watchlist: r.watchlist || [],
         chat: r.chat || [],
