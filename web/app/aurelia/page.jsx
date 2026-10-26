@@ -1118,12 +1118,15 @@ export default function AdminPage() {
 
   // Live Visitors & Hardware Device Telemetry State
   const [visitorsData, setVisitorsData] = useState({
-    summary: { totalRecorded: 0, totalUnique: 0, onlineNow: 0, mobileCount: 0, desktopCount: 0, tabletCount: 0 },
+    summary: { totalAllTimeUsers: 0, totalRecorded: 0, totalUnique: 0, onlineNow: 0, mobileCount: 0, desktopCount: 0, tabletCount: 0 },
     online: [],
     recent: [],
+    allTime: [],
+    liveActivityWire: [],
     breakdown: { os: {}, browsers: {}, countries: {} },
   });
-  const [visitorDeviceFilter, setVisitorDeviceFilter] = useState('all'); // 'all' | 'online' | 'mobile' | 'desktop' | 'tablet'
+  const [visitorScopeFilter, setVisitorScopeFilter] = useState('all'); // 'all' (All-Time Users) | 'online' (Live Now) | 'today' (Today)
+  const [visitorDeviceFilter, setVisitorDeviceFilter] = useState('all'); // 'all' | 'mobile' | 'desktop' | 'tablet'
   const [visitorSearch, setVisitorSearch] = useState('');
   const [selectedVisitorModal, setSelectedVisitorModal] = useState(null);
 
@@ -1689,9 +1692,15 @@ export default function AdminPage() {
     );
   });
 
-  // Filtered live website visitors
-  const filteredVisitors = (visitorsData?.recent || []).filter((v) => {
-    if (visitorDeviceFilter === 'online' && !v.online) return false;
+  // Filtered all-time & live website visitors
+  const sourceVisitorsList = visitorsData?.allTime?.length > 0 ? visitorsData.allTime : (visitorsData?.recent || []);
+  const filteredVisitors = sourceVisitorsList.filter((v) => {
+    if (visitorScopeFilter === 'online' && !v.online) return false;
+    if (visitorScopeFilter === 'today') {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const lastActiveDate = v.lastSeen ? new Date(v.lastSeen).toISOString().slice(0, 10) : '';
+      if (lastActiveDate !== todayStr) return false;
+    }
     if (visitorDeviceFilter === 'mobile' && !v.device?.isMobile) return false;
     if (visitorDeviceFilter === 'desktop' && !v.device?.isDesktop) return false;
     if (visitorDeviceFilter === 'tablet' && !v.device?.isTablet) return false;
@@ -1699,6 +1708,7 @@ export default function AdminPage() {
     const q = visitorSearch.toLowerCase();
     return (
       (v.ip && v.ip.toLowerCase().includes(q)) ||
+      (v.cid && v.cid.toLowerCase().includes(q)) ||
       (v.device?.model && v.device.model.toLowerCase().includes(q)) ||
       (v.device?.brand && v.device.brand.toLowerCase().includes(q)) ||
       (v.device?.os && v.device.os.toLowerCase().includes(q)) ||
@@ -1708,7 +1718,10 @@ export default function AdminPage() {
       (v.geo?.isp && v.geo.isp.toLowerCase().includes(q)) ||
       (v.nickname && v.nickname.toLowerCase().includes(q)) ||
       (v.currentRoom && v.currentRoom.toLowerCase().includes(q)) ||
-      (v.currentPath && v.currentPath.toLowerCase().includes(q))
+      (v.currentPath && v.currentPath.toLowerCase().includes(q)) ||
+      (v.lastAction?.description && v.lastAction.description.toLowerCase().includes(q)) ||
+      (v.roomsVisited && v.roomsVisited.some((r) => r.toLowerCase().includes(q))) ||
+      (v.mediaWatched && v.mediaWatched.some((m) => m.title && m.title.toLowerCase().includes(q)))
     );
   });
 
@@ -2027,7 +2040,7 @@ export default function AdminPage() {
               }`}
             >
               <Smartphone className="h-3.5 w-3.5 text-cyan-300" />
-              <span>📱 Live Visitors &amp; Devices ({visitorsData?.summary?.onlineNow || 0} Live &bull; {visitorsData?.recent?.length || 0} Logged)</span>
+              <span>👥 All-Time Users &amp; Live Telemetry ({visitorsData?.summary?.onlineNow || 0} Live &bull; {visitorsData?.summary?.totalAllTimeUsers || visitorsData?.summary?.totalRecorded || visitorsData?.recent?.length || 0} Saved)</span>
               {(visitorsData?.summary?.onlineNow || 0) > 0 && (
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -3558,85 +3571,167 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Top Command Bar & Device Type Filter Pills */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-cyan-500/20 bg-black/50 p-4 backdrop-blur-xl">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <Smartphone className="h-5 w-5 text-cyan-400" />
-                    <span>Real-Time Visitor &amp; Device Surveillance</span>
-                  </h2>
-                  <span className="rounded-full bg-cyan-500/20 border border-cyan-500/40 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
-                    REAL HARDWARE TELEMETRY
-                  </span>
+            {/* Top Command Bar & Surveillance Controls */}
+            <div className="flex flex-col gap-3 rounded-2xl border border-cyan-500/20 bg-black/50 p-4 backdrop-blur-xl">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      <Smartphone className="h-5 w-5 text-cyan-400" />
+                      <span>All-Time Users &amp; Live Telemetry Surveillance</span>
+                    </h2>
+                    <span className="rounded-full bg-cyan-500/20 border border-cyan-500/40 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+                      PERMANENT AUDIT VAULT
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    Surveillance of all-time saved visitors and real-time user actions (playing movies, seeking, joining rooms, chat, video calls, device specs, real IPs).
+                  </p>
                 </div>
-                <p className="text-xs text-white/50 mt-0.5">
-                  Live detection of visitor devices (iPhones, Androids, Windows PCs, Macs, iPads), display resolutions, real IPs, and visited routes.
-                </p>
+
+                {/* Primary Scope Toggle: All-Time / Live / Today */}
+                <div className="flex items-center gap-1.5 text-xs bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setVisitorScopeFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      visitorScopeFilter === 'all'
+                        ? 'bg-cyan-600 text-white shadow-md'
+                        : 'text-white/70 hover:text-white'
+                    }`}
+                  >
+                    <span>🌐 All-Time Users ({visitorsData?.summary?.totalAllTimeUsers || visitorsData?.summary?.totalRecorded || visitorsData?.recent?.length || 0})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisitorScopeFilter('online')}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      visitorScopeFilter === 'online'
+                        ? 'bg-emerald-600 text-white shadow-md'
+                        : 'text-white/70 hover:text-white'
+                    }`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>🟢 Online Now ({visitorsData?.summary?.onlineNow || 0})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisitorScopeFilter('today')}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      visitorScopeFilter === 'today'
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'text-white/70 hover:text-white'
+                    }`}
+                  >
+                    <Calendar className="h-3 w-3" />
+                    <span>📅 Today ({visitorsData?.summary?.todayUnique || 0})</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Filter Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs bg-white/5 p-1 rounded-xl border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setVisitorDeviceFilter('all')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-                    visitorDeviceFilter === 'all'
-                      ? 'bg-cyan-600 text-white shadow'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  All ({visitorsData?.recent?.length || 0})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisitorDeviceFilter('online')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1.5 ${
-                    visitorDeviceFilter === 'online'
-                      ? 'bg-emerald-600 text-white shadow'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>Online ({visitorsData?.summary?.onlineNow || 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisitorDeviceFilter('mobile')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
-                    visitorDeviceFilter === 'mobile'
-                      ? 'bg-pink-600 text-white shadow'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Smartphone className="h-3 w-3" />
-                  <span>Mobile ({visitorsData?.summary?.mobileCount || 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisitorDeviceFilter('desktop')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
-                    visitorDeviceFilter === 'desktop'
-                      ? 'bg-blue-600 text-white shadow'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Monitor className="h-3 w-3" />
-                  <span>Desktop ({visitorsData?.summary?.desktopCount || 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisitorDeviceFilter('tablet')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer flex items-center gap-1 ${
-                    visitorDeviceFilter === 'tablet'
-                      ? 'bg-purple-600 text-white shadow'
-                      : 'text-white/70 hover:text-white'
-                  }`}
-                >
-                  <Tablet className="h-3 w-3" />
-                  <span>Tablet ({visitorsData?.summary?.tabletCount || 0})</span>
-                </button>
+              {/* Sub-Filter: Hardware Devices */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10 text-xs">
+                <span className="text-[11px] text-white/50 font-medium">Filter by Hardware:</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setVisitorDeviceFilter('all')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
+                      visitorDeviceFilter === 'all'
+                        ? 'bg-white/20 text-white font-bold'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    All Devices
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisitorDeviceFilter('mobile')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1 ${
+                      visitorDeviceFilter === 'mobile'
+                        ? 'bg-pink-600 text-white font-bold'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <Smartphone className="h-3 w-3" />
+                    <span>Mobile ({visitorsData?.summary?.mobileCount || 0})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisitorDeviceFilter('desktop')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1 ${
+                      visitorDeviceFilter === 'desktop'
+                        ? 'bg-blue-600 text-white font-bold'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <Monitor className="h-3 w-3" />
+                    <span>Desktop ({visitorsData?.summary?.desktopCount || 0})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisitorDeviceFilter('tablet')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer flex items-center gap-1 ${
+                      visitorDeviceFilter === 'tablet'
+                        ? 'bg-purple-600 text-white font-bold'
+                        : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <Tablet className="h-3 w-3" />
+                    <span>Tablet ({visitorsData?.summary?.tabletCount || 0})</span>
+                  </button>
+                </div>
               </div>
+            </div>
+
+            {/* ⚡ REAL-TIME USER ACTIVITY WIRE (WHAT USERS ARE DOING RIGHT NOW) */}
+            <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-[#07131a] via-black/80 to-[#120a1c] p-4 backdrop-blur-xl space-y-3 shadow-xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+                  </span>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-amber-400" />
+                    <span>Real-Time User Action Stream &bull; Live Wire</span>
+                    <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded-full border border-cyan-500/30">
+                      LIVE SURVEILLANCE
+                    </span>
+                  </h3>
+                </div>
+                <span className="text-[11px] text-white/50 font-mono">
+                  {visitorsData?.liveActivityWire?.length || 0} user actions logged
+                </span>
+              </div>
+
+              {(!visitorsData?.liveActivityWire || visitorsData.liveActivityWire.length === 0) ? (
+                <p className="text-xs text-white/40 italic py-2">Listening for real-time user actions (joins, video playback, chat, voice)...</p>
+              ) : (
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1 text-xs">
+                  {visitorsData.liveActivityWire.slice(0, 16).map((act, idx) => (
+                    <div
+                      key={act.id || idx}
+                      className="flex items-center justify-between gap-3 p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition text-[11px]"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="shrink-0">{act.flag || '🌐'}</span>
+                        <span className="font-bold text-cyan-300 shrink-0">{act.nickname || 'Guest'}</span>
+                        <span className="text-white/40 shrink-0 font-mono text-[10px]">({act.ip})</span>
+                        <span className="text-white/90 truncate font-medium">{act.description}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 text-[10px]">
+                        {act.roomId && (
+                          <span className="px-1.5 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono">
+                            #{act.roomId}
+                          </span>
+                        )}
+                        <span className="text-white/40 font-mono">{fmtTimeAgo(act.time)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Hardware & Geography Breakdown Bento */}
@@ -3756,9 +3851,11 @@ export default function AdminPage() {
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <span>Logged Visitors</span>
+                  <span>
+                    {visitorScopeFilter === 'online' ? '🟢 Active Online Users' : visitorScopeFilter === 'today' ? "📅 Today's Visitors" : '🌐 All-Time Saved Users & Community'}
+                  </span>
                   <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-mono text-cyan-300">
-                    {filteredVisitors.length} of {visitorsData?.recent?.length || 0}
+                    {filteredVisitors.length} of {sourceVisitorsList.length}
                   </span>
                 </h3>
                 <div className="flex items-center gap-3">
@@ -3874,13 +3971,30 @@ export default function AdminPage() {
                           </div>
                         </div>
 
-                        {/* Current Location on Website / Room */}
-                        <div className="rounded-xl bg-black/40 p-2 border border-white/10 text-[11px] space-y-1">
+                        {/* Current Activity & Location on Website / Room */}
+                        <div className="rounded-xl bg-black/40 p-2.5 border border-white/10 text-[11px] space-y-1.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-white/50 text-[10px] uppercase font-bold">Current Page &bull; Activity</span>
-                            <span className="font-mono text-[10px] text-white/50">{v.hits || 1} hits</span>
+                            <span className="text-white/50 text-[10px] uppercase font-bold flex items-center gap-1">
+                              <Zap className="h-3 w-3 text-amber-400" />
+                              <span>Current / Last Activity</span>
+                            </span>
+                            <span className="font-mono text-[10px] text-cyan-300">
+                              {v.visits ? `${v.visits} visit(s) • ` : ''}{v.hits || 1} hits
+                            </span>
                           </div>
-                          <div className="flex items-center justify-between gap-2">
+
+                          {v.lastAction ? (
+                            <div className="p-1.5 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-[11px] flex items-center justify-between gap-1.5">
+                              <span className="truncate font-medium">{v.lastAction.description}</span>
+                              <span className="text-[10px] text-cyan-400/70 font-mono shrink-0">{fmtTimeAgo(v.lastAction.time)}</span>
+                            </div>
+                          ) : (
+                            <div className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 text-[11px] truncate">
+                              Browsing website {v.currentPath || '/'}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between gap-2 pt-0.5">
                             <span className="font-mono text-pink-300 truncate font-semibold">
                               {v.currentPath || '/'}
                             </span>
@@ -3892,6 +4006,18 @@ export default function AdminPage() {
                               <span className="text-[10px] text-white/40 shrink-0">Browsing site</span>
                             )}
                           </div>
+
+                          {((v.roomsVisited && v.roomsVisited.length > 0) || (v.mediaWatched && v.mediaWatched.length > 0)) && (
+                            <div className="flex items-center gap-2 pt-1 border-t border-white/5 text-[10px] text-white/60">
+                              {v.roomsVisited && v.roomsVisited.length > 0 && (
+                                <span>🚪 {v.roomsVisited.length} room(s)</span>
+                              )}
+                              {v.mediaWatched && v.mediaWatched.length > 0 && (
+                                <span className="truncate">🎬 Watched {v.mediaWatched.length} title(s)</span>
+                              )}
+                            </div>
+                          )}
+
                           {geo.isp && (
                             <p className="text-[10px] text-white/40 truncate font-mono pt-1 border-t border-white/5">
                               ISP: {geo.isp} {geo.org && geo.org !== geo.isp ? `(${geo.org})` : ''}
@@ -4639,6 +4765,75 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {/* 📜 Chronological Activity & Action Audit Trail */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 uppercase font-bold flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Chronological Action Trail ({selectedVisitorModal.activityLog?.length || 0} actions recorded)</span>
+                </span>
+                <span className="text-[10px] text-white/50 font-mono">
+                  Visits: {selectedVisitorModal.visits || 1} &bull; Page Views: {selectedVisitorModal.hits || 1}
+                </span>
+              </div>
+
+              {(!selectedVisitorModal.activityLog || selectedVisitorModal.activityLog.length === 0) ? (
+                <p className="text-white/40 text-xs italic py-1">No granular actions recorded yet for this session.</p>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {selectedVisitorModal.activityLog.map((act, aIdx) => (
+                    <div
+                      key={act.id || aIdx}
+                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-black/40 border border-white/5 text-[11px]"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
+                        <span className="text-white/90 font-medium truncate">{act.description}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 text-[10px] font-mono text-white/50">
+                        {act.roomId && (
+                          <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">#{act.roomId}</span>
+                        )}
+                        <span>{new Date(act.time).toLocaleTimeString()} ({fmtTimeAgo(act.time)})</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Rooms Joined & Movies Watched Bento */}
+            {((selectedVisitorModal.roomsVisited && selectedVisitorModal.roomsVisited.length > 0) || (selectedVisitorModal.mediaWatched && selectedVisitorModal.mediaWatched.length > 0)) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {selectedVisitorModal.roomsVisited && selectedVisitorModal.roomsVisited.length > 0 && (
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Rooms Joined ({selectedVisitorModal.roomsVisited.length})</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedVisitorModal.roomsVisited.map((rid, rIdx) => (
+                        <span key={rIdx} className="px-2 py-0.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-200 font-mono text-[10px]">
+                          #{rid}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedVisitorModal.mediaWatched && selectedVisitorModal.mediaWatched.length > 0 && (
+                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Movies &amp; Streams Watched ({selectedVisitorModal.mediaWatched.length})</span>
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {selectedVisitorModal.mediaWatched.map((m, mIdx) => (
+                        <div key={mIdx} className="text-[10px] text-white/80 truncate flex items-center justify-between gap-1">
+                          <span className="truncate">🎬 {m.title}</span>
+                          <span className="text-white/40 font-mono text-[9px] shrink-0">{fmtTimeAgo(m.at)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Raw User Agent Monospace Card */}
             <div className="rounded-2xl bg-black/60 border border-white/10 p-3 text-xs space-y-1">

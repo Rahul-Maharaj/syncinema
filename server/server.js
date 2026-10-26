@@ -27,7 +27,7 @@ const { ExpressPeerServer } = require('peer');
 const { WebSocketServer } = require('ws');
 const { handleAiQuery } = require('./aiAssistant');
 const { resolveUniversalMedia } = require('./universalExtractor');
-const { recordVisit, pingSession, setVisitorRoom, endSession, getVisitorStats, getAdminVisitorsData } = require('./visitorTracker');
+const { recordVisit, pingSession, setVisitorRoom, endSession, getVisitorStats, getAdminVisitorsData, logUserActivity } = require('./visitorTracker');
 const { botShieldMiddleware, isBotRequest } = require('./botShield');
 
 // Auto-load .env if present in root or server directory
@@ -2031,15 +2031,18 @@ app.get('/api/admin/session', adminGate, (req, res) => {
   });
 });
 
-// Export all recorded visitor logs
+// Export all recorded visitor logs & complete activity ledger
 app.get('/api/admin/visitors/export', adminGate, (req, res) => {
-  const visitorsData = getAdminVisitorsData();
+  const visitorsData = getAdminVisitorsData({ all: true });
   res.json({
     ok: true,
     exportedAt: new Date().toISOString(),
+    totalAllTimeUsers: visitorsData.summary?.totalAllTimeUsers || visitorsData.summary?.totalRecorded || 0,
     totalRecorded: visitorsData.summary?.totalRecorded || 0,
     totalUnique: visitorsData.summary?.totalUnique || 0,
-    visitors: visitorsData.recent || [],
+    totalPageViews: visitorsData.summary?.totalPageViews || 0,
+    visitors: visitorsData.allTime || visitorsData.recent || [],
+    liveActivityFeed: visitorsData.liveActivityWire || [],
   });
 });
 
@@ -2143,7 +2146,8 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
 
 // Dedicated 100% Genuine Real Visitors & Device Telemetry API for Admin
 app.get('/api/admin/visitors', adminGate, (req, res) => {
-  res.json({ ok: true, ...getAdminVisitorsData() });
+  const all = req.query.all === '1' || req.query.all === 'true';
+  res.json({ ok: true, ...getAdminVisitorsData({ all }) });
 });
 
 // Admin 1-Click Visitor Ban
@@ -2411,6 +2415,13 @@ io.on('connection', (socket) => {
     ref: socket.handshake.headers['referer'] || 'WebSocket App',
   });
 
+  logUserActivity(ip, qCid, {
+    action: 'connect',
+    description: qRoomId ? `Connected to couch #${qRoomId}` : 'Connected to SyncCinema',
+    roomId: qRoomId || null,
+    metadata: { path: qRoomId ? `/room/${qRoomId}` : '/' },
+  });
+
   socket.on('error', () => {});
   socket.use((_, next) => { if (Date.now() - t > 1000) { n = 0; t = Date.now(); } ++n <= 30 ? next() : next(new Error('rate')); });
   const joined = () => room && user;
@@ -2573,6 +2584,12 @@ io.on('connection', (socket) => {
     room.users.set(cid, user);
     if (!room.hostId || !room.users.has(room.hostId)) room.hostId = cid;
     setVisitorRoom(ip, cid, rid, user.name);
+    logUserActivity(ip, cid, {
+      action: isCreate ? 'create_room' : 'join_room',
+      description: isCreate ? `Created couch #${rid}` : `Joined couch #${rid} as "${user.name}"`,
+      roomId: rid,
+      metadata: { name: user.name, isCreate: !!isCreate },
+    });
     socket.join(rid);
 
     // AUTO-LOCK: When room capacity is reached, automatically lock entry
@@ -2641,6 +2658,13 @@ io.on('connection', (socket) => {
       currentServerIndex: Number.isInteger(media.currentServerIndex) ? media.currentServerIndex : 0,
       ...(local && { name: String(media.name || '').slice(0, 200) })
     });
+    logUserActivity(ip, user.cid, {
+      action: 'play_media',
+      description: `Watching "${isAdult ? 'Private Stream' : (media.title || media.name || media.src || 'Movie')}" (${media.type}) in #${rid}`,
+      roomId: rid,
+      mediaTitle: isAdult ? 'Private Stream' : (media.title || media.name || media.src),
+      metadata: { type: media.type, src, name: user.name },
+    });
   });
 
   const pushQ = () => { io.to(rid).emit('queue', room.queue); save(); };
@@ -2674,6 +2698,13 @@ io.on('connection', (socket) => {
       addedAt: Date.now(),
       votes: {},
       score: 0,
+    });
+    logUserActivity(ip, user.cid, {
+      action: 'queue_add',
+      description: `Queued "${isAdult ? 'Private Stream' : (media.title || 'video')}" in #${rid}`,
+      roomId: rid,
+      mediaTitle: isAdult ? 'Private Stream' : (media.title || 'video'),
+      metadata: { type: media.type, name: user.name },
     });
     pushQ();
   });
@@ -3139,6 +3170,12 @@ io.on('connection', (socket) => {
     // BUFFERING is handled as non-blocking soft notification, never stops the other person's player
     if (action !== 'BUFFERING') {
       socket.to(rid).emit('player', { action, time: room.time, playing: room.playing, by: user.cid, sentAt: Date.now() });
+      logUserActivity(ip, user.cid, {
+        action: action.toLowerCase(),
+        description: `${action === 'PLAY' ? 'Resumed playback' : action === 'PAUSE' ? 'Paused playback' : 'Seeked to ' + Math.round(room.time) + 's'} in #${rid}`,
+        roomId: rid,
+        metadata: { action, time: room.time, name: user.name },
+      });
     }
   });
 
@@ -3168,6 +3205,28 @@ io.on('connection', (socket) => {
   // WebRTC peer call coordination and readiness signaling
   socket.on('webrtc:signal', (payload = {}) => {
     if (joined()) {
+      if (payload && payload.type === 'cam_state') {
+        logUserActivity(ip, user.cid, {
+          action: payload.cam ? 'camera_on' : 'camera_off',
+          description: `${payload.cam ? 'Turned Camera ON' : 'Turned Camera OFF'} in video call in #${rid}`,
+          roomId: rid,
+          metadata: { name: user.name },
+        });
+      } else if (payload && payload.type === 'mic_state') {
+        logUserActivity(ip, user.cid, {
+          action: payload.mic ? 'mic_unmute' : 'mic_mute',
+          description: `${payload.mic ? 'Unmuted Microphone' : 'Muted Microphone'} in #${rid}`,
+          roomId: rid,
+          metadata: { name: user.name },
+        });
+      } else if (payload && payload.type === 'ready') {
+        logUserActivity(ip, user.cid, {
+          action: 'call_join',
+          description: `Joined video/voice call in #${rid}`,
+          roomId: rid,
+          metadata: { name: user.name },
+        });
+      }
       socket.to(rid).emit('webrtc:signal', {
         ...payload,
         fromCid: user.cid,
@@ -3185,11 +3244,23 @@ io.on('connection', (socket) => {
     const m = { id: crypto.randomUUID(), user: user.name, color: user.color, text: sanitized, vt: num(vt), ts: Date.now() };
     room.chat = [...room.chat.slice(-99), m];
     io.to(rid).emit('chat', m); save();
+    logUserActivity(ip, user.cid, {
+      action: 'chat',
+      description: `Sent message in #${rid}: "${sanitized.slice(0, 40)}"`,
+      roomId: rid,
+      metadata: { text: sanitized, name: user.name },
+    });
   });
   socket.on('reaction', (e) => {
     if (joined() && ['❤️', '😂', '😮', '😢', '🔥', '👏'].includes(e)) {
       touchRoom(room);
       io.to(rid).emit('reaction', e);
+      logUserActivity(ip, user.cid, {
+        action: 'reaction',
+        description: `Reacted with ${e} in #${rid}`,
+        roomId: rid,
+        metadata: { emoji: e, name: user.name },
+      });
     }
   });
   socket.on('gesture', (g = {}) => {
@@ -3198,8 +3269,30 @@ io.on('connection', (socket) => {
       io.to(rid).emit('gesture', { from: user.name, fromId: user.cid, type: g.type, meta: g.meta, ts: Date.now() });
     }
   });
-  socket.on('screen:start', () => { if (joined()) { room.screenBy = user.cid; io.to(rid).emit('screen', room.screenBy); } });
-  socket.on('screen:stop', () => { if (joined() && room.screenBy === user.cid) { room.screenBy = null; io.to(rid).emit('screen', null); } });
+  socket.on('screen:start', () => {
+    if (joined()) {
+      room.screenBy = user.cid;
+      io.to(rid).emit('screen', room.screenBy);
+      logUserActivity(ip, user.cid, {
+        action: 'screen_share_start',
+        description: `Started screen sharing in #${rid}`,
+        roomId: rid,
+        metadata: { name: user.name },
+      });
+    }
+  });
+  socket.on('screen:stop', () => {
+    if (joined() && room.screenBy === user.cid) {
+      room.screenBy = null;
+      io.to(rid).emit('screen', null);
+      logUserActivity(ip, user.cid, {
+        action: 'screen_share_stop',
+        description: `Stopped screen sharing in #${rid}`,
+        roomId: rid,
+        metadata: { name: user.name },
+      });
+    }
+  });
 
   // Ultra-Precise Sync: RTT ping/pong
   socket.on('sync:ping', ({ clientTime } = {}, ack) => {
@@ -3275,6 +3368,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     endSession(ip, socket.clientCid);
     setVisitorRoom(ip, socket.clientCid, null, null);
+    logUserActivity(ip, socket.clientCid, {
+      action: 'disconnect',
+      description: rid ? `Left couch #${rid}` : 'Disconnected from website',
+      roomId: rid || null,
+    });
     if (socket.isGhost) return; // 👻 Ghost admin disconnects silently without touching room users
     if (!joined() || user.sid !== socket.id) return;  // a newer socket already took over
     const [r, u, id] = [room, user, rid];

@@ -17,6 +17,8 @@ try {
 
 const STATS_FILE = path.join(dataDir, 'visitorStats.json');
 const VISITORS_LOG_FILE = path.join(dataDir, 'visitorsLog.json');
+const ALL_TIME_FILE = path.join(dataDir, 'allTimeVisitors.json');
+const ACTIVITY_FEED_FILE = path.join(dataDir, 'activityFeed.json');
 
 // In-memory telemetry state
 const stats = {
@@ -32,8 +34,12 @@ const stats = {
 
 // Map of currently active visitors: sessionKey -> visitorObject
 const activeVisitors = new Map();
-// Array of recent genuine website visitors (capped at 300)
+// Permanent All-Time Users Store: sessionKey -> visitorObject
+const allTimeVisitors = new Map();
+// Array of recent genuine website visitors
 let recentVisitors = [];
+// Real-time live activity wire (what users are doing right now)
+let liveActivityWire = [];
 
 // Geolocation memory cache
 const geoCache = new Map();
@@ -344,22 +350,79 @@ try {
 // 100% Genuine tracking - ZERO synthetic seeded history!
 // Only authentic incoming visitors recorded from live clients.
 
-// Load recent visitors log
+// Load all-time visitors and activity log from disk
+const sanitizeVisitorRecord = (v) => {
+  if (!v) return null;
+  const key = v.sessionKey || v.id;
+  if (!key) return null;
+  return {
+    ...v,
+    isOnline: false,
+    pageViews: Number(v.pageViews || 1),
+    totalVisits: Number(v.totalVisits || 1),
+    roomsVisited: Array.isArray(v.roomsVisited) ? v.roomsVisited : (v.inRoom ? [v.inRoom] : []),
+    mediaWatched: Array.isArray(v.mediaWatched) ? v.mediaWatched : [],
+    activityLog: Array.isArray(v.activityLog) ? v.activityLog : [],
+    allNicknames: Array.isArray(v.allNicknames) ? v.allNicknames : (v.nickname ? [v.nickname] : []),
+  };
+};
+
+try {
+  if (fs.existsSync(ALL_TIME_FILE)) {
+    const raw = fs.readFileSync(ALL_TIME_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      parsed.forEach((item) => {
+        const clean = sanitizeVisitorRecord(item);
+        if (clean) allTimeVisitors.set(clean.sessionKey || clean.id, clean);
+      });
+    }
+  }
+} catch (e) {}
+
 try {
   if (fs.existsSync(VISITORS_LOG_FILE)) {
     const raw = fs.readFileSync(VISITORS_LOG_FILE, 'utf8');
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      recentVisitors = parsed.slice(0, 2500);
-      // Pre-fill activeVisitors map from recent visitors
-      recentVisitors.forEach((v) => {
-        if (v && v.sessionKey) {
-          activeVisitors.set(v.sessionKey, v);
+      parsed.forEach((item) => {
+        const clean = sanitizeVisitorRecord(item);
+        if (clean) {
+          const k = clean.sessionKey || clean.id;
+          if (!allTimeVisitors.has(k)) {
+            allTimeVisitors.set(k, clean);
+          } else {
+            // Merge existing data
+            const existing = allTimeVisitors.get(k);
+            if (!existing.roomsVisited?.length && clean.roomsVisited?.length) existing.roomsVisited = clean.roomsVisited;
+            if (!existing.mediaWatched?.length && clean.mediaWatched?.length) existing.mediaWatched = clean.mediaWatched;
+            if (!existing.activityLog?.length && clean.activityLog?.length) existing.activityLog = clean.activityLog;
+          }
         }
       });
     }
   }
 } catch (e) {}
+
+try {
+  if (fs.existsSync(ACTIVITY_FEED_FILE)) {
+    const raw = fs.readFileSync(ACTIVITY_FEED_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      liveActivityWire = parsed.slice(0, 300);
+    }
+  }
+} catch (e) {}
+
+// Populate recentVisitors and activeVisitors from allTimeVisitors
+recentVisitors = Array.from(allTimeVisitors.values())
+  .sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0))
+  .slice(0, 10000);
+recentVisitors.forEach((v) => {
+  if (v && v.sessionKey) {
+    activeVisitors.set(v.sessionKey, v);
+  }
+});
 
 // Debounced asynchronous save to disk (Non-blocking I/O)
 let saveTimer = null;
@@ -372,20 +435,29 @@ function persistStats() {
     isSaving = true;
     try {
       const payload = {
-        totalVisitors: stats.uniqueVisitorsSet.size || stats.totalVisitors,
+        totalVisitors: Math.max(stats.uniqueVisitorsSet.size, allTimeVisitors.size, stats.totalVisitors),
         todayVisitors: stats.todayVisitorsSet.size || stats.todayVisitors,
         totalPageViews: stats.totalPageViews,
         lastDate: stats.lastDate,
-        uniqueList: Array.from(stats.uniqueVisitorsSet).slice(-10000),
+        uniqueList: Array.from(stats.uniqueVisitorsSet).slice(-50000),
         todayList: Array.from(stats.todayVisitorsSet),
         dailyHistory: stats.dailyHistory,
         updatedAt: new Date().toISOString(),
       };
       await fs.promises.writeFile(STATS_FILE, JSON.stringify(payload), 'utf8');
 
-      // Persist recent visitors log (capped at 2500)
-      const logsPayload = recentVisitors.slice(0, 2500);
+      // Persist all-time visitors (sorted by lastActive desc, up to 50,000 users)
+      const allTimeArr = Array.from(allTimeVisitors.values())
+        .sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0))
+        .slice(0, 50000);
+      await fs.promises.writeFile(ALL_TIME_FILE, JSON.stringify(allTimeArr), 'utf8');
+
+      // Persist recent visitors log for backwards compatibility (up to 10,000)
+      const logsPayload = allTimeArr.slice(0, 10000);
       await fs.promises.writeFile(VISITORS_LOG_FILE, JSON.stringify(logsPayload), 'utf8');
+
+      // Persist live activity stream (up to 300 entries)
+      await fs.promises.writeFile(ACTIVITY_FEED_FILE, JSON.stringify(liveActivityWire.slice(0, 300)), 'utf8');
     } catch (e) {
       console.warn('Failed to save visitor logs:', e.message);
     } finally {
@@ -464,8 +536,8 @@ async function recordVisit(ip, clientId, userAgent = '', clientMeta = {}) {
     }
   }
 
-  // 4. Update in activeVisitors map
-  let visitor = activeVisitors.get(sessionKey);
+  // 4. Update in allTimeVisitors & activeVisitors
+  let visitor = allTimeVisitors.get(sessionKey) || activeVisitors.get(sessionKey);
   if (!visitor) {
     const prev = recentVisitors.find((v) => v.sessionKey === sessionKey);
     visitor = {
@@ -482,42 +554,96 @@ async function recordVisit(ip, clientId, userAgent = '', clientMeta = {}) {
       firstSeen: prev?.firstSeen || now,
       lastActive: now,
       pageViews: (prev?.pageViews || 0) + 1,
+      totalVisits: (prev?.totalVisits || 0) + 1,
       isOnline: true,
       inRoom: clientMeta.inRoom || null,
-      nickname: clientMeta.name || null,
+      nickname: clientMeta.name || prev?.nickname || null,
       screen: device.screenResolution,
+      roomsVisited: clientMeta.inRoom ? [clientMeta.inRoom] : (prev?.roomsVisited || []),
+      mediaWatched: prev?.mediaWatched || [],
+      activityLog: prev?.activityLog || [],
+      allNicknames: clientMeta.name ? [clientMeta.name] : (prev?.allNicknames || []),
     };
-    activeVisitors.set(sessionKey, visitor);
   } else {
     visitor.lastActive = now;
     visitor.isOnline = true;
-    visitor.pageViews = (visitor.pageViews || 1) + 1;
+    visitor.pageViews = (visitor.pageViews || 0) + 1;
+    visitor.totalVisits = (visitor.totalVisits || 1) + 1;
     if (clientMeta.path) visitor.currentPath = clientMeta.path;
     if (clientMeta.ref) visitor.referrer = clientMeta.ref;
-    if (clientMeta.inRoom) visitor.inRoom = clientMeta.inRoom;
-    if (clientMeta.name) visitor.nickname = clientMeta.name;
+    if (clientMeta.inRoom) {
+      visitor.inRoom = clientMeta.inRoom;
+      if (!Array.isArray(visitor.roomsVisited)) visitor.roomsVisited = [];
+      if (!visitor.roomsVisited.includes(clientMeta.inRoom)) {
+        visitor.roomsVisited.push(clientMeta.inRoom);
+      }
+    }
+    if (clientMeta.name) {
+      visitor.nickname = clientMeta.name;
+      if (!Array.isArray(visitor.allNicknames)) visitor.allNicknames = [];
+      if (!visitor.allNicknames.includes(clientMeta.name)) {
+        visitor.allNicknames.push(clientMeta.name);
+      }
+    }
     if (device && device.deviceName) visitor.device = device;
-    if (location && location.countryCode) visitor.location = location;
+    if (location && location.countryCode && !location.country.includes('Detecting')) {
+      visitor.location = location;
+    }
   }
 
-  // 5. Update recentVisitors list (capped at 2500)
+  // Record initial page visit action
+  const act = {
+    id: 'act_' + crypto.randomBytes(4).toString('hex'),
+    time: now,
+    action: 'page_visit',
+    description: `Visited ${visitor.currentPath || '/'}`,
+    roomId: visitor.inRoom || null,
+    target: visitor.currentPath || '/',
+  };
+  visitor.lastAction = act;
+  if (!Array.isArray(visitor.activityLog)) visitor.activityLog = [];
+  visitor.activityLog.unshift(act);
+  if (visitor.activityLog.length > 50) visitor.activityLog.pop();
+
+  allTimeVisitors.set(sessionKey, visitor);
+  activeVisitors.set(sessionKey, visitor);
+
+  // Add to site-wide real-time activity wire
+  const wireItem = {
+    ...act,
+    sessionKey,
+    ip: visitor.maskedIp || maskIp(normIp),
+    fullIp: normIp,
+    clientId: visitor.clientId,
+    nickname: visitor.nickname || 'Guest',
+    flag: visitor.location?.flag || '🌐',
+    city: visitor.location?.city || 'Local',
+    country: visitor.location?.country || 'Global',
+    deviceIcon: visitor.device?.deviceIcon || '💻',
+    deviceName: visitor.device?.deviceName || 'Device',
+    path: visitor.currentPath || '/',
+  };
+  liveActivityWire.unshift(wireItem);
+  if (liveActivityWire.length > 300) liveActivityWire.pop();
+
+  // 5. Update recentVisitors list
   const existingIdx = recentVisitors.findIndex((v) => v.sessionKey === sessionKey);
   if (existingIdx !== -1) {
-    recentVisitors[existingIdx] = { ...visitor };
+    recentVisitors[existingIdx] = visitor;
   } else {
-    recentVisitors.unshift({ ...visitor });
-    if (recentVisitors.length > 2500) recentVisitors.pop();
+    recentVisitors.unshift(visitor);
+    if (recentVisitors.length > 10000) recentVisitors.pop();
   }
 
   // 6. Record all-time and daily counters
   const fp = makeFingerprint(normIp, clientId);
   if (!stats.uniqueVisitorsSet.has(fp)) {
-    if (stats.uniqueVisitorsSet.size >= 25000) {
-      const arr = Array.from(stats.uniqueVisitorsSet).slice(-15000);
+    if (stats.uniqueVisitorsSet.size >= 100000) {
+      const arr = Array.from(stats.uniqueVisitorsSet).slice(-60000);
       stats.uniqueVisitorsSet = new Set(arr);
     }
     stats.uniqueVisitorsSet.add(fp);
-    stats.totalVisitors = Math.max(stats.totalVisitors + 1, stats.uniqueVisitorsSet.size);
+    stats.totalVisitors = Math.max(stats.totalVisitors + 1, stats.uniqueVisitorsSet.size, allTimeVisitors.size);
   }
   if (!stats.todayVisitorsSet.has(fp)) {
     stats.todayVisitorsSet.add(fp);
@@ -576,36 +702,179 @@ function pingSession(ip, clientId, clientMeta = {}) {
   const now = Date.now();
   stats.activeSessions.set(sessionKey, now);
 
-  const visitor = activeVisitors.get(sessionKey);
+  const visitor = allTimeVisitors.get(sessionKey) || activeVisitors.get(sessionKey);
   if (visitor) {
     visitor.lastActive = now;
     visitor.isOnline = true;
     if (clientMeta.path) visitor.currentPath = clientMeta.path;
-    if (clientMeta.inRoom) visitor.inRoom = clientMeta.inRoom;
-    if (clientMeta.name) visitor.nickname = clientMeta.name;
+    if (clientMeta.inRoom) {
+      visitor.inRoom = clientMeta.inRoom;
+      if (!Array.isArray(visitor.roomsVisited)) visitor.roomsVisited = [];
+      if (!visitor.roomsVisited.includes(clientMeta.inRoom)) visitor.roomsVisited.push(clientMeta.inRoom);
+    }
+    if (clientMeta.name) {
+      visitor.nickname = clientMeta.name;
+      if (!Array.isArray(visitor.allNicknames)) visitor.allNicknames = [];
+      if (!visitor.allNicknames.includes(clientMeta.name)) visitor.allNicknames.push(clientMeta.name);
+    }
     if (clientMeta.screen && !visitor.screen) visitor.screen = clientMeta.screen;
+
+    allTimeVisitors.set(sessionKey, visitor);
+    activeVisitors.set(sessionKey, visitor);
 
     const existingIdx = recentVisitors.findIndex((v) => v.sessionKey === sessionKey);
     if (existingIdx !== -1) {
-      recentVisitors[existingIdx] = { ...visitor };
+      recentVisitors[existingIdx] = visitor;
     }
   }
+}
+
+// Log authentic real-time user action to visitor's audit trail and global activity wire
+function logUserActivity(ip, clientId, { action, description, roomId, mediaTitle, metadata } = {}) {
+  const normIp = normalizeIp(ip);
+  const sessionKey = makeSessionKey(normIp, clientId);
+  const now = Date.now();
+
+  let visitor = allTimeVisitors.get(sessionKey) || activeVisitors.get(sessionKey);
+  if (!visitor) {
+    visitor = {
+      id: 'vis_' + crypto.randomBytes(6).toString('hex'),
+      sessionKey,
+      ip: normIp,
+      maskedIp: maskIp(normIp),
+      clientId: clientId || 'anon',
+      userAgent: '',
+      device: { deviceType: 'Desktop', deviceName: 'Connected Device', deviceIcon: '💻' },
+      location: null,
+      currentPath: roomId ? `/room/${roomId}` : '/',
+      referrer: 'Direct Visit',
+      firstSeen: now,
+      lastActive: now,
+      pageViews: 1,
+      totalVisits: 1,
+      isOnline: true,
+      inRoom: roomId || null,
+      nickname: metadata?.name || null,
+      screen: 'Responsive Display',
+      roomsVisited: roomId ? [roomId] : [],
+      mediaWatched: [],
+      activityLog: [],
+      allNicknames: metadata?.name ? [metadata.name] : [],
+    };
+  }
+
+  visitor.lastActive = now;
+  visitor.isOnline = true;
+  stats.activeSessions.set(sessionKey, now);
+
+  if (roomId) {
+    visitor.inRoom = roomId;
+    if (!Array.isArray(visitor.roomsVisited)) visitor.roomsVisited = [];
+    if (!visitor.roomsVisited.includes(roomId)) {
+      visitor.roomsVisited.push(roomId);
+    }
+  }
+
+  if (metadata?.name || metadata?.nickname) {
+    const nick = metadata.name || metadata.nickname;
+    visitor.nickname = nick;
+    if (!Array.isArray(visitor.allNicknames)) visitor.allNicknames = [];
+    if (!visitor.allNicknames.includes(nick)) {
+      visitor.allNicknames.push(nick);
+    }
+  }
+
+  if (mediaTitle) {
+    if (!Array.isArray(visitor.mediaWatched)) visitor.mediaWatched = [];
+    const exists = visitor.mediaWatched.some((m) => m.title === mediaTitle);
+    if (!exists) {
+      visitor.mediaWatched.unshift({
+        title: String(mediaTitle).slice(0, 150),
+        type: metadata?.type || 'media',
+        src: metadata?.src ? String(metadata.src).slice(0, 200) : '',
+        at: now,
+      });
+      if (visitor.mediaWatched.length > 30) visitor.mediaWatched.pop();
+    }
+  }
+
+  const act = {
+    id: 'act_' + crypto.randomBytes(4).toString('hex'),
+    time: now,
+    action: action || 'activity',
+    description: description || 'User activity',
+    roomId: roomId || visitor.inRoom || null,
+    target: mediaTitle || metadata?.target || metadata?.path || null,
+  };
+
+  visitor.lastAction = act;
+  if (!Array.isArray(visitor.activityLog)) visitor.activityLog = [];
+  visitor.activityLog.unshift(act);
+  if (visitor.activityLog.length > 50) visitor.activityLog.pop();
+
+  allTimeVisitors.set(sessionKey, visitor);
+  activeVisitors.set(sessionKey, visitor);
+
+  const existingIdx = recentVisitors.findIndex((v) => v.sessionKey === sessionKey);
+  if (existingIdx !== -1) {
+    recentVisitors[existingIdx] = visitor;
+  } else {
+    recentVisitors.unshift(visitor);
+    if (recentVisitors.length > 10000) recentVisitors.pop();
+  }
+
+  const wireItem = {
+    id: act.id,
+    time: now,
+    action: act.action,
+    description: act.description,
+    roomId: act.roomId,
+    target: act.target,
+    sessionKey,
+    ip: visitor.maskedIp || maskIp(normIp),
+    fullIp: normIp,
+    clientId: visitor.clientId,
+    nickname: visitor.nickname || 'Guest',
+    flag: visitor.location?.flag || '🌐',
+    city: visitor.location?.city || 'Connected Peer',
+    country: visitor.location?.country || 'Global',
+    deviceIcon: visitor.device?.deviceIcon || '💻',
+    deviceName: visitor.device?.deviceName || 'Device',
+    path: visitor.currentPath || '/',
+  };
+
+  liveActivityWire.unshift(wireItem);
+  if (liveActivityWire.length > 300) liveActivityWire.pop();
+
+  persistStats();
+  return wireItem;
 }
 
 // Associate visitor with active cinema room and nickname
 function setVisitorRoom(ip, clientId, roomId, nickname = null) {
   const normIp = normalizeIp(ip);
   const sessionKey = makeSessionKey(normIp, clientId);
-  const visitor = activeVisitors.get(sessionKey);
+  const visitor = allTimeVisitors.get(sessionKey) || activeVisitors.get(sessionKey);
   if (visitor) {
     visitor.inRoom = roomId || null;
-    if (nickname) visitor.nickname = nickname;
+    if (nickname) {
+      visitor.nickname = nickname;
+      if (!Array.isArray(visitor.allNicknames)) visitor.allNicknames = [];
+      if (!visitor.allNicknames.includes(nickname)) visitor.allNicknames.push(nickname);
+    }
+    if (roomId) {
+      if (!Array.isArray(visitor.roomsVisited)) visitor.roomsVisited = [];
+      if (!visitor.roomsVisited.includes(roomId)) visitor.roomsVisited.push(roomId);
+    }
     visitor.lastActive = Date.now();
     visitor.isOnline = true;
 
+    allTimeVisitors.set(sessionKey, visitor);
+    activeVisitors.set(sessionKey, visitor);
+
     const existingIdx = recentVisitors.findIndex((v) => v.sessionKey === sessionKey);
     if (existingIdx !== -1) {
-      recentVisitors[existingIdx] = { ...visitor };
+      recentVisitors[existingIdx] = visitor;
     }
   }
 }
@@ -616,9 +885,11 @@ function endSession(ip, clientId) {
   const sessionKey = makeSessionKey(normIp, clientId);
   stats.activeSessions.delete(sessionKey);
 
-  const visitor = activeVisitors.get(sessionKey);
+  const visitor = allTimeVisitors.get(sessionKey) || activeVisitors.get(sessionKey);
   if (visitor) {
     visitor.isOnline = false;
+    visitor.lastActive = Date.now();
+    allTimeVisitors.set(sessionKey, visitor);
     const existingIdx = recentVisitors.findIndex((v) => v.sessionKey === sessionKey);
     if (existingIdx !== -1) {
       recentVisitors[existingIdx].isOnline = false;
@@ -635,6 +906,8 @@ function cleanStaleSessions() {
       stats.activeSessions.delete(id);
       const v = activeVisitors.get(id);
       if (v) v.isOnline = false;
+      const atV = allTimeVisitors.get(id);
+      if (atV) atV.isOnline = false;
     }
   }
 
@@ -666,7 +939,7 @@ function getVisitorStats(activeRoomsCount = 0) {
   cleanStaleSessions();
 
   return {
-    totalVisitors: stats.uniqueVisitorsSet.size,
+    totalVisitors: Math.max(stats.uniqueVisitorsSet.size, allTimeVisitors.size),
     todayVisitors: stats.todayVisitorsSet.size,
     totalPageViews: stats.totalPageViews,
     liveVisitors: stats.activeSessions.size,
@@ -675,14 +948,14 @@ function getVisitorStats(activeRoomsCount = 0) {
 }
 
 // Get full 100% genuine real telemetry for the Admin Panel
-function getAdminVisitorsData() {
+function getAdminVisitorsData(options = {}) {
   checkRollover();
   cleanStaleSessions();
 
   const now = Date.now();
   const liveList = [];
   for (const v of activeVisitors.values()) {
-    if (now - v.lastActive <= 50000) {
+    if (now - (v.lastActive || 0) <= 50000) {
       v.isOnline = true;
       liveList.push(v);
     } else {
@@ -690,17 +963,22 @@ function getAdminVisitorsData() {
     }
   }
 
-  // Calculate real device distribution
+  for (const v of allTimeVisitors.values()) {
+    v.isOnline = now - (v.lastActive || 0) <= 50000;
+  }
+
+  // Calculate real device distribution across all-time records
   let mobileCount = 0;
   let desktopCount = 0;
   let tabletCount = 0;
   const deviceModelMap = {};
   const browserMap = {};
   const countryMap = {};
+  const osMap = {};
 
-  const allKnown = recentVisitors.length > 0 ? recentVisitors : liveList;
+  const sourceVisitors = allTimeVisitors.size > 0 ? Array.from(allTimeVisitors.values()) : recentVisitors;
 
-  allKnown.forEach((v) => {
+  sourceVisitors.forEach((v) => {
     const t = v.device?.deviceType || 'Desktop';
     if (t === 'Mobile') mobileCount++;
     else if (t === 'Tablet') tabletCount++;
@@ -711,6 +989,9 @@ function getAdminVisitorsData() {
 
     const bName = v.device?.browser || 'Browser';
     browserMap[bName] = (browserMap[bName] || 0) + 1;
+
+    const osName = v.device?.os || 'Other OS';
+    osMap[osName] = (osMap[osName] || 0) + 1;
 
     const cName = v.location?.country || 'Unknown';
     if (!countryMap[cName]) {
@@ -738,31 +1019,28 @@ function getAdminVisitorsData() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
-  const osMap = {};
-  allKnown.forEach((v) => {
-    const osName = v.device?.os || 'Other OS';
-    osMap[osName] = (osMap[osName] || 0) + 1;
+  // Format all-time visitors list (sorted by lastActive desc)
+  const allTimeSorted = Array.from(allTimeVisitors.values())
+    .sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
+
+  const formatVisitor = (v) => ({
+    ...v,
+    cid: v.clientId,
+    geo: v.location,
+    currentRoom: v.inRoom,
+    hits: v.pageViews || 1,
+    visits: v.totalVisits || 1,
+    lastSeen: v.lastActive,
+    online: Boolean(v.isOnline),
+    roomsVisited: v.roomsVisited || [],
+    mediaWatched: v.mediaWatched || [],
+    activityLog: v.activityLog || [],
+    lastAction: v.lastAction || null,
   });
 
-  const formattedVisitors = recentVisitors.slice(0, 150).map((v) => ({
-    ...v,
-    cid: v.clientId,
-    geo: v.location,
-    currentRoom: v.inRoom,
-    hits: v.pageViews,
-    lastSeen: v.lastActive,
-    online: v.isOnline,
-  }));
-
-  const formattedLive = liveList.sort((a, b) => b.lastActive - a.lastActive).map((v) => ({
-    ...v,
-    cid: v.clientId,
-    geo: v.location,
-    currentRoom: v.inRoom,
-    hits: v.pageViews,
-    lastSeen: v.lastActive,
-    online: v.isOnline,
-  }));
+  const maxToReturn = options.all ? allTimeSorted.length : Math.min(1000, allTimeSorted.length);
+  const formattedAllTime = allTimeSorted.slice(0, maxToReturn).map(formatVisitor);
+  const formattedLive = liveList.sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0)).map(formatVisitor);
 
   // Format 100% Real Daily Audience Ledger
   const sortedDailyHistory = Object.values(stats.dailyHistory || {})
@@ -781,7 +1059,7 @@ function getAdminVisitorsData() {
     mobile: mobileCount,
     desktop: desktopCount,
     tablet: tabletCount,
-    topCountry: topCountries[0]?.country || (recentVisitors.length > 0 ? 'Detecting' : 'No Visitors Yet'),
+    topCountry: topCountries[0]?.country || (sourceVisitors.length > 0 ? 'Detecting' : 'No Visitors Yet'),
   };
 
   const yesterdayRecord = stats.dailyHistory?.[yesterdayStr] || null;
@@ -797,12 +1075,14 @@ function getAdminVisitorsData() {
 
   return {
     summary: {
+      totalAllTime: allTimeVisitors.size,
+      totalAllTimeUsers: allTimeVisitors.size,
       liveOnline: stats.activeSessions.size,
       onlineNow: stats.activeSessions.size,
       todayUnique: stats.todayVisitorsSet.size,
-      totalUnique: stats.uniqueVisitorsSet.size,
+      totalUnique: Math.max(stats.uniqueVisitorsSet.size, allTimeVisitors.size),
       totalPageViews: stats.totalPageViews,
-      totalRecorded: recentVisitors.length,
+      totalRecorded: allTimeVisitors.size,
       mobileCount,
       desktopCount,
       tabletCount,
@@ -832,8 +1112,12 @@ function getAdminVisitorsData() {
     },
     liveVisitors: formattedLive,
     online: formattedLive,
-    recentVisitors: formattedVisitors,
-    recent: formattedVisitors,
+    allTimeVisitors: formattedAllTime,
+    allTime: formattedAllTime,
+    recentVisitors: formattedAllTime,
+    recent: formattedAllTime,
+    liveActivityWire: liveActivityWire.slice(0, 100),
+    activityFeed: liveActivityWire.slice(0, 100),
   };
 }
 
@@ -844,6 +1128,7 @@ module.exports = {
   endSession,
   getVisitorStats,
   getAdminVisitorsData,
+  logUserActivity,
   parseDeviceDetails,
   getGeoForIp,
 };
