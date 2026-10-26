@@ -381,11 +381,13 @@ export default function CouplesOverlay({
   onSwitchToCallTab,
   isGhost = false,
   theme,
+  cameraDisabled = false,
 }) {
   const [mine, setMine] = useState(null);
   const [remote, setRemote] = useState({});     // peerId -> MediaStream
   const [ready, setReady] = useState(false);
   const [mic, setMic] = useState(true), [cam, setCam] = useState(true);
+  const [cameraPolicyBlocked, setCameraPolicyBlocked] = useState(Boolean(cameraDisabled));
   const [remoteCamOff, setRemoteCamOff] = useState({});
   const [remoteMicMuted, setRemoteMicMuted] = useState({});
   const [internalHidden, setInternalHidden] = useState(false);
@@ -777,6 +779,49 @@ export default function CouplesOverlay({
     };
   }, [me]);
 
+  // Turn Camera Off: Stops hardware sensor to completely power down device camera light
+  const turnCameraOff = useCallback(() => {
+    try {
+      const currentVideoTracks = (local.current && typeof local.current.getVideoTracks === 'function')
+        ? local.current.getVideoTracks()
+        : [];
+      currentVideoTracks.forEach((track) => {
+        try { track.stop(); } catch {}
+        try { local.current?.removeTrack(track); } catch {}
+      });
+
+      const dummyTrack = createBlankVideoTrack();
+      if (dummyTrack && local.current && typeof local.current.addTrack === 'function') {
+        try { local.current.addTrack(dummyTrack); } catch (e) {}
+      }
+
+      activeCalls.current.forEach((call) => {
+        try {
+          const senders = call.peerConnection?.getSenders?.() || [];
+          const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
+          if (videoSender) {
+            videoSender.replaceTrack(dummyTrack || null).catch(() => {});
+          }
+        } catch {}
+      });
+
+      if (local.current) {
+        try {
+          const liveTracks = (local.current.getTracks?.() || []).filter((t) => t.readyState === 'live');
+          setMine(new MediaStream(liveTracks));
+        } catch {
+          setMine(null);
+        }
+      }
+      setCam(false);
+      try {
+        socket?.emit('webrtc:signal', { type: 'cam_state', cam: false, fromCid: me });
+      } catch {}
+    } catch (e) {
+      console.warn('Error in turnCameraOff:', e);
+    }
+  }, [socket, me]);
+
   // Socket signaling listener for immediate and synchronized WebRTC connection
   useEffect(() => {
     if (!socket) return;
@@ -812,9 +857,34 @@ export default function CouplesOverlay({
       }
     };
 
+    const onRoomCameraPolicy = (data) => {
+      if (data && data.cameraAllowed === false) {
+        setCameraPolicyBlocked(true);
+        turnCameraOff();
+      } else if (data && data.cameraAllowed === true) {
+        setCameraPolicyBlocked(false);
+      }
+    };
+
+    const onUserCameraPolicy = (data) => {
+      if (data && data.cameraAllowed === false) {
+        setCameraPolicyBlocked(true);
+        turnCameraOff();
+      } else if (data && data.cameraAllowed === true) {
+        setCameraPolicyBlocked(false);
+      }
+    };
+
     socket.on('webrtc:signal', onSignal);
-    return () => socket.off('webrtc:signal', onSignal);
-  }, [socket, ready, me, callPeer]);
+    socket.on('room:camera_policy', onRoomCameraPolicy);
+    socket.on('user:camera_policy', onUserCameraPolicy);
+
+    return () => {
+      socket.off('webrtc:signal', onSignal);
+      socket.off('room:camera_policy', onRoomCameraPolicy);
+      socket.off('user:camera_policy', onUserCameraPolicy);
+    };
+  }, [socket, ready, me, callPeer, turnCameraOff]);
 
   // Watchdog & Reconnection loop: safely monitors peer connectivity without disrupting in-progress calls
   useEffect(() => {
@@ -860,56 +930,18 @@ export default function CouplesOverlay({
   const toggleCam = async () => {
     if (isGhost) return; // Ghost mode never touches physical camera hardware
     if (camSwitching) return;
+    if (cameraPolicyBlocked && !cam) {
+      alert('🔒 Camera access in this room has been restricted by Administrator for security compliance.');
+      return;
+    }
     setCamSwitching(true);
 
     try {
       if (cam) {
         // --- TURN CAMERA OFF: STOP PHYSICAL CAMERA HARDWARE SENSOR ---
-        const currentVideoTracks = (local.current && typeof local.current.getVideoTracks === 'function')
-          ? local.current.getVideoTracks()
-          : [];
-        currentVideoTracks.forEach((track) => {
-          try {
-            track.stop(); // Powers off the physical camera light and sensor on device
-          } catch {}
-          try {
-            local.current?.removeTrack(track);
-          } catch {}
-        });
-
-        // Insert blank dummy canvas track so WebRTC RTCPeerConnection stays connected
-        const dummyTrack = createBlankVideoTrack();
-        if (dummyTrack && local.current && typeof local.current.addTrack === 'function') {
-          try {
-            local.current.addTrack(dummyTrack);
-          } catch (e) {
-            console.warn('Could not add dummy track:', e);
-          }
-        }
-
-        // Replace track on all active PeerJS RTCPeerConnection video senders
-        activeCalls.current.forEach((call) => {
-          try {
-            const senders = call.peerConnection?.getSenders?.() || [];
-            const videoSender = senders.find((s) => s.track?.kind === 'video' || s.kind === 'video');
-            if (videoSender) {
-              videoSender.replaceTrack(dummyTrack || null).catch((e) => console.warn('replaceTrack off error:', e));
-            }
-          } catch {}
-        });
-
-        if (local.current) {
-          try {
-            const liveTracks = (local.current.getTracks?.() || []).filter((t) => t.readyState === 'live');
-            setMine(new MediaStream(liveTracks));
-          } catch {
-            setMine(null);
-          }
-        }
-        setCam(false);
-        try {
-          socket?.emit('webrtc:signal', { type: 'cam_state', cam: false, fromCid: me });
-        } catch {}
+        turnCameraOff();
+        setCamSwitching(false);
+        return;
       } else {
         // --- TURN CAMERA ON: RE-ACQUIRE FROM USER MEDIA ---
         let freshStream = null;
@@ -1180,20 +1212,28 @@ export default function CouplesOverlay({
 
               <button
                 type="button"
-                onClick={toggleCam}
+                onClick={cameraPolicyBlocked ? () => alert('🔒 Camera access in this room has been restricted by Administrator for security compliance.') : toggleCam}
                 disabled={camSwitching}
                 aria-label="Toggle camera"
-                title={cam ? 'Turn off camera (releases hardware)' : 'Turn on camera'}
-                className={`p-2.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-black ${
-                  cam
+                title={cameraPolicyBlocked ? 'Camera access disabled by Administrator for security compliance' : (cam ? 'Turn off camera (releases hardware)' : 'Turn on camera')}
+                className={`p-2.5 rounded-xl transition flex items-center gap-1.5 text-xs font-black ${
+                  cameraPolicyBlocked
+                    ? 'bg-rose-950/40 text-rose-300 border-2 border-rose-500/40 opacity-70 cursor-not-allowed'
+                    : cam
                     ? theme?.isLight
-                      ? 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-2 border-sky-300'
-                      : 'bg-emerald-500/25 hover:bg-emerald-500/35 text-emerald-300 border-2 border-emerald-400'
-                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 border-2 border-rose-400 shadow-sm'
+                      ? 'bg-sky-50 hover:bg-sky-100 text-sky-800 border-2 border-sky-300 cursor-pointer'
+                      : 'bg-emerald-500/25 hover:bg-emerald-500/35 text-emerald-300 border-2 border-emerald-400 cursor-pointer'
+                    : 'bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 border-2 border-rose-400 shadow-sm cursor-pointer'
                 }`}
               >
-                {cam ? <Video className="h-4 w-4 text-emerald-400" /> : <VideoOff className="h-4 w-4 text-rose-400" />}
-                <span className="text-[10px]">{cam ? 'Cam Off' : 'Cam On'}</span>
+                {cameraPolicyBlocked ? (
+                  <VideoOff className="h-4 w-4 text-rose-400" />
+                ) : cam ? (
+                  <Video className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <VideoOff className="h-4 w-4 text-rose-400" />
+                )}
+                <span className="text-[10px]">{cameraPolicyBlocked ? 'Cam Locked' : cam ? 'Cam Off' : 'Cam On'}</span>
               </button>
 
               <button

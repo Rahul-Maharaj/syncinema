@@ -2078,6 +2078,7 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
             isp: isLocalIp(u.ip) ? 'Direct Local Loopback' : 'Broadband ISP',
             ip: u.ip || '127.0.0.1',
           },
+          cameraBlocked: Boolean(r.cameraDisabled || (r.blockedCameras && r.blockedCameras.has(u.cid))),
         });
       }
     }
@@ -2100,6 +2101,8 @@ app.get('/api/admin/overview', adminGate, (req, res) => {
       isPasswordProtected: Boolean(r.pass),
       lock: Boolean(r.lock),
       entryLocked: Boolean(r.entryLocked),
+      cameraDisabled: Boolean(r.cameraDisabled),
+      blockedCameras: Array.from(r.blockedCameras || []),
       ambient: r.ambient,
       createdAt: r.createdAt || r.at || Date.now(),
       lastActivity: r.lastActivity || r.at || r.createdAt || Date.now(),
@@ -2340,6 +2343,114 @@ app.post('/api/admin/broadcast', adminGate, (req, res) => {
   res.json({ ok: true, message });
 });
 
+// --- ADMIN VIDEO CALL CAMERA SECURITY MODERATION ---
+// Turn OFF or Turn ON room-wide camera access for security / safety compliance
+app.post('/api/admin/room/camera', adminGate, (req, res) => {
+  const { roomId, enabled, reason } = req.body || {};
+  if (!roomId) return res.status(400).json({ error: 'Missing roomId' });
+
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+
+  const willAllow = Boolean(enabled);
+  r.cameraDisabled = !willAllow;
+
+  const msg = willAllow
+    ? (reason || 'Camera access has been restored by Administrator.')
+    : (reason || 'Camera access has been disabled by Administrator for security compliance.');
+
+  // Emit policy update to all clients in the room
+  io.to(roomId).emit('room:camera_policy', {
+    cameraAllowed: willAllow,
+    roomId,
+    reason: msg,
+    at: Date.now(),
+  });
+
+  // Emit user-visible toast to room
+  io.to(roomId).emit('toast', willAllow ? `🔓 ${msg}` : `🔒 ${msg}`);
+
+  // If cameras are disabled, also signal all peer connections to mute video immediately
+  if (!willAllow && r.users) {
+    for (const cid of r.users.keys()) {
+      io.to(roomId).emit('webrtc:signal', {
+        type: 'cam_state',
+        cam: false,
+        fromCid: cid,
+      });
+    }
+  }
+
+  logUserActivity(ipOf(req), 'admin', {
+    action: willAllow ? 'admin_camera_enable' : 'admin_camera_disable',
+    description: `${willAllow ? 'Enabled' : 'Disabled'} camera access in room #${roomId} for security`,
+    roomId,
+    metadata: { willAllow, reason: msg },
+  });
+
+  save();
+  res.json({
+    ok: true,
+    roomId,
+    cameraDisabled: r.cameraDisabled,
+    cameraAllowed: willAllow,
+    message: `Room #${roomId} camera access ${willAllow ? 'enabled' : 'disabled'} successfully.`,
+  });
+});
+
+// Turn OFF or Turn ON camera access for an individual participant in a room
+app.post('/api/admin/user/camera', adminGate, (req, res) => {
+  const { roomId, cid, enabled, reason } = req.body || {};
+  if (!roomId || !cid) return res.status(400).json({ error: 'Missing roomId or cid' });
+
+  const r = rooms.get(roomId);
+  if (!r) return res.status(404).json({ error: 'Room not found' });
+
+  if (!r.blockedCameras) r.blockedCameras = new Set();
+  const willAllow = Boolean(enabled);
+
+  if (willAllow) {
+    r.blockedCameras.delete(cid);
+  } else {
+    r.blockedCameras.add(cid);
+  }
+
+  const u = r.users?.get(cid);
+  const msg = willAllow
+    ? (reason || 'Your camera access has been restored by Administrator.')
+    : (reason || 'Your camera access has been disabled by Administrator for security purposes.');
+
+  if (u?.sid) {
+    const s = io.sockets.sockets.get(u.sid);
+    if (s) {
+      s.emit('user:camera_policy', { cameraAllowed: willAllow, reason: msg });
+      s.emit('toast', willAllow ? `🔓 ${msg}` : `🔒 ${msg}`);
+    }
+  }
+
+  // Signal peers in the room that this user's camera state changed
+  io.to(roomId).emit('webrtc:signal', {
+    type: 'cam_state',
+    cam: willAllow,
+    fromCid: cid,
+  });
+
+  logUserActivity(ipOf(req), 'admin', {
+    action: willAllow ? 'admin_user_cam_enable' : 'admin_user_cam_disable',
+    description: `${willAllow ? 'Enabled' : 'Disabled'} camera for participant ${u?.name || cid} in room #${roomId}`,
+    roomId,
+    metadata: { cid, willAllow },
+  });
+
+  res.json({
+    ok: true,
+    roomId,
+    cid,
+    cameraAllowed: willAllow,
+    message: `User camera access ${willAllow ? 'restored' : 'cut off'} successfully.`,
+  });
+});
+
 // 🛰️ Admin Deep Room Surveillance & Ghost Inspection
 app.get('/api/admin/room/inspect/:roomId', adminGate, (req, res) => {
   const { roomId } = req.params;
@@ -2355,6 +2466,7 @@ app.get('/api/admin/room/inspect/:roomId', adminGate, (req, res) => {
         geo: u.geo,
         isHost: u.cid === r.hostId,
         color: u.color,
+        cameraBlocked: Boolean(r.cameraDisabled || (r.blockedCameras && r.blockedCameras.has(u.cid))),
       });
     }
   }
@@ -2368,6 +2480,8 @@ app.get('/api/admin/room/inspect/:roomId', adminGate, (req, res) => {
     hostId: r.hostId,
     lock: !!r.lock,
     entryLocked: !!r.entryLocked,
+    cameraDisabled: Boolean(r.cameraDisabled),
+    blockedCameras: Array.from(r.blockedCameras || []),
     maxUsers: r.maxUsers,
     users: usersList,
     userCount: usersList.length,
@@ -2620,6 +2734,7 @@ io.on('connection', (socket) => {
       adult: !!room.adult,
       hasPin: !!room.pin,
       ottAccounts: room.ottAccounts || {},
+      cameraDisabled: Boolean(room.cameraDisabled || (room.blockedCameras && room.blockedCameras.has(cid))),
     });
     socket.emit('state', snapshot(room));            // re-sync player after reconnect
     presence(rid, room);

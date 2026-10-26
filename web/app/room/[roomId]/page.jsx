@@ -369,6 +369,7 @@ export default function Room() {
   const [currentMedia, setCurrentMedia] = useState(null);
   const [voiceActive, setVoiceActive] = useState(false);
   const [ottAccounts, setOttAccounts] = useState({});
+  const [roomCameraDisabled, setRoomCameraDisabled] = useState(false);
 
   // View Modes & Cinema Plugins State
   const [viewMode, setViewMode] = useState('theater'); // 'theater' | 'duo' | 'party' | 'focus'
@@ -541,6 +542,7 @@ export default function Room() {
       setReviews(r.reviews || []);
       setAdultMode(!!r.adult);
       setHasPin(!!r.hasPin);
+      if (r.cameraDisabled !== undefined) setRoomCameraDisabled(!!r.cameraDisabled);
       try {
         const searchParams = new URLSearchParams(typeof window !== 'undefined' ? (window.location.search || window.location.hash.replace(/^#/, '?')) : '');
         const urlTheme = searchParams.get('theme');
@@ -658,6 +660,12 @@ export default function Room() {
     });
     socket.on('room:entry_locked', ({ locked }) => {
       setEntryLocked(!!locked);
+    });
+    socket.on('room:camera_policy', ({ cameraAllowed }) => {
+      setRoomCameraDisabled(!cameraAllowed);
+    });
+    socket.on('user:camera_policy', ({ cameraAllowed }) => {
+      setRoomCameraDisabled(!cameraAllowed);
     });
     socket.on('kicked', ({ reason } = {}) => {
       setErr(reason || 'You have been removed from this room by the host.');
@@ -2403,6 +2411,7 @@ export default function Room() {
               onSwitchToCallTab={() => setMobileTab('call')}
               isGhost={isGhost}
               theme={theme}
+              cameraDisabled={roomCameraDisabled}
             />
           </CallErrorBoundary>
         </div>
